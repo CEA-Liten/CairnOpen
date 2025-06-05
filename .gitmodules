@@ -1,0 +1,3 @@
+[submodule "tests/privateTests"]
+	path = tests/privateTests
+	url = https://codev-tuleap.intra.cea.fr/plugins/git/persee/privateTests.git
