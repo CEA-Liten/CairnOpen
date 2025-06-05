@@ -1,0 +1,19 @@
+Etape;Qui;Description / précisions
+Création de la branche;Développeur;Nom : 
+;;
+;;contient le numéro du bug
+;;Court ! (attention sinon bug jenkins)
+;;Mêmes noms pour tous les dépots (Persee,PerseeGui..)
+;;
+Réalisation des changements;Développeur;A chaque nouvelle release, se remettre à jour sur la branche Integration
+Ajout de la documentation associée;Développeur;De préférence directement dans la doc Sphinx
+Ajout de TNR;Développeur;"Ajout/modification d&apos;un TNR pour vérifier le fonctionnement"
+Test Jenkins;Développeur;Test sur jenkins en choisissant les bonnes branches. Si nécessaire, aller-retour avec la phase précédente. 
+Pull request;Développeur;Une fois que tout est bon sur Jenkins --> pull request (divergence Integration < 1 mois)
+Review;Responsable du code;A la demande
+Merge dans les branches de dev;Intégrateur;Rebase de la branche dév depuis Integration
+Test Jenkins;Intégrateur;Test sur jenkins en choisissant les bonnes branches. Si nécessaire, aller-retour avec la phase précédente. 
+Merge dans Intégration;Intégrateur;
+Test Jenkins;Intégrateur;Test avec toutes les branches intégration
+Suppression des branches de dev;Développeur ?;
+;;
