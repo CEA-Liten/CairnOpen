@@ -1,0 +1,1266 @@
+{
+	"Saved with PERSEE version": "4.3.5",
+	"numberPages": 1,
+	"studyComment": "",
+	"mapParameters": {
+		"latitude": 45.125,
+		"longitude": 5.87,
+		"zoomlevel": 13.5
+	},
+	"Page1": {
+		"PageId": "Page1",
+		"Components": [
+			{
+				"nodeType": "TecEcoAnalysis",
+				"nodeId": "3018134851",
+				"nodeName": "TecEcoAnalysis#1",
+				"nodeTechnoType": "TecEcoAnalysis",
+				"componentPERSEEType": "TecEcoAnalysis",
+				"nodeComment": "",
+				"x": 50,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Model",
+						"value": "OptimNPV"
+					},
+					{
+						"key": "Currency",
+						"value": "EUR"
+					},
+					{
+						"key": "DiscountRate",
+						"value": 0
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "MinConstraintValue",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "SimulationControl",
+				"nodeId": "3018134852",
+				"nodeName": "Persee",
+				"nodeTechnoType": "SimulationControl",
+				"componentPERSEEType": "SimulationControl",
+				"nodeComment": "",
+				"x": 330,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [],
+				"paramListJson": [
+					{
+						"key": "TimeStep",
+						"value": 600
+					},
+					{
+						"key": "FutureSize",
+						"value": 12
+					},
+					{
+						"key": "NbCycle",
+						"value": 1
+					},
+					{
+						"key": "TimeShift",
+						"value": 1
+					},
+					{
+						"key": "PastSize",
+						"value": 1
+					},
+					{
+						"key": "FutureVariableTimestep",
+						"value": 8760
+					},
+					{
+						"key": "ModeObjective",
+						"value": "Mono"
+					},
+					{
+						"key": "CheckTimeSeriesUnits",
+						"value": false
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"Global_Optim",
+					"RH_MPC_Optim"
+				]
+			},
+			{
+				"nodeType": "Solver",
+				"nodeId": "3018134850",
+				"nodeName": "Solver#1",
+				"nodeTechnoType": "Solver",
+				"componentPERSEEType": "Solver",
+				"nodeComment": "",
+				"x": 190,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Model",
+						"value": "MIPModeler"
+					},
+					{
+						"key": "Solver",
+						"value": "Cplex"
+					},
+					{
+						"key": "Category",
+						"value": "MIP"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "Gap",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base"
+				]
+			},
+			{
+				"nodeType": "Electricity",
+				"nodeId": "3018309120",
+				"nodeName": "Electricity",
+				"nodeTechnoType": "Electricity",
+				"componentPERSEEType": "EnergyVector",
+				"energyTypeColor": "#E8A317",
+				"nodeComment": "",
+				"x": 428,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "NO_CARRIER",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "Electrical"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "MW"
+					},
+					{
+						"key": "MassUnit",
+						"value": "kg"
+					},
+					{
+						"key": "EnergyUnit",
+						"value": "MWh"
+					},
+					{
+						"key": "PowerUnit",
+						"value": "MW"
+					},
+					{
+						"key": "SurfaceUnit",
+						"value": "m2"
+					},
+					{
+						"key": "PeakUnit",
+						"value": "MWc"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "H2Vector",
+				"nodeId": "3018310920",
+				"nodeName": "H2Vector",
+				"nodeTechnoType": "H2Vector",
+				"componentPERSEEType": "EnergyVector",
+				"energyTypeColor": "green",
+				"nodeComment": "",
+				"x": 532,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "NO_CARRIER",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "FluidH2"
+					},
+					{
+						"key": "IsMassCarrier",
+						"value": true
+					},
+					{
+						"key": "IsFuelCarrier",
+						"value": true
+					},
+					{
+						"key": "MassUnit",
+						"value": "kg"
+					},
+					{
+						"key": "EnergyUnit",
+						"value": "MWh"
+					},
+					{
+						"key": "PowerUnit",
+						"value": "MW"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "kg/h"
+					},
+					{
+						"key": "SurfaceUnit",
+						"value": "m2"
+					},
+					{
+						"key": "PeakUnit",
+						"value": "MWc"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "LHV",
+						"value": 0.03332
+					},
+					{
+						"key": "RHO",
+						"value": 0.0899
+					},
+					{
+						"key": "Potential",
+						"value": 0
+					},
+					{
+						"key": "GHV",
+						"value": 0
+					},
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "SellPrice",
+						"value": 100
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"UnitNames"
+				]
+			},
+			{
+				"nodeType": "NodeEquality",
+				"nodeId": "3018616336",
+				"nodeName": "NodeEquality#1",
+				"nodeTechnoType": "NodeEquality",
+				"componentPERSEEType": "BusSameValue",
+				"nodeComment": "",
+				"x": 364,
+				"y": 204,
+				"componentWidth": 20,
+				"componentCarrier": "Electricity",
+				"nodePorts": {
+					"top": 1,
+					"bottom": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "top",
+						"ports": [
+							{
+								"name": "PortT0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "ConnectRamp",
+								"checkunit": "No",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"name": "PortB0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "UsedPower",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeEquality"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxBusValue",
+						"value": 1000000000000000
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "NodeEquality",
+				"nodeId": "3018643872",
+				"nodeName": "NodeEquality#2",
+				"nodeTechnoType": "NodeEquality",
+				"componentPERSEEType": "BusSameValue",
+				"nodeComment": "",
+				"x": 460,
+				"y": 204,
+				"componentWidth": 20,
+				"componentCarrier": "Electricity",
+				"nodePorts": {
+					"top": 1,
+					"bottom": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "top",
+						"ports": [
+							{
+								"name": "PortT0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "ComponentSize",
+								"checkunit": "No",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"name": "PortB0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "SizeMax",
+								"checkunit": "No",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeEquality"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxBusValue",
+						"value": 1000000000000000
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "NodeLaw",
+				"nodeId": "3018479152",
+				"nodeName": "NodeLaw#1",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"x": 270,
+				"y": 300,
+				"componentWidth": 20,
+				"componentCarrier": "Electricity",
+				"nodePorts": {
+					"left": 1,
+					"right": 1,
+					"bottom": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "I0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "O0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "UsedPower",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"name": "PortB0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"paramListJson": [],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "NodeLaw",
+				"nodeId": "3018487762",
+				"nodeName": "NodeLaw#2",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"x": 456,
+				"y": 300,
+				"componentWidth": 20,
+				"componentCarrier": "H2Vector",
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "I0",
+								"carrier": "H2Vector",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "H2MassFlowRate",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "O0",
+								"carrier": "H2Vector",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"paramListJson": [],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "GridFree",
+				"nodeId": "3019034810",
+				"nodeName": "Curtailment",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"x": 208,
+				"y": 364,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "InjectToGrid"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "PriceMultiplier",
+						"value": 1
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "GridFree",
+				"nodeId": "3018286217",
+				"nodeName": "H2_Grid",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"x": 524,
+				"y": 290,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "PortL0",
+								"carrier": "H2Vector",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "InjectToGrid"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "PriceMultiplier",
+						"value": 1
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "SourceLoad",
+				"nodeId": "3018845134",
+				"nodeName": "Elec_source",
+				"nodeTechnoType": "SourceLoad",
+				"componentPERSEEType": "SourceLoad",
+				"nodeComment": "",
+				"x": 150,
+				"y": 292,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "Direction",
+						"value": "Source"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "Weight",
+						"value": 1
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "StaticCompensationValue",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileLoadFlux",
+						"value": "Source"
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "Electrolyzer",
+				"nodeId": "3018303402",
+				"nodeName": "Electrolyzer",
+				"nodeTechnoType": "Electrolyzer",
+				"componentPERSEEType": "Converter",
+				"nodeComment": "",
+				"x": 364,
+				"y": 290,
+				"componentWidth": 40,
+				"componentCarrier": "Electrical",
+				"nodePorts": {
+					"left": 1,
+					"right": 1,
+					"top": 2
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "PortL0",
+								"carrier": "Electricity",
+								"carrierType": "Electrical",
+								"direction": "INPUT",
+								"variable": "UsedPower",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "H2Vector",
+								"carrierType": "FluidH2",
+								"direction": "OUTPUT",
+								"variable": "H2MassFlowRate",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "top",
+						"ports": [
+							{
+								"name": "PortT0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "UsedPower",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"isEnabled": true
+							},
+							{
+								"name": "PortT1",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "SizeMax",
+								"checkunit": "No",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "Electrolyzer"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "Capex",
+						"value": 0
+					},
+					{
+						"key": "Opex",
+						"value": 0
+					},
+					{
+						"key": "Efficiency",
+						"value": 0.6
+					},
+					{
+						"key": "MaxPower",
+						"value": 400
+					},
+					{
+						"key": "MinPower",
+						"value": 0
+					},
+					{
+						"key": "Cost",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel",
+					"AddOperationConstraints",
+					"OptimizationOptions",
+					"Ageing",
+					"ProfileCoefficients",
+					"ConverterProfiles"
+				]
+			},
+			{
+				"nodeType": "RampModel",
+				"nodeId": "3018145357",
+				"nodeName": "RampModel",
+				"nodeTechnoType": "RampModel",
+				"componentPERSEEType": "OperationConstraint",
+				"nodeComment": "",
+				"x": 364,
+				"y": 98,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"bottom": 2
+				},
+				"nodePortsData": [
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"name": "PortB0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "ConnectRamp",
+								"checkunit": "No",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							},
+							{
+								"name": "PortB1",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "ComponentSize",
+								"checkunit": "No",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "RampModel"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "MaxVariable",
+						"value": 400
+					},
+					{
+						"key": "ConstantRampUpLimit",
+						"value": 0.25
+					},
+					{
+						"key": "ConstantRampDownLimit",
+						"value": 0.5
+					},
+					{
+						"key": "AddRampCost",
+						"value": false
+					},
+					{
+						"key": "RampCost",
+						"value": 10
+					},
+					{
+						"key": "MinInput",
+						"value": 0
+					},
+					{
+						"key": "ConstantRamp",
+						"value": false
+					}
+				],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [
+					{
+						"key": "RampUpLimit",
+						"value": "RampUpLimit"
+					},
+					{
+						"key": "RampDownLimit",
+						"value": "RampDownLimit"
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			}
+		],
+		"DuplicateComponents": [],
+		"Links": [
+			{
+				"linkType": "straight",
+				"tailNodeName": "Curtailment",
+				"tailSocketName": "Curtailment.PortR0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.PortB0",
+				"listPoint": [
+					{
+						"x": 280,
+						"y": 384
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_source",
+				"tailSocketName": "Elec_source.PortR0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.I0",
+				"listPoint": [
+					{
+						"x": 230,
+						"y": 312
+					},
+					{
+						"x": 230,
+						"y": 310
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Electrolyzer",
+				"tailSocketName": "Electrolyzer.PortT1",
+				"headNodeName": "NodeEquality#2",
+				"headSocketName": "NodeEquality#2.PortB0",
+				"listPoint": [
+					{
+						"x": 392,
+						"y": 258
+					},
+					{
+						"x": 470,
+						"y": 258
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Electrolyzer",
+				"tailSocketName": "Electrolyzer.PortL0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.O0",
+				"listPoint": [
+					{
+						"x": 326,
+						"y": 310
+					},
+					{
+						"x": 326,
+						"y": 310
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Electrolyzer",
+				"tailSocketName": "Electrolyzer.PortR0",
+				"headNodeName": "NodeLaw#2",
+				"headSocketName": "NodeLaw#2.I0",
+				"listPoint": [
+					{
+						"x": 430,
+						"y": 310
+					},
+					{
+						"x": 430,
+						"y": 310
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "H2_Grid",
+				"tailSocketName": "H2_Grid.PortL0",
+				"headNodeName": "NodeLaw#2",
+				"headSocketName": "NodeLaw#2.O0",
+				"listPoint": [
+					{
+						"x": 500,
+						"y": 310
+					},
+					{
+						"x": 500,
+						"y": 310
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "NodeEquality#1",
+				"tailSocketName": "NodeEquality#1.PortB0",
+				"headNodeName": "Electrolyzer",
+				"headSocketName": "Electrolyzer.PortT0",
+				"listPoint": [
+					{
+						"x": 374,
+						"y": 256
+					},
+					{
+						"x": 374,
+						"y": 256
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "NodeEquality#1",
+				"tailSocketName": "NodeEquality#1.PortT0",
+				"headNodeName": "RampModel",
+				"headSocketName": "RampModel.PortB0",
+				"listPoint": [
+					{
+						"x": 374,
+						"y": 170
+					},
+					{
+						"x": 374,
+						"y": 170
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "NodeEquality#2",
+				"tailSocketName": "NodeEquality#2.PortT0",
+				"headNodeName": "RampModel",
+				"headSocketName": "RampModel.PortB1",
+				"listPoint": [
+					{
+						"x": 470,
+						"y": 172
+					},
+					{
+						"x": 392,
+						"y": 172
+					}
+				]
+			}
+		],
+		"Groups": []
+	},
+	"DynamicIndicators": []
+}

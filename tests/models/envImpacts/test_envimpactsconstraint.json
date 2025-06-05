@@ -1,0 +1,774 @@
+{
+	"Saved with PERSEE version": "4.4.0",
+	"numberPages": 1,
+	"studyComment": "",
+	"mapParameters": {
+		"latitude": 45.06964,
+		"longitude": 6.0108203,
+		"zoomlevel": 13.5
+	},
+	"Page1": {
+		"PageId": "Page1",
+		"Components": [
+			{
+				"nodeType": "TecEcoAnalysis",
+				"nodeId": "88895538",
+				"nodeName": "TecEcoAnalysis",
+				"nodeTechnoType": "TecEcoAnalysis",
+				"componentPERSEEType": "TecEcoAnalysis",
+				"nodeComment": "",
+				"x": 50,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "DiscountRate",
+						"value": 0
+					},
+					{
+						"key": "Model",
+						"value": "OptimEnvImpact-GWP"
+					},
+					{
+						"key": "Currency",
+						"value": "EUR"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "ConsideredEnvironmentalImpacts",
+						"value": [
+							"Climate change#Global Warming Potential 100"
+						]
+					},
+					{
+						"key": "MinConstraintValue",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Climate change#Global Warming Potential 100 MaxConstraint",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 MaxConstraintValue",
+						"value": 50000000
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "SimulationControl",
+				"nodeId": "88895539",
+				"nodeName": "Persee",
+				"nodeTechnoType": "SimulationControl",
+				"componentPERSEEType": "SimulationControl",
+				"nodeComment": "",
+				"x": 330,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [],
+				"paramListJson": [
+					{
+						"key": "NbCycle",
+						"value": 1
+					},
+					{
+						"key": "TimeStep",
+						"value": 3600
+					},
+					{
+						"key": "TimeShift",
+						"value": 1
+					},
+					{
+						"key": "ModeObjective",
+						"value": "Mono"
+					},
+					{
+						"key": "PastSize",
+						"value": 1
+					},
+					{
+						"key": "FutureSize",
+						"value": 24
+					},
+					{
+						"key": "FutureVariableTimestep",
+						"value": 8760
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"Global_Optim",
+					"RH_MPC_Optim"
+				]
+			},
+			{
+				"nodeType": "Solver",
+				"nodeId": "88895537",
+				"nodeName": "Solver#1",
+				"nodeTechnoType": "Solver",
+				"componentPERSEEType": "Solver",
+				"nodeComment": "",
+				"x": 190,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Category",
+						"value": "MIP"
+					},
+					{
+						"key": "Solver",
+						"value": "Cplex"
+					},
+					{
+						"key": "Model",
+						"value": "MIPModeler"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "Gap",
+						"value": 0
+					},
+					{
+						"key": "TreeMemoryLimit",
+						"value": 50000
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base"
+				]
+			},
+			{
+				"nodeType": "Electricity",
+				"nodeId": "88924481",
+				"nodeName": "Electricity",
+				"nodeTechnoType": "Electricity",
+				"componentPERSEEType": "EnergyVector",
+				"energyTypeColor": "#E8A317",
+				"nodeComment": "",
+				"x": 470,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "NO_CARRIER",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "Electrical"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "MW"
+					},
+					{
+						"key": "SurfaceUnit",
+						"value": "m2"
+					},
+					{
+						"key": "PeakUnit",
+						"value": "MWc"
+					},
+					{
+						"key": "PowerUnit",
+						"value": "MW"
+					},
+					{
+						"key": "MassUnit",
+						"value": "kg"
+					},
+					{
+						"key": "EnergyUnit",
+						"value": "MWh"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "NodeLaw",
+				"nodeId": "88945810",
+				"nodeName": "NodeLaw#1",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"x": 420,
+				"y": 216,
+				"componentWidth": 20,
+				"componentCarrier": "Electricity",
+				"nodePorts": {
+					"left": 2,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "I0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							},
+							{
+								"name": "I1",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "O0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"paramListJson": [],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "GridFree",
+				"nodeId": "88958542",
+				"nodeName": "Elec_Grid_Cheap",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"x": 220,
+				"y": 170,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxFlow",
+						"value": 400
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "Capex",
+						"value": 10
+					},
+					{
+						"key": "MinSize",
+						"value": 0
+					},
+					{
+						"key": "UseConstantPrice",
+						"value": true
+					},
+					{
+						"key": "ConstantBuyPrice",
+						"value": 10
+					},
+					{
+						"key": "ConstantSellPrice",
+						"value": 0
+					},
+					{
+						"key": "Opex",
+						"value": 0
+					},
+					{
+						"key": "Weight",
+						"value": -1
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"value": false
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"value": 0
+					}
+				],
+				"portImpactsListJson": [
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+						"value": 1
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "GridFree",
+				"nodeId": "88961339",
+				"nodeName": "Elec_Grid_LowCO2",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"x": 220,
+				"y": 262,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxFlow",
+						"value": 400
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "Capex",
+						"value": 10
+					},
+					{
+						"key": "UseConstantPrice",
+						"value": true
+					},
+					{
+						"key": "ConstantBuyPrice",
+						"value": 30
+					},
+					{
+						"key": "MinSize",
+						"value": 0
+					},
+					{
+						"key": "ConstantSellPrice",
+						"value": 0
+					},
+					{
+						"key": "Opex",
+						"value": 0
+					},
+					{
+						"key": "Weight",
+						"value": -1
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"value": false
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"value": 0
+					}
+				],
+				"portImpactsListJson": [
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+						"value": 0.2
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Ionising radiation human health#Human exposure efficiency relative to U EnvContentCoefficient_A",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "SourceLoad",
+				"nodeId": "88917198",
+				"nodeName": "Elec_Load",
+				"nodeTechnoType": "SourceLoad",
+				"componentPERSEEType": "SourceLoad",
+				"nodeComment": "",
+				"x": 634,
+				"y": 208,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "PortL0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "Direction",
+						"value": "Sink"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "Weight",
+						"value": 1
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "MinSize",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					}
+				],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileLoadFlux",
+						"value": "Load"
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			}
+		],
+		"DuplicateComponents": [],
+		"Links": [
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Grid_Cheap",
+				"tailSocketName": "Elec_Grid_Cheap.PortR0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.I0",
+				"listPoint": [
+					{
+						"x": 340,
+						"y": 190
+					},
+					{
+						"x": 340,
+						"y": 222
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Grid_LowCO2",
+				"tailSocketName": "Elec_Grid_LowCO2.PortR0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.I1",
+				"listPoint": [
+					{
+						"x": 338,
+						"y": 282
+					},
+					{
+						"x": 338,
+						"y": 234
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Load",
+				"tailSocketName": "Elec_Load.PortL0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.O0",
+				"listPoint": [
+					{
+						"x": 540,
+						"y": 228
+					},
+					{
+						"x": 540,
+						"y": 228
+					}
+				]
+			}
+		],
+		"Groups": []
+	},
+	"DynamicIndicators": []
+}

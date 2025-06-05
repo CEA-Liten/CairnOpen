@@ -1,0 +1,4 @@
+;Converter__paramListJson__LifeTime;Converter__envImpactsListJson__Climate change#Global Warming Potential 100 EnvGreyReplacement;Converter__envImpactsListJson__Water use#User Deprivation Potential EnvGreyReplacement;Elec_Grid__portImpactsListJson__PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A
+base;1;0;0;false
+withReplacement;10;80;8;false
+withCO2GridTS;1;0;0;true

@@ -1,0 +1,72 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;20;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis#1;OBJECTIVE;1.20281e+09;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-145306;EUR;NPV
+TecEcoAnalysis#1;Computed Average Rate Of Return Factor;-1.16528;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;8000;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total Discounted Net OPEX;137306;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total Discounted Pure OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total Discounted Buy Part;137306;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total Discounted EnvImpact Part (Flow and Grey) Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Discounted EnvImpact Mass (Flow and Grey) Climate change#Global Warming Potential 100;5707.76;kg CO2 eq;GWPDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total GreyEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPGreyEnvImpactPart
+TecEcoAnalysis#1;Total GreyEnvImpact Mass Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPGreyEnvImpactMass
+TecEcoAnalysis#1;Total Discounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedFlowEnvImpactPart
+TecEcoAnalysis#1;Total Discounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;5707.76;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Total Undiscounted Net OPEX;6865.3;EUR;NetOPEX
+TecEcoAnalysis#1;Total Undiscounted Pure OPEX;0;EUR;PureOPEX
+TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis#1;Total Undiscounted Buy Part;6865.3;EUR;BuyPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;285.388;kg CO2 eq;GWPFlowEnvImpactMass
+Elec_Grid_Cheap;Total Cost Function;55347;EUR;TotCosts
+Elec_Grid_Cheap;Capex part;4000;EUR;CAPEX
+Elec_Grid_Cheap;is installed;1;-;IsInstalled
+Elec_Grid_Cheap;Opex part (including energy cost);2567.35;EUR;OPEX
+Elec_Grid_Cheap;Pure Opex part;0;EUR;PureOPEX
+Elec_Grid_Cheap;Replacement part;0;EUR;Replacement
+Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env impact penalty part;0;EUR;GWPDirectCost
+Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env impact mass;256.735;kg CO2 eq;GWPDirectMass
+Elec_Grid_Cheap;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
+Elec_Grid_Cheap;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
+Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env grey impact replacement part;0;EUR;GWPReplacementCost
+Elec_Grid_Cheap;Grid extraction time;1;h;extraction Time
+Elec_Grid_Cheap;Grid extraction ElectricalEnergy GridFlow;256.735;MWh;TotGridFlow
+Elec_Grid_Cheap;Levelized Grid extraction ElectricalEnergy GridFlow;5134.7;MWh;LvlzdTotGridFlow
+Elec_Grid_Cheap;Mean extraction ElectricalPower GridFlow;256.735;MW;MeanGridFlow
+Elec_Grid_LowCO2;Total Cost Function;89958.9;EUR;TotCosts
+Elec_Grid_LowCO2;Capex part;4000;EUR;CAPEX
+Elec_Grid_LowCO2;is installed;1;-;IsInstalled
+Elec_Grid_LowCO2;Opex part (including energy cost);4297.95;EUR;OPEX
+Elec_Grid_LowCO2;Pure Opex part;0;EUR;PureOPEX
+Elec_Grid_LowCO2;Replacement part;0;EUR;Replacement
+Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env impact penalty part;0;EUR;GWPDirectCost
+Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env impact mass;28.653;kg CO2 eq;GWPDirectMass
+Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
+Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
+Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env grey impact replacement part;0;EUR;GWPReplacementCost
+Elec_Grid_LowCO2;Grid extraction time;1;h;extraction Time
+Elec_Grid_LowCO2;Grid extraction ElectricalEnergy GridFlow;143.265;MWh;TotGridFlow
+Elec_Grid_LowCO2;Levelized Grid extraction ElectricalEnergy GridFlow;2865.3;MWh;LvlzdTotGridFlow
+Elec_Grid_LowCO2;Mean extraction ElectricalPower GridFlow;143.265;MW;MeanGridFlow
+Elec_Load;Total Cost Function;0;EUR;TotCosts
+Elec_Load;is installed;0;-;IsInstalled
+Elec_Load;Opex part (including energy cost);0;EUR;OPEX
+Elec_Load;Component Weight;1;Unit;Weight
+Elec_Load;ImposedProfile load time;1;h;ImposedProfileTime
+Elec_Load;ImposedProfile ElectricalEnergy SourceLoadFlow;-400;MWh;TotImposedProfileSourceLoadFlow
+Elec_Load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-8000;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Elec_Load;Mean ElectricalPower SourceLoadFlow;-400;MW;MeanImposedProfileSourceLoadFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance

@@ -1,0 +1,6 @@
+;ELY_PEM;ELY_PEM;ElectricityDistrib;H2_Tank
+;Capex;Efficiency;UseProfileBuyPrice;Capex
+Ref_case;240000;0.5;Elec_Grid.ElectricityPrice;240
+Price2_case;240000;0.5;Elec_Grid.ElectricityPrice2;240
+HigherCapex_case;480000;0.5;Elec_Grid.ElectricityPrice;480
+HigherEff_case;480000;0.55;Elec_Grid.ElectricityPrice;480

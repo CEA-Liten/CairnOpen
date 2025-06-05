@@ -1,0 +1,951 @@
+{
+	"Saved with PERSEE version": "4.4.0",
+	"numberPages": 1,
+	"studyComment": "",
+	"mapParameters": {
+		"latitude": 45.06964,
+		"longitude": 6.0108203,
+		"zoomlevel": 13.5
+	},
+	"Page1": {
+		"PageId": "Page1",
+		"Components": [
+			{
+				"nodeType": "TecEcoAnalysis",
+				"nodeId": "76406690",
+				"nodeName": "TecEcoAnalysis#1",
+				"nodeTechnoType": "TecEcoAnalysis",
+				"componentPERSEEType": "TecEcoAnalysis",
+				"nodeComment": "",
+				"x": 50,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "DiscountRate",
+						"value": 0
+					},
+					{
+						"key": "Model",
+						"value": "OptimNPV"
+					},
+					{
+						"key": "Currency",
+						"value": "EUR"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "ConsideredEnvironmentalImpacts",
+						"value": [
+							"Climate change#Global Warming Potential 100",
+							"Water use#User Deprivation Potential"
+						]
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Water use#User Deprivation Potential Cost",
+						"value": 0.5
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 Cost",
+						"value": 1
+					},
+					{
+						"key": "Particulate matter-Respiratory inorganics#Human health effects associated with exposure to PM Cost",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "SimulationControl",
+				"nodeId": "76406691",
+				"nodeName": "Persee",
+				"nodeTechnoType": "SimulationControl",
+				"componentPERSEEType": "SimulationControl",
+				"nodeComment": "",
+				"x": 330,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [],
+				"paramListJson": [
+					{
+						"key": "NbCycle",
+						"value": 1
+					},
+					{
+						"key": "TimeStep",
+						"value": 3600
+					},
+					{
+						"key": "TimeShift",
+						"value": 1
+					},
+					{
+						"key": "ModeObjective",
+						"value": "Mono"
+					},
+					{
+						"key": "PastSize",
+						"value": 1
+					},
+					{
+						"key": "FutureSize",
+						"value": 24
+					},
+					{
+						"key": "FutureVariableTimestep",
+						"value": 8760
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"Global_Optim",
+					"RH_MPC_Optim"
+				]
+			},
+			{
+				"nodeType": "Solver",
+				"nodeId": "76406689",
+				"nodeName": "Solver#1",
+				"nodeTechnoType": "Solver",
+				"componentPERSEEType": "Solver",
+				"nodeComment": "",
+				"x": 190,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "none",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Category",
+						"value": "MIP"
+					},
+					{
+						"key": "Solver",
+						"value": "Cplex"
+					},
+					{
+						"key": "Model",
+						"value": "MIPModeler"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "Gap",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base"
+				]
+			},
+			{
+				"nodeType": "Electricity",
+				"nodeId": "76417474",
+				"nodeName": "Electricity",
+				"nodeTechnoType": "Electricity",
+				"componentPERSEEType": "EnergyVector",
+				"energyTypeColor": "#E8A317",
+				"nodeComment": "",
+				"x": 470,
+				"y": 2,
+				"componentWidth": 40,
+				"componentCarrier": "NO_CARRIER",
+				"nodePortsData": [],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "Electrical"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "MW"
+					},
+					{
+						"key": "SurfaceUnit",
+						"value": "m2"
+					},
+					{
+						"key": "PeakUnit",
+						"value": "MWc"
+					},
+					{
+						"key": "PowerUnit",
+						"value": "MW"
+					},
+					{
+						"key": "MassUnit",
+						"value": "kg"
+					},
+					{
+						"key": "EnergyUnit",
+						"value": "MWh"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "BuyPrice",
+						"value": 5
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"UnitNames"
+				]
+			},
+			{
+				"nodeType": "NodeLaw",
+				"nodeId": "76482447",
+				"nodeName": "NodeLaw#1",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"x": 216,
+				"y": 146,
+				"componentWidth": 20,
+				"componentCarrier": "Electricity",
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "I0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "O0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "PowerIn",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"paramListJson": [],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "NodeLaw",
+				"nodeId": "76489669",
+				"nodeName": "NodeLaw#2",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"x": 460,
+				"y": 148,
+				"componentWidth": 20,
+				"componentCarrier": "Electricity",
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "I0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "PowerOut",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "O0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"paramListJson": [],
+				"envImpactsListJson": [],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": []
+			},
+			{
+				"nodeType": "GridFree",
+				"nodeId": "76421815",
+				"nodeName": "Elec_Grid",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"x": 84,
+				"y": 136,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "MinSize",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U EnvGreyContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyReplacementConstant",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyReplacement",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential PiecewiseEnvGreyContentCoeff_A",
+						"value": false
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"value": false
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"value": 0
+					}
+				],
+				"portImpactsListJson": [
+					{
+						"key": "PortR0.Water use#User Deprivation Potential EnvContentCoefficient_A",
+						"value": 0.2
+					},
+					{
+						"key": "PortR0.Water use#User Deprivation Potential EnvContentOffset_B",
+						"value": 0.002
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+						"value": 0.6
+					},
+					{
+						"key": "PortR0.Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": true
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Ionising radiation human health#Human exposure efficiency relative to U EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+						"value": "CO2Content"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "SourceLoad",
+				"nodeId": "76438616",
+				"nodeName": "Elec_Load",
+				"nodeTechnoType": "SourceLoad",
+				"componentPERSEEType": "SourceLoad",
+				"nodeComment": "",
+				"x": 572,
+				"y": 138,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "PortL0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "Direction",
+						"value": "Sink"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "Weight",
+						"value": 1
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "MinSize",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					}
+				],
+				"portImpactsListJson": [],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileLoadFlux",
+						"value": "Load"
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeType": "Converter",
+				"nodeId": "76429471",
+				"nodeName": "Converter",
+				"nodeTechnoType": "Converter",
+				"componentPERSEEType": "Converter",
+				"nodeComment": "",
+				"x": 340,
+				"y": 138,
+				"componentWidth": 40,
+				"componentCarrier": "ANY_TYPE",
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"name": "PortL0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "PowerIn",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"name": "PortR0",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "PowerOut",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"isEnabled": true
+							}
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "Converter"
+					}
+				],
+				"paramListJson": [
+					{
+						"key": "MaxPower",
+						"value": -1000
+					},
+					{
+						"key": "Efficiency",
+						"value": 0.8
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "Capex",
+						"value": 0
+					},
+					{
+						"key": "Opex",
+						"value": 0
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "LifeTime",
+						"value": 0
+					}
+				],
+				"envImpactsListJson": [
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyContentCoefficient_A",
+						"value": 10
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"value": 100
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"value": 250
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyReplacementConstant",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyReplacement",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential PiecewiseEnvGreyContentCoeff_A",
+						"value": false
+					},
+					{
+						"key": "Water use#User Deprivation Potential EnvGreyContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"value": false
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"value": true
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"value": 0
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"value": 0
+					},
+					{
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U EnvGreyContentCoefficient_A",
+						"value": 0
+					}
+				],
+				"portImpactsListJson": [
+					{
+						"key": "PortL0.Water use#User Deprivation Potential EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortL0.Water use#User Deprivation Potential EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortL0.Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortL0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Water use#User Deprivation Potential EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Water use#User Deprivation Potential EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortB0.Water use#User Deprivation Potential EnvContentOffset_B",
+						"value": 0
+					},
+					{
+						"key": "PortB0.Water use#User Deprivation Potential EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortB0.Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortB0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "PortB0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+						"value": 0
+					},
+					{
+						"key": "PortB0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+						"value": 0
+					}
+				],
+				"timeSeriesListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel",
+					"AddOperationConstraints",
+					"PiecewiseEfficiency",
+					"ProfileCoefficients",
+					"ConverterProfiles"
+				]
+			}
+		],
+		"DuplicateComponents": [],
+		"Links": [
+			{
+				"linkType": "straight",
+				"tailNodeName": "Converter",
+				"tailSocketName": "Converter.PortL0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.O0",
+				"listPoint": [
+					{
+						"x": 288,
+						"y": 158
+					},
+					{
+						"x": 288,
+						"y": 156
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Converter",
+				"tailSocketName": "Converter.PortR0",
+				"headNodeName": "NodeLaw#2",
+				"headSocketName": "NodeLaw#2.I0",
+				"listPoint": [
+					{
+						"x": 420,
+						"y": 158
+					},
+					{
+						"x": 420,
+						"y": 158
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Grid",
+				"tailSocketName": "Elec_Grid.PortR0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "NodeLaw#1.I0",
+				"listPoint": [
+					{
+						"x": 170,
+						"y": 156
+					},
+					{
+						"x": 170,
+						"y": 156
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Load",
+				"tailSocketName": "Elec_Load.PortL0",
+				"headNodeName": "NodeLaw#2",
+				"headSocketName": "NodeLaw#2.O0",
+				"listPoint": [
+					{
+						"x": 526,
+						"y": 158
+					},
+					{
+						"x": 526,
+						"y": 158
+					}
+				]
+			}
+		],
+		"Groups": []
+	},
+	"DynamicIndicators": []
+}

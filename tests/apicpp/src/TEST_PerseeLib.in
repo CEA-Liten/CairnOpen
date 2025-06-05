@@ -1,0 +1,9 @@
+#ifndef __CairnAPITest__
+#define __CairnAPITest__
+
+
+#include "CairnAPI.h"
+#define TEST_DATA "@TEST_DATA@"
+#define TEST_RESULTS "@TEST_RESULTS@"
+
+#endif
