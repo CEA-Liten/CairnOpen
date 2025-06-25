@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graph_list>
+	<graph>
+		<type>TableDiff</type>
+		<title>Differences entre les paramétrages</title>
+	</graph>
+	<graph>
+		<type>ResolCplex</type>
+		<title>Statistiques sur les temps et précision de résolution</title>
+	</graph>
+	<graph>
+		<type>NPV</type>
+		<title>NPV over years</title>
+	</graph>
+	<graph>
+		<type>DistributionGraph</type>
+		<title>Distribution graph of the SOEC use</title>
+		<ylabel>Number of hours</ylabel>
+		<xlabel>MW</xlabel>
+		<plotted_variables>ELY_PEM.UsedPower</plotted_variables>
+	</graph>
+	<graph>
+		<type>SankeyGraph</type>
+		<title>Sankey graph</title>
+		<overwrite>True</overwrite>
+		<file_path>.\sankey_graph.xml</file_path>
+	</graph>
+	<graph>
+		<type>AreaGraph</type>
+		<vector>ElectricityDistrib</vector>
+		<title>Electrical Power balance</title>
+		<unit>MW</unit>
+		<section_title>Time series : Electrical Power Provenance</section_title>
+		<file_path>.\sankey_graph.xml</file_path>
+		<comment>Positive : produced, negative: consumed</comment>
+	</graph>
+<graph>
+	<type>MultiPieChart</type>
+	<title>Cost structure [EUR]</title>
+	<search_strings>Total Cost</search_strings>
+	<threshold>1.00E+03</threshold>
+	<color>True</color>
+	<nbcol>5</nbcol>
+</graph>
+<graph>
+	<type>Table</type>
+	<title>Cost structure table [EUR]</title>
+	<search_strings>Total Cost</search_strings>
+	<threshold>1.00E+03</threshold>
+</graph>
+<graph>
+	<type>PieChart</type>
+	<title>Cost structure [EUR]</title>
+	<color>True</color>
+	<search_strings>Total Cost</search_strings>
+	<threshold>1.00E+03</threshold>
+</graph>
+<graph>
+	<type>PieChart</type>
+	<title>EnvEmission mass [kg]</title>
+	<search_strings>EnvEmission mass</search_strings>
+	<threshold>1</threshold>
+</graph>
+<graph>
+	<type>StackBarGraph</type>
+	<title>Balance of costs and incomes</title>
+	<search_strings>Total Cost</search_strings>
+	<threshold>1</threshold>
+	<color>True</color>
+</graph>
+<graph>
+	<type>BarGraph</type>
+	<title>Component Optimal Weight PV, Wind, ...</title>
+	<search_strings>Component Optimal Weight</search_strings>
+	<threshold>1</threshold>
+</graph>
+
+
+<graph>
+	<type>DynamicGraph</type>
+	<title>Electrical Power produced </title>
+	<unit>MW</unit>
+	<plotted_variables>Wind_farm.OUTPUTFlux1,Elec_Grid.GridFlow</plotted_variables>
+	<section_title>Time series : Electrical Power Provenance</section_title>
+	<comment>.</comment>
+</graph>
+<graph>
+	<type>MonotonicLoadGraph</type>
+	<title>Electrical Power produced </title>
+	<unit>MW</unit>
+	<plotted_variables>Wind_farm.OUTPUTFlux1,Elec_Grid.GridFlow</plotted_variables>
+	<section_title>Time series : Electrical Power Provenance</section_title>
+	<comment>.</comment>
+</graph>
+
+<graph>
+	<type>XYGraph</type>
+	<title>Electrical Power produced </title>
+	<unit>MW</unit>
+	<plotted_variables>Wind_farm.OUTPUTFlux1,Elec_Grid.GridFlow</plotted_variables>
+	<xvar>Wind_farm.OUTPUTFlux1</xvar>
+	<xlabel>Wind_farm.OUTPUTFlux1 : MW</xlabel>
+	<ylabel>MW</ylabel>
+	<yvar>Elec_Grid.GridFlow,Elec_Grid_Inject.GridFlow</yvar>
+	<section_title>Time series : Electrical Power Provenance</section_title>
+	<comment>.</comment>
+</graph>
+<graph>
+	<type>XYGraphMultiStudy</type>
+	<title>XYGraphMultiStudy</title>
+	<unit>MW</unit>
+	<xvar>H2_Tank . Storage Optimal Capacity kgMaxEsto </xvar>
+	<xlabel>H2_Tank . Storage Optimal Capacity kgMaxEsto </xlabel>
+	<ylabel>ELY_PEM Efficiency</ylabel>
+	<yvar>ELY_PEM.paramListJson.Efficiency</yvar>
+	<section_title>Time series : Electrical Power Provenance</section_title>
+	<comment>.</comment>
+</graph>
+</graph_list>

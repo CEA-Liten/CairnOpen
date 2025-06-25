@@ -1,0 +1,150 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0.07;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;11.3356;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;876;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;0;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);0;EUR;NPV
+TecEcoAnalysis#1;Computed Average Rate Of Return Factor;nan;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis#1;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
+TecEcoAnalysis#1;Current Rate Of Return perCent;nan;%;CurrentRateOfReturnperCent
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;0;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total Discounted Net OPEX;0;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total Discounted Pure OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total Discounted Buy Part;0;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total Undiscounted Net OPEX;0;EUR;NetOPEX
+TecEcoAnalysis#1;Total Undiscounted Pure OPEX;0;EUR;PureOPEX
+TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis#1;Total Undiscounted Buy Part;0;EUR;BuyPart
+Elec_grid;Total Cost Function;0;EUR;TotCosts
+Elec_grid;Capex part;0;EUR;CAPEX
+Elec_grid;is installed;1;-;IsInstalled
+Elec_grid;Opex part (including energy cost);0;EUR;OPEX
+Elec_grid;Pure Opex part;0;EUR;PureOPEX
+Elec_grid;Replacement part;0;EUR;Replacement
+Elec_grid;Mass;0;kg;Mass
+Elec_grid;Area;0;m2;Area
+Elec_grid;Volume;0;m3;Volume
+Elec_grid;Grid extraction time;0;h;extraction Time
+Elec_grid;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+Elec_grid;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+Elec_grid;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
+H2O_grid;Total Cost Function;0;EUR;TotCosts
+H2O_grid;Capex part;0;EUR;CAPEX
+H2O_grid;is installed;1;-;IsInstalled
+H2O_grid;Opex part (including energy cost);0;EUR;OPEX
+H2O_grid;Pure Opex part;0;EUR;PureOPEX
+H2O_grid;Replacement part;0;EUR;Replacement
+H2O_grid;Mass;0;kg;Mass
+H2O_grid;Area;0;m2;Area
+H2O_grid;Volume;0;m3;Volume
+H2O_grid;Grid extraction time;8760;h;extraction Time
+H2O_grid;Grid extraction FluidMass at 0 degC GridFlow;78214.3;kg;TotGridFlow
+H2O_grid;Levelized Grid extraction FluidMass at 0 degC GridFlow;886605;kg;LvlzdTotGridFlow
+H2O_grid;Mean extraction FluidFlowrate at 0 degC GridFlow;8.92857;kg/h;MeanGridFlow
+H2_load;Total Cost Function;0;EUR;TotCosts
+H2_load;Capex part;0;EUR;CAPEX
+H2_load;is installed;1;-;IsInstalled
+H2_load;Opex part (including energy cost);0;EUR;OPEX
+H2_load;Pure Opex part;0;EUR;PureOPEX
+H2_load;Replacement part;0;EUR;Replacement
+H2_load;Mass;0;kg;Mass
+H2_load;Area;0;m2;Area
+H2_load;Volume;0;m3;Volume
+H2_load;Component Weight;1;Unit;Weight
+H2_load;ImposedProfile load time;8760;h;ImposedProfileTime
+H2_load;ImposedProfile FluidH2Mass SourceLoadFlow;-8760;kg;TotImposedProfileSourceLoadFlow
+H2_load;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-99299.8;kg;LvlzdTotImposedProfileSourceLoadFlow
+H2_load;Mean FluidH2Flowrate SourceLoadFlow;-1;kg/h;MeanImposedProfileSourceLoadFlow
+Heat_HT_grid;Total Cost Function;0;EUR;TotCosts
+Heat_HT_grid;Capex part;0;EUR;CAPEX
+Heat_HT_grid;is installed;1;-;IsInstalled
+Heat_HT_grid;Opex part (including energy cost);0;EUR;OPEX
+Heat_HT_grid;Pure Opex part;0;EUR;PureOPEX
+Heat_HT_grid;Replacement part;0;EUR;Replacement
+Heat_HT_grid;Mass;0;kg;Mass
+Heat_HT_grid;Area;0;m2;Area
+Heat_HT_grid;Volume;0;m3;Volume
+Heat_HT_grid;Grid extraction time;8760;h;extraction Time
+Heat_HT_grid;Grid extraction ThermalEnergy GridFlow;346896;MWh;TotGridFlow
+Heat_HT_grid;Levelized Grid extraction ThermalEnergy GridFlow;3.93227e+06;MWh;LvlzdTotGridFlow
+Heat_HT_grid;Mean extraction ThermalPower GridFlow;39.6;MW;MeanGridFlow
+Heat_Low_temp;Total Cost Function;0;EUR;TotCosts
+Heat_Low_temp;Capex part;0;EUR;CAPEX
+Heat_Low_temp;is installed;1;-;IsInstalled
+Heat_Low_temp;Opex part (including energy cost);0;EUR;OPEX
+Heat_Low_temp;Pure Opex part;0;EUR;PureOPEX
+Heat_Low_temp;Replacement part;0;EUR;Replacement
+Heat_Low_temp;Mass;0;kg;Mass
+Heat_Low_temp;Area;0;m2;Area
+Heat_Low_temp;Volume;0;m3;Volume
+Heat_Low_temp;Grid injection time;8760;h;injection Time
+Heat_Low_temp;Grid injection ThermalEnergy GridFlow;-55188;MWh;TotGridFlow
+Heat_Low_temp;Levelized Grid injection ThermalEnergy GridFlow;-625589;MWh;LvlzdTotGridFlow
+Heat_Low_temp;Mean injection ThermalPower GridFlow;-6.3;MW;MeanGridFlow
+MultiConverter#1;Total Cost Function;0;EUR;TotCosts
+MultiConverter#1;Capex part;0;EUR;CAPEX
+MultiConverter#1;is installed;1;-;IsInstalled
+MultiConverter#1;Opex part (including energy cost);0;EUR;OPEX
+MultiConverter#1;Pure Opex part;0;EUR;PureOPEX
+MultiConverter#1;Replacement part;0;EUR;Replacement
+MultiConverter#1;Mass;0;kg;Mass
+MultiConverter#1;Area;0;m2;Area
+MultiConverter#1;Volume;0;m3;Volume
+MultiConverter#1;Sum up at;1;-;SumUp
+MultiConverter#1;Installed Size;1000;MW;Size
+MultiConverter#1;Running time at power >0.;8760;h;RunningTime
+MultiConverter#1;Running time availability;1;-;RunningTimeAvailable
+MultiConverter#1;CONS Total ElectricalEnergy INPUTFlux1;0;MWh;TotConsINPUTFlux1
+MultiConverter#1;CONS Levelized Total ElectricalEnergy INPUTFlux1;0;MWh;LvlzdTotConsINPUTFlux1
+MultiConverter#1;CONS Mean Total ElectricalPower INPUTFlux1;0;MW;MeanConsINPUTFlux1
+MultiConverter#1;CONS Total Power Factor INPUTFlux1;0;-;PowerFactorINPUTFlux1
+MultiConverter#1;Rate of use INPUTFlux1;0;-;UseRateINPUTFlux1
+MultiConverter#1;PROD Total FluidH2Mass OUTPUTFlux1;8760;kg;TotProdOUTPUTFlux1
+MultiConverter#1;PROD Levelized Total FluidH2Mass OUTPUTFlux1;99299.8;kg;LvlzdTotProdOUTPUTFlux1
+MultiConverter#1;PROD Mean Total FluidH2Flowrate OUTPUTFlux1;1;kg/h;MeanProdOUTPUTFlux1
+MultiConverter#1;CONS Total FluidMass INPUTFlux2;-78214.3;kg;TotConsINPUTFlux2
+MultiConverter#1;CONS Levelized Total FluidMass INPUTFlux2;-886605;kg;LvlzdTotConsINPUTFlux2
+MultiConverter#1;CONS Mean Total FluidFlowrate INPUTFlux2;-8.92857;kg/h;MeanConsINPUTFlux2
+MultiConverter#1;CONS Total Power Factor INPUTFlux2;0.00892857;-;PowerFactorINPUTFlux2
+MultiConverter#1;Rate of use INPUTFlux2;0.00892857;-;UseRateINPUTFlux2
+MultiConverter#1;CONS Total ThermalEnergy INPUTFlux3;-346896;MWh;TotConsINPUTFlux3
+MultiConverter#1;CONS Levelized Total ThermalEnergy INPUTFlux3;-3.93227e+06;MWh;LvlzdTotConsINPUTFlux3
+MultiConverter#1;CONS Mean Total ThermalPower INPUTFlux3;-39.6;MW;MeanConsINPUTFlux3
+MultiConverter#1;CONS Total Power Factor INPUTFlux3;0.0396;-;PowerFactorINPUTFlux3
+MultiConverter#1;Rate of use INPUTFlux3;0.0396;-;UseRateINPUTFlux3
+MultiConverter#1;PROD Total ThermalEnergy OUTPUTFlux2;55188;MWh;TotProdOUTPUTFlux2
+MultiConverter#1;PROD Levelized Total ThermalEnergy OUTPUTFlux2;625589;MWh;LvlzdTotProdOUTPUTFlux2
+MultiConverter#1;PROD Mean Total ThermalPower OUTPUTFlux2;6.3;MW;MeanProdOUTPUTFlux2
+MultiConverter#1;PROD Total FluidMass OUTPUTFlux3;69502.1;kg;TotProdOUTPUTFlux3
+MultiConverter#1;PROD Levelized Total FluidMass OUTPUTFlux3;787847;kg;LvlzdTotProdOUTPUTFlux3
+MultiConverter#1;PROD Mean Total FluidFlowrate OUTPUTFlux3;7.93403;kg/h;MeanProdOUTPUTFlux3
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;kg;BusBalance
+NodeLaw#3;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#4;Integrated bus balance;0;kg;BusBalance
+NodeLaw#5;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#6;Integrated bus balance;0;kg;BusBalance
+O2_prod;Total Cost Function;0;EUR;TotCosts
+O2_prod;Capex part;0;EUR;CAPEX
+O2_prod;is installed;1;-;IsInstalled
+O2_prod;Opex part (including energy cost);0;EUR;OPEX
+O2_prod;Pure Opex part;0;EUR;PureOPEX
+O2_prod;Replacement part;0;EUR;Replacement
+O2_prod;Mass;0;kg;Mass
+O2_prod;Area;0;m2;Area
+O2_prod;Volume;0;m3;Volume
+O2_prod;Grid injection time;8760;h;injection Time
+O2_prod;Grid injection FluidMass GridFlow;-69502.1;kg;TotGridFlow
+O2_prod;Levelized Grid injection FluidMass GridFlow;-787847;kg;LvlzdTotGridFlow
+O2_prod;Mean injection FluidFlowrate GridFlow;-7.93403;kg/h;MeanGridFlow

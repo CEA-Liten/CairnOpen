@@ -1,0 +1,21 @@
+{
+ "name": "DefUnits",
+ "systems":[
+  {
+   "name": "UserSystem",
+   "items": [
+    {
+      "name": "Temperature",
+      "unit": "°F",
+      "alias": "F"
+    },
+    {
+      "name": "Delta_Temperature",
+      "unit": "_C",
+      "alias": "degC"
+    }
+   ]
+  }
+ ]
+}
+

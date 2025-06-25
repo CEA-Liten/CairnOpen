@@ -1,0 +1,105 @@
+{
+ "name": "DefUnits",
+ "units":[
+  {
+   "name": "°C",
+   "alias": [
+    { "name": "°C"},
+    { "name": "DegC"}
+   ],
+   "kind": "Temperature",
+   "A": "1",
+   "B": "1",
+   "C": 273.15,
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "°F",
+   "alias": [
+    { "name": "°F"}
+   ],
+   "kind": "Temperature",
+   "A": "5",
+   "B": "9",
+   "C": 2298.35,
+   "D": "9",
+   "inverse": "0"
+  },
+  {
+   "name": "°K",
+   "alias": [
+    { "name": "°K"},
+    { "name": "K"}
+   ],
+   "kind": "Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "°R",
+   "alias": [
+    { "name": "°R"}
+   ],
+   "kind": "Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_K",
+   "alias": [
+    { "name": "°K"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_C",
+   "alias": [
+    { "name": "°C"},
+    { "name": "DegC"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_R",
+   "alias": [
+    { "name": "°R"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_F",
+   "alias": [
+    { "name": "°F"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  }
+ ]
+}
+

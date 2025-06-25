@@ -1,0 +1,4 @@
+;Battery__paramListJson__InitSOC;Battery__paramListJson__FinalSOC;Battery__paramListJson__MaxEsto
+freeInitSoc;-1;1;-100
+InitSOC0;0;0;-100
+InitSOC05;0.5;1;-1000

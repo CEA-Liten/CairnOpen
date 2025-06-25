@@ -1,0 +1,39 @@
+# =================================================================
+# persee configuration file.
+# Check https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-packages
+# This file has been generated during persee install and
+# may be used by another cmake project to retrieve all the configuration variables.
+#
+#
+# Usage :
+# 
+# find_package(cairn)
+#  ... define some target ...
+# target_link_libraries(my_target ${pegase_LIBRARIES})
+#
+# A call to find_package(cairn) will define targets
+# cairn::<component> with component =  ...
+# 
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Name of the package
+set(PACKAGE_NAME cairn)
+
+# set path to installation
+set_and_check(cairn_ROOT ${PACKAGE_PREFIX_DIR})
+
+# set list of targets build by cairn project
+set(installed_targets "@installed_targets@")
+
+set(CMAKE_CXX_STANDARD @CMAKE_CXX_STANDARD@)
+  
+# include cairn project targets
+include("${CMAKE_CURRENT_LIST_DIR}/cairnTargets.cmake")
+
+# --- Final check to set (or not) cairn_FOUND
+check_required_components(cairn)
+
+

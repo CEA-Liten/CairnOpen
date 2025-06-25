@@ -1,0 +1,118 @@
+
+pipeline {
+    agent {
+        node {
+            label "${params.agent}"
+            //TBReviewed
+            customWorkspace "F:\\Persee_Project\\\\pipeline_installer_Cairn_Project\\"
+        }
+    }
+
+    parameters {
+        string(name: 'agent', defaultValue: 'grep773', description: 'nom de l\'agent soit grep773 soit grep1003')        
+        string(name: 'installeur_pegase', defaultValue: '', description: 'nom de l\'installeur Pegase - laisser vide pour prendre automatiquement le plus recent')
+        string(name: 'CAIRNGUI_GIT_BRANCH', defaultValue: '', description: 'laisser vide pour execution par defaut')
+        string(name: 'CAIRN_GIT_BRANCH', defaultValue: 'Integration', description: 'laisser vide pour execution par defaut')
+        string(name: 'MIPMODELER_GIT_BRANCH', defaultValue: 'Integration', description: 'laisser vide pour execution par defaut')
+        string(name: 'TEST_PATH', defaultValue: 'F:\\A_VERSION_PERSEE', description: 'endroit pour installeur non validé')
+        string(name: 'EXPORT_PATH', defaultValue: 'D:\\A_VERSION_PERSEE', description: 'endoit ou un installeur correct doit être mis')
+        string(name: 'CLIENT', defaultValue: 'CEA', description: '')
+        booleanParam(name: 'NO_GAMS', defaultValue: false, description: '')
+        booleanParam(name: 'NO_CPLEX', defaultValue: false, description: '')
+    
+    }
+
+    environment {
+        CAIRN_APP = "${WORKSPACE}"
+        PEGASE_APP = "${WORKSPACE}"
+    }
+
+
+    stages {
+        stage("set variables"){
+            steps {
+                script {
+                        currentBuild.displayName = "#${BUILD_NUMBER}-${params.agent}"
+                }
+            }
+        }
+        //update les submodules manuellement
+        stage('gestion submodules and checkouts'){
+            steps{
+				//change gui branch if needed then init the submodules
+                bat "if NOT '${params.CAIRN_GIT_BRANCH}' == '' (git -c http.sslVerify=false reset --hard && git clean -fdx && git checkout ${params.CAIRN_GIT_BRANCH} && git pull origin ${params.CAIRN_GIT_BRANCH})"
+                bat "git -c http.sslVerify=false submodule update --init --force --recursive"
+
+                bat "if NOT '${params.CAIRNGUI_GIT_BRANCH}' == '' (cd gui && git -c http.sslVerify=false reset --hard && git clean -fdx  && git checkout ${params.CAIRNGUI_GIT_BRANCH} && git pull && git submodule update --init --force --remote)"
+				
+                bat "if NOT '${params.MIPMODELER_GIT_BRANCH}' == '' (cd lib\\MIPModeler && git -c http.sslVerify=false reset --hard && git clean -fdx && git checkout ${params.MIPMODELER_GIT_BRANCH} && git pull)"				
+                
+            }
+			
+        }
+
+         stage('install Pegase'){
+            steps{
+                script {
+                    //find the most recent install if not specified
+                    if (params.installeur_pegase == '') {
+                        pegase_exec = powershell (script: "python ${WORKSPACE}\\tests\\scripts\\get_last_pegase_version.py D:\\A_VERSION_PEGASE", returnStdout: true).trim()
+                    } else {
+                        pegase_exec = params.installeur_pegase
+                    }
+                //remove previous install if it exists
+                bat "if exist ${WORKSPACE}\\lib\\PegaseInstall rmdir ${WORKSPACE}\\lib\\PegaseInstall /q /s"
+                bat "D:\\A_VERSION_PEGASE\\${pegase_exec} -root ${WORKSPACE}\\lib\\PegaseInstall --al -c install PegaseLibs"
+                }
+            }
+        }
+		
+        // build user documentation //GenerateSphinxDoc is called inside DeployPersee
+		//stage('Setup Build User doc'){
+        //    steps{
+        //        echo "${WORKSPACE}"
+        //        bat "call ${WORKSPACE}\\GenerateSphinxDoc.bat ${params.CLIENT}"
+        //    }
+        //}
+
+       
+        stage('deploy installer'){
+            steps{
+                bat "cd ${WORKSPACE}\\gui\\installer && call DeployCairn.bat ${params.CLIENT} ${WORKSPACE} ${params.TEST_PATH} ${params.NO_GAMS} ${params.NO_CPLEX}"
+            }
+        }
+
+        stage('test installer'){
+            //test if the installer is correct
+            steps{
+                script{
+                    cairn_exec = powershell (script: "python ${WORKSPACE}\\tests\\scripts\\get_last_pegase_version.py ${params.TEST_PATH}", returnStdout: true).trim()
+                }
+                bat "if exist ${WORKSPACE}\\testinginstall rmdir ${WORKSPACE}\\testinginstall /q /s"
+                bat "${params.TEST_PATH}\\${cairn_exec} -root ${WORKSPACE}\\testinginstall --al -c install Cairn.Cplex pythonEnv=C:\\PythonPegase\\3_10_9\\envPegase pythonDefaultEnv=false"
+                bat "cd ${WORKSPACE}\\testinginstall\\examples && RunTests.bat"
+
+            }
+            post{
+                //if the test is successfull we move the installer to the export directory
+                success{
+                    script{
+                        cairn_exec = powershell (script: "python ${WORKSPACE}\\tests\\scripts\\get_last_pegase_version.py ${params.TEST_PATH}", returnStdout: true).trim()
+                    }
+                    bat "move ${params.TEST_PATH}\\${cairn_exec} ${params.EXPORT_PATH}" //TODO change for once testing is over ${params.EXPORT_PATH}
+                }
+                //if not we notify the person who started the build
+                unsuccessful{
+                    emailext (
+                    recipientProviders: [requestor()],                
+                    subject: "[Installer Cairn] Cairn pipeline Installer ",
+                    body: "Un probleme est survenu lors de la creation de l'installeur de Cairn : ${BUILD_URL}",
+                    mimeType: 'text/html'
+                    );
+                }
+
+            }
+        }
+    }
+//end pipeline
+}

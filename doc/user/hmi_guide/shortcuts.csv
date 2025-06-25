@@ -1,0 +1,14 @@
+ ; Action ; Shortcut 
+0;Change color of a carrier;Ctrl + Double click (on the carrier icon)
+1;Generate HTML interactive report;Ctrl + P
+2;Load input time series;Ctrl + T
+3;Load project;Ctrl + L
+4;New project;Ctrl + N
+5;Open Users manual;Ctrl + H
+6;Quit;Ctrl + Q
+7;Save;Ctrl + S
+8;Save as;Shift + Ctrl + S
+9;Restore backup;Ctrl + Z
+10;Horizontal scroll wheel;Scroll wheel
+11;Vertical scroll wheel;Shift + scroll wheel
+12;Zoom in or out;Ctrl + Scroll wheel

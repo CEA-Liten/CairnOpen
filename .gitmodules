@@ -1,0 +1,24 @@
+[submodule "tests/privateTests"]
+	path = tests/privateTests
+	url = https://codev-tuleap.intra.cea.fr/plugins/git/persee/privateTests.git
+[submodule "src/privateModels"]
+	path = src/privateModels
+	url = https://gitlab.deeplab.intra.cea.fr/lset/outils/cairn/cairnsolus/privatemodels.git
+[submodule "lib/MIPModeler"]
+	path = lib/MIPModeler
+	url = https://github.com/CEA-Liten/MIPModeler.git
+[submodule "lib/CMakeTools"]
+	path = lib/CMakeTools
+	url = https://github.com/CEA-Liten/LSET_CMakeTools.git
+[submodule "gui"]
+	path = gui
+	url = https://gitlab.deeplab.intra.cea.fr/lset/outils/cairn/cairnsolus/cairngui.git
+[submodule "doc/devDocCairn"]
+	path = doc/devDocCairn
+	url = https://gitlab.deeplab.intra.cea.fr/lset/outils/cairn/devDocCairn.git
+[submodule "lib/ModuleCairn"]
+	path = lib/ModuleCairn
+	url = https://codev-tuleap.intra.cea.fr/plugins/git/pegase/pegase_export.git
+[submodule "doc/user/privateDoc"]
+	path = doc/user/privateDoc
+	url = https://gitlab.deeplab.intra.cea.fr/lset/outils/cairn/cairnsolus/privatedoc.git

@@ -1,0 +1,6 @@
+;Electrolyzer__paramListJson__AddAuxConso;Electrolyzer__paramListJson__AddStdByConso;Electrolyzer__paramListJson__MinPower;Electrolyzer__paramListJson__Cost
+constantEfficiency;0;0;0;0
+withAuxConso;1;0;0;0
+withStdByConso;0;1;0.4;0
+withAuxConsoAndStdByConso;1;1;0.4;0
+withCost;0;0;0;1

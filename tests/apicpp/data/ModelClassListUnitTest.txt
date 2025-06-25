@@ -1,0 +1,8 @@
+ELY_PEM,Electrolyzer
+H2_Tank,StorageGen
+H2_Load,SourceLoad
+H2_Bus,NodeLaw
+Elec_Bus,NodeLaw
+Elec_Grid,GridFree
+Wind_farm,SourceLoad
+Elec_Grid_Inject,GridFree

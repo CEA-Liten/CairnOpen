@@ -1,0 +1,12 @@
+from skbuild import setup
+
+setup(
+    name="cairn",
+    version="@PROJECT_VERSION@",
+    description="Cairn is a simulation and optimization software for energy and environmental systems. It allows for the modeling of technical components and the simulation of their behavior in various scenarios. Cairn is designed to be used in research and engineering environments to evaluate the environmental and economic impacts of energy systems.",
+    author="CEA",
+    license="CEA",    
+    python_requires=">=3.9",
+	cmake_install_dir="Lib/site-packages/cairn",
+	cmake_args=['-DUSER_OPTIONS_FILE:STRING=cmake/api_options.cmake', '@PROJECT_OPTION1@', '@PROJECT_OPTION2@']
+)

@@ -1,0 +1,4 @@
+nodeType;componentPERSEEType
+HeatExchangeEquation;PhysicalEquation
+RampModel;OperationConstraint
+HeatEquation;PhysicalEquation
