@@ -10,7 +10,7 @@ Cairn is a simulation and optimization software for energy and environmental sys
 - ⚡ Simulation of energy scenarios. 
 - 🌳 Evaluation of environmental impacts. 
 - 📈 Optimization of system configurations. 
-- 🖥️ Graphical user interface for configuration and visualization of results. 
+- 🖥️ Graphical user interface for configuration and visualization of results. (Installer available in the releases).
 
 ## 🛠️ Prerequisites
 Before installing Cairn, ensure your system meets the following prerequisites:
