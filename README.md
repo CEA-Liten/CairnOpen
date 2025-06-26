@@ -41,7 +41,7 @@ If you encounter any issues or have questions, you can consult the contact techn
 If you wish to contribute to the development of Cairn, please refer to the CONTRIBUTING.md file for more information on how to submit pull requests and report bugs. 
 
 ## 📜 License
-Cairn is distributed under the [license name]. For more information, see the LICENSE file. 
+Cairn is distributed under the Eclipse Public Licence V2. For more information, see the LICENSE file. 
 
 # Cite Cairn
 
