@@ -32,7 +32,7 @@ To use Cairn, follow these steps:
 - View the results in the visualization tabs.
 
 ## Documentation
-For more information on using Cairn, refer to the online documentation available at [documentation link].
+For more information on using Cairn, refer to the online [documentation](https://cea-liten.github.io/CairnOpen/).
 
 ## 📞 Support
 If you encounter any issues or have questions, you can consult the contact technical support at pimprenelle.parmentier at cea point fr. 
