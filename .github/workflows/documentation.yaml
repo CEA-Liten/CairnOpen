@@ -18,6 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r ./doc/user/requirements.txt
+          python ./scripts/doc/userDocGenRST.py
       - name: Sphinx build
         run: |
           sphinx-build -M html ./doc/user/ ./doc/user/_build
