@@ -16,9 +16,12 @@ Cairn is a simulation and optimization software for energy and environmental sys
 Before installing Cairn, ensure your system meets the following prerequisites:
 
 - Operating System: Windows, Linux, macOS. 
-- C++ compiler compatible with C++17 or higher. 
+- C++ compiler compatible with C++17 or higher.
+
+## Dependances 
 - Qt libraries (version 5.12 or higher). 
-- Eigen libraries (version 3.3 or higher). 
+- Eigen libraries (version 3.3 or higher).
+- Highs solver
 
 ## 🖥️ Usage
 To use Cairn, follow these steps:
@@ -39,3 +42,24 @@ If you wish to contribute to the development of Cairn, please refer to the CONTR
 
 ## 📜 License
 Cairn is distributed under the [license name]. For more information, see the LICENSE file. 
+
+# Cite Cairn
+
+Cairn has been presented in ECOS converence in 2024. The paper is available [here](https://cea.hal.science/cea-04681216).
+
+Please cite as follows:
+
+```
+@inproceedings{ruby:cea-04681216,
+  TITLE = {{PERSEE, a single tool for various optimizations of multi-carrier energy system sizing and operation}},
+  AUTHOR = {Ruby, Alain and Parmentier, Pimprenelle and Crevon, St{\'e}phanie and Gaoua, Yacine and Piguet, Antoine and Wissocq, Thibaut and Leoncini, Gabriele and Lavialle, Gilles},
+  URL = {https://cea.hal.science/cea-04681216},
+  BOOKTITLE = {{ECOS 2024 - 37th International Conference on Efficiency, Cost, Optimization, Simulation and Environmental Impact of Energy Systems}},
+  ADDRESS = {Rhodes, Greece},
+  YEAR = {2024},
+  MONTH = Jun,
+  PDF = {https://cea.hal.science/cea-04681216v1/file/ECOS2024_Paper_112.pdf},
+  HAL_ID = {cea-04681216},
+  HAL_VERSION = {v1},
+}
+```
