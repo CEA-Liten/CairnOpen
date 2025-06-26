@@ -32,7 +32,7 @@ To use Cairn, follow these steps:
 For more information on using Cairn, refer to the online documentation available at [documentation link].
 
 ## 📞 Support
-If you encounter any issues or have questions, you can consult the FAQ section at [FAQ link] or contact technical support at [support email address]. 
+If you encounter any issues or have questions, you can consult the contact technical support at pimprenelle.parmentier at cea point fr. 
 
 ## 🤝 Contribution
 If you wish to contribute to the development of Cairn, please refer to the CONTRIBUTING.md file for more information on how to submit pull requests and report bugs. 
