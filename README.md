@@ -16,7 +16,7 @@ Cairn is a simulation and optimization software for energy and environmental sys
 Before installing Cairn, ensure your system meets the following prerequisites:
 
 - Operating System: Windows, Linux, macOS. 
-- C++ compiler compatible with C++11 or higher. 
+- C++ compiler compatible with C++17 or higher. 
 - Qt libraries (version 5.12 or higher). 
 - Eigen libraries (version 3.3 or higher). 
 
