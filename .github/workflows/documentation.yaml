@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
       - run: |
-        echo "CAIRN_PACKAGE_URL=$WHL_URL"
-        curl -o $WHL_FILENAME $WHL_URL
+          echo "CAIRN_PACKAGE_URL=$WHL_URL"
+          curl -o $WHL_FILENAME $WHL_URL
 
       - name: Install dependencies
         run: |
