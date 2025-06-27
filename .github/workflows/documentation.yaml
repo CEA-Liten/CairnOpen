@@ -16,15 +16,19 @@ jobs:
     env:
       GITHUB_URL: https://github.com/CEA-Liten/CairnOpen
       VERSION: 5.0.0
-      WHL_FILENAME: cairn-${{ env.VERSION }}-cp310-cp310-win_amd64.whl
-      WHL_URL: ${{ env.GITHUB_URL }}/releases/download/${{ env.VERSION }}/${{ env.WHL_FILENAME }}
-
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
-      - run: |
-          echo "CAIRN_PACKAGE_URL=$WHL_URL"
-          curl -o $WHL_FILENAME $WHL_URL
+    
+      - name: Define WHL variables and download package
+        run: |
+          set -e
+          WHL_FILENAME="cairn-${VERSION}-cp310-cp310-win_amd64.whl"
+          WHL_URL="${GITHUB_URL}/releases/download/${VERSION}/${WHL_FILENAME}"
+          echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
+          echo "WHL_URL=$WHL_URL" >> $GITHUB_ENV
+          echo "Downloading wheel from $WHL_URL"
+          curl -o "$WHL_FILENAME" "$WHL_URL"
 
       - name: Install dependencies
         run: |
