@@ -1,0 +1,62 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;182.5;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;2.42085e+07;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-3750.05;EUR;NPV
+TecEcoAnalysis#1;Computed Average Rate Of Return Factor;-876000;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis#1;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
+TecEcoAnalysis#1;Current Rate Of Return perCent;-42344.5;%;CurrentRateOfReturnperCent
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;3750;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total Discounted Net OPEX;0.0485257;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total Discounted Pure OPEX;0.0485257;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total Discounted Buy Part;0;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total Undiscounted Net OPEX;0.00428082;EUR;NetOPEX
+TecEcoAnalysis#1;Total Undiscounted Pure OPEX;0.00428082;EUR;PureOPEX
+TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis#1;Total Undiscounted Buy Part;0;EUR;BuyPart
+ELec_Bus;Integrated bus balance;0;MWh;BusBalance
+Grid_Extract;Total Cost Function;0;EUR;TotCosts
+Grid_Extract;is installed;1;-;IsInstalled
+Grid_Extract;Opex part (including energy cost);0;EUR;OPEX
+Grid_Extract;Grid extraction time;0;h;extraction Time
+Grid_Extract;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+Grid_Extract;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+Grid_Extract;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
+Grid_Inject;Total Cost Function;0;EUR;TotCosts
+Grid_Inject;is installed;1;-;IsInstalled
+Grid_Inject;Opex part (including energy cost);0;EUR;OPEX
+Grid_Inject;Grid injection time;0;h;injection Time
+Grid_Inject;Grid injection ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+Grid_Inject;Levelized Grid injection ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+Grid_Inject;Mean injection ElectricalPower GridFlow;0;MW;MeanGridFlow
+Load_PeakShaving;Total Cost Function;3750.05;EUR;TotCosts
+Load_PeakShaving;Capex part;3750;EUR;CAPEX
+Load_PeakShaving;is installed;1;-;IsInstalled
+Load_PeakShaving;Opex part (including energy cost);0.00428082;EUR;OPEX
+Load_PeakShaving;Pure Opex part;0.00428082;EUR;PureOPEX
+Load_PeakShaving;Replacement part;0;EUR;Replacement
+Load_PeakShaving;Component Weight;15;Unit;Weight
+Load_PeakShaving;ImposedProfile load time;1;h;ImposedProfileTime
+Load_PeakShaving;ImposedProfile ElectricalEnergy SourceLoadFlow;-10;MWh;TotImposedProfileSourceLoadFlow
+Load_PeakShaving;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-113.356;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Load_PeakShaving;Mean ElectricalPower SourceLoadFlow;-10;MW;MeanImposedProfileSourceLoadFlow
+Variable_Source;Total Cost Function;0;EUR;TotCosts
+Variable_Source;is installed;1;-;IsInstalled
+Variable_Source;Opex part (including energy cost);0;EUR;OPEX
+Variable_Source;Component Weight;1;Unit;Weight
+Variable_Source;ImposedProfile source time;1;h;ImposedProfileTime
+Variable_Source;ImposedProfile ElectricalEnergy SourceLoadFlow;10;MWh;TotImposedProfileSourceLoadFlow
+Variable_Source;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;113.356;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Variable_Source;Mean ElectricalPower SourceLoadFlow;10;MW;MeanImposedProfileSourceLoadFlow

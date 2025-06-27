@@ -1,0 +1,5 @@
+Electrolyzer#1.MassSetPoint;Electrolyzer#1.MassCapacitySetPoint;Electrolyzer#1.VolumeSetPoint;Electrolyzer#1.VolumeCapacitySetPoint;Electrolyzer#1.AreaSetPoint;Electrolyzer#1.AreaCapacitySetPoint;Electrolyzer#1.CapexSetPoint;Electrolyzer#1.CapexCapacitySetPoint
+0;0;0;0;0;0;0;0
+3000;0.0001;1000;0.0001;5000;0.0001;1000;0.0001
+60000;1;20000;1;50000;1;1400;1
+800000;10;300000;10;500000;10;14000;10

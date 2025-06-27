@@ -1,0 +1,58 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;20;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;365;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;3.7887e+09;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-220000;EUR;NPV
+TecEcoAnalysis#1;Computed Average Rate Of Return Factor;0;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis#1;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
+TecEcoAnalysis#1;Current Rate Of Return perCent;0;%;CurrentRateOfReturnperCent
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;0;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total Discounted Net OPEX;220000;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total Discounted Pure OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total Discounted Buy Part;220000;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total Undiscounted Net OPEX;11000;EUR;NetOPEX
+TecEcoAnalysis#1;Total Undiscounted Pure OPEX;0;EUR;PureOPEX
+TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis#1;Total Undiscounted Buy Part;11000;EUR;BuyPart
+Elec_grid;Total Cost Function;70000;EUR;TotCosts
+Elec_grid;is installed;1;-;IsInstalled
+Elec_grid;Opex part (including energy cost);3500;EUR;OPEX
+Elec_grid;Grid extraction time;1;h;extraction Time
+Elec_grid;Grid extraction ElectricalEnergy GridFlow;350;MWh;TotGridFlow
+Elec_grid;Levelized Grid extraction ElectricalEnergy GridFlow;7000;MWh;LvlzdTotGridFlow
+Elec_grid;Mean extraction ElectricalPower GridFlow;350;MW;MeanGridFlow
+Elec_grid_backup;Total Cost Function;0;EUR;TotCosts
+Elec_grid_backup;is installed;1;-;IsInstalled
+Elec_grid_backup;Opex part (including energy cost);0;EUR;OPEX
+Elec_grid_backup;Grid extraction time;0;h;extraction Time
+Elec_grid_backup;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+Elec_grid_backup;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+Elec_grid_backup;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
+Elec_grid_backup_2;Total Cost Function;150000;EUR;TotCosts
+Elec_grid_backup_2;is installed;1;-;IsInstalled
+Elec_grid_backup_2;Opex part (including energy cost);7500;EUR;OPEX
+Elec_grid_backup_2;Grid extraction time;1;h;extraction Time
+Elec_grid_backup_2;Grid extraction ElectricalEnergy GridFlow;50;MWh;TotGridFlow
+Elec_grid_backup_2;Levelized Grid extraction ElectricalEnergy GridFlow;1000;MWh;LvlzdTotGridFlow
+Elec_grid_backup_2;Mean extraction ElectricalPower GridFlow;50;MW;MeanGridFlow
+Elec_load;Total Cost Function;0;EUR;TotCosts
+Elec_load;is installed;1;-;IsInstalled
+Elec_load;Opex part (including energy cost);0;EUR;OPEX
+Elec_load;Component Weight;1;Unit;Weight
+Elec_load;ImposedProfile load time;1;h;ImposedProfileTime
+Elec_load;ImposedProfile ElectricalEnergy SourceLoadFlow;-400;MWh;TotImposedProfileSourceLoadFlow
+Elec_load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-8000;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Elec_load;Mean ElectricalPower SourceLoadFlow;-400;MW;MeanImposedProfileSourceLoadFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance

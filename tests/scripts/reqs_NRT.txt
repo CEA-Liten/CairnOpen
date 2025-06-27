@@ -1,0 +1,10 @@
+numpy==1.26.1
+pytest==7.2.0
+matplotlib==3.6.2
+deap==1.3.3
+psutil==5.9.4
+pandas==1.5.2
+lxml==4.9.2
+plotly==5.11.0
+spyder-kernels==3.0.*
+ipykernel==6.29.5

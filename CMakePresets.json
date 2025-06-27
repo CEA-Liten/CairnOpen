@@ -1,0 +1,134 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "windows-base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "installDir": "${sourceDir}/bin/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "PRESETNAME": "${presetName}"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "environment": {
+                "GUI_HOME": "${sourceDir}/gui",
+                "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
+                "Path": "$penv{Path};${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin"
+            }
+        },
+        {
+            "name": "windows-VS",
+            "hidden": true,
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "installDir": "${sourceDir}/bin/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "inherits": "windows-base",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "inherits": "debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "fulldebug",
+            "displayName": "Full-Debug",
+            "inherits": "debug",
+            "cacheVariables": {
+                "USER_OPTIONS_FILE": "cmake/full_options.cmake"
+            }
+        },
+        {
+            "name": "fullrelease",
+            "displayName": "Full-Release",
+            "inherits": "fulldebug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "configurePreset": "debug",
+            "configuration": "debug",
+            "jobs": 4
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "configurePreset": "release",
+            "configuration": "release",
+            "jobs": 4
+        },
+        {
+            "name": "fullrelease",
+            "displayName": "Full-Release",
+            "configurePreset": "fullrelease",
+            "configuration": "release",
+            "jobs": 4
+        },
+        {
+            "name": "fulldebug",
+            "displayName": "Full-Debug",
+            "configurePreset": "fulldebug",
+            "configuration": "debug",
+            "jobs": 4
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "configurePreset": "debug",
+            "configuration": "debug"
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "configurePreset": "release",
+            "configuration": "release"
+        },
+        {
+            "name": "fullrelease",
+            "displayName": "Full-Release",
+            "configurePreset": "fullrelease",
+            "configuration": "release"
+        },
+        {
+            "name": "fulldebug",
+            "displayName": "Full-Debug",
+            "configurePreset": "fulldebug",
+            "configuration": "debug"
+        }
+    ]
+}

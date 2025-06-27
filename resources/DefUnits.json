@@ -1,0 +1,698 @@
+{
+ "name": "DefUnits",
+ "units":[
+  {
+   "name": "Misc",
+   "alias": [
+    { "name": "bool"},
+    { "name": "-"},
+    { "name": "unit"}
+   ],
+   "kind": "Miscellaneous",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "°K",
+   "alias": [
+    { "name": "°K"},
+    { "name": "K"}
+   ],
+   "kind": "Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "°C",
+   "alias": [
+    { "name": "°C"},
+    { "name": "DegC"}
+   ],
+   "kind": "Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "273.15",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "°F",
+   "alias": [
+    { "name": "°F"}
+   ],
+   "kind": "Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "2298.35",
+   "D": "9",
+   "inverse": "0"
+  },
+  {
+   "name": "°R",
+   "alias": [
+    { "name": "°R"}
+   ],
+   "kind": "Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_K",
+   "alias": [
+    { "name": "°K"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_C",
+   "alias": [
+    { "name": "°C"},
+    { "name": "DegC"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_R",
+   "alias": [
+    { "name": "°R"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "_F",
+   "alias": [
+    { "name": "°F"}
+   ],
+   "kind": "Delta_Temperature",
+   "A": "5",
+   "B": "9",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EUR/Wh",
+   "alias": [
+    { "name": "eur/Wh"},
+    { "name": "EUR/Wh"},
+    { "name": "euro/Wh"},
+    { "name": "euros/Wh"}
+   ],
+   "kind": "StorageCost",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EUR/kWh",
+   "alias": [
+    { "name": "eur/kWh"},
+    { "name": "EUR/kWh"},
+    { "name": "euro/kWh"},
+    { "name": "euros/kWh"}
+   ],
+   "kind": "StorageCost",
+   "A": "1",
+   "B": "1000",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EUR/MWh",
+   "alias": [
+    { "name": "eur/MWh"},
+    { "name": "EUR/MWh"},
+    { "name": "euro/MWh"},
+    { "name": "euros/MWh"}
+   ],
+   "kind": "StorageCost",
+   "A": "1",
+   "B": "1000000",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "W",
+   "alias": [
+    { "name": "W"},
+    { "name": "Watt"},
+    { "name": "J/s"}
+   ],
+   "kind": "Power",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kW",
+   "alias": [
+    { "name": "kW"}
+   ],
+   "kind": "Power",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "MW",
+   "alias": [
+    { "name": "MW"}
+   ],
+   "kind": "Power",
+   "A": "1000000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "Wc",
+   "alias": [
+    { "name": "Wc"},
+    { "name": "Watt-Crete"},
+    { "name": "watt-crete"}
+   ],
+   "kind": "Peak",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kWc",
+   "alias": [
+    { "name": "kWc"}
+   ],
+   "kind": "Peak",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "MWc",
+   "alias": [
+    { "name": "MWc"}
+   ],
+   "kind": "Peak",
+   "A": "1000000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EUR",
+   "alias": [
+    { "name": "euro"},
+    { "name": "eur"},
+    { "name": "euros"},
+    { "name": "EUR"},
+    { "name": "EURO"},
+    { "name": "EUROS"},
+    { "name": "€"}
+   ],
+   "kind": "Cost",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kEUR",
+   "alias": [
+    { "name": "kEUR"}
+   ],
+   "kind": "Cost",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "W/m2",
+   "alias": [
+    { "name": "W/m2"}
+   ],
+   "kind": "PowerDensity",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kW/m2",
+   "alias": [
+    { "name": "kW/m2"}
+   ],
+   "kind": "PowerDensity",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "MW/m2",
+   "alias": [
+    { "name": "MW/m2"}
+   ],
+   "kind": "PowerDensity",
+   "A": "1000000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg",
+   "alias": [
+    { "name": "kg"}
+   ],
+   "kind": "Mass",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "g",
+   "alias": [
+    { "name": "g"}
+   ],
+   "kind": "Mass",
+   "A": "0.001",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "t",
+   "alias": [
+    { "name": "t"}
+   ],
+   "kind": "Mass",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/s",
+   "alias": [
+    { "name": "kg/s"}
+   ],
+   "kind": "MassFlow",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/h",
+   "alias": [
+    { "name": "kg/h"}
+   ],
+   "kind": "MassFlow",
+   "A": "1",
+   "B": "3600",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "t/h",
+   "alias": [
+    { "name": "t/h"}
+   ],
+   "kind": "MassFlow",
+   "A": "1000",
+   "B": "3600",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/d",
+   "alias": [
+    { "name": "kg/d"}
+   ],
+   "kind": "MassFlow",
+   "A": "0.0000115741",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/min",
+   "alias": [
+    { "name": "kg/min"}
+   ],
+   "kind": "MassFlow",
+   "A": "1",
+   "B": "60",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/s/m2",
+   "alias": [
+    { "name": "kg/s/m2"}
+   ],
+   "kind": "MassFlowDensity",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/h/m2",
+   "alias": [
+    { "name": "kg/h/m2"}
+   ],
+   "kind": "MassFlowDensity",
+   "A": "1",
+   "B": "3600",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "t/h/m2",
+   "alias": [
+    { "name": "t/h/m2"}
+   ],
+   "kind": "MassFlowDensity",
+   "A": "1000",
+   "B": "3600",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/d/m2",
+   "alias": [
+    { "name": "kg/d/m2"}
+   ],
+   "kind": "MassFlowDensity",
+   "A": "0.0000115741",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kg/min/m2",
+   "alias": [
+    { "name": "kg/min/m2"}
+   ],
+   "kind": "MassFlowDensity",
+   "A": "1",
+   "B": "60",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "m2",
+   "alias": [
+    { "name": "m2"},
+    { "name": "m²"}
+   ],
+   "kind": "Surface",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "are",
+   "alias": [
+    { "name": "are"}
+   ],
+   "kind": "Surface",
+   "A": "100",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "ha",
+   "alias": [
+    { "name": "ha"}
+   ],
+   "kind": "Surface",
+   "A": "10000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "acre",
+   "alias": [
+    { "name": "acre"}
+   ],
+   "kind": "Surface",
+   "A": "4046.8564",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "GWPkg",
+   "alias": [
+    { "name": "kg CO2 eq"},
+    { "name": "kg eq CO2"},
+    { "name": "kg CO2"},
+    { "name": "kgCO2eq"},
+    { "name": "kgCO2"},
+    { "name": "kgCO2e"}
+   ],
+   "kind": "ImpactUnit1",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "GWPt",
+   "alias": [
+    { "name": "t CO2 eq"},
+    { "name": "tons CO2 eq"},
+    { "name": "tons CO2"},
+    { "name": "t CO2"},
+    { "name": "tCO2"}
+   ],
+   "kind": "ImpactUnit1",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "ODP",
+   "alias": [
+    { "name": "kg CFC-11 eq"},
+    { "name": "kgCFC-11eq"},
+    { "name": "kg CFC-11"},
+    { "name": "kg CFC"}
+   ],
+   "kind": "ImpactUnit2",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "Htox",
+   "alias": [
+    { "name": "CTUh"}
+   ],
+   "kind": "ImpactUnit3",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "IRP",
+   "alias": [
+    { "name": "kBq U"}
+   ],
+   "kind": "ImpactUnit4",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "POCP",
+   "alias": [
+    { "name": "kg NMVOC eq"},
+    { "name": "kgNM"}
+   ],
+   "kind": "ImpactUnit5",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "AP",
+   "alias": [
+    { "name": "mol H+ eq"},
+    { "name": "molH+"}
+   ],
+   "kind": "ImpactUnit6",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EP-t",
+   "alias": [
+    { "name": "mol N eq"},
+    { "name": "molN"}
+   ],
+   "kind": "ImpactUnit7",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EP-fw",
+   "alias": [
+    { "name": "kg P eq"},
+    { "name": "kgPeq"},
+    { "name": "kg P"}
+   ],
+   "kind": "ImpactUnit8",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "EP-m",
+   "alias": [
+    { "name": "kg N eq"},
+    { "name": "kgNeq"}
+   ],
+   "kind": "ImpactUnit9",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "Ecotox",
+   "alias": [
+    { "name": "CTUe"}
+   ],
+   "kind": "ImpactUnit10",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "WU",
+   "alias": [
+    { "name": "kg world eq deprived"}
+   ],
+   "kind": "ImpactUnit11",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "ADP-mm",
+   "alias": [
+    { "name": "kg Sb eq:kgSbeq"},
+    { "name": "kg Sb"},
+    { "name": "kgSb"}
+   ],
+   "kind": "ImpactUnit12",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "ADP-f",
+   "alias": [
+    { "name": "MJ"}
+   ],
+   "kind": "ImpactUnit13",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  }
+ ]
+}

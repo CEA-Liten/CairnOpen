@@ -1,0 +1,190 @@
+\usepackage[cyr]{aeguill}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{fancyvrb}
+\usepackage{eurosym}
+\usepackage{url}
+%\usepackage{uarial}
+\usepackage{tocvsec2}
+\usepackage{fancyhdr}
+\usepackage{graphics} 
+\usepackage{latexsym} 
+\usepackage[dvips]{graphicx} 
+\usepackage{subfigure}
+\usepackage{rotating} 
+\usepackage{pslatex}
+\usepackage{psfrag}
+\usepackage{color}
+\usepackage[svgnames]{xcolor}
+\usepackage{colortbl,hhline}
+\usepackage{ifthen} 
+\usepackage{lastpage} 
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{supertabular}
+\usepackage{subfigure}
+\usepackage{xr-hyper}
+%\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage[toc,page]{appendix}
+\usepackage{changes}
+\usepackage{enumerate}
+\usepackage{times}
+\usepackage{gensymb}
+\usepackage[toc,style=alttreehypergroup,nolong,nosuper]{glossaries}
+\usepackage{enumitem}
+\usepackage{pifont}
+\usepackage{hyperref}
+\glssetwidest{Roman letters} % level 0 widest name
+\glssetwidest[1]{Sigma}      % level 1 widest name
+\usepackage{multicol}
+\usepackage{titletoc}
+\usepackage{graphicx}
+\usepackage{indentfirst}
+\usepackage[titles,subfigure]{tocloft}
+\usepackage{bigstrut}
+\usepackage{makeidx}
+\usepackage{index}
+\usepackage{datetime}
+\usepackage{calc}
+\usepackage{lastpage}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{wasysym}
+\usepackage{cooltooltips}
+\usepackage{pstricks}
+\usepackage{pst-plot}
+\usepackage{epsfig} 
+\usepackage{fixfoot}
+\usepackage{textcomp}
+\usepackage{verbatim}
+%\usepackage{fancybox}
+%\usepackage{onglet}
+%\usepackage[nofligs]{verdana}
+\usepackage[outermarks]{titlesec}
+\usepackage{pdfpages}
+\usepackage{blindtext}
+\usepackage[titles,subfigure]{tocloft}
+
+
+\hypersetup{
+    bookmarks=true,         % show bookmarks bar?
+    unicode=false,          % non-Latin characters in Acrobat�s bookmarks
+    pdfborder=={0 0 0 0},   %
+    filecolor=magenta,      % color of file links
+    urlcolor=magenta      % color of external links
+}
+\hypersetup{hyperindex=true,linkcolor=MediumBlue,citecolor=black,colorlinks=true}
+
+\lstdefinestyle{monstyle}{language=monlangage,
+  emph={[2]or},emphstyle={[2]\underbar},emph={[3]and},emphstyle={[3]\underbar},
+  linewidth=15.0cm,rulesep=1.5cm,
+  frame=shadowbox, rulesepcolor=\color{blue},framexleftmargin=0.5cm,xleftmargin=0.5cm,breakatwhitespace=true,breaklines=true,
+  backgroundcolor=\color{AliceBlue},basicstyle=\scriptsize,keywordstyle=\bf\color{blue},commentstyle=\color{violet},stringstyle=\bf\color{red},
+  showstringspaces=false, escapeinside={@!}{!@}
+}
+% Language definition
+\lstdefinelanguage{monlangage}{morekeywords={afficher,&,command,newcommand,renewcommand,begin,end,document,partenaire,cea,input,&},
+sensitive=true,morestring=[b]',morestring=[d]',morecomment=[f]*%
+}
+\lstnewenvironment{C2listing}[1][]{\lstset{style=monstyle,#1}}{}
+
+\bibliographystyle{plain}
+%\makeglossaries% Change the glossary headings% style biblio%\usepackage[numbers]{natbib}
+\DeclareTextSymbol{\degre}{OT1}{23}
+\DeclareTextSymbol{\degre}{T1}{6}
+\global\long\def\labelitemi{$\bullet$}
+%
+\setlength{\paperwidth}{21cm}
+\setlength{\hoffset}{1.00cm}
+\setlength{\oddsidemargin}{0.cm}
+\setlength{\textwidth}{16.00cm}
+\setlength{\marginparsep}{0cm}
+\setlength{\marginparwidth}{0cm}
+
+\setlength{\paperheight}{29.7cm}
+\setlength{\voffset}{-1.95cm}
+\setlength{\topmargin}{1.00cm}
+\setlength{\headheight}{1.9cm}
+\setlength{\headsep}{1.250cm}
+\setlength{\textheight}{21.8cm}
+\setlength{\footskip}{1.5cm}
+
+% En-t�te et pied de page
+\pagestyle{fancyplain}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\headerpage}{\scriptsize{Page \thepage/\pageref{LastPage}} \rule[-7pt]{0pt}{20pt}\normalsize}
+\newcommand{\headerdate}{
+\ifthenelse{\equal{\datea}{AUJOURDHUI}}
+	{\small{\underline{Date} : \ddmmyyyydate\today \normalsize}}
+	{\small{\underline{Date} : \datea\date{\ddmmyyyydate\displaydate{nouvelledate}} \normalsize}}}
+
+\newcommand{\headertitre}{\small{\titredoc\normalsize}}
+
+\newcommand{\defaultheader}{
+  \begin{tabularx}{16.0cm}{ >{}p{1.0cm} >{}p{1.0cm}  >{}X  }
+    \textcolor{gray}{\scriptsize Projet:}&\multicolumn{2}{l}{\textcolor{gray}{\scriptsize\projet} } \tabularnewline   
+    \multicolumn{2}{l}{\textcolor{gray}{\scriptsize\No Chrono livrable}}&\textcolor{gray}{\scriptsize\departement/LV/\chrono}
+	\tabularnewline
+	\tabularnewline
+     \multicolumn{3}{c}{\strut\centering\includegraphics[width=6.74cm,height=1.35cm]{FIGURES/confidentiel.png}}\tabularnewline
+  \end{tabularx}
+}
+\newcommand{\defaultfooter}{
+	\begin{tabularx}{16.0cm}{p{2.0cm}>{\raggedleft}X}
+	\hline
+	{\scriptsize\textcolor{gray}{FOR 180 E}}&\textcolor{gray}{\headerpage}\tabularnewline
+	\end{tabularx}
+}
+\newcommand{\defaultpagestyle}{
+  \pagestyle{fancy}
+  \lhead{}
+  \chead{\defaultheader}
+  \rhead{}
+  \lfoot{}
+  \rfoot{}
+  \cfoot{\defaultfooter}
+}
+\defaultpagestyle
+
+\renewcommand\theparagraph{\thesubsubsection.\arabic{paragraph}}
+\renewcommand\thesubparagraph{\theparagraph.\arabic{subparagraph}}
+\renewcommand*\contentsname{}
+%Alignement des titres :
+\titlespacing{\chapter}{0pt}{12pt}{12pt}
+\titlespacing{\section}{0pt}{24pt}{12pt} 
+\titlespacing{\subsection}{0pt}{24pt}{12pt}
+\titlespacing{\subsubsection}{0pt}{12pt}{12pt} 
+\titlespacing{\paragraph}{12pt}{12pt}{12pt}
+\titleformat{\chapter}[hang]{\normalfont\Large\bf}{\Large\bf\thechapter-}{1ex}{\Large}
+\renewcommand{\chaptermark}[1]{\markboth{#1} {}}
+\renewcommand{\sectionmark}[1]{\markright{#1}{}}
+\renewcommand\tableofcontents{\section*{\contentsname\@mkboth{\contentsname}{\contentsname}}\@starttoc{toc}}
+\newcounter{Figure}
+\setcounter{tocdepth}{5}
+\setcounter{secnumdepth}{6}
+\renewcommand{\thefigure}{\thesection.\arabic{figure}}
+%\addto\captionsfrench{\def\tablename{Tableau}}
+\renewcommand{\thetable}{\thesection.\arabic{table}}
+\renewcommand\theequation{Equation. \thesection.\arabic{equation}}
+\newcommand\normalsubformula[1]{\text{\mathversion{normal}$#1$}}
+\makeatletter
+\newcommand\arraybslash{\let\\\@arraycr}
+\makeatother
+\long\def\ignore#1{}
+%\usepackage[Conny]{fncychap}
+%\usepackage[Bjornstrup]{fncychap}
+\let\oldpm\pm
+\newcommand{\poum}{\ensuremath{\oldpm}}
+%\usepackage{block}
+\newcommand{\insertiongraphique}[4]{
+	\begin{figure}[!ht]\centering
+	\fbox{\begin{minipage}{1.0\textwidth}\centering
+	\includegraphics[#1]{#2}
+	\end{minipage}}
+	\caption{#3}\label{#4}
+	\end{figure}
+}

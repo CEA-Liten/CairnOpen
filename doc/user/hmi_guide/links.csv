@@ -1,0 +1,6 @@
+Horizontal-Vertical segments;Oblique link; Hybrid link
+Start with click on tail port;Start with ctrl+click on tail port;Start with click on tail port
+End with click on head port;End with click on head port;End with ctrl+click on head port
+Click to add a point;Click to add a point;Click to add a point
+Handle on segment to deplace it;Handle on segment to split it;Handle depends on segment type
+;Handle on vertex to deplace it;

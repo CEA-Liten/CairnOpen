@@ -1,0 +1,4 @@
+;TecEcoAnalysis__envImpactsListJson__Climate change#Global Warming Potential 100 MaxConstraint;TecEcoAnalysis__optionListJson__Model
+optimNPV;false;OptimNPV
+constraint;true;OptimNPV
+optimGWP;false;OptimEnvImpact-GWP

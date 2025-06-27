@@ -1,0 +1,109 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0.07;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;11.3356;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;8.76;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;163935;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-163935;EUR;NPV
+TecEcoAnalysis#1;Computed Average Rate Of Return Factor;-99.3757;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis#1;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
+TecEcoAnalysis#1;Current Rate Of Return perCent;-100.076;%;CurrentRateOfReturnperCent
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;81998.7;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total Discounted Net OPEX;81936.1;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total Discounted Pure OPEX;81444.3;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total Discounted Buy Part;491.81;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total Undiscounted Net OPEX;7228.21;EUR;NetOPEX
+TecEcoAnalysis#1;Total Undiscounted Pure OPEX;7184.83;EUR;PureOPEX
+TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis#1;Total Undiscounted Buy Part;43.3864;EUR;BuyPart
+Electrolyzer#1;Total Cost Function;10150.4;EUR;TotCosts
+Electrolyzer#1;Capex part;10150.4;EUR;CAPEX
+Electrolyzer#1;is installed;1;-;IsInstalled
+Electrolyzer#1;Opex part (including energy cost);0;EUR;OPEX
+Electrolyzer#1;Pure Opex part;0;EUR;PureOPEX
+Electrolyzer#1;Replacement part;0;EUR;Replacement
+Electrolyzer#1;Mass;362.516;kg;Mass
+Electrolyzer#1;Area;72.5032;m2;Area
+Electrolyzer#1;Volume;145.006;m3;Volume
+Electrolyzer#1;Sum up at;1;-;SumUp
+Electrolyzer#1;Installed Optimal Size;7.25032;MW;Size
+Electrolyzer#1;Running time at power >0.;2233.8;h;RunningTime
+Electrolyzer#1;Running time availability;0.255;-;RunningTimeAvailable
+Electrolyzer#1;PROD Total FluidH2Mass H2MassFlowRate;166569;kg;TotProdH2MassFlowRate
+Electrolyzer#1;PROD Levelized Total FluidH2Mass H2MassFlowRate;1.88816e+06;kg;LvlzdTotProdH2MassFlowRate
+Electrolyzer#1;PROD Mean Total FluidH2Flowrate H2MassFlowRate;74.5675;kg/h;MeanProdH2MassFlowRate
+Electrolyzer#1;CONS Total ElectricalEnergy UsedPower;-9250.13;MWh;TotConsUsedPower
+Electrolyzer#1;CONS Levelized Total ElectricalEnergy UsedPower;-104856;MWh;LvlzdTotConsUsedPower
+Electrolyzer#1;CONS Mean Total ElectricalPower UsedPower;-4.14098;MW;MeanConsUsedPower
+Electrolyzer#1;CONS Total Power Factor UsedPower;0.571145;-;PowerFactorUsedPower
+Electrolyzer#1;Rate of use UsedPower;0.145642;-;UseRateUsedPower
+GridFree#1;Total Cost Function;491.81;EUR;TotCosts
+GridFree#1;is installed;1;-;IsInstalled
+GridFree#1;Opex part (including energy cost);43.3864;EUR;OPEX
+GridFree#1;Grid extraction time;17.52;h;extraction Time
+GridFree#1;Grid extraction ElectricalEnergy GridFlow;0.600088;MWh;TotGridFlow
+GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;6.80236;MWh;LvlzdTotGridFlow
+GridFree#1;Mean extraction ElectricalPower GridFlow;0.0342516;MW;MeanGridFlow
+GridFree#2;Total Cost Function;0;EUR;TotCosts
+GridFree#2;is installed;1;-;IsInstalled
+GridFree#2;Opex part (including energy cost);0;EUR;OPEX
+GridFree#2;Grid injection time;8733.72;h;injection Time
+GridFree#2;Grid injection ElectricalEnergy GridFlow;-53689.6;MWh;TotGridFlow
+GridFree#2;Levelized Grid injection ElectricalEnergy GridFlow;-608603;MWh;LvlzdTotGridFlow
+GridFree#2;Mean injection ElectricalPower GridFlow;-6.14739;MW;MeanGridFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;kg;BusBalance
+NodeLaw#3;Integrated bus balance;3.23858e+06;MWh;BusBalance
+SourceLoad#1;Total Cost Function;0;EUR;TotCosts
+SourceLoad#1;is installed;1;-;IsInstalled
+SourceLoad#1;Opex part (including energy cost);0;EUR;OPEX
+SourceLoad#1;Component Weight;1;Unit;Weight
+SourceLoad#1;ImposedProfile load time;2233.8;h;ImposedProfileTime
+SourceLoad#1;ImposedProfile FluidH2Mass SourceLoadFlow;-166569;kg;TotImposedProfileSourceLoadFlow
+SourceLoad#1;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-1.88816e+06;kg;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#1;Mean FluidH2Flowrate SourceLoadFlow;-74.5675;kg/h;MeanImposedProfileSourceLoadFlow
+SourceLoad#2;Total Cost Function;153293;EUR;TotCosts
+SourceLoad#2;Capex part;71848.3;EUR;CAPEX
+SourceLoad#2;is installed;1;-;IsInstalled
+SourceLoad#2;Opex part (including energy cost);7184.83;EUR;OPEX
+SourceLoad#2;Pure Opex part;7184.83;EUR;PureOPEX
+SourceLoad#2;Replacement part;0;EUR;Replacement
+SourceLoad#2;Mass;71.8483;kg;Mass
+SourceLoad#2;Area;0;m2;Area
+SourceLoad#2;Volume;0;m3;Volume
+SourceLoad#2;Component Optimal Weight;7.18483;Unit;Weight
+SourceLoad#2;ImposedProfile source time;8760;h;ImposedProfileTime
+SourceLoad#2;ImposedProfile ElectricalEnergy SourceLoadFlow;62939.1;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#2;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;713452;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#2;Mean ElectricalPower SourceLoadFlow;7.18483;MW;MeanImposedProfileSourceLoadFlow
+SourceLoad#2;Data Port published SourceLoadFlow - data computed;62939.1;MWh;DataPortSourceLoadFlow
+StorageGen#1;Total Cost Function;0;EUR;TotCosts
+StorageGen#1;Capex part;0;EUR;CAPEX
+StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;Opex part (including energy cost);0;EUR;OPEX
+StorageGen#1;Pure Opex part;0;EUR;PureOPEX
+StorageGen#1;Replacement part;0;EUR;Replacement
+StorageGen#1;Mass;0;kg;Mass
+StorageGen#1;Area;0;m2;Area
+StorageGen#1;Volume;0;m3;Volume
+StorageGen#1;Storage Optimal Capacity;0;kg;Capacity
+StorageGen#1;Charging time;0;h;ChargingTime
+StorageGen#1;Discharging time;0;h;DischargingTime
+StorageGen#1;Charged FluidH2Mass Flow;0;kg;TotChargedFlow
+StorageGen#1;Discharged FluidH2Mass Flow;0;kg;TotDischargedFlow
+StorageGen#1;Levelized Charged FluidH2Mass Flow;0;kg;LvlzdTotChargedFlow
+StorageGen#1;Levelized Discharged FluidH2Mass Flow;0;kg;LvlzdDischargedFlow
+StorageGen#1;Mean Charged FluidH2Flowrate Flow;0;kg/h;MeanChargedFlow
+StorageGen#1;Mean Discharged FluidH2Flowrate Flow;0;kg/h;MeanDischargedFlow
+StorageGen#1;Equivalent number of cycles FluidH2Flowrate Flow;0;-;NbCycles
+StorageGen#1;Cumulated losses;0;kg;CumulatedLosses

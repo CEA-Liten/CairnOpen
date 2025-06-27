@@ -1,0 +1,7 @@
+model.x;model.y;model.x(r=3);model.y(c=2);model.z
+x1;y1;x1;y1;f(x1,y1)
+x2;y2;x1;y2;f(x1,y2)
+x3;;x2;y1;f(x2,y1)
+;;x2;y2;f(x2,y2)
+;;x3;y1;f(x3,y1)
+;;x3;y2;f(x3,y2)

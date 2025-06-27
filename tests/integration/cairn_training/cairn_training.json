@@ -1,0 +1,3439 @@
+{
+    "Components": [
+        {
+            "componentCarrier": "",
+            "componentPERSEEType": "TecEcoAnalysis",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance Cost",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance MaxConstraint",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance MaxConstraintValue",
+                    "value": 1000000000000
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 Cost",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 MaxConstraint",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 MaxConstraintValue",
+                    "value": 1000000000000
+                }
+            ],
+            "nodeId": "19001",
+            "nodeName": "TecEco",
+            "nodePortsData": [
+            ],
+            "nodeTechnoType": "OptimNPV",
+            "nodeType": "TecEcoAnalysis",
+            "optionListJson": [
+                {
+                    "key": "Currency",
+                    "value": "EUR"
+                },
+                {
+                    "key": "DiscountRate",
+                    "value": 0.07
+                },
+                {
+                    "key": "ImpactDiscountRate",
+                    "value": 0.07
+                },
+                {
+                    "key": "InternalRateOfReturn",
+                    "value": -1
+                },
+                {
+                    "key": "LeapYearPos",
+                    "value": 0
+                },
+                {
+                    "key": "Model",
+                    "value": "OptimNPV"
+                },
+                {
+                    "key": "NbYear",
+                    "value": 20
+                },
+                {
+                    "key": "NbYearInput",
+                    "value": 1
+                },
+                {
+                    "key": "NbYearOffset",
+                    "value": 0
+                },
+                {
+                    "key": "ObjectiveUnit",
+                    "value": "EUR"
+                },
+                {
+                    "key": "Range",
+                    "value": "HISTandPLAN"
+                },
+                {
+                    "key": "Xpos",
+                    "value": "134"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "4"
+                },
+                {
+                    "key": "id",
+                    "value": "TecEco"
+                },
+                {
+                    "key": "type",
+                    "value": "TecEcoAnalysis"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "ConsideredEnvironmentalImpacts",
+                    "value": [
+                        "Climate change#Global Warming Potential 100",
+                        "Acidification#Accumulated Exceedance"
+                    ]
+                },
+                {
+                    "key": "ForceExportAllIndicators",
+                    "value": true
+                }
+            ],
+            "timeSeriesListJson": [
+            ],
+            "x": 134,
+            "y": 4
+        },
+        {
+            "componentCarrier": "ElectricityDistrib",
+            "componentPERSEEType": "EnergyVector",
+            "energyTypeColor": "#fabe0c",
+            "nodeId": "19301",
+            "nodeName": "ElectricityDistrib",
+            "nodeTechnoType": "Electrical",
+            "nodeType": "Electricity",
+            "optionListJson": [
+                {
+                    "key": "EnergyName",
+                    "value": "Energy"
+                },
+                {
+                    "key": "EnergyUnit",
+                    "value": "MWh"
+                },
+                {
+                    "key": "FlowrateUnit",
+                    "value": "kg/h"
+                },
+                {
+                    "key": "FluxName",
+                    "value": "ElectricalPower"
+                },
+                {
+                    "key": "FluxUnit",
+                    "value": "MW"
+                },
+                {
+                    "key": "IsFuelCarrier",
+                    "value": false
+                },
+                {
+                    "key": "IsHeatCarrier",
+                    "value": false
+                },
+                {
+                    "key": "IsMassCarrier",
+                    "value": false
+                },
+                {
+                    "key": "MassUnit",
+                    "value": "kg"
+                },
+                {
+                    "key": "PeakUnit",
+                    "value": "MWc"
+                },
+                {
+                    "key": "PotentialName",
+                    "value": "Voltage"
+                },
+                {
+                    "key": "PotentialUnit",
+                    "value": "V"
+                },
+                {
+                    "key": "PowerName",
+                    "value": "Power"
+                },
+                {
+                    "key": "PowerUnit",
+                    "value": "MW"
+                },
+                {
+                    "key": "StorageName",
+                    "value": "ElectricalEnergy"
+                },
+                {
+                    "key": "StorageUnit",
+                    "value": "MWh"
+                },
+                {
+                    "key": "SurfaceUnit",
+                    "value": "m2"
+                },
+                {
+                    "key": "Type",
+                    "value": "Electrical"
+                },
+                {
+                    "key": "Xpos",
+                    "value": "330"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "4"
+                },
+                {
+                    "key": "id",
+                    "value": "ElectricityDistrib"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "BuyPrice",
+                    "value": 0
+                },
+                {
+                    "key": "CP",
+                    "value": 0
+                },
+                {
+                    "key": "GHV",
+                    "value": 0
+                },
+                {
+                    "key": "LHV",
+                    "value": 1
+                },
+                {
+                    "key": "Potential",
+                    "value": 220
+                },
+                {
+                    "key": "RHO",
+                    "value": 0
+                },
+                {
+                    "key": "SellPrice",
+                    "value": 0
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "UseProfileBuyPrice",
+                    "value": "Elec_Grid.ElectricityPrice"
+                },
+                {
+                    "key": "UseProfileBuyPriceSeasonal",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileSellPrice",
+                    "value": ""
+                }
+            ],
+            "x": 330,
+            "y": 4
+        },
+        {
+            "componentCarrier": "H2",
+            "componentPERSEEType": "EnergyVector",
+            "energyTypeColor": "green",
+            "nodeId": "19401",
+            "nodeName": "H2",
+            "nodeTechnoType": "FluidH2",
+            "nodeType": "H2Vector",
+            "optionListJson": [
+                {
+                    "key": "EnergyName",
+                    "value": "Energy"
+                },
+                {
+                    "key": "EnergyUnit",
+                    "value": "MWh"
+                },
+                {
+                    "key": "FlowrateUnit",
+                    "value": "kg/h"
+                },
+                {
+                    "key": "FluxName",
+                    "value": "FluidH2Flowrate"
+                },
+                {
+                    "key": "FluxUnit",
+                    "value": "kg/h"
+                },
+                {
+                    "key": "IsFuelCarrier",
+                    "value": true
+                },
+                {
+                    "key": "IsHeatCarrier",
+                    "value": false
+                },
+                {
+                    "key": "IsMassCarrier",
+                    "value": true
+                },
+                {
+                    "key": "MassUnit",
+                    "value": "kg"
+                },
+                {
+                    "key": "PeakUnit",
+                    "value": "MWc"
+                },
+                {
+                    "key": "PotentialName",
+                    "value": "Pressure"
+                },
+                {
+                    "key": "PotentialUnit",
+                    "value": "bar"
+                },
+                {
+                    "key": "PowerName",
+                    "value": "Power"
+                },
+                {
+                    "key": "PowerUnit",
+                    "value": "MW"
+                },
+                {
+                    "key": "StorageName",
+                    "value": "FluidH2Mass"
+                },
+                {
+                    "key": "StorageUnit",
+                    "value": "kg"
+                },
+                {
+                    "key": "SurfaceUnit",
+                    "value": "m2"
+                },
+                {
+                    "key": "Type",
+                    "value": "FluidH2"
+                },
+                {
+                    "key": "Xpos",
+                    "value": "254"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "4"
+                },
+                {
+                    "key": "id",
+                    "value": "H2"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "BuyPrice",
+                    "value": 0
+                },
+                {
+                    "key": "CP",
+                    "value": 0
+                },
+                {
+                    "key": "GHV",
+                    "value": 0
+                },
+                {
+                    "key": "LHV",
+                    "value": 0.03332
+                },
+                {
+                    "key": "Potential",
+                    "value": 30
+                },
+                {
+                    "key": "RHO",
+                    "value": 0.0899
+                },
+                {
+                    "key": "SellPrice",
+                    "value": 0
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "UseProfileBuyPrice",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileBuyPriceSeasonal",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileSellPrice",
+                    "value": ""
+                }
+            ],
+            "x": 254,
+            "y": 4
+        },
+        {
+            "componentCarrier": "none",
+            "componentPERSEEType": "Solver",
+            "nodeId": "19201",
+            "nodeName": "Cplex",
+            "nodeTechnoType": "MIPModeler",
+            "nodeType": "Solver",
+            "optionListJson": [
+                {
+                    "key": "Category",
+                    "value": ""
+                },
+                {
+                    "key": "FileMipStart",
+                    "value": ""
+                },
+                {
+                    "key": "Model",
+                    "value": "MIPModeler"
+                },
+                {
+                    "key": "ReadParamFile",
+                    "value": "NO"
+                },
+                {
+                    "key": "Solver",
+                    "value": "Cplex"
+                },
+                {
+                    "key": "WriteLp",
+                    "value": "YES"
+                },
+                {
+                    "key": "WriteMipStart",
+                    "value": "NO"
+                },
+                {
+                    "key": "Xpos",
+                    "value": "74"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "4"
+                },
+                {
+                    "key": "id",
+                    "value": "Cplex"
+                },
+                {
+                    "key": "type",
+                    "value": "Solver"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "Gap",
+                    "value": 0.001
+                },
+                {
+                    "key": "NbSolToKeep",
+                    "value": 1
+                },
+                {
+                    "key": "Threads",
+                    "value": 8
+                },
+                {
+                    "key": "TimeLimit",
+                    "value": 0
+                },
+                {
+                    "key": "TreeMemoryLimit",
+                    "value": 50000
+                }
+            ],
+            "x": 74,
+            "y": 4
+        },
+        {
+            "componentCarrier": "none",
+            "componentPERSEEType": "SimulationControl",
+            "nodeId": "19101",
+            "nodeName": "Cairn",
+            "nodePortsData": [
+            ],
+            "nodeTechnoType": "SimulationControl",
+            "nodeType": "SimulationControl",
+            "optionListJson": [
+                {
+                    "key": "Xpos",
+                    "value": "14"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "4"
+                },
+                {
+                    "key": "id",
+                    "value": "Persee"
+                },
+                {
+                    "key": "type",
+                    "value": "SimulationControl"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "CheckTimeSeriesUnits",
+                    "value": true
+                },
+                {
+                    "key": "ExportJson",
+                    "value": false
+                },
+                {
+                    "key": "ExportParameters",
+                    "value": false
+                },
+                {
+                    "key": "ExportResults",
+                    "value": true
+                },
+                {
+                    "key": "ExportResultsEveryCycle",
+                    "value": false
+                },
+                {
+                    "key": "FutureSize",
+                    "value": 48
+                },
+                {
+                    "key": "FutureVariableTimestep",
+                    "value": 8760
+                },
+                {
+                    "key": "ModeObjective",
+                    "value": "Mono"
+                },
+                {
+                    "key": "NbCycle",
+                    "value": 1
+                },
+                {
+                    "key": "PastSize",
+                    "value": 1
+                },
+                {
+                    "key": "ReadingMode",
+                    "value": "Average"
+                },
+                {
+                    "key": "RollingMode",
+                    "value": "Periodic"
+                },
+                {
+                    "key": "RunUntilSimulationEnd",
+                    "value": false
+                },
+                {
+                    "key": "TimeShift",
+                    "value": 1
+                },
+                {
+                    "key": "TimeStep",
+                    "value": 3600
+                },
+                {
+                    "key": "UseExtrapolationFactor",
+                    "value": true
+                }
+            ],
+            "timeSeriesListJson": [
+            ],
+            "x": 14,
+            "y": 4
+        },
+        {
+            "componentCarrier": "ElectricityDistrib",
+            "componentPERSEEType": "Converter",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+                    "value": 100
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+                    "value": 10
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                }
+            ],
+            "nodeId": "20101",
+            "nodeName": "ELY_PEM",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 1,
+                "right": 1,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "INPUT",
+                            "name": "PortL0",
+                            "offset": 0,
+                            "variable": "UsedPower"
+                        }
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                        {
+                            "carrier": "H2",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "PortR0",
+                            "offset": 0,
+                            "variable": "H2MassFlowRate"
+                        }
+                    ],
+                    "pos": "right"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "bottom"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "top"
+                }
+            ],
+            "nodeTechnoType": "Electrolyzer",
+            "nodeType": "Electrolyzer",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "Electrolyzer"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "Xpos",
+                    "value": "480"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "234"
+                },
+                {
+                    "key": "id",
+                    "value": "ELY_PEM"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "Converter"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "AddAuxConso",
+                    "value": false
+                },
+                {
+                    "key": "AddImposeControlProd",
+                    "value": false
+                },
+                {
+                    "key": "AddMinimumCapacity",
+                    "value": false
+                },
+                {
+                    "key": "AddStdByConso",
+                    "value": false
+                },
+                {
+                    "key": "Area",
+                    "value": 0
+                },
+                {
+                    "key": "AuxConso",
+                    "value": 0
+                },
+                {
+                    "key": "Capex",
+                    "value": 480000
+                },
+                {
+                    "key": "CondenseVariablesOnTP",
+                    "value": false
+                },
+                {
+                    "key": "Cost",
+                    "value": 0
+                },
+                {
+                    "key": "EcoInvestModel",
+                    "value": true
+                },
+                {
+                    "key": "Efficiency",
+                    "value": 0.6667
+                },
+                {
+                    "key": "EfficiencyLHVbased",
+                    "value": true
+                },
+                {
+                    "key": "Efficiency_Global",
+                    "value": 0.5
+                },
+                {
+                    "key": "EnvironmentModel",
+                    "value": true
+                },
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "GeometryModel",
+                    "value": false
+                },
+                {
+                    "key": "LPModelONLY",
+                    "value": false
+                },
+                {
+                    "key": "LPWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "LifeTime",
+                    "value": 10
+                },
+                {
+                    "key": "Mass",
+                    "value": 0
+                },
+                {
+                    "key": "MaxPower",
+                    "value": -30
+                },
+                {
+                    "key": "MinPower",
+                    "value": 0
+                },
+                {
+                    "key": "MinSize",
+                    "value": 0
+                },
+                {
+                    "key": "NomPower",
+                    "value": -30
+                },
+                {
+                    "key": "Opex",
+                    "value": 0.04
+                },
+                {
+                    "key": "OpexConstant",
+                    "value": 0
+                },
+                {
+                    "key": "PiecewiseArea",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseCapex",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseMass",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseVolume",
+                    "value": false
+                },
+                {
+                    "key": "Replacement",
+                    "value": 0
+                },
+                {
+                    "key": "ReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "SeasonalPrevisions",
+                    "value": false
+                },
+                {
+                    "key": "StdByConso",
+                    "value": 0
+                },
+                {
+                    "key": "TotalCapexCoefficient",
+                    "value": 1
+                },
+                {
+                    "key": "TotalCapexOffset",
+                    "value": 0
+                },
+                {
+                    "key": "TryRelaxationArea",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationCapex",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationMass",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationVolume",
+                    "value": true
+                },
+                {
+                    "key": "UseAgeing",
+                    "value": false
+                },
+                {
+                    "key": "UseWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "Volume",
+                    "value": 0
+                },
+                {
+                    "key": "Weight",
+                    "value": 1
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "portImpactsListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileConverterUse",
+                    "value": ""
+                }
+            ],
+            "x": 480,
+            "y": 234
+        },
+        {
+            "componentCarrier": "ElectricityDistrib",
+            "componentPERSEEType": "BusFlowBalance",
+            "nodeId": "19501",
+            "nodeName": "Elec_Bus",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 2,
+                "right": 2,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "I0",
+                            "offset": 0,
+                            "variable": "GridFlow"
+                        },
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "I1",
+                            "offset": 0,
+                            "variable": "SourceLoadFlow"
+                        }
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "INPUT",
+                            "name": "O0",
+                            "offset": 0,
+                            "variable": "UsedPower"
+                        },
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "INPUT",
+                            "name": "O1",
+                            "offset": 0,
+                            "variable": "GridFlow"
+                        }
+                    ],
+                    "pos": "right"
+                }
+            ],
+            "nodeTechnoType": "NodeLaw",
+            "nodeType": "NodeLaw",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "NodeLaw"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "VectorName",
+                    "value": "ElectricityDistrib"
+                },
+                {
+                    "key": "Xpos",
+                    "value": "340"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "314"
+                },
+                {
+                    "key": "id",
+                    "value": "Elec_Bus"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "BusFlowBalance"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "InitBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "IntervalBetweenIntegrals",
+                    "value": 0
+                },
+                {
+                    "key": "MaxConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MaxConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MaxFlexIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MaxFlexIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MaxIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MaxIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MaxIntegrateSeparateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MinConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MinConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MinIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MinIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MinIntegrateSeparateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "PenaltyCost",
+                    "value": 1000000000000
+                },
+                {
+                    "key": "PeriodIntegrateConstraint",
+                    "value": 0
+                },
+                {
+                    "key": "StrictConstraint",
+                    "value": true
+                },
+                {
+                    "key": "StrictConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "StrictIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "StrictIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "TimeIntegration",
+                    "value": true
+                },
+                {
+                    "key": "UseExtrapolationFactor",
+                    "value": false
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "timeSeriesListJson": [
+            ],
+            "x": 340,
+            "y": 314
+        },
+        {
+            "componentCarrier": "ElectricityDistrib",
+            "componentPERSEEType": "Grid",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                }
+            ],
+            "nodeId": "19701",
+            "nodeName": "Elec_Grid",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 0,
+                "right": 1,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "PortR0",
+                            "offset": 0,
+                            "variable": "GridFlow"
+                        }
+                    ],
+                    "pos": "right"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "bottom"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "top"
+                }
+            ],
+            "nodeTechnoType": "GridFree",
+            "nodeType": "GridFree",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "Direction",
+                    "value": "ExtractFromGrid"
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "GridFree"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "Xpos",
+                    "value": "138"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "244"
+                },
+                {
+                    "key": "id",
+                    "value": "Elec_Grid"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "Grid"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "AddMinimumCapacity",
+                    "value": false
+                },
+                {
+                    "key": "AddVariableMaxFlow",
+                    "value": false
+                },
+                {
+                    "key": "Area",
+                    "value": 0
+                },
+                {
+                    "key": "Capex",
+                    "value": 0
+                },
+                {
+                    "key": "CondenseVariablesOnTP",
+                    "value": false
+                },
+                {
+                    "key": "ConstantBuyPrice",
+                    "value": 0
+                },
+                {
+                    "key": "ConstantSellPrice",
+                    "value": 0
+                },
+                {
+                    "key": "EcoInvestModel",
+                    "value": false
+                },
+                {
+                    "key": "EnvironmentModel",
+                    "value": true
+                },
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "GeometryModel",
+                    "value": false
+                },
+                {
+                    "key": "LPModelONLY",
+                    "value": false
+                },
+                {
+                    "key": "LPWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "LifeTime",
+                    "value": 1
+                },
+                {
+                    "key": "Mass",
+                    "value": 0
+                },
+                {
+                    "key": "MaxFlow",
+                    "value": 400
+                },
+                {
+                    "key": "MinFlow",
+                    "value": 0
+                },
+                {
+                    "key": "MinSize",
+                    "value": 0
+                },
+                {
+                    "key": "Opex",
+                    "value": 0
+                },
+                {
+                    "key": "OpexConstant",
+                    "value": 0
+                },
+                {
+                    "key": "PiecewiseArea",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseCapex",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseMass",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseVolume",
+                    "value": false
+                },
+                {
+                    "key": "PriceMultiplier",
+                    "value": 1
+                },
+                {
+                    "key": "Replacement",
+                    "value": 0
+                },
+                {
+                    "key": "ReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "SeasonalCosts",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalCostsFree",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalPrevisions",
+                    "value": false
+                },
+                {
+                    "key": "TotalCapexCoefficient",
+                    "value": 1
+                },
+                {
+                    "key": "TotalCapexOffset",
+                    "value": 0
+                },
+                {
+                    "key": "TryRelaxationArea",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationCapex",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationMass",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationVolume",
+                    "value": true
+                },
+                {
+                    "key": "UseAgeing",
+                    "value": false
+                },
+                {
+                    "key": "UseConstantPrice",
+                    "value": false
+                },
+                {
+                    "key": "UseWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "Volume",
+                    "value": 0
+                },
+                {
+                    "key": "Weight",
+                    "value": 1
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "portImpactsListJson": [
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0.5
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 20
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileBuyPrice",
+                    "value": "Elec_Grid.ElectricityPrice"
+                },
+                {
+                    "key": "UseProfileBuyPriceSeasonal",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileGrid",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileSellPrice",
+                    "value": ""
+                },
+                {
+                    "key": "UseVariableMaximumGridFlow",
+                    "value": ""
+                }
+            ],
+            "x": 138,
+            "y": 244
+        },
+        {
+            "componentCarrier": "ElectricityDistrib",
+            "componentPERSEEType": "Grid",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                }
+            ],
+            "nodeId": "19801",
+            "nodeName": "Elec_Grid_Inject",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 1,
+                "right": 0,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "INPUT",
+                            "name": "PortL0",
+                            "offset": 0,
+                            "variable": "GridFlow"
+                        }
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "right"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "bottom"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "top"
+                }
+            ],
+            "nodeTechnoType": "GridFree",
+            "nodeType": "GridFree",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "Direction",
+                    "value": "InjectToGrid"
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "GridFree"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "Xpos",
+                    "value": "480"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "390"
+                },
+                {
+                    "key": "id",
+                    "value": "Elec_Grid_Inject"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "Grid"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "AddMinimumCapacity",
+                    "value": false
+                },
+                {
+                    "key": "AddVariableMaxFlow",
+                    "value": false
+                },
+                {
+                    "key": "Area",
+                    "value": 0
+                },
+                {
+                    "key": "Capex",
+                    "value": 0
+                },
+                {
+                    "key": "CondenseVariablesOnTP",
+                    "value": false
+                },
+                {
+                    "key": "ConstantBuyPrice",
+                    "value": 0
+                },
+                {
+                    "key": "ConstantSellPrice",
+                    "value": 0
+                },
+                {
+                    "key": "EcoInvestModel",
+                    "value": false
+                },
+                {
+                    "key": "EnvironmentModel",
+                    "value": false
+                },
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "GeometryModel",
+                    "value": false
+                },
+                {
+                    "key": "LPModelONLY",
+                    "value": false
+                },
+                {
+                    "key": "LPWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "LifeTime",
+                    "value": 1
+                },
+                {
+                    "key": "Mass",
+                    "value": 0
+                },
+                {
+                    "key": "MaxFlow",
+                    "value": 1500000
+                },
+                {
+                    "key": "MinFlow",
+                    "value": 0
+                },
+                {
+                    "key": "MinSize",
+                    "value": 0
+                },
+                {
+                    "key": "Opex",
+                    "value": 0
+                },
+                {
+                    "key": "OpexConstant",
+                    "value": 0
+                },
+                {
+                    "key": "PiecewiseArea",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseCapex",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseMass",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseVolume",
+                    "value": false
+                },
+                {
+                    "key": "PriceMultiplier",
+                    "value": 1
+                },
+                {
+                    "key": "Replacement",
+                    "value": 0
+                },
+                {
+                    "key": "ReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "SeasonalCosts",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalCostsFree",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalPrevisions",
+                    "value": false
+                },
+                {
+                    "key": "TotalCapexCoefficient",
+                    "value": 1
+                },
+                {
+                    "key": "TotalCapexOffset",
+                    "value": 0
+                },
+                {
+                    "key": "TryRelaxationArea",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationCapex",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationMass",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationVolume",
+                    "value": true
+                },
+                {
+                    "key": "UseAgeing",
+                    "value": false
+                },
+                {
+                    "key": "UseConstantPrice",
+                    "value": false
+                },
+                {
+                    "key": "UseWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "Volume",
+                    "value": 0
+                },
+                {
+                    "key": "Weight",
+                    "value": 1
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "portImpactsListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileBuyPrice",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileBuyPriceSeasonal",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileGrid",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileSellPrice",
+                    "value": ""
+                },
+                {
+                    "key": "UseVariableMaximumGridFlow",
+                    "value": ""
+                }
+            ],
+            "x": 480,
+            "y": 390
+        },
+        {
+            "componentCarrier": "H2",
+            "componentPERSEEType": "BusFlowBalance",
+            "nodeId": "19601",
+            "nodeName": "H2_Bus",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 1,
+                "right": 2,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                        {
+                            "carrier": "H2",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "I0",
+                            "offset": 0,
+                            "variable": "H2MassFlowRate"
+                        }
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                        {
+                            "carrier": "H2",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "INPUT",
+                            "name": "O0",
+                            "offset": 0,
+                            "variable": "SourceLoadFlow"
+                        },
+                        {
+                            "carrier": "H2",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "O1",
+                            "offset": 0,
+                            "variable": "Flow"
+                        }
+                    ],
+                    "pos": "right"
+                }
+            ],
+            "nodeTechnoType": "NodeLaw",
+            "nodeType": "NodeLaw",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "NodeLaw"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "VectorName",
+                    "value": "H2"
+                },
+                {
+                    "key": "Xpos",
+                    "value": "674"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "210"
+                },
+                {
+                    "key": "id",
+                    "value": "H2_Bus"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "BusFlowBalance"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "InitBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "IntervalBetweenIntegrals",
+                    "value": 0
+                },
+                {
+                    "key": "MaxConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MaxConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MaxFlexIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MaxFlexIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MaxIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MaxIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MaxIntegrateSeparateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MinConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MinConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MinIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "MinIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "MinIntegrateSeparateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "PenaltyCost",
+                    "value": 1000000000000
+                },
+                {
+                    "key": "PeriodIntegrateConstraint",
+                    "value": 0
+                },
+                {
+                    "key": "StrictConstraint",
+                    "value": true
+                },
+                {
+                    "key": "StrictConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "StrictIntegrateConstraint",
+                    "value": false
+                },
+                {
+                    "key": "StrictIntegrateConstraintBusValue",
+                    "value": 0
+                },
+                {
+                    "key": "TimeIntegration",
+                    "value": true
+                },
+                {
+                    "key": "UseExtrapolationFactor",
+                    "value": false
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "timeSeriesListJson": [
+            ],
+            "x": 674,
+            "y": 210
+        },
+        {
+            "componentCarrier": "H2",
+            "componentPERSEEType": "SourceLoad",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                }
+            ],
+            "nodeId": "19901",
+            "nodeName": "H2_Load",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 1,
+                "right": 0,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                        {
+                            "carrier": "H2",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "INPUT",
+                            "name": "PortL0",
+                            "offset": 0,
+                            "variable": "SourceLoadFlow"
+                        }
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "right"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "bottom"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "top"
+                }
+            ],
+            "nodeTechnoType": "SourceLoad",
+            "nodeType": "SourceLoad",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "Direction",
+                    "value": "Sink"
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "SourceLoad"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "Xpos",
+                    "value": "850"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "264"
+                },
+                {
+                    "key": "id",
+                    "value": "H2_Load"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "SourceLoad"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "AddHeatConsumerModel",
+                    "value": false
+                },
+                {
+                    "key": "AddMinimumCapacity",
+                    "value": false
+                },
+                {
+                    "key": "AddSheddingDetailed",
+                    "value": false
+                },
+                {
+                    "key": "AddSheddingTS",
+                    "value": false
+                },
+                {
+                    "key": "AddStaticCompensation",
+                    "value": false
+                },
+                {
+                    "key": "AddVariableCostModel",
+                    "value": false
+                },
+                {
+                    "key": "Area",
+                    "value": 0
+                },
+                {
+                    "key": "Capex",
+                    "value": 0
+                },
+                {
+                    "key": "ComputeOptimalPrice",
+                    "value": false
+                },
+                {
+                    "key": "CondenseVariablesOnTP",
+                    "value": false
+                },
+                {
+                    "key": "CostShedding",
+                    "value": 0
+                },
+                {
+                    "key": "EcoInvestModel",
+                    "value": true
+                },
+                {
+                    "key": "EnvironmentModel",
+                    "value": false
+                },
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "FixedStaticCompensation",
+                    "value": false
+                },
+                {
+                    "key": "GeometryModel",
+                    "value": false
+                },
+                {
+                    "key": "LPModelONLY",
+                    "value": false
+                },
+                {
+                    "key": "LPWeightOptimization",
+                    "value": true
+                },
+                {
+                    "key": "LifeTime",
+                    "value": 1
+                },
+                {
+                    "key": "Mass",
+                    "value": 0
+                },
+                {
+                    "key": "MaxFlow",
+                    "value": 1000
+                },
+                {
+                    "key": "MaxOptimalPrice",
+                    "value": 0
+                },
+                {
+                    "key": "MaxShedding",
+                    "value": 0
+                },
+                {
+                    "key": "MaxTimeShedding",
+                    "value": 0
+                },
+                {
+                    "key": "MinSheddingStandBy",
+                    "value": 0
+                },
+                {
+                    "key": "MinSize",
+                    "value": 0
+                },
+                {
+                    "key": "Opex",
+                    "value": 0
+                },
+                {
+                    "key": "OpexConstant",
+                    "value": 0
+                },
+                {
+                    "key": "PiecewiseArea",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseCapex",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseMass",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseVolume",
+                    "value": false
+                },
+                {
+                    "key": "Replacement",
+                    "value": 0
+                },
+                {
+                    "key": "ReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "SeasonalCosts",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalPrevisions",
+                    "value": false
+                },
+                {
+                    "key": "StaticCompensationValue",
+                    "value": 0
+                },
+                {
+                    "key": "TotalCapexCoefficient",
+                    "value": 1
+                },
+                {
+                    "key": "TotalCapexOffset",
+                    "value": 0
+                },
+                {
+                    "key": "TryRelaxationArea",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationCapex",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationMass",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationVolume",
+                    "value": true
+                },
+                {
+                    "key": "UseAgeing",
+                    "value": false
+                },
+                {
+                    "key": "UseControlledFlux",
+                    "value": false
+                },
+                {
+                    "key": "UseWeightOptimization",
+                    "value": true
+                },
+                {
+                    "key": "UseWeightedFlux",
+                    "value": false
+                },
+                {
+                    "key": "Volume",
+                    "value": 0
+                },
+                {
+                    "key": "Weight",
+                    "value": 1
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "portImpactsListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileCostShedding",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileEnergyPrice",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileLoadFlux",
+                    "value": "H2_Load.LoadMassFlowrate"
+                },
+                {
+                    "key": "UseProfileLoadFluxSeasonal",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileMaxShedding",
+                    "value": ""
+                },
+                {
+                    "key": "UseStartStopProfile",
+                    "value": ""
+                }
+            ],
+            "x": 850,
+            "y": 264
+        },
+        {
+            "componentCarrier": "H2",
+            "componentPERSEEType": "Storage",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                }
+            ],
+            "nodeId": "20201",
+            "nodeName": "H2_Tank",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 1,
+                "right": 0,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                        {
+                            "carrier": "H2",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "PortL0",
+                            "offset": 0,
+                            "variable": "Flow"
+                        }
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "right"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "bottom"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "top"
+                }
+            ],
+            "nodeTechnoType": "StorageGen",
+            "nodeType": "StorageGen",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "StorageGen"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "Xpos",
+                    "value": "844"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "140"
+                },
+                {
+                    "key": "id",
+                    "value": "H2_Tank"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "Storage"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "AddFinalStorageValue",
+                    "value": false
+                },
+                {
+                    "key": "AddMinimumCapacity",
+                    "value": false
+                },
+                {
+                    "key": "AddPressureModel",
+                    "value": false
+                },
+                {
+                    "key": "AddSocConstraints",
+                    "value": false
+                },
+                {
+                    "key": "Area",
+                    "value": 0
+                },
+                {
+                    "key": "Capex",
+                    "value": 50
+                },
+                {
+                    "key": "CondenseVariablesOnTP",
+                    "value": false
+                },
+                {
+                    "key": "EcoInvestModel",
+                    "value": true
+                },
+                {
+                    "key": "EnvironmentModel",
+                    "value": false
+                },
+                {
+                    "key": "Eta",
+                    "value": 0.999
+                },
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "FinalSOC",
+                    "value": 0
+                },
+                {
+                    "key": "FlowDirection",
+                    "value": true
+                },
+                {
+                    "key": "GeometryModel",
+                    "value": false
+                },
+                {
+                    "key": "ImposeStrictFinalSOC",
+                    "value": false
+                },
+                {
+                    "key": "InitSOC",
+                    "value": 0
+                },
+                {
+                    "key": "KLoss",
+                    "value": 0
+                },
+                {
+                    "key": "LPModelONLY",
+                    "value": false
+                },
+                {
+                    "key": "LPWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "LifeTime",
+                    "value": 1
+                },
+                {
+                    "key": "Mass",
+                    "value": 0
+                },
+                {
+                    "key": "MaxEsto",
+                    "value": -20000000000
+                },
+                {
+                    "key": "MaxFlowCharge",
+                    "value": 1100
+                },
+                {
+                    "key": "MaxFlowDischarge",
+                    "value": 1200
+                },
+                {
+                    "key": "MaxPressure",
+                    "value": 350
+                },
+                {
+                    "key": "MaxSOC",
+                    "value": 1
+                },
+                {
+                    "key": "MinEsto",
+                    "value": 0
+                },
+                {
+                    "key": "MinFlowCharge",
+                    "value": 0
+                },
+                {
+                    "key": "MinFlowDischarge",
+                    "value": 0
+                },
+                {
+                    "key": "MinSOC",
+                    "value": 0
+                },
+                {
+                    "key": "MinSize",
+                    "value": 0
+                },
+                {
+                    "key": "Opex",
+                    "value": 0
+                },
+                {
+                    "key": "OpexConstant",
+                    "value": 0
+                },
+                {
+                    "key": "PiecewiseArea",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseCapex",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseMass",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseVolume",
+                    "value": false
+                },
+                {
+                    "key": "Replacement",
+                    "value": 0
+                },
+                {
+                    "key": "ReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "SeasonalCosts",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalPrevisions",
+                    "value": false
+                },
+                {
+                    "key": "StoragePrice",
+                    "value": 0
+                },
+                {
+                    "key": "TotalCapexCoefficient",
+                    "value": 1
+                },
+                {
+                    "key": "TotalCapexOffset",
+                    "value": 0
+                },
+                {
+                    "key": "TryRelaxationArea",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationCapex",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationMass",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationVolume",
+                    "value": true
+                },
+                {
+                    "key": "UseAgeing",
+                    "value": false
+                },
+                {
+                    "key": "UseWeightOptimization",
+                    "value": false
+                },
+                {
+                    "key": "Volume",
+                    "value": 0
+                },
+                {
+                    "key": "Weight",
+                    "value": 1
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "portImpactsListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "PortL0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortL0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileAllowCharge",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileAllowDischarge",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileAllowStorage",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileCapacityMultiplier",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileFinalStorageValue",
+                    "value": ""
+                }
+            ],
+            "x": 844,
+            "y": 140
+        },
+        {
+            "componentCarrier": "ElectricityDistrib",
+            "componentPERSEEType": "SourceLoad",
+            "envImpactsListJson": [
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+                    "value": 50
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+                    "value": 250
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+                    "value": false
+                },
+                {
+                    "key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+                    "value": true
+                }
+            ],
+            "nodeId": "20001",
+            "nodeName": "Wind_farm",
+            "nodePorts": {
+                "bottom": 0,
+                "left": 0,
+                "right": 1,
+                "top": 0
+            },
+            "nodePortsData": [
+                {
+                    "ports": [
+                    ],
+                    "pos": "left"
+                },
+                {
+                    "ports": [
+                        {
+                            "carrier": "ElectricityDistrib",
+                            "checkunit": "Yes",
+                            "coeff": 1,
+                            "direction": "OUTPUT",
+                            "name": "PortR0",
+                            "offset": 0,
+                            "variable": "SourceLoadFlow"
+                        }
+                    ],
+                    "pos": "right"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "bottom"
+                },
+                {
+                    "ports": [
+                    ],
+                    "pos": "top"
+                }
+            ],
+            "nodeTechnoType": "SourceLoad",
+            "nodeType": "SourceLoad",
+            "optionListJson": [
+                {
+                    "key": "Control",
+                    "value": ""
+                },
+                {
+                    "key": "DataFile",
+                    "value": ""
+                },
+                {
+                    "key": "Direction",
+                    "value": "Source"
+                },
+                {
+                    "key": "ModelClass",
+                    "value": "SourceLoad"
+                },
+                {
+                    "key": "PublishUserVariable",
+                    "value": ""
+                },
+                {
+                    "key": "Xpos",
+                    "value": "140"
+                },
+                {
+                    "key": "Ypos",
+                    "value": "364"
+                },
+                {
+                    "key": "id",
+                    "value": "Wind_farm"
+                },
+                {
+                    "key": "submodelfile",
+                    "value": ""
+                },
+                {
+                    "key": "type",
+                    "value": "SourceLoad"
+                }
+            ],
+            "paramListJson": [
+                {
+                    "key": "AddHeatConsumerModel",
+                    "value": false
+                },
+                {
+                    "key": "AddMinimumCapacity",
+                    "value": false
+                },
+                {
+                    "key": "AddSheddingDetailed",
+                    "value": false
+                },
+                {
+                    "key": "AddSheddingTS",
+                    "value": false
+                },
+                {
+                    "key": "AddStaticCompensation",
+                    "value": false
+                },
+                {
+                    "key": "AddVariableCostModel",
+                    "value": false
+                },
+                {
+                    "key": "Area",
+                    "value": 0
+                },
+                {
+                    "key": "Capex",
+                    "value": 0
+                },
+                {
+                    "key": "ComputeOptimalPrice",
+                    "value": false
+                },
+                {
+                    "key": "CondenseVariablesOnTP",
+                    "value": false
+                },
+                {
+                    "key": "CostShedding",
+                    "value": 0
+                },
+                {
+                    "key": "EcoInvestModel",
+                    "value": false
+                },
+                {
+                    "key": "EnvironmentModel",
+                    "value": true
+                },
+                {
+                    "key": "ExportIndicators",
+                    "value": true
+                },
+                {
+                    "key": "FixedStaticCompensation",
+                    "value": false
+                },
+                {
+                    "key": "GeometryModel",
+                    "value": false
+                },
+                {
+                    "key": "LPModelONLY",
+                    "value": false
+                },
+                {
+                    "key": "LPWeightOptimization",
+                    "value": true
+                },
+                {
+                    "key": "LifeTime",
+                    "value": 1
+                },
+                {
+                    "key": "Mass",
+                    "value": 0
+                },
+                {
+                    "key": "MaxFlow",
+                    "value": 1000000
+                },
+                {
+                    "key": "MaxOptimalPrice",
+                    "value": 0
+                },
+                {
+                    "key": "MaxShedding",
+                    "value": 0
+                },
+                {
+                    "key": "MaxTimeShedding",
+                    "value": 0
+                },
+                {
+                    "key": "MinSheddingStandBy",
+                    "value": 0
+                },
+                {
+                    "key": "MinSize",
+                    "value": 0
+                },
+                {
+                    "key": "Opex",
+                    "value": 0
+                },
+                {
+                    "key": "OpexConstant",
+                    "value": 0
+                },
+                {
+                    "key": "PiecewiseArea",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseCapex",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseMass",
+                    "value": false
+                },
+                {
+                    "key": "PiecewiseVolume",
+                    "value": false
+                },
+                {
+                    "key": "Replacement",
+                    "value": 0
+                },
+                {
+                    "key": "ReplacementConstant",
+                    "value": 0
+                },
+                {
+                    "key": "SeasonalCosts",
+                    "value": false
+                },
+                {
+                    "key": "SeasonalPrevisions",
+                    "value": false
+                },
+                {
+                    "key": "StaticCompensationValue",
+                    "value": 0
+                },
+                {
+                    "key": "TotalCapexCoefficient",
+                    "value": 1
+                },
+                {
+                    "key": "TotalCapexOffset",
+                    "value": 0
+                },
+                {
+                    "key": "TryRelaxationArea",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationCapex",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationMass",
+                    "value": true
+                },
+                {
+                    "key": "TryRelaxationVolume",
+                    "value": true
+                },
+                {
+                    "key": "UseAgeing",
+                    "value": false
+                },
+                {
+                    "key": "UseControlledFlux",
+                    "value": false
+                },
+                {
+                    "key": "UseWeightOptimization",
+                    "value": true
+                },
+                {
+                    "key": "UseWeightedFlux",
+                    "value": false
+                },
+                {
+                    "key": "Volume",
+                    "value": 0
+                },
+                {
+                    "key": "Weight",
+                    "value": -1
+                },
+                {
+                    "key": "WeightUnit",
+                    "value": "-"
+                }
+            ],
+            "portImpactsListJson": [
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance UseEnvContentTS_A",
+                    "value": false
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B",
+                    "value": 0
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+                    "value": false
+                }
+            ],
+            "timeSeriesListJson": [
+                {
+                    "key": "PortR0.Acidification#Accumulated Exceedance EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "PortR0.Climate change#Global Warming Potential 100 EnvContentTS_A",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileCostShedding",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileEnergyPrice",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileLoadFlux",
+                    "value": "WindFarmProduction"
+                },
+                {
+                    "key": "UseProfileLoadFluxSeasonal",
+                    "value": ""
+                },
+                {
+                    "key": "UseProfileMaxShedding",
+                    "value": ""
+                },
+                {
+                    "key": "UseStartStopProfile",
+                    "value": ""
+                }
+            ],
+            "x": 140,
+            "y": 364
+        }
+    ],
+    "Links": [
+        {
+            "headNodeId": "20101",
+            "headSocketId": "20101.PortL0",
+            "listPoint": [
+                {
+                    "x": 410,
+                    "y": 234
+                },
+                {
+                    "x": 410,
+                    "y": 314
+                }
+            ],
+            "tailNodeId": "19501",
+            "tailSocketId": "19501.O0"
+        },
+        {
+            "headNodeId": "19501",
+            "headSocketId": "19501.I0",
+            "listPoint": [
+                {
+                    "x": 239,
+                    "y": 244
+                },
+                {
+                    "x": 239,
+                    "y": 314
+                }
+            ],
+            "tailNodeId": "19701",
+            "tailSocketId": "19701.PortR0"
+        },
+        {
+            "headNodeId": "19801",
+            "headSocketId": "19801.PortL0",
+            "listPoint": [
+                {
+                    "x": 410,
+                    "y": 390
+                },
+                {
+                    "x": 410,
+                    "y": 314
+                }
+            ],
+            "tailNodeId": "19501",
+            "tailSocketId": "19501.O1"
+        },
+        {
+            "headNodeId": "19501",
+            "headSocketId": "19501.I1",
+            "listPoint": [
+                {
+                    "x": 240,
+                    "y": 364
+                },
+                {
+                    "x": 240,
+                    "y": 314
+                }
+            ],
+            "tailNodeId": "20001",
+            "tailSocketId": "20001.PortR0"
+        },
+        {
+            "headNodeId": "19601",
+            "headSocketId": "19601.I0",
+            "listPoint": [
+                {
+                    "x": 577,
+                    "y": 234
+                },
+                {
+                    "x": 577,
+                    "y": 210
+                }
+            ],
+            "tailNodeId": "20101",
+            "tailSocketId": "20101.PortR0"
+        },
+        {
+            "headNodeId": "19901",
+            "headSocketId": "19901.PortL0",
+            "listPoint": [
+                {
+                    "x": 762,
+                    "y": 264
+                },
+                {
+                    "x": 762,
+                    "y": 210
+                }
+            ],
+            "tailNodeId": "19601",
+            "tailSocketId": "19601.O0"
+        },
+        {
+            "headNodeId": "20201",
+            "headSocketId": "20201.PortL0",
+            "listPoint": [
+                {
+                    "x": 759,
+                    "y": 140
+                },
+                {
+                    "x": 759,
+                    "y": 210
+                }
+            ],
+            "tailNodeId": "19601",
+            "tailSocketId": "19601.O1"
+        }
+    ],
+	"DynamicIndicators": [
+		{
+			"formula": "( \"Elec_Grid.Total Cost Function\" + \"Wind_farm.Total Cost Function\" ) / ( \"Elec_Grid.Levelized Grid extraction ElectricalEnergy GridFlow\" + \"Wind_farm.Levelized ImposedProfile ElectricalEnergy SourceLoadFlow\" + \"Elec_Grid_Inject.Levelized Grid injection ElectricalEnergy GridFlow\" )",
+			"name": "Elec_cost"
+		},
+		{
+			"formula": "(\"ELY_PEM.Total Cost Function\" - \"ELY_PEM.CONS Levelized Total ElectricalEnergy UsedPower\" * \"Elec_cost\" + \"H2_Tank.Total Cost Function\" )/ \"ELY_PEM.PROD Levelized Total FluidH2Mass H2MassFlowRate\"",
+			"name": "LCOH"
+		}
+	]
+}

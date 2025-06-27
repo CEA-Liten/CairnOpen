@@ -1,0 +1,99 @@
+echo off
+set OPTION=%1
+if "%OPTION%" == "" set OPTION=@PRESETNAME@
+echo %OPTION%
+
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for Cairn
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set CAIRN_APP=@CAIRN_APP@
+set "CAIRN_APP=%CAIRN_APP:/=\%"
+set WORKSPACE=%CAIRN_APP%
+set USER_DOC_HOME=https://pages-gitlab.deeplab.intra.cea.fr/cairnopen-2c83de/
+set IMPORT_HOME=%CAIRN_APP%\lib
+set EXPORT_HOME=%CAIRN_APP%\lib
+set PEGASE_INSTALL=%IMPORT_HOME%\PegaseInstall
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for Gui Home
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set GUI_HOME=@CAIRNGUI_HOME@
+set SENSITIVITY_SCRIPT=%CAIRN_APP%\tests\scripts
+set REPORT_SCRIPT=%CAIRN_APP%\scripts\automaticReport
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for Python
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set PYTHONPATH=%IMPORT_HOME%\TestingScripts\RunPegaseTests
+set PYTHON_HOME=@PYTHON_HOME@
+set "PYTHON_HOME=%PYTHON_HOME:/=\%"
+set PYTHON_VENV=@PYTHON_VENV@
+set "PYTHON_VENV=%PYTHON_VENV:/=\%"
+
+call %PYTHON_VENV%\scripts\deactivate.bat
+set PATH=%PYTHON_HOME%;%PATH%
+rem bien mettre cette ligne après le 'set PATH' (sinon problème de définition du PATH)
+call %PYTHON_VENV%\scripts\activate.bat
+echo - PYTHON_HOME = %PYTHON_HOME%
+echo - PYTHON_VENV = %PYTHON_VENV%
+
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for Pegase lib 
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set PEGASE_HOME=%IMPORT_HOME%\Pegase
+set PEGASE_INCLUDE=%PEGASE_INSTALL%\include
+set PEGASE_OUT=%PEGASE_INSTALL%\%OPTION%\bin
+if "%OPTION%" == "fullrelease" set PEGASE_OUT=%PEGASE_INSTALL%\release\bin
+if "%OPTION%" == "fulldebug" set PEGASE_OUT=%PEGASE_INSTALL%\debug\bin
+
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for FBSF
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set FBSF_HOME=%PEGASE_INSTALL%
+set FBSF_INCLUDE=%PEGASE_INCLUDE%
+set FBSF_BIN=%PEGASE_OUT%
+set PATH=%FBSF_BIN%;%FBSF_BIN%\fbsfplugins;%FBSF_BIN%\FbsfUtilities;%PATH%
+
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for Cairn
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set CAIRN_BIN=%CAIRN_APP%\bin\%OPTION%\bin
+set PATH=%CAIRN_BIN%;%PATH%
+
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rem Path for Qt
+rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set QTDIR=@Qt5_HOME@
+set PATH=%QTDIR%\bin;@Qt5Creator_BIN@;%PATH%
+
+rem Path for QtCSV
+set PEGASE_QTCSV_HOME=%IMPORT_HOME%\Qt_tools\QtCsv
+
+rem Path for MIPModeler
+set MIPMODELER_HOME=%EXPORT_HOME%\MIPModeler
+set COINOR_HOME=%EXPORT_HOME%\MIPModeler\external\CoinOR
+
+rem Path for Cplex
+set CPLEX_HOME=@CPLEX_ROOT@
+set "CPLEX_HOME=%CPLEX_HOME:/=\%"
+set CPLEX_HOME_BIN=
+if not "%CPLEX_HOME%" == "" (
+	set CPLEX_HOME_BIN=%CPLEX_HOME%\bin\x64_win64
+)
+set PATH=%PATH%;%CPLEX_HOME_BIN%
+
+rem Path for Cairn
+set CAIRN_HOME=%EXPORT_HOME%
+set SOLVER_DEPS=%IMPORT_HOME%
+set PERSEE_DEPS=%EXPORT_HOME%
+
+rem path for translation
+set TRANSLATIONS_PATH=%FBSF_BIN%\translations
+
+echo - FBSF_BIN is %FBSF_BIN%
+echo - FBSF_HOME is %FBSF_HOME%
+echo - PEGASE_HOME = %PEGASE_HOME%
+echo - CAIRN_HOME = %CAIRN_HOME%
+echo - CAIRN_BIN = %CAIRN_BIN%
+echo - CAIRN_APP = %CAIRN_APP%
+echo - CPLEX_HOME = %CPLEX_HOME%
+
+

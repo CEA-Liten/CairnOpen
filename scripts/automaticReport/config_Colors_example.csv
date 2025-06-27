@@ -1,0 +1,9 @@
+Element_name;Color xkcd:colorname according to https://xkcd.com/color/rgb/
+Wind_farm;xkcd:blue
+ElectricityDistrib;xkcd:dark yellow
+Elec_Grid;xkcd:lime green
+H2;xkcd:mustard
+Elec_Grid_Inject;xkcd:grey
+ ELY_PEM;xkcd:orange
+ H2_Load;xkcd:light blue
+ H2_Tank;xkcd:azure

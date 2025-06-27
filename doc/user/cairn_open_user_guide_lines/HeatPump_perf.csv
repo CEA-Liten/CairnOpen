@@ -1,0 +1,5 @@
+Heat_Pump.ColdTempTable;Heat_Pump.HotTempTable;Heat_Pump.ColdTempTable(r=2);Heat_Pump.HotTempTable(c=2);Heat_Pump.CopTable;Heat_Pump.ThermalPowerTable
+5;50;5;50;3;7
+10;60;5;60;4;8
+;;10;50;5;9
+;;10;60;6;10

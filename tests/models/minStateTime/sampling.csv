@@ -1,0 +1,3 @@
+;MinStateTime__paramListJson__AddStartUpCost;MinStateTime__paramListJson__AddShutDownCost
+withoutCosts;false;false
+withCosts;true;true

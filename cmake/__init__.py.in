@@ -1,0 +1,57 @@
+import os
+import sys
+import pandas as pd
+
+cairnBin =  os.path.join(os.path.dirname(os.path.realpath(__file__)), '@CMAKE_INSTALL_BINDIR@')
+os.add_dll_directory(cairnBin)
+sys.path.append( cairnBin )
+os.environ["CAIRN_BIN"] = cairnBin
+
+from .cairn import *
+
+def set_param(problem, header_col, value):
+    try:
+        component=problem.get_component(header_col[0])
+        component.set_setting_value(header_col[1], value)
+        return 0
+    except ValueError:
+        try:
+            energy_carrier=problem.get_energy_carrier(header_col[0])
+            energy_carrier.set_setting_value(header_col[1], value)
+            return 0
+        except ValueError:
+            try:
+                problem.tech_eco_analysis[header_col[1]] = value
+                return 0
+            except ValueError:
+                try:
+                    problem.solver[header_col[1]] = value
+                    return 0
+                except ValueError:
+                    try:
+                        problem.simulation_control[header_col[1]] = value
+                        return 0
+                    except ValueError:
+                        return 1
+
+def run_sensitivity(problem, df_sens, max_time=-1):
+    """ runs sensitivity study of a given problem with a given input dataframe (2 header rows: 1st row: name of the component, 
+    2nd row: name of the parameter and one sensitivity study per row) for an optional maximal duration of each run.
+    arg1: persee problem
+    arg2: dataframe containing sensitivity studies to be conducted
+    arg3: maximal duration of each sensitivity study (optional)
+    :meta public:
+    """
+    columns=df_sens.columns.tolist()
+    cases=df_sens.index.tolist()
+    #Set maximum resolution if there is
+    if max_time != -1:
+        problem.solver['TimeLimit'] = max_time
+    #Modify problem with input values from dataframe for each case
+    for sens_case in cases:
+        for col in columns:
+            res = set_param(problem, col, df_sens[col][sens_case])
+            if res != 0:
+                print("Input param "+col+" not found")
+        problem.run("Report_s"+sens_case)
+  

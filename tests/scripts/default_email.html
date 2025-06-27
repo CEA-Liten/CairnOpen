@@ -1,0 +1,18 @@
+<html>
+<body>
+    Bonjour a tous,
+    <br>
+    <br>
+    Voici les resultats des TNR de Cairn sur les tests de base, a partir des dll reconstruites depuis les sources :
+    <br>
+    <br>
+    <u color : grey>Resultats : $BUILD_STATUS</u>
+    <br>
+    <br>
+</body>
+<ul>
+    ${FAILED_TESTS, showStack=false}
+</ul>
+</html>
+${FILE,path="tests/reports/Cairn-TNR.html"}
+${FILE,path="tests/reports/CairnCtest-TNR.html"}
