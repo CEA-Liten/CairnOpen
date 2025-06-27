@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install $WHL_FILENAME
+          # pip install $WHL_FILENAME
           pip install -r ./doc/user/requirements.txt
           python ./scripts/doc/userDocGenRST.py
       - name: Sphinx build
