@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setting advanced constraints on components &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_model_multiconverter.html">MultiConverter usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Setting advanced constraints on components</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="setting-advanced-constraints-on-components">
+<h1>Setting advanced constraints on components<a class="headerlink" href="#setting-advanced-constraints-on-components" title="Link to this heading"></a></h1>
+<p>Sometimes, you may want to add your own constraints between components.
+This may be the case when:</p>
+<ul class="simple">
+<li><p>you want to limit the power that a component may extract from a grid
+(example 1 below)</p></li>
+<li><p>you want to combine the operation of two production units, imposing
+an exclusion constraints on the two units (example 2 below),</p></li>
+<li><p>you want to impose a yearly power partition between two production
+units (example 3 below)</p></li>
+</ul>
+<section id="example-1-constraint-for-limiting-the-power-a-component-may-extract-from-a-grid">
+<h2>Example 1: constraint for limiting the power a component may extract from a grid<a class="headerlink" href="#example-1-constraint-for-limiting-the-power-a-component-may-extract-from-a-grid" title="Link to this heading"></a></h2>
+<div class="line-block">
+<div class="line">Let us suppose you have an electroloysis with electrical input and H2
+output, and want to exchange with a grid component the maximum power
+the electrolyzer is allowed to extract from grid at each time of a
+simulation horizon.</div>
+<div class="line">You need a way to get this maximum value from grid to electrolyzer.</div>
+<div class="line">This is illustrated by the example below, and explained just below. To
+do this you must:</div>
+</div>
+<ol class="arabic simple">
+<li><p>define a bus with model NodeEquality, and energy vector Electricity.</p></li>
+<li><p>create a port on the Grid component, specifing the value MaxPower as
+variable to export, and connect it to the bus you have just created.
+It is possible as it is present in the list of published values by
+the Grid.</p></li>
+<li><p>create a port on the electrolyzer component, to get the value, and
+connect it to the bus you have just created. It is possible as it is
+present in the list of published values by the Electrolyzer.</p></li>
+</ol>
+<p>This will add a constraint to your optimization problem telling that
+MaxPower of Grid should be the same as MaxPower of Electrolyzer.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Elec_Bus&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>ElectricityDistrib<span class="nt">&lt;/VectorName&gt;</span>
+<span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="nt">&lt;BusSameValue</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;CNX_GridEly&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>NodeEquality<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>ElectricityDistrib<span class="nt">&lt;/VectorName&gt;</span>
+<span class="nt">&lt;/BusSameValue&gt;</span>
+<span class="nt">&lt;BusSameValue</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;P_GridEly&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>NodeEquality<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>ElectricityDistrib<span class="nt">&lt;/VectorName&gt;</span>
+<span class="nt">&lt;/BusSameValue&gt;</span>
+<span class="nt">&lt;Converter</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;QUALYGRIDS_ALK&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>Electrolyzer<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot; H2MassFlowRate &quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span>H2_Bus<span class="nt">&lt;/Port1&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port2</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;UsedPower&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span>Elec_Bus<span class="nt">&lt;/Port2&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port3</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;MaxPower&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>CNX_GridEly<span class="w"> </span><span class="nt">&lt;/Port3&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port4</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;UsedPower&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span>P_GridEly<span class="nt">&lt;/Port4&gt;</span>
+<span class="w">        </span><span class="nt">&lt; ComputeProductionCost</span><span class="w"> </span><span class="nt">&gt;</span><span class="w"> </span>H2MassFlowRate<span class="w"> </span><span class="nt">&lt;/ ComputeProductionCost &gt;</span>
+<span class="w">        </span><span class="nt">&lt;UsedPower.Coeff&gt;</span>+1.<span class="nt">&lt;/UsedPower.Coeff&gt;</span>
+<span class="nt">&lt;/Converter&gt;</span>
+<span class="nt">&lt; GridFCRService</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Elec_Grid&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;file&gt;</span>.\lib\<span class="w"> </span>GridFCRService<span class="w"> </span>.dll<span class="nt">&lt;/file&gt;</span>\textsl{}
+<span class="w">        </span><span class="nt">&lt; ExtractFromGrid</span><span class="w"> </span><span class="nt">&gt;</span>1<span class="nt">&lt;/ ExtractFromGrid &gt;</span>
+<span class="w">        </span><span class="nt">&lt; UseZEPrice</span><span class="w"> </span><span class="nt">&gt;</span>true<span class="nt">&lt;/UseZEPrice &gt;</span>
+<span class="w">        </span><span class="nt">&lt; UseProfileFCRCapacityPrice</span><span class="w"> </span><span class="nt">&gt;</span>Elec_Grid.CapacityFCR<span class="w"> </span><span class="nt">&lt;/ UseProfileFCRCapacityPrice &gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;GridFlow&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span>Elec_Bus<span class="nt">&lt;/Port1&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port2</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;MaxPower&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>CNX_GridEly<span class="w"> </span><span class="nt">&lt;/Port2&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port3</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;UsedPower&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span>P_GridEly<span class="nt">&lt;/Port3&gt;</span>
+<span class="nt">&lt;/ GridFCRService &gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="example-2-constraint-for-combining-the-operation-of-two-production-units">
+<h2>Example 2: constraint for combining the operation of two production units<a class="headerlink" href="#example-2-constraint-for-combining-the-operation-of-two-production-units" title="Link to this heading"></a></h2>
+<p>This is illustrated by the example below, and explained just below. To
+do this you must:</p>
+<ol class="arabic simple">
+<li><p>define a bus Heat_SUMBIOGAZ with model NodeLaw, to add a Summation
+type constraint, and energy vector of whatever type you want (Fluid,
+Electrical or Thermal), it has no meaning in this case,</p></li>
+<li><p>set the bus settings: StrictConstraint = false, MaxConstraint=true,
+and MaxConstraintBusValue = 1.,</p></li>
+<li><p>create an additionnal port on each production unit, specifing the
+value “States” as variable to export, (ie with use=”OUPUT”
+attribute), and connect it to the bus you have just created. It is
+possible only for unit production models publishing States in the
+list of published values (see for instance ProductionUC or
+ThermalGroup submodels).</p></li>
+</ol>
+<p>This will add a constraint to your optimization problem telling that the
+sum of both States should lower than 1., at each timestep of the
+planning horizon.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="nt">&lt;EnergyVector</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;CH4&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Type&gt;</span>FluidCH4<span class="nt">&lt;/Type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;FluxUnit&gt;</span>kg/h<span class="nt">&lt;/FluxUnit&gt;</span>
+<span class="w">        </span><span class="nt">&lt; StorageUnit</span><span class="w"> </span><span class="nt">&gt;</span>kg<span class="nt">&lt;/StorageUnit &gt;</span>
+<span class="nt">&lt;/EnergyVector&gt;</span>
+<span class="nt">&lt;EnergyVector</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;BoisSec&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Type&gt;</span><span class="w"> </span>FluidDryWood<span class="w"> </span><span class="nt">&lt;/Type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;FluxUnit&gt;</span>kg/h<span class="nt">&lt;/FluxUnit&gt;</span>
+<span class="w">        </span><span class="nt">&lt; StorageUnit</span><span class="w"> </span><span class="nt">&gt;</span>kg<span class="nt">&lt;/StorageUnit &gt;</span>
+<span class="nt">&lt;/EnergyVector&gt;</span>
+<span class="nt">&lt;EnergyVector</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Chaleur&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Type&gt;</span>Thermal<span class="nt">&lt;/Type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;FluxUnit&gt;</span>MW<span class="nt">&lt;/FluxUnit&gt;</span>
+<span class="w">        </span><span class="nt">&lt; StorageUnit</span><span class="w"> </span><span class="nt">&gt;</span>MWh<span class="nt">&lt;/StorageUnit &gt;</span>
+<span class="nt">&lt;/EnergyVector&gt;</span>
+<span class="nt">&lt;Converter</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;GenGAZ&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>ThermalGroup<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;INPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>CH4_Balance<span class="w"> </span><span class="nt">&lt;/Port1&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port2</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_Balance<span class="w"> </span><span class="nt">&lt;/Port2&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port3</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;States&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_SUMBIOGAZ<span class="w"> </span><span class="nt">&lt;/Port3&gt;</span>
+<span class="w">        </span><span class="nt">&lt; ComputeProductionCost</span><span class="w"> </span><span class="nt">&gt;</span><span class="w"> </span>OUTPUTFlux1<span class="w"> </span><span class="nt">&lt;/ ComputeProductionCost &gt;</span>
+<span class="nt">&lt;/Converter&gt;</span>
+<span class="nt">&lt;Converter</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;GenBIO&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>ThermalGroup<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;INPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Wood_Balance<span class="w"> </span><span class="nt">&lt;/Port1&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port2</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_Balance<span class="w"> </span><span class="nt">&lt;/Port2&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Port3</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;States&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="w"> </span><span class="na">Coeff=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_SUMBIOGAZ<span class="w"> </span><span class="nt">&lt;/Port3&gt;</span>
+<span class="w">        </span><span class="nt">&lt; ComputeProductionCost</span><span class="w"> </span><span class="nt">&gt;</span><span class="w"> </span>OUTPUTFlux1<span class="w"> </span><span class="nt">&lt;/ ComputeProductionCost &gt;</span>
+<span class="nt">&lt;/Converter&gt;</span>
+<span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;CH4_Balance&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>CH4<span class="nt">&lt;/VectorName&gt;</span>
+<span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Wood_Balance&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>BoisSec<span class="nt">&lt;/VectorName&gt;</span>
+<span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Heat_Balance&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>Chaleur<span class="nt">&lt;/VectorName&gt;</span>
+<span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Heat_SUMBIOGAZ&quot;</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">        </span><span class="nt">&lt;VectorName&gt;</span>Chaleur<span class="nt">&lt;/VectorName&gt;</span>
+</pre></div>
+</div>
+<p>&lt;/BusFlowBalance&gt;</p>
+<p>and the corresponding settings in the JSON file are :</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="err">Hea</span><span class="kc">t</span><span class="err">_SUMBIOGAZ</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">S</span><span class="kc">tr</span><span class="err">ic</span><span class="kc">t</span><span class="err">Co</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="w"> </span><span class="err">=</span><span class="kc">false</span>
+<span class="err">Hea</span><span class="kc">t</span><span class="err">_SUMBIOGAZ</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">MaxCo</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="w"> </span><span class="err">=</span><span class="kc">true</span>
+<span class="err">Hea</span><span class="kc">t</span><span class="err">_SUMBIOGAZ</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">MaxCo</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="err">BusValue</span><span class="w"> </span><span class="err">=</span><span class="mf">1.</span>
+</pre></div>
+</div>
+</section>
+<section id="example-3-constraint-for-imposing-a-yearly-power-partition-between-two-production-units">
+<h2>Example 3: constraint for imposing a yearly power partition between two production units<a class="headerlink" href="#example-3-constraint-for-imposing-a-yearly-power-partition-between-two-production-units" title="Link to this heading"></a></h2>
+<p>Let us suppose you want to set a production constraint such that 40
+percent of the total yearly heat production be produced by the Biomass
+heat production unit. This can be achieved by summing the power from
+both production units, take 40 percent of it and set a constraint such
+that the biomass heat production represent at least 40 percent of the
+yearly total production.</p>
+<p>This is illustrated by the example below, and explained just below. To
+do this you must:</p>
+<ol class="arabic simple">
+<li><p>define a bus Heat_SUMBIOGAZ with model NodeLaw, to perform a
+Summation, and energy vector of Energy Type,</p></li>
+<li><p>set the bus settings: StrictConstraint = false : NO constraint on the
+summation,</p></li>
+<li><p>add port1 on Heat_SUMBIOGAZ to get the result of the summation
+through the Variable=”BusBalance” Use=”OUTPUT” statements at that
+port.</p></li>
+<li><p>create an additionnal port on each production unit, specifing the
+value “OUTPUTFlux1” as variable to export, (ie with use=”OUPUT”
+attribute), and connect it to the bus you have just created. It is
+possible only for unit production models publishing OUTPUTFlux1 in
+the list of published values (see for instance ProductionUC or
+ThermalGroup submodels).</p></li>
+<li><p>define a bus Heat_YEARCONSTRAINT with model NodeLaw, to perform a
+Summation with TimeIntegration, and energy vector of Energy Type,</p></li>
+<li><p>set the Heat_YEARCONSTRAINT bus settings: MaxIntegrateConstraint=true
+: Max-bounded integration constraint on the summation of 40 percent
+of the total power computed by Heat_SUMBIOGAZ, and the full BIOGAZ
+power from its port number 4.</p></li>
+</ol>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;EnergyVector</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;CH4&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Type&gt;</span>FluidCH4<span class="nt">&lt;/Type&gt;</span>
+<span class="w">         </span><span class="nt">&lt;FluxUnit&gt;</span>kg/h<span class="nt">&lt;/FluxUnit&gt;</span>
+<span class="w">         </span><span class="nt">&lt; StorageUnit</span><span class="w"> </span><span class="nt">&gt;</span>kg<span class="nt">&lt;/StorageUnit &gt;</span>
+<span class="w"> </span><span class="nt">&lt;/EnergyVector&gt;</span>
+<span class="w"> </span><span class="nt">&lt;EnergyVector</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;BoisSec&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Type&gt;</span><span class="w"> </span>FluidDryWood<span class="w"> </span><span class="nt">&lt;/Type&gt;</span>
+<span class="w">         </span><span class="nt">&lt;FluxUnit&gt;</span>kg/h<span class="nt">&lt;/FluxUnit&gt;</span>
+<span class="w">         </span><span class="nt">&lt; StorageUnit</span><span class="w"> </span><span class="nt">&gt;</span>kg<span class="nt">&lt;/StorageUnit &gt;</span>
+<span class="w"> </span><span class="nt">&lt;/EnergyVector&gt;</span>
+<span class="w"> </span><span class="nt">&lt;EnergyVector</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Chaleur&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Type&gt;</span>Thermal<span class="nt">&lt;/Type&gt;</span>
+<span class="w">         </span><span class="nt">&lt;FluxUnit&gt;</span>MW<span class="nt">&lt;/FluxUnit&gt;</span>
+<span class="w">         </span><span class="nt">&lt; StorageUnit</span><span class="w"> </span><span class="nt">&gt;</span>MWh<span class="nt">&lt;/StorageUnit &gt;</span>
+<span class="w"> </span><span class="nt">&lt;/EnergyVector&gt;</span>
+<span class="w"> </span><span class="nt">&lt;Converter</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;GenGAZ&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>ThermalGroup<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;INPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>CH4_Balance<span class="w"> </span><span class="nt">&lt;/Port1&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port2</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_Balance<span class="w"> </span><span class="nt">&lt;/Port2&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port3</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="w"> </span><span class="na">Coeff=</span><span class="s">&quot;0.4&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_SUMBIOGAZ<span class="w"> </span><span class="nt">&lt;/Port3&gt;</span>
+<span class="w">         </span><span class="nt">&lt; ComputeProductionCost</span><span class="w"> </span><span class="nt">&gt;</span><span class="w"> </span>OUTPUTFlux1<span class="w"> </span><span class="nt">&lt;/ ComputeProductionCost &gt;</span>
+<span class="w"> </span><span class="nt">&lt;/Converter&gt;</span>
+<span class="w"> </span><span class="nt">&lt;Converter</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;GenBIO&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span><span class="w"> </span>ThermalGroup<span class="w"> </span><span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;INPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;INPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Wood_Balance<span class="w"> </span><span class="nt">&lt;/Port1&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port2</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_Balance<span class="w"> </span><span class="nt">&lt;/Port2&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port3</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="w"> </span><span class="na">Coeff=</span><span class="s">&quot;0.4&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_SUMBIOGAZ<span class="w"> </span><span class="nt">&lt;/Port3&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port4</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;OUTPUTFlux1&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="w"> </span><span class="na">Coeff=</span><span class="s">&quot;-1&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_YEARCONSTRAINT<span class="w"> </span><span class="nt">&lt;/Port4&gt;</span>
+<span class="w">         </span><span class="nt">&lt; ComputeProductionCost</span><span class="w"> </span><span class="nt">&gt;</span><span class="w"> </span>OUTPUTFlux1<span class="w"> </span><span class="nt">&lt;/ ComputeProductionCost &gt;</span>
+<span class="w"> </span><span class="nt">&lt;/Converter&gt;</span>
+<span class="w"> </span><span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;CH4_Balance&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;VectorName&gt;</span>CH4<span class="nt">&lt;/VectorName&gt;</span>
+<span class="w"> </span><span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="w"> </span><span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Wood_Balance&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;VectorName&gt;</span>BoisSec<span class="nt">&lt;/VectorName&gt;</span>
+<span class="w"> </span><span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="w"> </span><span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Heat_Balance&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;VectorName&gt;</span>Chaleur<span class="nt">&lt;/VectorName&gt;</span>
+<span class="w"> </span><span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="w"> </span><span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Heat_SUMBIOGAZ&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;VectorName&gt;</span>Chaleur<span class="nt">&lt;/VectorName&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Port1</span><span class="w"> </span><span class="na">Variable=</span><span class="s">&quot;BusBalance&quot;</span><span class="w"> </span><span class="na">Use=</span><span class="s">&quot;OUTPUT&quot;</span><span class="nt">&gt;</span><span class="w"> </span>Heat_YEARCONSTRAINT<span class="w"> </span><span class="nt">&lt;/Port1&gt;</span>
+<span class="w"> </span><span class="nt">&lt;/BusFlowBalance&gt;</span>
+<span class="w"> </span><span class="nt">&lt;BusFlowBalance</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;Heat_YEARCONSTRAINT&quot;</span><span class="nt">&gt;</span>
+<span class="w">         </span><span class="nt">&lt;Model&gt;</span>NodeLaw<span class="nt">&lt;/Model&gt;</span>
+<span class="w">         </span><span class="nt">&lt;VectorName&gt;</span>Chaleur<span class="nt">&lt;/VectorName&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/BusFlowBalance&gt;</span>
+</pre></div>
+</div>
+<p>and the settings are :</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="err">Hea</span><span class="kc">t</span><span class="err">_SUMBIOGAZ</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">S</span><span class="kc">tr</span><span class="err">ic</span><span class="kc">t</span><span class="err">Co</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="w"> </span><span class="err">=</span><span class="kc">false</span>
+<span class="err">Hea</span><span class="kc">t</span><span class="err">_YEARCONSTRAINT</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">S</span><span class="kc">tr</span><span class="err">ic</span><span class="kc">t</span><span class="err">Co</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="w"> </span><span class="err">=</span><span class="kc">false</span>
+<span class="err">Hea</span><span class="kc">t</span><span class="err">_YEARCONSTRAINT</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">MaxI</span><span class="kc">nte</span><span class="err">gra</span><span class="kc">te</span><span class="err">Co</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="w"> </span><span class="err">=</span><span class="kc">true</span>
+<span class="err">Hea</span><span class="kc">t</span><span class="err">_YEARCONSTRAINT</span><span class="w"> </span><span class="err">.</span><span class="w"> </span><span class="err">MaxI</span><span class="kc">nte</span><span class="err">gra</span><span class="kc">te</span><span class="err">Co</span><span class="kc">nstra</span><span class="err">i</span><span class="kc">nt</span><span class="err">BusValue</span><span class="w"> </span><span class="err">=</span><span class="mf">0.</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

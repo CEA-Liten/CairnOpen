@@ -1,0 +1,257 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ramp &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../../_static/cairn_logo.png"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/how_to_model_multiconverter.html">MultiConverter usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Cairn Open SubModels</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Ramp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ramp">
+<h1>Ramp<a class="headerlink" href="#ramp" title="Link to this heading"></a></h1>
+<section id="model-interface-of-ramp">
+<h2>Model interface of Ramp<a class="headerlink" href="#model-interface-of-ramp" title="Link to this heading"></a></h2>
+<p>Model imposing constraints on ramp-down and ramp-up.</p>
+<p>ConnectRamp must be connected to the flux of the component on which the ramp constraints must be applied.</p>
+<p>Ramp-down and ramp-up costs can be considered.</p>
+<blockquote>
+<div><figure class="align-center" id="ioramp">
+<a class="reference internal image-reference" href="../../_images/Ramp_ConstantProd.svg"><img alt="IO Ramp" src="../../_images/Ramp_ConstantProd.svg" style="width: 200px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">I/O Ramp</span><a class="headerlink" href="#ioramp" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div></blockquote>
+</section>
+<section id="expressions-table-of-ramp">
+<h2>Expressions table  of Ramp<a class="headerlink" href="#expressions-table-of-ramp" title="Link to this heading"></a></h2>
+<p>See also <a class="reference internal" href="../TechnicalSubModel.html#expressions-table-of-technicalsubmodel"><span class="std std-ref">Expressions table  of TechnicalSubModel</span></a> for generic options</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Ramp</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Expression name</p></th>
+<th class="head"><p>Unit</p></th>
+<th class="head"><p>Mandatory</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ComponentSize</p></td>
+<td><p>mExpSizeMax</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><blockquote>
+<div><p>\</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="row-odd"><td><p>State</p></td>
+<td><p>mExpState</p></td>
+<td><p>bool</p></td>
+<td><blockquote>
+<div><p>ON OFF state of the element connected to ramp \</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="row-even"><td><p>StartUp</p></td>
+<td><p>mExpStartUp</p></td>
+<td><p>bool</p></td>
+<td><blockquote>
+<div><p>\</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="row-odd"><td><p>ShutDown</p></td>
+<td><p>mExpShutDown</p></td>
+<td><p>bool</p></td>
+<td><blockquote>
+<div><p>\</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="model-variables-of-ramp">
+<h2>Model variables of Ramp<a class="headerlink" href="#model-variables-of-ramp" title="Link to this heading"></a></h2>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Ramp variables table</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable name</p></th>
+<th class="head"><p>dimension</p></th>
+<th class="head"><p>Associated Expr</p></th>
+<th class="head"><p>size</p></th>
+<th class="head"><p>varMin</p></th>
+<th class="head"><p>varMax</p></th>
+<th class="head"><p>varType</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>mVarInput</p></td>
+<td><p>1</p></td>
+<td><p>mExpInput</p></td>
+<td><p>mHorizon</p></td>
+<td></td>
+<td></td>
+<td><p>double</p></td>
+</tr>
+<tr class="row-odd"><td><p>mVarWeight</p></td>
+<td><p>0</p></td>
+<td></td>
+<td></td>
+<td><ol class="arabic simple" start="0">
+<li></li>
+</ol>
+</td>
+<td><p>fabs(mMaxWeight)</p></td>
+<td><p>double</p></td>
+</tr>
+<tr class="row-even"><td><p>mRampCostVar</p></td>
+<td><p>1</p></td>
+<td></td>
+<td><p>varMilpHorizon()</p></td>
+<td><p>0</p></td>
+<td><p>fabs(mMaxBound) * mRampCost</p></td>
+<td><p>double</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,252 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultiConverter usage &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Rolling Horizon" href="rolling_horizon.html" />
+    <link rel="prev" title="Environmental impacts" href="How_to_take_into_account_the_environmental_impacts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MultiConverter usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#principles">Principles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-example-of-use-high-temperature-steam-electrolysis">Advanced example of use: High Temperature Steam Electrolysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MultiConverter usage</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multiconverter-usage">
+<h1>MultiConverter usage<a class="headerlink" href="#multiconverter-usage" title="Link to this heading"></a></h1>
+<p>The components of <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> are specific components with hardcoded behavior laws in the model (e.g., HeatPump, electrolyzer) and a limited number of inputs/outputs (linked to the component’s behavior).</p>
+<p>One option could be to add ports linked to one of the existing variables. However, this does not allow for linking multiple variables together.</p>
+<p>The MultiConverter offers a solution by allowing the user to write its own matrix of constraints.</p>
+<section id="principles">
+<h2>Principles<a class="headerlink" href="#principles" title="Link to this heading"></a></h2>
+<p>This component allows to configure its behavior owing to two constraints:</p>
+<ul>
+<li><p>Equality constraint:  <span class="math notranslate nohighlight">\(A \cdot V = B\)</span>
+where <span class="math notranslate nohighlight">\(V = \begin{pmatrix}X\\Y\end{pmatrix}\)</span> and <span class="math notranslate nohighlight">\(B = \begin{pmatrix}B_{X}\\B_{Y}\end{pmatrix}\)</span></p>
+<p>X are in the inputs and Y the outputs.</p>
+<p>Thus we have:</p>
+<p><span class="math notranslate nohighlight">\(\forall{m} \in{[|1;N_{I}+N_{J}|]}, \sum_{k=1}^{N_{I}} a_{m,k}x_{k} + \sum_{k=1}^{N_{J}} a_{m,k+N_{I}}y_{k} = B_{m}\)</span></p>
+</li>
+<li><p>Unequality constraint: <span class="math notranslate nohighlight">\(C \cdot V &lt;= D\)</span></p>
+<p>With the same principle as the equality constraint.</p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To correctly configure the component, be aware of:</p>
+<ul class="simple">
+<li><p>If we have I, the number of inputs and J, the number of outputs, A and C matrices are two square matrices with a size of <span class="math notranslate nohighlight">\(N_{I} + N_{J}\)</span></p></li>
+<li><p>The matrices’ coefficients are in the order of inputs then outputs</p></li>
+<li><p>CAPEX is set relative to the first output</p></li>
+<li><p>MaxPower is set relative to the first output</p></li>
+<li><p>All the matrices must be provided owing to .csv files</p></li>
+</ul>
+</div>
+</section>
+<section id="advanced-example-of-use-high-temperature-steam-electrolysis">
+<h2>Advanced example of use: High Temperature Steam Electrolysis<a class="headerlink" href="#advanced-example-of-use-high-temperature-steam-electrolysis" title="Link to this heading"></a></h2>
+<p>An example can be found in Cairn Viewer, in examples/models/multiConverter.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This example is purely fictive, and made to illustrate some aspects of the multiconverter. It is probably not realistic at all.</p>
+</div>
+<p>We want to model an electrolyzer that consumes water, heat and electricity and produces hydrogen, fatal heat, and oxygen.</p>
+<p>We write the vector X as follows:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+P_{elec}\\
+Q_{H_2O}\\
+P_{600}\\
+Q_{H_2}\\
+P_{60}\\
+Q_{O_2}
+\end{pmatrix}\end{split}\]</div>
+<p>With <span class="math notranslate nohighlight">\(P_{elec}\)</span> the electric power in MW (InputFlux1), <span class="math notranslate nohighlight">\(Q_{H_2O}\)</span>, <span class="math notranslate nohighlight">\(Q_{H_2}\)</span> and <span class="math notranslate nohighlight">\(Q_{O_2}\)</span> the fluxes in kg/h of water, hydrogen and oxygen, <span class="math notranslate nohighlight">\(P_{600}\)</span> and <span class="math notranslate nohighlight">\(P_{60}\)</span> the thermal power of high temperature (600°C) and low temperature (60°C).</p>
+<p>The following set of equation describes the functionning of the system:</p>
+<p>The energy balance :</p>
+<div class="math notranslate nohighlight">
+\[P_{elec} + P_{600} = 33.3 Q_{H2} + P_{60}\]</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that if you give only this line of equation, it means that you can choose to put only eletricity or only heat to produce hydrogen, and you can choose to convert everything in hydrogen. This means that you probably have to add some constraint to force to have a fixed proportion between high temperature heat and eletricity or to precise the proportion of thermic losses.</p>
+</div>
+<p>To which we add an efficiency : the quantity of hydrogen out is limited by a ratio between heat and electricity.</p>
+<div class="math notranslate nohighlight">
+\[Q_{elec} + 0.5P_{600} = 19.8 Q_{H_2}\]</div>
+<p>We add the stoechiometric relation describing the chemical transformation <span class="math notranslate nohighlight">\(2 H_2O \rightarrow 2H_2 + O_2\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[4.032 Q_{H_2O} = Q_{H_2}\]</div>
+<div class="math notranslate nohighlight">
+\[31.99 Q_{H_2} = 4.0332 Q_{O_2}\]</div>
+<p>Then the matrix <span class="math notranslate nohighlight">\(A\)</span> is the following :</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+1 &amp; 0 &amp; 1 &amp; -33.3 &amp; -1 &amp; 0 \\
+1 &amp; 0 &amp; 0.5 &amp; -19.8 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; -31.99 &amp; 0 &amp; 4.032 \\
+0 &amp; 0 &amp; 4.032 &amp; 0 &amp; -36 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix} \cdot
+\begin{pmatrix}
+P_{elec}\\
+Q_{H_2O}\\
+P_{600}\\
+Q_{H_2}\\
+P_{60}\\
+Q_{O_2}
+\end{pmatrix} =
+\begin{pmatrix}
+0\\
+0\\
+0\\
+0\\
+0\\
+0
+\end{pmatrix}\end{split}\]</div>
+<p>And the system can be written <span class="math notranslate nohighlight">\(AX = B\)</span>, with <span class="math notranslate nohighlight">\(B=0\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that the matrix A is not inversible, which not a problem, otherwise, the system leaves very few freedom to the variables.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="How_to_take_into_account_the_environmental_impacts.html" class="btn btn-neutral float-left" title="Environmental impacts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rolling_horizon.html" class="btn btn-neutral float-right" title="Rolling Horizon" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

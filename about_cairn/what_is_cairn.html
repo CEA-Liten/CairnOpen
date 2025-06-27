@@ -1,0 +1,407 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview of the Cairn tool &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installing Cairn" href="installation.html" />
+    <link rel="prev" title="Cairn Tool" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview of the <span class="xref std std-term">Cairn</span> tool</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cairn-principles"><span class="xref std std-term">Cairn</span> principles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modelling-principles-of-cairn">Modelling principles of <span class="xref std std-term">Cairn</span></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#screenshots">Screenshots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#historic">Historic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#citing">Citing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_model_multiconverter.html">MultiConverter usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Overview of the <span class="xref std std-term">Cairn</span> tool</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="overview-of-the-cairn-tool">
+<h1>Overview of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> tool<a class="headerlink" href="#overview-of-the-cairn-tool" title="Link to this heading"></a></h1>
+<section id="cairn-principles">
+<h2><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> principles<a class="headerlink" href="#cairn-principles" title="Link to this heading"></a></h2>
+<p>CEA has been developing an optimization software called <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> to conduct techno-economic and environmental studies
+that help decision making when looking for optimal energy mixes at several scales of the <strong>energy system</strong>, from industrial premises
+to territories or countries.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="admonition-what-is-an-energy-system admonition">
+<p class="admonition-title">What is an energy system?</p>
+<ul class="simple">
+<li><p>An <strong>energy system</strong> is a system designed to supply <strong>energy-services to end-users</strong>.</p></li>
+<li><p>An <strong>energy system</strong> consists of <strong>inlet primary energies</strong> (fossil, renewables,…), <strong>conversion</strong> of primary energies to intermediate ones
+and <strong>outlet or final energies</strong> to <strong>end-users</strong>.</p></li>
+<li><p>An <strong>energy system</strong> is constituted by all components related to the <strong>production, conversion, storage, delivery, and use of energy</strong>.</p></li>
+<li><p>An <strong>energy system</strong> accounts for all technical, environmental, economic and social aspects.</p></li>
+</ul>
+</div>
+<p>The <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> tool allows in a modular way to define and solve a <strong>techno-economic problem</strong> including environmental aspects by assembling
+several Mixed Integer Linear Programming (<a class="reference internal" href="../glossary.html#term-MILP"><span class="xref std std-term">MILP</span></a>) contributions of a dedicated C++ core library by modelling the main technological components
+of multi-energy systems.</p>
+<p><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> is mainly used to solve the optimization problems of so-called <strong>unit-commitment problems</strong> with <strong>size optimization</strong>,
+trying to find the <strong>optimal energy mix</strong> for the energy system submitted to one or several time load profiles.</p>
+<p>Specific constraints between components and their variables can be defined without any code development and through
+<strong>smart connectors</strong>.</p>
+<p>Solving the <strong>problem</strong> is performed thanks to an Application Programming Interface (<a class="reference internal" href="../glossary.html#term-API"><span class="xref std std-term">API</span></a>) of various Open Source or
+commercial mixed integer linear solvers.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> is not a solver.</p></li>
+<li><p><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> does not supply solvers.</p></li>
+<li><p>Solver has to be installed by users.</p></li>
+</ul>
+</div>
+<p>The user is able to build the <strong>energy system</strong> either through a C++ Application Programming Interface (<a class="reference internal" href="../glossary.html#term-API"><span class="xref std std-term">API</span></a>)
+or through a Graphical User Interface (<a class="reference internal" href="../glossary.html#term-GUI"><span class="xref std std-term">GUI</span></a>).</p>
+</section>
+<section id="modelling-principles-of-cairn">
+<h2>Modelling principles of <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a><a class="headerlink" href="#modelling-principles-of-cairn" title="Link to this heading"></a></h2>
+<p>A multi-energy system (<span class="xref std std-ref">energysystem</span>) is modelled by an set of technological components exchanging flows
+of different <strong>energy carriers</strong>, and/or state data (internal temperature, operating status…).
+Each technological components is associated to a model that writes <a class="reference internal" href="../glossary.html#term-MILP"><span class="xref std std-term">MILP</span></a> contribution to a global <strong>optimization problem</strong>.
+An <strong>optimization problem</strong> consists of maximization or minimization of an <strong>objective function</strong> under constraints.</p>
+<p>Each energy or mass term (electrical, thermal or material, H2) is associated with an <strong>energy carrier</strong>.
+These energy carriers give the nature of the flow associated to it and the different units to be used.
+Energy carriers are linked to <strong>smart connections</strong> (bus or nodes). These smart connections enable data exchange between models.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="admonition-technological-components-models-are-divided-into-4-main-classes admonition">
+<p class="admonition-title">Technological components models are divided into <strong>4 main classes</strong></p>
+<ul class="simple">
+<li><p><strong>Converters models</strong> describing the behavior of conversion technologies (Heat Pumps, combined heat and power units, electrolyzers,
+methaners, biogas or biomethane units) with their efficiencies and constraints (start-up or ramp) to pass flow from a given energy carrier to another one.</p></li>
+<li><p><strong>Storage models</strong> modelling capacities of energy or mass.</p></li>
+<li><p><strong>Load models</strong> which impose source or load time profiles, with flexibility, load shedding or curtailment abilities.</p></li>
+<li><p><strong>Grid models</strong> which calculate injected or extracted flow, at a given cost.</p></li>
+</ul>
+</div>
+<p>A technological component model includes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Input parameters</strong> : the techno-economic and environmental parameters (eg efficiencies, environmental impacts, costs),
+the boundary condition time series (eg the prices), the maps (CAPEX, performance…) and the setting options.</p></li>
+<li><dl class="simple">
+<dt><strong>Decision variables</strong> :</dt><dd><ul>
+<li><p>About sizing : capacities (nominal production power or flow rate, maximum storage capacity).</p></li>
+<li><p>About operation and control : state variables that are time-dependent, and instantaneous flows
+exchanged between components (UsedPower between Grid and Electrolyzer).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Constraints</strong> :</dt><dd><ul>
+<li><p><strong>Linear constraints</strong> linking decision variables and parameters (e.g. the relationship between
+input and output, as a simple efficiency between electricity consumption and Hydrogen production in an Electrolysis system).</p></li>
+<li><p><strong>Advanced constraints</strong> like piecewise linear equations involving decision variables to reflect
+non linear operation constraints (e.g. an efficiency map for a Heat Pump).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>Several modeling levels are possible to match the desired compromise between time and accuracy, as for the example of a <strong>Li-Ion battery</strong> :</dt><dd><ul class="simple">
+<li><p>it can be modeled either like a generic energy storage with constant charging and discharging
+powers assuming main use in the range 20% to 80% of full charge,</p></li>
+<li><p>or it can be modeled using a performance map giving precisely charging and discharging
+powers as function of the state of charge of the battery.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Smart connections</strong> between ports of models use specific constraint modules; which can be of the following classes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt><strong>System constraints</strong> (Bus) :</dt><dd><ul>
+<li><p><strong>Node Laws</strong> : the variables connected to the node are summed at each time step, a sum
+value can be imposed (eg 0 to ensure flow balances).</p></li>
+<li><p><strong>Node equality</strong> : the variables connected to the node must be equal at each time step.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><strong>Generic operational constraints</strong> to add to technological models (for instance ramp constraints).</p></li>
+<li><p><strong>Physical models to add physical generic equations</strong> to some technological components (temperature).</p></li>
+</ul>
+</div></blockquote>
+<p>This modularity, based on object-oriented programming permits having a great modeling freedom as it is illustrated in <a class="reference internal" href="#figmain2"><span class="std std-numref">Fig. 2</span></a> <a class="reference internal" href="#figmain2"><span class="std std-ref">View and modify easily energy architectures with GUI</span></a>, as well as the ability / capability of capitalizing on models.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+</div>
+<p><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> is a tool that allows building a model of a multi-energy system and its associated data, and to turn it into an optimization problem.
+<a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> is used to :</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>solve optimization</strong> problems of so-called <strong>unit-commitment problems</strong>
+with size optimization trying to find <strong>optimal energy mix</strong> for an energy system submitted to one or several time load profiles.</p></li>
+<li><p><strong>simulate the operation</strong> of the system. The set of equations describes the state of the system
+(with accounts for all constraints), depending on the past and on the boundary conditions.</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition-what-are-optimization-and-simulation-modes admonition">
+<p class="admonition-title">What are <strong>optimization</strong> and <strong>simulation</strong> modes?</p>
+<p>Optimization and simulation are two commonly used approaches in system modeling and analysis, but they serve different purposes.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Optimization</strong> aims to find <strong>the best possible solution to a given problem</strong>, by maximizing or minimizing an objective function.
+For example, this could involve minimizing costs, maximizing profit, or achieving the best trade-off between multiple criteria.</p></li>
+<li><p><strong>Simulation</strong>, on the other hand, is used to model the behavior of a real or hypothetical system under various conditions without
+necessarily seeking the optimal solution. It allows understanding how a system works, assessing the impact of different
+scenarios or conditions, as well as testing hypotheses.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<p>After the optimization, <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> allows analyzing the results. The <a class="reference internal" href="#figmain1"><span class="std std-numref">Fig. 1</span></a> <a class="reference internal" href="#figmain1"><span class="std std-ref">Overview of the steps of Cairn’s operation.</span></a> illustrates the global steps of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> operation.</p>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain1">
+<a class="reference internal image-reference" href="../_images/cairn_steps.PNG"><img alt="Description of what |cairn| does" src="../_images/cairn_steps.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Overview of the steps of <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a>’s operation.</span><a class="headerlink" href="#figmain1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ol class="arabic simple">
+<li><p>How to run <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> ?</p></li>
+<li><p>What is the methodolgy to use <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> ?</p></li>
+</ol>
+</div>
+</section>
+<section id="screenshots">
+<h2>Screenshots<a class="headerlink" href="#screenshots" title="Link to this heading"></a></h2>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain2">
+<a class="reference internal image-reference" href="../_images/screenshot_view_architecture.PNG"><img alt="View and modify easily energy architectures with |gui|" src="../_images/screenshot_view_architecture.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">View and modify easily energy architectures with <a class="reference internal" href="../glossary.html#term-GUI"><span class="xref std std-term">GUI</span></a></span><a class="headerlink" href="#figmain2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain3">
+<a class="reference internal image-reference" href="../_images/screenshot_parameters.PNG"><img alt="View and modify easily energy architectures with |gui|" src="../_images/screenshot_parameters.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">View and modify easily energy architectures with <a class="reference internal" href="../glossary.html#term-GUI"><span class="xref std std-term">GUI</span></a>, with drag-and-and-drop intuitive commands.</span><a class="headerlink" href="#figmain3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain4">
+<a class="reference internal image-reference" href="../_images/screenshot_plotter.PNG"><img alt="View and modify easily energy architectures with |gui|" src="../_images/screenshot_plotter.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Visualize and compare results of several studies with the plotter</span><a class="headerlink" href="#figmain4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain5">
+<a class="reference internal image-reference" href="../_images/screenshot_kpi.PNG"><img alt="View and modify easily energy architectures with |gui|" src="../_images/screenshot_kpi.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Compute automatically KPIs and display it - or publish it into files</span><a class="headerlink" href="#figmain5" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain6">
+<a class="reference internal image-reference" href="../_images/screenshot_multistudy.PNG"><img alt="../_images/screenshot_multistudy.PNG" src="../_images/screenshot_multistudy.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Automatically lauch studies following an experiment plan</span><a class="headerlink" href="#figmain6" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain7">
+<a class="reference internal image-reference" href="../_images/screenshot_timegraph.PNG"><img alt="../_images/screenshot_timegraph.PNG" src="../_images/screenshot_timegraph.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 7 </span><span class="caption-text">Publish reports with interactive graphs generated</span><a class="headerlink" href="#figmain7" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain8">
+<a class="reference internal image-reference" href="../_images/screenshot_sankey.PNG"><img alt="../_images/screenshot_sankey.PNG" src="../_images/screenshot_sankey.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 8 </span><span class="caption-text">Screenshot of a balance of energy graph</span><a class="headerlink" href="#figmain8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain9">
+<a class="reference internal image-reference" href="../_images/screenshot_bargraph.PNG"><img alt="../_images/screenshot_bargraph.PNG" src="../_images/screenshot_bargraph.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 9 </span><span class="caption-text">Compare several studies through various graphs:</span><a class="headerlink" href="#figmain9" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+<div class="cadre docutils container">
+<figure class="align-center" id="figmain10">
+<a class="reference internal image-reference" href="../_images/screenshot_pies.PNG"><img alt="../_images/screenshot_pies.PNG" src="../_images/screenshot_pies.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 10 </span><span class="caption-text">Screenshot piegraph</span><a class="headerlink" href="#figmain10" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="historic">
+<h2>Historic<a class="headerlink" href="#historic" title="Link to this heading"></a></h2>
+</section>
+<section id="citing">
+<h2>Citing<a class="headerlink" href="#citing" title="Link to this heading"></a></h2>
+<p>If you use <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a>, please cite the following paper <span id="id1">[RPCG24]</span>.</p>
+<p>The folling paper <span id="id2">[CBRL21]</span> refers <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> .</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Cairn Tool" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installing Cairn" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

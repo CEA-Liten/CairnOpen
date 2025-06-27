@@ -1,0 +1,298 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Environmental impacts &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MultiConverter usage" href="how_to_model_multiconverter.html" />
+    <link rel="prev" title="Economic modelling guidelines" href="how_to_take_into_account_economic_aspects.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Environmental impacts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_model_multiconverter.html">MultiConverter usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Environmental impacts</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="environmental-impacts">
+<span id="cairn-environmental"></span><h1>Environmental impacts<a class="headerlink" href="#environmental-impacts" title="Link to this heading"></a></h1>
+<p>Environmental impact calculation are activated in the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> “TecEcoAnalysis” component.
+Environmental impacts have to be defined for each component.</p>
+<p>Environmental impact are defined in <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> through the “TecEcoAnalysis” component in the parameters tab.
+It is possible to consider several impacts (list based on EF V3.0, <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters</span></code>).</p>
+<div class="cadre docutils container">
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-number">Table. 9 </span><span class="caption-text">How to define parameters of the environmental model?</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><figure class="align-center" id="lca-parameters">
+<a class="reference internal image-reference" href="cairn_open_user_guide_lines/images/lca_parameters.PNG"><img alt="cairn_open_user_guide_lines/images/lca_parameters.PNG" src="cairn_open_user_guide_lines/images/lca_parameters.PNG" style="width: 400px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 15 </span><span class="caption-text">In the “Parameters Tab” in the “TecEcoAnalysis” component</span><a class="headerlink" href="#lca-parameters" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</td>
+<td><div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-number">Listing 1 </span><span class="caption-text">Using the <a class="reference internal" href="../glossary.html#term-Python"><span class="xref std std-term">Python</span></a> <a class="reference internal" href="../glossary.html#term-API"><span class="xref std std-term">API</span></a></span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>            <span class="n">problem</span><span class="o">.</span><span class="n">tech_eco_analysis</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ConsideredEnvironmentalImpacts&#39;</span><span class="p">:</span>
+            <span class="s1">&#39;Climate change#Global Warming Potential 100,</span>
+            <span class="s1">&#39;Land use#Soil quality index&#39;</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cadre docutils container">
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-number">Table. 10 </span><span class="caption-text">How to enable environmental impact calculation for a component?</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><figure class="align-center">
+<a class="reference internal image-reference" href="cairn_open_user_guide_lines/images/lca_parameters_compo.PNG"><img alt="cairn_open_user_guide_lines/images/lca_parameters_compo.PNG" src="cairn_open_user_guide_lines/images/lca_parameters_compo.PNG" style="width: 400px;" />
+</a>
+</figure>
+</td>
+<td><div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-number">Listing 2 </span><span class="caption-text">Using the <a class="reference internal" href="../glossary.html#term-Python"><span class="xref std std-term">Python</span></a> <a class="reference internal" href="../glossary.html#term-API"><span class="xref std std-term">API</span></a></span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">my_elz</span><span class="o">.</span><span class="n">set_setting_value</span><span class="p">(</span><span class="s2">&quot;EnvironmentModel&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><span class="xref std std-ref">lca_intro</span></p></li>
+<li><p><span class="xref std std-ref">lca_ef</span></p></li>
+</ul>
+</div>
+<p>For each component:</p>
+<blockquote>
+<div><ul>
+<li><p>Indicators are calculated only for a component itself.</p></li>
+<li><p>The environmental model (EnvironmentModel, <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters_compo</span></code>) has to be activated.</p></li>
+<li><p>The tabs (Env. Impacts and Ports) in which environmental impacts can be configured are colored green.
+It is possible to set for each impact :</p>
+<blockquote>
+<div><ul>
+<li><p><strong>Grey or manufacturing impact</strong> linked to the size (in tab “Environmental impacts” of a component) owing to coeffs A and B
+(see <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters_compo_grey</span></code>) : <span class="math notranslate nohighlight">\(m = A * size + B\)</span></p>
+<p>In case of replacement modelling, grey impacts can be added using the “EnvGreyReplacement” (A coeff) and
+“EnvGreyReplacementConstant” (B coeff)parameters.</p>
+</li>
+<li><p><strong>Direct or consumption impact</strong> linked to flux (can be selected by the user in tab “Ports”) owing to coeffs A and B
+(see <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters_compo_direct</span></code>): <span class="math notranslate nohighlight">\(m = A * flux + B\)</span>.</p>
+<p>The A coefficient can be also set using a timeseries (“UseEnvContentTS_A”=True, the timeseries is given in the “EnvContentTS_A” field).</p>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<div class="cadre docutils container">
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-number">Table. 11 </span><span class="caption-text">How to define impacts for a component?</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+<tbody>
+<tr class="row-odd"><td><figure class="align-center" id="lca-parameters-compo-grey">
+<a class="reference internal image-reference" href="cairn_open_user_guide_lines/images/lca_parameters_compo_grey.PNG"><img alt="cairn_open_user_guide_lines/images/lca_parameters_compo_grey.PNG" src="cairn_open_user_guide_lines/images/lca_parameters_compo_grey.PNG" style="width: 1000px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 16 </span><span class="caption-text">Grey impacts</span><a class="headerlink" href="#lca-parameters-compo-grey" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</td>
+<td><figure class="align-center" id="lca-parameters-compo-direct">
+<a class="reference internal image-reference" href="cairn_open_user_guide_lines/images/lca_parameters_compo_direct.PNG"><img alt="cairn_open_user_guide_lines/images/lca_parameters_compo_direct.PNG" src="cairn_open_user_guide_lines/images/lca_parameters_compo_direct.PNG" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 17 </span><span class="caption-text">Direct impacts</span><a class="headerlink" href="#lca-parameters-compo-direct" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<ol class="arabic">
+<li><p>It is possible to take into account in the economic objective function by tax penalty if the impact cost of the “TecEcoAnalysis” component
+(green tab Env. Impacts) is given a non zero (see <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters_cost</span></code> where <span class="math notranslate nohighlight">\(50\; €/kg\; CO2\)</span> is set).
+In this case, the component “EcoInvestModel” has to be enabled (see <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters_compo</span></code>).</p>
+<blockquote>
+<div><div class="cadre docutils container">
+<figure class="align-center" id="lca-parameters-cost">
+<a class="reference internal image-reference" href="cairn_open_user_guide_lines/images/lca_parameters_cost.PNG"><img alt="cairn_open_user_guide_lines/images/lca_parameters_cost.PNG" src="cairn_open_user_guide_lines/images/lca_parameters_cost.PNG" style="width: 800px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 18 </span><span class="caption-text">Impose impact cost and constraints in the “TecEcoAnalysis” component</span><a class="headerlink" href="#lca-parameters-cost" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</div>
+</div></blockquote>
+</li>
+<li><p>It is possible to take into account <strong>a levelized maximum constraint</strong> (see <code class="xref std std-numref docutils literal notranslate"><span class="pre">lca_parameters_cost</span></code> where the flag “”MaxContraint is set
+at 1 with a levelized maximum value at <span class="math notranslate nohighlight">\(10000\; kg\; CO2\)</span>)</p></li>
+</ol>
+</div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The user should be very careful not to mix models for the same carbon sources:</p>
+<ul class="simple">
+<li><p>It is correct to define environmental impact for an energy (electrical) or material carrier (fluid, hydrogen, CH4).
+All converters connected to the carrier and the corresponding grid will be considered.
+Then, environmental impact due to the vector is accounted at the grid level.
+The use of this carrier on several converters is enseared without adding any other data
+and <strong>without knowing which converters is contributing the most</strong>.</p></li>
+<li><p>It would be <strong>wrong to both</strong> define environmental impact <strong>on a carrier and on each converter</strong>.
+In this situation, <strong>Environmental impacts would then be accounted TWICE</strong>.</p></li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="how_to_take_into_account_economic_aspects.html" class="btn btn-neutral float-left" title="Economic modelling guidelines" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="how_to_model_multiconverter.html" class="btn btn-neutral float-right" title="MultiConverter usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

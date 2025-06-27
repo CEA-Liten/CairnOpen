@@ -1,0 +1,315 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cairn Open SubModels &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="TechnicalSubModel" href="TechnicalSubModel.html" />
+    <link rel="prev" title="Cairn API documentation" href="../api_guide/commands.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_model_multiconverter.html">MultiConverter usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cairn Open SubModels</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#principles">Principles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#submodels-summary">Submodels summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#submodels-documentation-description">Submodels documentation description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#units">Units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#technical-models">Technical models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="TechnicalSubModel.html">TechnicalSubModel</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#converter-models">Converter models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="converter/Compressor.html">Compressor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="converter/Converter.html">Converter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="converter/Electrolyzer.html">Electrolyzer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="converter/MultiConverter.html">MultiConverter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#storage-models">Storage models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="storage/StorageGen.html">StorageGen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="storage/ResourceStock.html">ResourceStock</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grid-models">Grid models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="grid/GridFree.html">GridFree</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sourceload-models">SourceLoad models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sourceload/SourceLoad.html">SourceLoad</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bus-submodels">Bus submodels</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#operation-constraint-models">Operation constraint models</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#physical-equations">Physical equations</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Cairn Open SubModels</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>Work in progress</p>
+</div>
+<section id="cairn-open-submodels">
+<h1>Cairn Open SubModels<a class="headerlink" href="#cairn-open-submodels" title="Link to this heading"></a></h1>
+<section id="principles">
+<h2>Principles<a class="headerlink" href="#principles" title="Link to this heading"></a></h2>
+<p>Models are libraries represent elements that are commonly used in energy systems. They add to the global MILP problem the following items:</p>
+<ul class="simple">
+<li><p>variables representing fluxes, states of the system, costs…</p></li>
+<li><p>constraints linking these variables together</p></li>
+<li><p>a constribution to objectives functions.</p></li>
+</ul>
+<p>A model added to the system has to be connected to other components through ports, that link some of its variables to variables of other models.</p>
+<p>Each model can be parametrized with static and time-dependant parameters, that make them versatile. The following part of the documentation describes precisely each model.</p>
+<p>If none of the models corresponds to your need, it is possible to add your own model to cairn. See the ref:<cite>develop_own_model</cite>.</p>
+</section>
+<section id="submodels-summary">
+<h2>Submodels summary<a class="headerlink" href="#submodels-summary" title="Link to this heading"></a></h2>
+<p>Models library is divided into 2 categories in cairn:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>the <strong>technical models</strong>: they represent physical technologies that will be added to the energy system. They are subdivided into 4 categories:</dt><dd><ul>
+<li><p>the <strong>converters</strong> are used to convert energy vectors to others.</p></li>
+<li><p>the <strong>storage</strong> are used to store energy vector for some time and redistribute it later.</p></li>
+<li><p>the <strong>Source Loads</strong> allow to impose a time series profiles to represent either a imposed production or a consumption.</p></li>
+<li><p>the <strong>Grids</strong> represent a degree of liberty of the system: it is possible either to import or export an energy vector with the outside of the system.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>the <strong>operation constraint models</strong>: they allow to add constraints to components, either due to <strong>physical phenomenons</strong>, either due to <strong>rules of functionning</strong> to components. The <strong>buses</strong> allow to write constraints between components such as the node law (Kirchhoff).</p></li>
+</ul>
+</section>
+<section id="submodels-documentation-description">
+<h2>Submodels documentation description<a class="headerlink" href="#submodels-documentation-description" title="Link to this heading"></a></h2>
+<p>The description is made of 3 main parts:</p>
+<ul class="simple">
+<li><p>Model Parameters : it describes which parameters must be set by the user via the .ini settings file. When specified, some of them will be automatically filled in by cairn.</p></li>
+<li><p>Model Interface Expression : it describes the model linear expression published by the model to enable the user to</p></li>
+</ul>
+<p>impose combined constraints by connecting ports using these variable names, to bus.</p>
+<ul class="simple">
+<li><p>Model equations : it gathers the linear equations used to write linear constraints and objective contribution.</p></li>
+</ul>
+</section>
+<section id="units">
+<h2>Units<a class="headerlink" href="#units" title="Link to this heading"></a></h2>
+<p>The Interface Expression also specifies a type of unit:</p>
+<ul class="simple">
+<li><p>the first field gives the possible energy carrier types, namely Electrical, Thermal, Fluid or Material</p></li>
+<li><p>and the second field indicates the type of unit, whether it is relative to energy Flux, or to Capacity storage, or Currency for economic data.</p></li>
+</ul>
+<p>The effective unit will be built from these data and from the units specified in each associated EnergyVector components.
+Sometimes, the units are indicated explicitly, meaning that the model only supports this particular one.
+Be aware that parameters set in settings file must be consistent with the units defined in the EnergyVector component.
+Also notice that using cairn self defined physical propeties like Low Heat Values of fluids, imposes to use the same units in the EnergyVectorcomponent. To do it another way, please define the fluid physical properties again consistently with the unit system chosen in your particular EnergyVector.</p>
+</section>
+<section id="technical-models">
+<h2>Technical models<a class="headerlink" href="#technical-models" title="Link to this heading"></a></h2>
+<p>The SubModel subsection describes the parts that are common to all of the technical models.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="TechnicalSubModel.html">TechnicalSubModel</a></li>
+</ul>
+</div>
+</section>
+<section id="converter-models">
+<h2>Converter models<a class="headerlink" href="#converter-models" title="Link to this heading"></a></h2>
+<p>These models will be used to model energy or mass conversion from one carrier to another.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="converter/Compressor.html">Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="converter/Converter.html">Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="converter/Electrolyzer.html">Electrolyzer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="converter/MultiConverter.html">MultiConverter</a></li>
+</ul>
+</div>
+</section>
+<section id="storage-models">
+<h2>Storage models<a class="headerlink" href="#storage-models" title="Link to this heading"></a></h2>
+<p>These models will be used to model energy or mass storage.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="storage/StorageGen.html">StorageGen</a></li>
+<li class="toctree-l1"><a class="reference internal" href="storage/ResourceStock.html">ResourceStock</a></li>
+</ul>
+</div>
+</section>
+<section id="grid-models">
+<h2>Grid models<a class="headerlink" href="#grid-models" title="Link to this heading"></a></h2>
+<p>These models will be used to model grids.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="grid/GridFree.html">GridFree</a></li>
+</ul>
+</div>
+</section>
+<section id="sourceload-models">
+<h2>SourceLoad models<a class="headerlink" href="#sourceload-models" title="Link to this heading"></a></h2>
+<p>These models will be used to model either sources either loads.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sourceload/SourceLoad.html">SourceLoad</a></li>
+</ul>
+</div>
+</section>
+<section id="bus-submodels">
+<h2>Bus submodels<a class="headerlink" href="#bus-submodels" title="Link to this heading"></a></h2>
+<p>These models will be used to model bus constraints.</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+<section id="operation-constraint-models">
+<h2>Operation constraint models<a class="headerlink" href="#operation-constraint-models" title="Link to this heading"></a></h2>
+<p>These models will be used to model bus operation constraints that can be added to a component.</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+<section id="physical-equations">
+<h2>Physical equations<a class="headerlink" href="#physical-equations" title="Link to this heading"></a></h2>
+<section id="solus-submodels">
+<h3>Solus submodels<a class="headerlink" href="#solus-submodels" title="Link to this heading"></a></h3>
+<blockquote>
+<div></div></blockquote>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api_guide/commands.html" class="btn btn-neutral float-left" title="Cairn API documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="TechnicalSubModel.html" class="btn btn-neutral float-right" title="TechnicalSubModel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

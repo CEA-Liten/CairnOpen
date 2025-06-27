@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post-processing &mdash; Cairn 4.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=81c2bc6f" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=772b3574"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Cairn API documentation" href="../api_guide/commands.html" />
+    <link rel="prev" title="Setting new indicators" href="How_to_build_a_UDI.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Open User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_cairn_timeseries_file.html"><span class="xref std std-term">Cairn</span> timeseries files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_performance_map_file.html">Performance maps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_model_multiconverter.html">MultiConverter usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/rolling_horizon.html">Rolling Horizon</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Post-processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-configuration-file">The configuration file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-graphs">Basic graphs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parametrizable-global-graphs">Parametrizable global graphs</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Post-processing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="post-processing">
+<span id="id1"></span><h1>Post-processing<a class="headerlink" href="#post-processing" title="Link to this heading"></a></h1>
+<p>It is possible to produce automatic HTML reports with graphs to compare Persee studies.</p>
+<p>An example can be found here: (rajouter le lien).</p>
+<p>To create a first report, follow this two steps:
+- generate a Scenario by checking the box next to the run button, then click on run, choose a name, click on run.
+- click on Post-processing -&gt; Generate HTML Interactive report.</p>
+<p>A first report, not fully parametrized, will be produced (onpen it with Edge or Chrome, not internet explorer).</p>
+<p>You can configure this report through several files.</p>
+<section id="the-configuration-file">
+<h2>The configuration file<a class="headerlink" href="#the-configuration-file" title="Link to this heading"></a></h2>
+<p>This file contains the list of all the graphs you want to find in the report.</p>
+<p>Here is an example.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph_list&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>PieChart<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Cost<span class="w"> </span>structure<span class="w"> </span>[EUR]<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Total<span class="w"> </span>Cost<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1.00E+03<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>StackBarGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Balance<span class="w"> </span>of<span class="w"> </span>costs<span class="w"> </span>and<span class="w"> </span>incomes<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Total<span class="w"> </span>Cost<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>BarGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Installed<span class="w"> </span>Optimal<span class="w"> </span>Size<span class="w"> </span>for<span class="w"> </span>Converters<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Installed<span class="w"> </span>Optimal<span class="w"> </span>Size<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>DynamicGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Thermal<span class="w"> </span>Utility<span class="w"> </span>loads<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plotted_variables&gt;</span>LNG180_Load.SourceLoadFlow<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>Thermal<span class="w"> </span>Utility<span class="w"> </span>loads<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>It<span class="w"> </span>shows<span class="w"> </span>thermal<span class="w"> </span>power<span class="w"> </span>loads<span class="w"> </span>imposed<span class="w"> </span>by<span class="w"> </span>plant<span class="w"> </span>utilities.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>MonotonicLoadGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Number<span class="w"> </span>of<span class="w"> </span>hours<span class="w"> </span>at<span class="w"> </span>given<span class="w"> </span>RES<span class="w"> </span>powers<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plotted_variables&gt;</span>PV_Field1.SourceLoadFlow,WT_OnShore.SourceLoadFlow,Solar_Tower.SourceLoadFlow,Solar_CSP.SourceLoadFlow<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>RES<span class="w"> </span>available<span class="w"> </span>powers<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>It<span class="w"> </span>represents<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>hours<span class="w"> </span>at<span class="w"> </span>given<span class="w"> </span>available<span class="w"> </span>RES<span class="w"> </span>powers.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;/graph_list&gt;</span>
+</pre></div>
+</div>
+<p>To add a graph, simply another block among the one presented in the following part.</p>
+</section>
+<section id="basic-graphs">
+<h2>Basic graphs<a class="headerlink" href="#basic-graphs" title="Link to this heading"></a></h2>
+<p>Here are the exisiting graph list with the parameters available.</p>
+<p><strong>TableDiff</strong>: produces a table of all the parameter that changes between scenarios.</p>
+<ul class="simple">
+<li><p>type: TableDiff</p></li>
+<li><p>title: <em>Title</em></p></li>
+</ul>
+<p><strong>NPV</strong>: produces the graph of the evolution of NPV through years.</p>
+<ul class="simple">
+<li><p>type: NPV</p></li>
+<li><p>title: <em>Title</em></p></li>
+</ul>
+<p><strong>ResolCplex</strong>: Produces a table and a graph of the times of resolutions, and the gaps.
+- type: ResolCplex
+- title: <em>Title</em></p>
+</section>
+<section id="parametrizable-global-graphs">
+<h2>Parametrizable global graphs<a class="headerlink" href="#parametrizable-global-graphs" title="Link to this heading"></a></h2>
+<p>These graphs are based on the PLAN files. Some of them are plotted for each study (BarGraph, PieChart), others are plotted to compare
+studies (StackBarGraph, MultiPieChart).</p>
+<p><strong>StackBarGraph</strong>:</p>
+<p><strong>MultiPieChart</strong>, <strong>BarGraph</strong>, <strong>PieChart</strong></p>
+<p><strong>XYGraph</strong>, <strong>XYGraphMultiStudy</strong>, <strong>MonotonicLoadGraph</strong></p>
+<p><strong>SankeyGraph</strong>:</p>
+   <iframe src="htmlReportExemple.html"></iframe>
+
+**AreaGraph**</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="How_to_build_a_UDI.html" class="btn btn-neutral float-left" title="Setting new indicators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api_guide/commands.html" class="btn btn-neutral float-right" title="Cairn API documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

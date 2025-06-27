@@ -1,0 +1,122 @@
+.wy-nav-content {max-width: 90% !important;}
+
+/*#063738 le vert fonce CEA
+/*#2d666e le vert clair CEA
+/*#e50019 le rouge CEA
+/*#ffcd31 le jaune CEA
+/*#ffffff le blanc CEA
+
+/*couleur des liens*/
+a:link { color: #2d666e; }
+/*couleur des liens visités*/
+a:visited { color: #2d666e; }
+a:link:active, :visited:active { color: #2d666e; }
+/*liens visités soulignés*/
+/*a:link, :visited { text-decoration: underline; cursor: pointer; }/*
+
+/*couleur du fond logo et search bar*/
+.wy-side-nav-search, .wy-nav-top {background: #ffffff;}
+
+/*couleur du fond bas barre latérale*/
+.wy-nav-side {background: #2d666e;}
+
+/*couleur de police barre latérale - titres principaux*/
+.wy-menu-vertical a {color: #ffffff; }
+
+/*couleur de police barre latérale - titres secondaires*/
+.wy-menu > .caption > span.caption-text {
+    color: #ffffff;
+    font-size: 15px;
+ }
+
+
+.boxed-text {
+    border: 2px solid #000;    /* Bordure noire */
+    padding: 10px;             /* Espacement interne */
+    margin: 10px 0;            /* Espacement externe en haut et en bas */
+    background-color: #f9f9f9; /* Couleur de fond */
+    border-radius: 5px;        /* Bords l�g�rement arrondis */
+    font-family: sans-serif;
+}
+.center-text {
+    border: 2px solid #000;    /* Bordure noire */
+    padding: 0px 0;              /* Espacement interne */
+    margin: 20px 0;            /* Espacement externe en haut et en bas */
+    background-color: #f9f9f9; /* Couleur de fond */
+    border-radius: 15px;        /* Bords l�g�rement arrondis */
+    font-family: sans-serif;
+    text-align: center;
+	min-height: 0px; 
+	font-size: 14 ;
+    color: darkblue;
+    margin-bottom: 50px; 
+}
+.cadre {
+    margin: 20px 0;            /* Espacement externe en haut et en bas */
+	margin-left: 75px ;
+    margin-right: 75px ;
+    color: darkblue;
+    padding: 3px 2em ;
+    border: 2px solid #000;    /*Bordure noire*/
+    border-radius: 15px;       /* Bords l�g�rement arrondis*/
+    background-color: #f9f9f9; /* Couleur de fond */ 
+    font-family: sans-serif; 
+    text-align: center; 
+    padding: 10px 10px;              /* Espacement interne*/
+}
+
+.wy-table-responsive table td, .wy-table-responsive table th {
+    white-space: inherit;
+}
+.red {color:red;}
+.blue {color:blue;}
+.white{color:white;}
+
+section {
+    text-align: justify;
+}
+
+p {
+	margin: 5px; 
+	margin-top: 10px; 
+}
+
+/*titre de niveau 1*/
+h1 {
+	margin: 0px; 
+	margin-top: 50px; 
+	margin-bottom: 50%; 
+	color: #2d666e
+}
+/*titre de niveau 2*/
+h2 {
+	margin: 0px; 
+	margin-top: 50px; 
+	margin-bottom: 50%; 
+	color: #063738
+}
+ul {	margin-top: 0; }
+.rst-content .seealso .admonition-title {background: rgb(71, 189, 148)}
+.rst-content .seealso {background: honeydew}
+
+.rst-content .attention .admonition-title {background: rgb(131, 13, 13)}
+.rst-content .attention {background: rgb(185, 61, 61)}
+.rst-content .attention {color:  white}
+
+ol.enumlist {list-style-type: decimal;}
+ol.enumlist ol {list-style-type: lower-alpha;}
+ol.enumlist ol ol {list-style-type: upper-roman;}
+
+.docutils caption {caption-side: bottom; }
+
+.caption-text   {font-size: 10; font-style: normal ; }
+.caption-number {font-size: 10; font-style: normal ; }
+
+.center {text-align: center;}
+
+/* td {text-align: center;vertical-align: middle;font-size: 5; font-style: normal ;} */
+/* th {text-align: center;vertical-align: middle;font-size: 5; font-style: normal ;} */
+
+table.docutils td p {text-align: center;vertical-align: middle; font-size: 0.9em !important;}
+table.docutils th p {text-align: center;vertical-align: middle; font-size: 0.9em !important;}
+
