@@ -4,7 +4,6 @@ class MilpComponent ;
 class SubModel;
 
 #include <QtCore>
-#include <qdom.h>
 #include <QFile>
 #include <QVector>
 #include <QMap>

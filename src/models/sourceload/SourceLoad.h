@@ -15,72 +15,88 @@
 //linkPerseeModelClass SourceLoad.h SourceLoadFlexible.h SourceLoadMinMax.h
 
 /**
- * \details
- This component represents either a source (injection) or a load (extraction). To extend the definition, for instance, a source can be a powerplant or a photovoltaic panel, 
- whilst a load could be the demand of hydrogen of a building. 
- 
- Thus, an **imposed flow** of energy or material can be inserted as input for:
- - Power for electrical or thermal carriers
- - Flow rates for fluids, biomass, etc.
- 
- ### Main Features
- - **MaxFlow** limits the absolute value of injected or extracted flow.
- - **Weight** parameter scales the flow profile (e.g., to represent multiple units or the installation of a certain amount of m² for a plant).
- 
- - Different strategies of load handling can be implemented:
- - **Load Shedding**: optional load shedding model for demand-side management (available only for loads, compatible with Rolling Horizon usage).
- - **Peak Shaving**: optional peak shaving model for demand-side management (available only for loads).
- - **Optimization of Price or Size**:
-   - Can optimize the size (capacity) or the price signal for injected/extracted flow.
- 
- 
- ### Focus:
- - **Load shedding**: 
- .. figure:: ../images/Shedding.JPG
-   :alt: IO Shedding
-   :name: IOShedding
-   :width: 200
-   :align: center
+* \details
+This component represents either a source (injection) or a load (extraction). To extend the definition, for instance, a source can be a powerplant or a photovoltaic panel, 
+whilst a load could be the demand of hydrogen of a building. 
+
+Thus, an **imposed flow** of energy or material can be inserted as input for:
+
+- Power for electrical or thermal carriers
+- Flow rates for fluids, biomass, etc.
+
+Main Features
+-------------
+
+- **MaxFlow** limits the absolute value of injected or extracted flow.
+- **Weight** parameter scales the flow profile (e.g., to represent multiple units or the installation of a certain amount of mï¿½ for a plant).
+
+- Different strategies of load handling can be implemented:
+
+  - **Load Shedding**: optional load shedding model for demand-side management (available only for loads, compatible with Rolling Horizon usage).
+  - **Peak Shaving**: optional peak shaving model for demand-side management (available only for loads).
+  - **Optimization of Price or Size**:
+    - Can optimize the size (capacity) or the price signal for injected/extracted flow.
+
+
+Focus
+-----
+
+- **Load shedding**:
+
+  .. figure:: ../images/Shedding.JPG
+    :alt: IO Shedding
+    :name: IOShedding
+    :width: 500
+    :align: center
 
     Load Shedding Graphics
- 
- 
-  This method introduces optional **load shedding** capability for a load component.
-  Load shedding represents the deliberate reduction of demand when it's beneficial or necessary 
-  (e.g., during system stress or high price events). This model could be used for 
- - Demand Response modeling
- - Robust optimization scenarios with load flexibility
- - Scenario analysis for energy-constrained systems
- 
- - **Peak Shaving**:
- .. figure:: ../images/Shaving.JPG
-   :alt: IO Shaving
-   :name: IOShaving
-   :width: 200
-   :align: center
+
+
+ This method introduces optional **load shedding** capability for a load component.
+ Load shedding represents the deliberate reduction of demand when it's beneficial or necessary 
+ (e.g., during system stress or high price events). This model could be used for 
+- Demand Response modeling
+- Robust optimization scenarios with load flexibility
+- Scenario analysis for energy-constrained systems
+
+- **Peak Shaving**:
+
+  .. figure:: ../images/Shaving.JPG
+    :alt: IO Shaving
+    :name: IOShaving
+    :width: 500
+    :align: center
 
     Peak Shaving Graphics
- 
- This method introduces optional **peak shaving** capability for a load component. 
- Peak shaving represents the redistribution of charge when a peak is highlighted, over hours where load is less important. 
- The imposed flow (ImposedFlow) can be balanced in this way: it can be increased or decreased by MaxEffect but the total energy over the period TimeSpan must be conserved.
 
- The imposed quantity depends on the connected energy vector.
-  ImposedFlow and MaxFlow define the input data on which to apply flexibility:
-  - ImposedFlow: the time distribution to be balanced using flexibility.
-  - MaxFlow: used to scale ImposedFlow. Scaling is done in order to set MaxFlow as the maximum of ImposedFlow. (The obtained distribution is referred to as "old flux")
+This method introduces optional **peak shaving** capability for a load component. 
+Peak shaving represents the redistribution of charge when a peak is highlighted, over hours where load is less important. 
+The imposed flow (ImposedFlow) can be balanced in this way: it can be increased or decreased by MaxEffect but the total energy over the period TimeSpan must be conserved.
+
+The imposed quantity depends on the connected energy vector.
+
+ImposedFlow and MaxFlow define the input data on which to apply flexibility:
+
+ - ImposedFlow: the time distribution to be balanced using flexibility.
+ - MaxFlow: used to scale ImposedFlow. Scaling is done in order to set MaxFlow as the maximum of ImposedFlow. (The obtained distribution is referred to as "old flux")
 
 .. caution:
 
-  - Load shedding:
-    - Is only allowed for loads (`mSens > 0.`).
-    - Is incompatible with `mLPModelOnly = true`.
-    - Requires that the past horizon (`mNpdtPast`) is larger than shedding activation/deactivation times if rolling horizon is used.
-  - Do not forget to set EconomicModel to True if you want to consider costs
+ - Load shedding:
 
-### Generated Variables and Expressions
+   - Is only allowed for loads (`mSens > 0.`).
+   - Is incompatible with `mLPModelOnly = true`.
+   - Requires that the past horizon (`mNpdtPast`) is larger than shedding activation/deactivation times if rolling horizon is used.
+
+ - Do not forget to set EconomicModel to True if you want to consider costs
+
+Generated Variables and Expressions
+-----------------------------------
+
 - Variables for controlled or weighted flux, shedding, and reactive power.
+
 - Expressions for:
+
   - Total imposed flux
   - Input and output powers
   - Costs (regular and shedding)
@@ -116,7 +132,7 @@ public:
         mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel","AddThermalModel","ControlOptions","CompensationConstraints", "TimeSeriesForecast" });
 
         //re-declare these parameters to change their default values
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", { "" });    /** Use EcoInvestModel - ie Use Capex and Opex if true */
+        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", { "EcoInvestModel" });    /** Use EcoInvestModel - ie Use Capex and Opex if true */
         addParameter("UseWeightOptimization", &mUseWeightOptimization, true, false, true, "Use sizing based on Weight if true", "", { "" }); // this way weight will be considered flat by default allowing for upward compatibility with previous computations
         addParameter("LPModelONLY", &mLPModelOnly, true, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "", { "" });          /** Use LP Model - ie binary variable imposed if true */
 

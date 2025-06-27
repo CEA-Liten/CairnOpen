@@ -3,7 +3,6 @@
 class EnergyVector ;
 
 #include <QtCore>
-#include <qdom.h>
 #include <QObject>
 
 #include <QMap>

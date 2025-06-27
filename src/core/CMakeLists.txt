@@ -17,6 +17,9 @@
 set(COMPONENT CairnCore)
 message("\n-- Set up for ${PROJECT_NAME}_${COMPONENT} library ...")
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CairnVersion.in ${CMAKE_CURRENT_SOURCE_DIR}/CairnVersion.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CairnDefine.in ${CMAKE_CURRENT_SOURCE_DIR}/CairnDefine.h @ONLY)
+
 # ------ source directories for current component ------
 # What is needed by component to compile ?
 # List here all directories that contain sources files for current component.
@@ -50,8 +53,6 @@ set(${COMPONENT}_INSTALLRESOURCES
   ${CMAKE_SOURCE_DIR}/resources/images/cairn.ico
   )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CairnVersion.in ${CMAKE_CURRENT_SOURCE_DIR}/CairnVersion.h @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CairnDefine.in ${CMAKE_CURRENT_SOURCE_DIR}/CairnDefine.h @ONLY)
 include(ComponentSetup)
 create_component(${COMPONENT})
 
@@ -62,7 +63,14 @@ if(MSVC)
   target_compile_options(${COMPONENT} PRIVATE "/bigobj")
 endif()
 
-find_package(Qt REQUIRED Core Xml)
+find_package(Qt REQUIRED Core)
+if(CMAKE_SYSTEM_NAME MATCHES Windows)
+	if(CMAKE_BUILD_TYPE MATCHES Release)
+           install(FILES ${Qt5_BIN}/Qt5Core.dll
+                     DESTINATION ${CMAKE_INSTALL_BINDIR}            
+            )
+    endif()
+endif()
 find_package(MIPModeler REQUIRED)
 find_package(Cairn REQUIRED CairnModelInterface)
 

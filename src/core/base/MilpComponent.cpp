@@ -5,6 +5,7 @@
 #include "MilpComponent.h"
 #include "SubModel.h"
 #include "TechnicalSubModel.h"
+#include "OptimProblem.h"
 #include "ModelTS.h"
 #include "CairnAPIUtils.h"
 #include "CairnUtils.h"
@@ -749,7 +750,9 @@ int MilpComponent::initSubModelInput()
     int ierr = 0;
 
     // if DataFile specified: direct reading of SubModel array parameters (perf maps : vector, double) from file
-    if (mCompoInputParam->getParamQSValue("DataFile") != "") {
+    QString dataFileValue = mCompoInputParam->getParamQSValue("DataFile");
+    if (dataFileValue.simplified().replace(" ", "") != "")
+    {
         QList<QString> perfParamNames;
         mModelPerfParam->getParameters(perfParamNames, EParamType::eVectorDouble);
         QStringList dataFiles = {};
@@ -762,6 +765,14 @@ int MilpComponent::initSubModelInput()
         //Read
         for (int i = 0; i < dataFiles.size(); i++) {
             QString dataFile_i = dataFiles[i].replace("./", "").replace(".\\", "").trimmed();
+            QFile dataFileName(dataFile_i);
+            if (!dataFileName.exists()) {
+                OptimProblem* optimProblem = dynamic_cast<OptimProblem*> (this->parent());
+                if (optimProblem) {
+                    QString projectDir = QString(optimProblem->getStudyPathManager()->projectDir().c_str());
+                    dataFile_i = projectDir + "/" + dataFile_i;
+                }
+            }
             mModelPerfParam->readVectorParameters(mName, dataFile_i, perfParamNames);
         }
         //Verification

@@ -245,7 +245,7 @@ def make_toc(directory,models_list):
     for i in (models_list.keys()):
         rst_file = directory+i+"_toc.rst"
         with open( rst_file, 'w') as o:
-            o.write(rst_file+"\n\n")
+            #o.write(rst_file+"\n\n")
             o.write(".. toctree::\n")
             o.write("   :maxdepth: 1\n\n")
             for j in models_list[i]:

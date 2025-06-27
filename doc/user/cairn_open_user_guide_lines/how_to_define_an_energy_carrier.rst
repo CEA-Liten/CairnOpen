@@ -1,6 +1,6 @@
 .. _SetEnergyVector:
 
-How to define an energy carrier? 
+Energy Carriers
 --------------------------------
 
 How to set parameters and options of an energy carrier? 

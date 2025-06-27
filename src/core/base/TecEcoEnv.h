@@ -3,7 +3,6 @@
 class TecEcoEnv ;
 
 #include <QtCore>
-#include "qdom.h"
 #include "CairnCore_global.h"
 #include "GUIData.h"
 #include <QtMath>

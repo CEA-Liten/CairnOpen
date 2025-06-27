@@ -1,5 +1,4 @@
 #include <QtCore>
-#include "qdom.h"
 #include "base/GUIData.h"
 #include "GlobalSettings.h"
 #include <QDebug>

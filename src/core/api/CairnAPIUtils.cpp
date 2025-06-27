@@ -7,13 +7,8 @@ namespace CairnAPIUtils {
 	
 	t_list get_Possible_Model_Names()
 	{
-		// static list for the internal Cairn components
+		//Dynamics list from *CairnModel.dll
 		t_list vRet;
-		for (auto const& vItem : mModelsMap) {
-			vRet.insert(vRet.end(), vItem.second.begin(), vItem.second.end());
-		}
-
-		// dynamics list for the external components (Private)
 		ModelFactory vModelFactory;
 		vModelFactory.findModels();
 		QStringList vModels = vModelFactory.getModelList();
@@ -33,11 +28,6 @@ namespace CairnAPIUtils {
 
 	std::string get_Component_Type(const std::string& a_Model) {
 		for (auto const& vItem : mModelsMap) {
-			if (std::find(vItem.second.begin(), vItem.second.end(), a_Model) != vItem.second.end()) {
-				return vItem.first;
-			}
-		}
-		for (auto const& vItem : mPrivateModelsMap) {
 			if (std::find(vItem.second.begin(), vItem.second.end(), a_Model) != vItem.second.end()) {
 				return vItem.first;
 			}

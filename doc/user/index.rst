@@ -63,19 +63,20 @@
    cairn_open_user_guide_lines/how_to_make_a_performance_map_file
    cairn_open_user_guide_lines/What_are_the_input_and_output_files_of_a_cairn_simulation
    cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects
+   cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts
    cairn_open_user_guide_lines/how_to_take_into_account_environmental_aspects
    cairn_open_user_guide_lines/What_are_the_input_and_output_files_of_a_cairn_simulation
+   cairn_open_user_guide_lines/how_to_model_multiconverter
    cairn_open_user_guide_lines/rolling_horizon
 
    
 .. toctree::
    :maxdepth: 2
-   :caption: GUI Guide 
+   :caption: Cairn Viewer Guide 
    
    hmi_guide/build_a_problem
    hmi_guide/display_results
    hmi_guide/shortcuts_and_options 
-   hmi_guide/How_to_take_into_account_the_environmental_impacts
    hmi_guide/How_to_build_a_UDI
    hmi_guide/postprocessing
   
@@ -89,7 +90,7 @@
 
 .. toctree::
     :maxdepth: 2
-    :caption: Components detailed description
+    :caption: Components description
     
     models/models
     privateDoc/models/modelSolus_toc

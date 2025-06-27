@@ -3,16 +3,29 @@ image: python:3.11
 stages:
   - docs
 
+variables:
+  GITHUB_URL: https://github.com/CEA-Liten/CairnOpen
+  VERSION: 5.0.0
+  WHL_FILENAME: cairn-${VERSION}-cp310-cp310-win_amd64.whl
+  WHL_URL: ${GITHUB_URL}/releases/download/${VERSION}/${WHL_FILENAME}
 
 pages:
   stage: docs
   tags:
     - python
+  before_script:
+    - echo "CAIRN_PACKAGE_URL=$WHL_URL"
+    - curl -o $WHL_FILENAME $WHL_URL #download cairn package
   script:
+    - pip install $WHL_FILENAME
     - pip install -r ./doc/user/requirements.txt
     - python ./scripts/doc/userDocGenRST.py
     - sphinx-build -M html ./doc/user/ ./doc/user/_build
     - mv ./doc/user/_build/html/ ./public/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  tags:
+    - grewp-1003app # Will be executed only on grewp1003app machine
   artifacts:
     paths:
       - public

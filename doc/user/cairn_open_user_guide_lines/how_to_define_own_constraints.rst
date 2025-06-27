@@ -1,4 +1,4 @@
-How to define my own constraints between components ? 
+Setting advanced constraints on components
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes, you may want to add your own constraints between components.

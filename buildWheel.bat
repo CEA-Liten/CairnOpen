@@ -49,3 +49,5 @@ if exist %APPLI_PATH%\_skbuild (
 	)
 
 pip wheel . -w %EXPORT_PATH%
+
+del %EXPORT_PATH%\fullrelease\bin\Qt5Core.dll

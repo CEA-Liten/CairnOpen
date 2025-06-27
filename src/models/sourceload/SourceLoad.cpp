@@ -87,7 +87,10 @@ int SourceLoad::checkConsistency()
         qCritical() << "Load shedding min deactivation time (" << mMinSheddingStandBy << ") must be less or equal to past size (" << mNpdtPast << ")";
         return -1;
     }
-
+    if (mAddPeakShavingDetailed && mEcoInvestModel == false) {
+        qCritical() << "Peak shaving adds costs to sourceload, please activate ecoinvestmodel";
+        return -1;
+    }
     return 0;
 }
 

@@ -37,21 +37,14 @@ namespace CairnAPIUtils {
 		{ "BusFlowBalance", {"NodeLaw"} },
 		{ "BusSameValue", {"NodeEquality"} },
 		{ "MultiObjCompo", {"ManualObjective"} },
-		{ "Grid", {"GridFree"} },
+		{ "Grid", {"GridFree", "GridaFRRService", "GridFCRService"} },
 		{ "SourceLoad", {"SourceLoad", "SourceLoadFlexible", "SourceLoadMinMax", "BuildingFlexibleBasic", "BuildingFlexible"} },
-		{ "Storage", {"StorageGen", "StorageLinearBounds", "StorageThermal", "Battery_V1"} },
-		{ "Converter", {"Electrolyzer", "PipelineBasic", "ThermalGroup", "ProductionUC", "Cogeneration", "FuelCell", "Dam", "Mixer",
-			"Transportation", "NeuralNetwork", "HeatPump", "SMReformer", "Methaner", "Methanizer", "Compressor", "Converter",
+		{ "Storage", {"StorageGen", "StorageLinearBounds", "StorageThermal", "Battery_V1", "StorageSeasonal", "ResourceStock"}},
+		{ "Converter", {"Electrolyzer", "ElectrolyzerDetailed", "PipelineBasic", "ThermalGroup", "ProductionUC", "Cogeneration", "FuelCell", 
+		    "Dam", "Mixer", "Transportation", "NeuralNetwork", "HeatPump", "SMReformer", "Methaner", "Methanizer", "Compressor", "Converter",
 			"MultiConverter", "HeatExchange", "PowerToFluidT", "PowerToFluidH", "Cluster"} },
 		{ "OperationConstraint", {"Ramp", "MinStateTime", "ConstantProduction"} },
 		{ "PhysicalEquation", {"HeatEquation","HeatExchangeEquation"} }
-	};
-
-	//This list only used to get the type of a private model. Not all models are necessarily available 
-	static std::map<std::string, t_list> mPrivateModelsMap = { //TODO: add Type inside ModelFactory Info.?!
-			{ "Grid", {"GridaFRRService", "GridFCRService"} },
-			{ "Storage", {"StorageSeasonal"} },
-			{ "Converter", {"ElectrolyzerDetailed"} }
 	};
 
 	// Return the list of the all possibles model names

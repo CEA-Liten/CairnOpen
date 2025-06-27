@@ -1,6 +1,6 @@
 .. _cairn_map_file:
 
-How to make a performance map file ?
+Performance maps
 ------------------------------------
 
 .. raw:: html

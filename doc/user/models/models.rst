@@ -3,12 +3,13 @@
 	Work in progress
 
 Cairn Open SubModels
-============================
+====================
 
 Principles
 ----------
 
 Models are libraries represent elements that are commonly used in energy systems. They add to the global MILP problem the following items:
+
 - variables representing fluxes, states of the system, costs...
 - constraints linking these variables together
 - a constribution to objectives functions.
@@ -33,7 +34,7 @@ Models library is divided into 2 categories in cairn:
 
 
 Submodels documentation description
---------------------------------------------
+-----------------------------------
 
 The description is made of 3 main parts:
 
@@ -45,7 +46,7 @@ impose combined constraints by connecting ports using these variable names, to b
 - Model equations : it gathers the linear equations used to write linear constraints and objective contribution.
 
 Units
--------------------
+-----
 
 The Interface Expression also specifies a type of unit:
 
@@ -60,7 +61,7 @@ Also notice that using cairn self defined physical propeties like Low Heat Value
 
 
 Technical models 
--------------------------------------
+----------------
 
 The SubModel subsection describes the parts that are common to all of the technical models.
 
@@ -115,24 +116,21 @@ These models will be used to model either sources either loads.
 	sourceload/SourceLoad
 
 Bus submodels
-----------------------
+-------------
+
+These models will be used to model bus constraints.
 
 .. include:: bus_toc.rst
 
-Objective function models
---------------------------------------------
-These models will be used to model various predefined objective economic functions.
-
-.. include:: objectivefunction_toc.rst
-
 Operation constraint models
---------------------------------------------
+---------------------------
+
+These models will be used to model bus operation constraints that can be added to a component.
 
 .. include:: operationconstraint_toc.rst
 
-
 Physical equations
-------------------------
+------------------
 
 .. include:: physicalequation_toc.rst
 

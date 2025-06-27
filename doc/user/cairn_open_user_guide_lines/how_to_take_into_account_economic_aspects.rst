@@ -4,7 +4,7 @@
 
 .. _SetEconomicParam:
 
-How to take into account economic aspects? 
+Economic modelling guidelines
 ------------------------------------------
 
 What are the possible ways to consider costs at a component level? 

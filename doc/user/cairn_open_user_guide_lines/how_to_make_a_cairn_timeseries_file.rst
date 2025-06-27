@@ -2,7 +2,7 @@
 
 .. _cairn_timeseriesfile:
 
-How to make a |cairn| timeseries file?
+|cairn| timeseries files
 ---------------------------------------
 
 .. raw:: html

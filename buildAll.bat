@@ -30,21 +30,25 @@ mkdir "%BUILD_PATH%"
 
 
 rem Generate config
-if "%OPTION%"=="all" ( 
-	"%CMAKEPATH%/cmake.exe" --preset=%CONFIGURATION% -S . 
-) else (
-    "%CMAKEPATH%/cmake.exe" --preset=%CONFIGURATION% -DWITH_PRIVATEMODELS=OFF -DWITH_LICENCE=OFF -DCAIRN_DEFAULTSOLVER:STRING=Highs -S . 
-)
+REM if "%OPTION%"=="all" ( 
+	REM "%CMAKEPATH%/cmake.exe" --preset=%CONFIGURATION% -S . 
+REM ) else (
+    REM "%CMAKEPATH%/cmake.exe" --preset=%CONFIGURATION% -DWITH_PRIVATEMODELS=OFF -DWITH_LICENCE=OFF -DCAIRN_DEFAULTSOLVER:STRING=Highs -S . 
+REM )
 
 rem build  -j %NUMBER_OF_PROCESSORS%
-"%CMAKEPATH%/cmake.exe" --build --preset %CONFIGURATION%  
+REM "%CMAKEPATH%/cmake.exe" --build --preset %CONFIGURATION%  
+
 
 rem remove previous install directory
-set BIN_PATH=bin/%CONFIGURATION%
-if exist %BIN_PATH% (
-	rmdir /s /q "%BIN_PATH%"
-	)
+set BIN_PATH=bin\%CONFIGURATION%
+REM if exist %BIN_PATH% (
+	REM rmdir /s /q "%BIN_PATH%"
+	REM )
 	
 rem Install
-"%CMAKEPATH%/cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+REM "%CMAKEPATH%/cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+
+
+del %BIN_PATH%\bin\Qt5Core.dll
 

@@ -234,8 +234,8 @@ public:
 	class DECLSPEC MilpComponentAPI : public ObjectAPI {
 	public:
 		MilpComponentAPI();
-		MilpComponentAPI(const std::string& a_Name, const std::string& a_Type, const std::string& a_ModelName, const t_dict& a_SettingValues = {});
-		MilpComponentAPI(const std::string& a_Name, const std::string& a_ModelName, const t_dict& a_SettingValues = {});
+		MilpComponentAPI(const std::string& a_Name, const std::string& a_Type, const std::string& a_ModelName);
+		MilpComponentAPI(const std::string& a_Name, const std::string& a_ModelName);
 		void set_MilpComponent(class MilpComponent* ap_Component);
 		class MilpComponent* get_MilpComponent() const;
 

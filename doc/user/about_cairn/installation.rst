@@ -1,9 +1,9 @@
 .. _installp:
 
 
-###################
+##################
 Installing |cairn|
-###################
+##################
 
 Dependencies
 ============
@@ -36,9 +36,6 @@ Dependencies
    * - |cplex|
      - 20.1
      - Use commercial solver |cplex|
-   * - |gams|
-     - 
-     - Use commercial modeller |gams|
 
 Standalone installation
 =======================
@@ -46,13 +43,12 @@ Standalone installation
 - **Windows**
 
 	- In the documentation, **CAIRN_APP** refers to the root directory.
-	- Use the installer Cairn_3.n.m, n being the major release number and m the minor one (update).
-	- Double click on the installer and follow the instructions (see :numref:`cairnInstaller`-:ref:`cairnInstaller`).
+	- Use the installer Cairn_r.n.m, r being the major release number and n the minor one (update) and m the bugfix version.
+	- Double click on the installer and follow the instructions.
 	- If you are using |cplex|, do not forget to check the |cplex| component, you will be asked to confirm default location later on.
-	  Specify the path to |cplex| component and/or |gams| component if relevant and at the end, click on Install.
+	  Specify the path to |cplex| component if relevant and at the end, click on Install.
 	- |python| 3.10.9 and a dedicated virtual environment are needed as a pre-requisite.
-	  The virtual environment can be generated automatically by checking the box "Install virtual environment ?" 
-	  (see :numref:`cairnInstaller|python|`-:ref:`cairnInstaller|python|`)
+	  The virtual environment can be generated automatically by checking the box "Install virtual environment?"
 
 
 .. caution:: 
@@ -80,18 +76,14 @@ Standalone installation
   
   .. include:: ../privateDoc/about_cairn/installation_cea_windows.rst
 
-.. ifconfig:: cea_content
-  
-  - **CEA linux server**
-
-  1 linux server is accessible at LSET:
-
-  #. AAR
-
-  To be documented...
+  .. include:: ../privateDoc/about_cairn/installation_cea_linux.rst
 
 |python| package installation
 =============================
+
+A wheel is available on GitHub.
+
+Only windows plateform is supported so far.
 
 Dependencies
 ------------
@@ -99,69 +91,21 @@ Dependencies
 **Required dependencies**
 
 .. list-table:: Required dependencies
-   :widths: 200, 200, 200
+   :widths: 200, 200
    :class: longtable
 
    * - Package
      - Version
-     - Use
    * - Qt
      - 5.15
-     - 
-
-The cairn |python| |api| can be installed together with cairn through the installer.
-
-At the beginning of the installation process, select the component cairn API.
-
-.. figure:: images/InstallAPI1.PNG
-   :width: 500 
-   :name: cairnPythonAPIInstaller
-   :align: center
-
-   Select the component cairn API.
-
-You can choose to install the cairn |python| |api| in a default virtual environment (with this option, the environment is created and required python packages are installed) or in your existing virtual environment.
-
-.. figure:: images/InstallAPI2.PNG
-   :width: 500 
-   :name: cairnPythonAPIInstallerEnv
-   :align: center
-
-   Choose the python environment in which you want to install the cairn |python| |api|.
-
-Qt is now mandatory so fill in your Qt path.
-
-.. figure:: images/InstallAPI3.PNG
-   :width: 500 
-   :name: cairnPythonAPIInstallerQt
-   :align: center
-
-   Fill in your Qt path.
-
-Another possibility is to install it directly with the 7z file:
-
-To install cairn |python| |api| package in your current |python| environment, do the following :
-
-  #. Unzip folder cairn-{version}-Source.7z
-
-  #. In file cmake/default_options.cmake, change the installation path of Qt and/or |python| and |python| environment if necessary
-
-  #. Through a command window, activate your |python| environment
-
-  .. code-block:: batch
-
-    activate.bat
-
-  #. Change the directory to the unzipped folder
-
-  #. At the root of the unzipped folder, launch the command :
-
-     .. code-block:: batch
-
-	   pip install . -v
-
-The installation process takes time as |cairn| is built.
+   * - python
+     - 3.10
+   * - pybind11
+     - 2.11.1
+   * - pandas
+     - >= 1.5.2
 
 .. ifconfig:: cea_content
 
+  .. include:: ../privateDoc/about_cairn/installation_api_installer.rst
   .. include:: ../privateDoc/about_cairn/installation_module_cairn.rst

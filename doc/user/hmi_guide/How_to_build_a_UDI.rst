@@ -1,9 +1,9 @@
 .. _cairn_UDI:
 
-How to build a |udi|?
+Setting new indicators
 ===================================================
 
-In addition to the predefined indicators, the user can build his own indicator, called |udi|.
+In addition to the predefined indicators, the user can build his own indicator, called |udi| (user defined indicator).
 
 The predefined indicators and |udi| themself can be combined to build new |udi| owing to ExprTk package.
 Thus, numerous forms of functional, logical and vector processing semantics are available.

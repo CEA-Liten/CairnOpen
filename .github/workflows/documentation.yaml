@@ -12,11 +12,23 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-latest
+
+    env:
+      GITHUB_URL: https://github.com/CEA-Liten/CairnOpen
+      VERSION: 5.0.0
+      WHL_FILENAME: cairn-${{ env.VERSION }}-cp310-cp310-win_amd64.whl
+      WHL_URL: ${{ env.GITHUB_URL }}/releases/download/${{ env.VERSION }}/${{ env.WHL_FILENAME }}
+
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+      - run: |
+        echo "CAIRN_PACKAGE_URL=$WHL_URL"
+        curl -o $WHL_FILENAME $WHL_URL
+
       - name: Install dependencies
         run: |
+          pip install $WHL_FILENAME
           pip install -r ./doc/user/requirements.txt
           python ./scripts/doc/userDocGenRST.py
       - name: Sphinx build

@@ -203,7 +203,10 @@ int InputParam::checkProfile (const QString aName, const Eigen::VectorXf &aProfi
 void InputParam::readVectorParameters (const QString &aName, const QString &aFileName, QList<QString> &aPerfParamNames)
 {
     QFile dataFileName(aFileName);
-    if (!dataFileName.exists()) return;
+    if (!dataFileName.exists()) {
+        Cairn_Exception error("ERROR DataFile " + aFileName + " doesn't exist for component " + aName, -1);
+        throw& error;
+    }
     
     QList<QStringList> data_Inputs = GS::readFromCsvFile (aFileName, ";");
     qInfo() << "Reading vector parameters from file " << aFileName ;

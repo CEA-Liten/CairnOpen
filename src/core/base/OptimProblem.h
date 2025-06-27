@@ -4,7 +4,6 @@
 class OptimProblem;
 
 #include <QtCore>
-#include <qdom.h>
 #include <QMap>
 #include <QVector>
 #include <QDataStream>
@@ -254,6 +253,8 @@ public:
 
     void computeObjectiveFunction(MIPModeler::MIPExpression& objective);
     void resetFlags();
+
+    const StudyPathManager* getStudyPathManager() { return mStudyFile  ; }
     
 private:    
     TecEcoEnv* mTecEcoEnv ;

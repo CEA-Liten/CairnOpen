@@ -3,7 +3,6 @@
 class GUIData ;
 
 #include <QtCore>
-#include "qdom.h"
 #include "CairnCore_global.h"
 #include <QObject>
 

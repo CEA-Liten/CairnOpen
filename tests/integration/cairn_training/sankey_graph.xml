@@ -1,0 +1,47 @@
+<graph>
+  <vector>
+    <name>ElectricityDistrib</name>
+    <unit>MWh</unit>
+    <conso>
+      <flow>
+        <variable>ELY_PEM.UsedPower</variable>
+      </flow>
+      <flow>
+        <variable>Elec_Grid_Inject.GridFlow</variable>
+      </flow>
+    </conso>
+    <prod>
+      <flow>
+        <variable>Elec_Grid.GridFlow</variable>
+      </flow>
+      <flow>
+        <variable>Wind_farm.SourceLoadFlow</variable>
+      </flow>
+    </prod>
+  </vector>
+  <vector>
+    <name>H2</name>
+    <unit>MWh</unit>
+    <conso>
+      <flow>
+        <variable>H2_Tank.ChargeFlow</variable>
+        <factor>0.033</factor>
+      </flow>
+      <flow>
+        <variable>H2_Load.SourceLoadFlow</variable>
+        <factor>0.033</factor>
+      </flow>
+    </conso>
+    <prod>
+      <flow>
+        <variable>ELY_PEM.H2MassFlowRate</variable>
+        <factor>0.033</factor>
+      </flow>
+      <flow>
+        <variable>H2_Tank.DischargeFlow</variable>
+        <factor>0.033</factor>
+      </flow>
+    </prod>
+  </vector>
+</graph>
+

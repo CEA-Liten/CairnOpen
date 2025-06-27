@@ -53,4 +53,4 @@ Example through a notebook
 ==========================
 
 .. raw:: html
-    :file: Draft_APIPython_Doc_Notebook.html
+    :file: APIPython_Doc_Notebook.html

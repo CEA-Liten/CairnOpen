@@ -2,8 +2,6 @@ import os
 import sys
 import pandas as pd
 
-os.add_dll_directory("@Qt5_BIN@")
-
 cairnBin =  os.path.join(os.path.dirname(os.path.realpath(__file__)), '@CMAKE_INSTALL_BINDIR@')
 os.add_dll_directory(cairnBin)
 sys.path.append( cairnBin )

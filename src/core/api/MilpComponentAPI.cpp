@@ -11,16 +11,13 @@ CairnAPI::MilpComponentAPI::MilpComponentAPI()
 {	
 }
 
-CairnAPI::MilpComponentAPI::MilpComponentAPI(const std::string& a_Name, const std::string& a_Type, const std::string& a_ModelName, const t_dict& a_SettingValues)
+CairnAPI::MilpComponentAPI::MilpComponentAPI(const std::string& a_Name, const std::string& a_Type, const std::string& a_ModelName)
 	: CairnAPI::ObjectAPI(a_Name, a_Type)
 {
 	set_ModelClass(a_ModelName);
-	if (a_SettingValues.size() != 0) {
-		set_SettingValues(a_SettingValues);
-	}
 }
 
-CairnAPI::MilpComponentAPI::MilpComponentAPI(const std::string& a_Name, const std::string& a_ModelName, const t_dict& a_SettingValues)
+CairnAPI::MilpComponentAPI::MilpComponentAPI(const std::string& a_Name, const std::string& a_ModelName)
 	: CairnAPI::ObjectAPI(a_Name, "Unknown")
 {
 	t_list possibleTypes = CairnAPIUtils::get_Possible_Component_Types();
@@ -31,9 +28,6 @@ CairnAPI::MilpComponentAPI::MilpComponentAPI(const std::string& a_Name, const st
 	}
 	set_Type(type);
 	set_ModelClass(a_ModelName);
-	if (a_SettingValues.size() != 0) {
-		set_SettingValues(a_SettingValues);
-	}
 }
 
 void CairnAPI::MilpComponentAPI::set_MilpComponent(class MilpComponent* ap_Component)

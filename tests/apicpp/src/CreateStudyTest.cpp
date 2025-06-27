@@ -288,15 +288,15 @@ int main()
 		vH2_Load.add(vH2_Load_L0)
 	)
 
-	TESTAPI("add H2_Load",
-		m_Problem.add(vH2_Load)
-	)
+		TESTAPI("add H2_Load",
+			m_Problem.add(vH2_Load)
+		)
 
 
 	// ajout d'un composant
 	// -------------------------------------------------------------------
-	CairnAPI::MilpComponentAPI vWind_farm("Wind_farm", "SourceLoad", 
-		{
+	CairnAPI::MilpComponentAPI vWind_farm("Wind_farm", "SourceLoad");
+	vWind_farm.set_SettingValues({
 		{"Direction", "Source"},
 		{"LPModelONLY", false},
 		{"MaxFlow", "1e+06"},
@@ -317,6 +317,7 @@ int main()
 		{"PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0}
 		}
 	);
+
 	CairnAPI::MilpPortAPI vWind_farm_L0("PortL0", vElec);
 	vWind_farm_L0.set_SettingValues({
 				{"Direction", "OUTPUT"},
