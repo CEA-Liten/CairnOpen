@@ -28,14 +28,14 @@ Before installing Cairn, ensure your system meets the following prerequisites:
 - [LSET CMakeTools](https://github.com/CEA-Liten/LSET_CMakeTools)
 
 ## 📦 Installation
-They are have several options to use Cairn:
+There are have several options to use Cairn:
 - **Cairn Viewer**, a graphical interface, can be installed on Windows PC : see releases.
 - **Cairn Python API** wheels are available on releases. 
 
 ## 🚀 Usage
 To use Cairn, follow these steps:
 
-- Insall Cairn. 
+- Install Cairn. 
 - Build and configure your model parameters using the graphical user interface or the API.
 - Run the simulation by clicking the "Run" button.
 - View the results in the visualization tabs.
