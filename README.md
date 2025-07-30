@@ -18,12 +18,13 @@ Before installing Cairn, ensure your system meets the following prerequisites:
 
 - Operating System: Windows, Linux, macOS. 
 - C++ compiler compatible with C++17 or higher (for instance CMake)
-- Python 3.10 or higher
+- Python 3.10
 
-## ⚙️ Dependances 
+## ⚙️ Dependencies 
 - Qt libraries (version 5.12 or higher). 
 - Eigen libraries (version 3.3 or higher).
 - Highs solver
+- Cplex solver (optional, version 20.10)
 - [MIPModeler](https://github.com/CEA-Liten/MIPModeler)
 - [LSET CMakeTools](https://github.com/CEA-Liten/LSET_CMakeTools)
 
