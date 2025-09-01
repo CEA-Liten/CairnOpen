@@ -1,4 +1,5 @@
-;Ramp__paramListJson__AddRampCost;Ramp__paramListJson__ConstantRamp
+;Ramp;Ramp
+;AddRampCost;ConstantRamp
 withoutCosts;false;true
 withCosts;true;true
 withVariableRamps;false;false

@@ -38,23 +38,14 @@ void NodeEquality::setTimeData()
     mExprBusValue.resize(mHorizon);
 }
 
-void NodeEquality::buildModel()
+void NodeEquality::computeModelContribution()
 {
-    if (mAllocate)
-    {
-        if (mMaxBusValue >=0.)
-            mVarBusValue = MIPModeler::MIPVariable1D( mHorizon, mMinBusValue, mMaxBusValue); // debit max de production Cette grandeur est mis a  jour dynamiquement dans le "buildProblem"
-        else
-            mVarBusValue = MIPModeler::MIPVariable1D( mHorizon, fabs(mMaxBusValue), 0.f); // debit max de production Cette grandeur est mis a  jour dynamiquement dans le "buildProblem"
-        for (unsigned int t = 0; t < mHorizon ; ++t)
-           mExprBusValue[t] = MIPModeler::MIPExpression () ;
+    if (mMaxBusValue >= 0.) {
+        addVariable(mVarBusValue, "BusValue", mMinBusValue, mMaxBusValue);
     }
-    else
-    {
-        for (unsigned int t = 0; t < mHorizon ; ++t)
-            closeExpression(mExprBusValue[t]) ;
+    else {
+        addVariable(mVarBusValue, "BusValue", fabs(mMaxBusValue), 0.f);
     }
-    addVariable(mVarBusValue,"BusValue");
 
     // le bus est une contrainte systeme sous forme d'une expression a laquelle chaque composant contribue directement
     // we will loop on the list of connected ports imposing BusSameValue constraint for each of them with BusValue one
@@ -80,11 +71,6 @@ void NodeEquality::buildModel()
         for (unsigned int t = 0; t < mHorizon ; ++t)
            addConstraint(mVarBusValue(t) == mBusValue,"I",t) ;
     }
-
-    /** Objective contribution expressed as the sum of Capex and Opex so as to be able to account for actualization rate on Opex part only*/
-    computeAllContribution() ;
-
-    mAllocate = false ;
 }
 //-------------------------------------------------------
 void NodeEquality::computeAllIndicators(const double* optSol)

@@ -5,7 +5,9 @@ TechnicalSubModel(aParent) ,
 mAddVariableMaxFlow(false),
 mMaxFlux(1.e4),
 mMinFlux(0.)
-{ }
+{ 
+    mSens = 1.;
+}
 
 GridSubModel::~GridSubModel() { }
 
@@ -18,6 +20,11 @@ void GridSubModel::setTimeData()
     mBuyPriceSeasonal.resize(mHorizon);
     mGridUse.resize(mHorizon);
     mGridVariableMaxFlow.resize(mHorizon);
+}
+
+void GridSubModel::computeInitialData() {
+    setMaxValue(mMaxFlux);
+    setMinValue(mMinSize); 
 }
 
 void GridSubModel::computeAllIndicators(const double* optSol)
@@ -120,8 +127,12 @@ int GridSubModel::checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange,
         qInfo() << "Use default Use to send from Component to BusFlowBalance bus " << (port->Direction());
     }
     // user defined varname and varuse, check consistency against sink/source attribute !
-    if (mSens > 0 && varUse != KPROD() && PortList().size() == 1) { port->setDirection(KPROD()); qWarning() << "Variable Use reset to PRODUCER for consistency with Source attribute "; }
-    if (mSens < 0 && varUse != KCONS() && PortList().size() == 1) { port->setDirection(KCONS()); qWarning() << "Variable Use reset to CONSUMER for consistency with Source attribute "; }
+    if (mSens > 0 && varUse != KPROD() && PortList().size() == 1) { 
+        port->setDirection(KPROD()); qWarning() << "Variable Use reset to PRODUCER for consistency with Source attribute "; 
+    }
+    if (mSens < 0 && varUse != KCONS() && PortList().size() == 1) { 
+        port->setDirection(KCONS()); qWarning() << "Variable Use reset to CONSUMER for consistency with Source attribute ";
+    }
     if (varUse == "") {
         if (mSens > 0) port->setDirection(KPROD()); //producer for balance bus - no sign change
         else if (mSens < 0) port->setDirection(KCONS()); //consumer for balance bus - negative sign change required

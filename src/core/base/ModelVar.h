@@ -8,7 +8,6 @@
 #include "InputParam.h"
 #include "ZEVariables.h"
 
-
 enum EIOModelType {
     eMIPUndefined = -1,
     eMIPExpression = 0,
@@ -83,31 +82,32 @@ protected:
 class ModelIO : public ModelVar
 {
 public:
-    ModelIO(const QString& aName = "",
+    ModelIO(const QString& aName = "", t_flag a_IsUsed = true, 
         const QString& a_Unit = "", const QString& aCurrency = ""
     );
     ModelIO(const QString& aName,
-        MIPModeler::MIPExpression* aPtr,
+        MIPModeler::MIPExpression* aPtr, t_flag a_IsUsed = true,
         const QString& a_Unit = "", const QString& aCurrency = ""
     );
     ModelIO(const QString& aName,
-        MIPModeler::MIPExpression1D* aPtr,
+        MIPModeler::MIPExpression1D* aPtr, t_flag a_IsUsed = true,
         const QString& a_Unit = "", const QString& aCurrency = ""
     );
 
-    ModelIO(const QString& aName = "",
+    ModelIO(const QString& aName = "", t_flag a_IsUsed = true,
         const QString* a_Unit = nullptr, const QString& aCurrency = ""
     );
     ModelIO(const QString& aName,
-        MIPModeler::MIPExpression* aPtr,
+        MIPModeler::MIPExpression* aPtr, t_flag a_IsUsed = true,
         const QString* a_Unit = nullptr, const QString& aCurrency = ""
     );
     ModelIO(const QString& aName,
-        MIPModeler::MIPExpression1D* aPtr,
+        MIPModeler::MIPExpression1D* aPtr, t_flag a_IsUsed = true,
         const QString* a_Unit = nullptr, const QString& aCurrency = ""
     );
 
     const EIOModelType& getType() const { return m_Type; };
+    bool IsUsed() { return m_IsUsed.get_Value(); };
     const t_pExpr& getPtr() const { return p_Expr; };
     bool isPExpr() const;
 
@@ -118,6 +118,7 @@ public:
 
 protected:
     EIOModelType m_Type;
+    FlagParam m_IsUsed;
     t_pExpr p_Expr;
     t_value m_evaluateExpr;
 };

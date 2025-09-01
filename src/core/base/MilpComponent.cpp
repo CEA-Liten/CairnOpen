@@ -12,6 +12,9 @@
 #include "ModelFactory.h"
 #include <map>
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 using namespace CairnUtils;
 using namespace CairnAPIUtils;
 using namespace GS ;
@@ -50,7 +53,6 @@ MilpComponent::MilpComponent(QObject *aParent,
 
     mCompoInputParam = new InputParam (this,"CompoInputParam"+aName) ;
     mInputParam = new InputParam (this, "InputParam"+aName) ;                   /** List of COMPONENT Input parameters (for link with PEGASE or OUTSIDE) */
-    mCompoToModel = new InputParam (this, "CompoToModel"+aName) ;               /** List of COMPONENT data to be sent to Model (derived secundary parameters...) */
     mPlugSubmodelIO = new InputParam (this, "PlugSubmodelIO"+aName) ;           /** List of COMPONENT Output data (for link with PEGASE or OUTSIDE) Used for timeShifting, IMPORT and EXPORT wrt PEGASE exchange Zone */
     mTimeSeriesSubmodel = new InputParam (this, "TimeSeriesSubmodel"+aName) ;   /** List of COMPONENT TimeSeries input data (for link with PEGASE) Used for timeShifting, IMPORT and EXPORT wrt PEGASE exchange Zone */
 
@@ -76,7 +78,6 @@ MilpComponent::~MilpComponent()
 {
     if (mTimeSeriesSubmodel) delete mTimeSeriesSubmodel ;   /** List of COMPONENT TimeSeries input data (for link with PEGASE) Used for timeShifting, IMPORT and EXPORT wrt PEGASE exchange Zone */
     if (mPlugSubmodelIO) delete mPlugSubmodelIO ;           /** List of COMPONENT Output data (for link with PEGASE or OUTSIDE) Used for timeShifting, IMPORT and EXPORT wrt PEGASE exchange Zone */
-    if (mCompoToModel) delete mCompoToModel ;               /** List of COMPONENT data to be sent to Model (derived secundary parameters...) */
     if (mInputParam) delete mInputParam ;                   /** List of COMPONENT Input parameters (for link with PEGASE or OUTSIDE) */
     if (mCompoInputParam) delete mCompoInputParam ;
 
@@ -243,7 +244,10 @@ void MilpComponent::createOnePort(const QString& portId, const QMap<QString, QSt
     addPort(lptrport);
     mNports++;
     if (portParams["IsDefaultPort"] == Yes()) {//For a default port, the linked component is not known at this point.
-        qDebug() << "Created port " << Name() << portName << " linked to " << portParams[portName];
+        if(portParams[portName] != "")
+            qInfo() << "Created port" << Name()+"."+portName << " linked to " << portParams[portName];
+        else
+            qInfo() << "Created default port" << Name() + "." + portName;
     }
     if (lptrport->Variable().contains("INPUTFlux") || lptrport->Variable().contains("OUTPUTFlux")) 
     {
@@ -287,6 +291,7 @@ void MilpComponent::createPorts()
     //Create default ports first
     for (auto& portId : mCompoModel->DefaultPorts().keys()) {
         QMap<QString, QString> portParams = mCompoModel->DefaultPorts()[portId];
+        portParams["CompoName"] = Name();
         portParams["IsDefaultPort"] = Yes();
         createOnePort(portId, portParams);
     }
@@ -301,6 +306,7 @@ void MilpComponent::createPorts()
             qDebug() << "Created default port " << Name() << defaultPort->ID() << " linked to " << defaultPort->LinkedComponent();
         }
         else {
+            portParams["CompoName"] = Name();
             portParams["IsDefaultPort"] = No();
             createOnePort(portId, portParams);
         }
@@ -310,14 +316,14 @@ void MilpComponent::createPorts()
 void MilpComponent::declareCompoInputParam()
 {    
     //QString
-    // this is not an Option of the Component !! mCompoInputParam->addParameter("Model",&mComponent["Model"],true,"Model used","",{"DONOTSHOW"});
-    mCompoInputParam->addParameter("ModelClass", &mCompoModelClassName, "", true, true, "ModelClass used", "", {});
-    mCompoInputParam->addParameter("Xpos", &mXpos, 0, false, true,"X position on planteditor","",{"DONOTSHOW"});
-    mCompoInputParam->addParameter("Ypos", &mYpos, 0, false, true,"Y position on planteditor","",{"DONOTSHOW"});
+    // this is not an Option of the Component !! mCompoInputParam->addParameter("Model",&mComponent["Model"],true,"Model used","","DONOTSHOW");
+    mCompoInputParam->addParameter("ModelClass", &mCompoModelClassName, "", true, true, "ModelClass used", "");
+    mCompoInputParam->addParameter("Xpos", &mXpos, 0, false, true,"X position on planteditor","", "DONOTSHOW");
+    mCompoInputParam->addParameter("Ypos", &mYpos, 0, false, true,"Y position on planteditor","", "DONOTSHOW");
     mCompoInputParam->addParameter("Control", &mControl, "", false, true, "Type of time control rolling horizon or MPC");
-    mCompoInputParam->addParameter("DataFile", &mDataFile, "", false, true, "Path to .csv data file for 1D or 2D map definitions. Use ; to provide several files","file",{""});
-    mCompoInputParam->addParameter("PublishUserVariable", &mPublishUserVariable, "", false, true, "Full path to define text file for additionnal variables publication to output","file",{""});
-    mCompoInputParam->addParameter("submodelfile", &mSubmodelFile, "", false, true, "If model uses user dll path to this dll", "");
+    mCompoInputParam->addParameter("DataFile", &mDataFile, "", false, true, "Path to .csv data file for 1D or 2D map definitions. Use ; to provide several files","file");
+    mCompoInputParam->addParameter("PublishUserVariable", &mPublishUserVariable, "", false, true, "Full path to define text file for additionnal variables publication to output","file");
+    mCompoInputParam->addParameter("submodelfile", &mSubmodelFile, "", false, true, "If model uses user dll path to this dll");
 }
 
 void MilpComponent::setCompoInputParam(const QMap<QString, QString> aComponent) 
@@ -347,8 +353,10 @@ void MilpComponent::setCompoInputParam(const QMap<QString, QString> aComponent)
     else {
         mCompoTechnoType = mCompoModelClassName;
     }
-    
-    mCompoToModel->publishData("ControlType", &mControl);
+
+    if (mCompoModel) {
+        mCompoModel->setControlType(mControl);
+    }
 }
 
 void MilpComponent::initGuiData() 
@@ -357,6 +365,25 @@ void MilpComponent::initGuiData()
     mGUIData->doInit(mCompoModelName, mCompoTechnoType, mType, mXpos, mYpos);
 }
 
+void MilpComponent::declareIOVariables()
+{
+    //First, verify that every default port has an assigned EnergyVector
+    bool hasEnergyVector = true;
+    foreach(MilpPort* lptrport, PortList())
+    {
+        if (lptrport->IsDefaultPort() && !lptrport->ptrEnergyVector()) 
+        {
+            hasEnergyVector = false;
+            break;
+        }
+    }
+    //Declare IO variables
+    if (hasEnergyVector && mCompoModel) {
+        defineMainEnergyVector();
+        removeIOs();
+        mCompoModel->declareModelInterface();
+    }
+}
 
 void MilpComponent::setXpos(const int& aXpos)
 {
@@ -400,7 +427,8 @@ void MilpComponent::createExportListVars(t_mapExchange& a_Exchange)
     if (mCompoModel != nullptr)
     {
         for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D)) {
-            if (ivar1D->isPExpr()) {
+            //Only publish used IO variables
+            if (ivar1D->isPExpr() && ivar1D->IsUsed()) {
                 QString varName = ivar1D->getName();
                 QString exName = mName + "." + varName;
                 a_Exchange[exName] = new ZEVariables(                        
@@ -410,8 +438,13 @@ void MilpComponent::createExportListVars(t_mapExchange& a_Exchange)
             }
         }
     }
-    // automatically publish variables at ports !    
-    createPortsExportListVars(a_Exchange);
+
+    /*
+    * Port variables (expressions) are published later on in MilpComponent::initSubModelInput(). 
+    * A port variable can be published only after defining the value of its mVarType. 
+    * This can only be done on execution as user may change the port variable after component initialization
+    * createPortsExportListVars(a_Exchange);
+    */
 
     if (mCompoInputParam->getParamQSValue("PublishUserVariable") != "")  /** define file for additionnal variables publication to output */
     {
@@ -449,7 +482,9 @@ void MilpComponent::createZEVariablesList()
 
 void MilpComponent::readTSVariablesFromModel() {
     //Read Time Series variables from Model Data 
-    MilpComponent::readTSVariables(mModelDataTS);    
+    mModelDataTS = mCompoModel->getInputDataTS();
+    MilpComponent::readTSVariables(mModelDataTS); 
+    mModelPortImpactParamTS = mCompoModel->getInputPortImpactsParamTS();
     MilpComponent::readTSVariables(mModelPortImpactParamTS);
 }
 
@@ -505,6 +540,12 @@ void MilpComponent::setTimeSeriesName(const QString& ts_paramName, const QString
         }
     }
 }
+
+void MilpComponent::cleanTimeSeries()
+{
+    m_timeSeries.clear();
+}
+
 
 void MilpComponent::readTSVariables(InputParam* aMapParamTS)
 {
@@ -608,7 +649,21 @@ void MilpComponent::initSubModelTopology()
     mCompoModel->setParentCompo(this) ;
 }
 
-int MilpComponent::initSubModelConfiguration()
+void MilpComponent::resetCompoModel()
+{
+    /*
+    * Don't delete IOs (mIOExpressions) here
+    */
+    if (mCompoModel) {
+        mCompoModel->closeExpressions(); /* It is better to stay before declareInputParams(mName) */
+        mCompoModel->declareInputParams(mName);
+        mCompoModel->resetFlags();
+    }
+
+    cleanTimeSeries();
+}
+
+int MilpComponent::initSubModelConfiguration(const bool& readParams)
 {
     /** initSubModelInput :
      * init SubModel timestep and horizon data
@@ -616,6 +671,8 @@ int MilpComponent::initSubModelConfiguration()
      * */
 
     mCompoModel->setParent(this);
+
+    resetCompoModel();
 
     // init SubModel topology data : list of ports
     initSubModelTopology();
@@ -629,96 +686,76 @@ int MilpComponent::initSubModelConfiguration()
     mCompoModel->setAbsoluteTimeStep(mMilpData->getAbsoluteTimeStep()) ;
     mCompoModel->setTimeshift(mMilpData->getTimeshift()) ;
     mCompoModel->setFuturesize(mMilpData->getIHMFuturSize()) ;
-    mCompoModel->setTimeSteps(mMilpData->TimeSteps(), mMilpData->TimeStepBeginLP(), mMilpData->TimeStepBeginForecast(), mMilpData->DecreaseOptimizationHorizon()) ;
+    mCompoModel->setTimeSteps(mMilpData->useVariableTimeSteps(), mMilpData->TimeSteps(), mMilpData->TimeStepBeginLP(), mMilpData->TimeStepBeginForecast(), mMilpData->DecreaseOptimizationHorizon());
     mCompoModel->setNpdtPast(mMilpData->npdtPast()) ;
 
     mCompoModel->setTimeData() ;
 
-    mModelParam = mCompoModel->getInputParam() ;
-    mModelData = mCompoModel->getInputData() ;
-    mModelDataTS = mCompoModel->getInputDataTS();
-    
+    mModelParam = mCompoModel->getInputParam();
     mModelPortImpactParam = mCompoModel->getInputPortImpactsParam();
-    mModelPortImpactParamTS = mCompoModel->getInputPortImpactsParamTS();
-    mModelPerfParam = mCompoModel->getInputPerfParam();
     mModelEnvImpactParam = mCompoModel->getInputEnvImpactsParam();
+    mModelPerfParam = mCompoModel->getInputPerfParam();
 
     //first delcare then read configuration parameters for other parameter settings.
 
     mCompoModel->declareModelConfigurationParameters();
 
     int ierr = 0;
-    //read configuration parameters
-    ierr = mModelParam->readParameters(mComponent);
-    if (ierr < 0) { qCritical() << " Error reading Parameters of SubModel " << (mName); return -1; }
-        
-    ierr = mModelPortImpactParam->readParameters(mComponent);
-    if (ierr < 0) { qCritical() << " Error reading PortImpact of SubModel " << (mName); return -1; }
 
-    ierr = mModelEnvImpactParam->readParameters(mComponent);
-    if (ierr < 0) { qCritical() << " Error reading EnvImpact of SubModel " << (mName); return -1; }
+    if (readParams) {
+        //read configuration parameters
+        ierr = mModelParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading Parameters of SubModel " << (mName); return -1; }
 
-    //fill data transmitted from MilpComponent
-    ierr = mModelData->fillData(mName, *mCompoToModel, eBool); // transmit
-    if (ierr < 0) { qCritical() << " Error filling DBLE scalar data of SubModel from Component data " << (mName); return -1; }
+        ierr = mModelPortImpactParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading PortImpact of SubModel " << (mName); return -1; }
 
-    ierr = mModelData->fillData(mName, *mCompoToModel, eInt); // transmit
-    if (ierr < 0) { qCritical() << " Error filling DBLE scalar data of SubModel from Component data " << (mName); return -1; }
-
-    ierr = mModelData->fillData(mName, *mCompoToModel, eDouble); // transmit
-    if (ierr < 0) { qCritical() << " Error filling DBLE scalar data of SubModel from Component data " << (mName); return -1; }
-
-    ierr = mModelData->fillData(mName, *mCompoToModel, eString); // transmit
-    if (ierr < 0) { qCritical() << " Error filling DBLE scalar data of SubModel from Component data " << (mName); return -1; }
-
+        ierr = mModelEnvImpactParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading EnvImpact of SubModel " << (mName); return -1; }
+    }
 
     // now build list of SubModel parameters (int, bool, scalar, double, QString) and data (time series, secundary parameters...)
 
     mCompoModel->declareModelParameters();
 
-    mCompoModel->declareModelInterface();
+    mCompoModel->setTypicalPeriods(mMilpData->useTypicalPeriods(), mMilpData->TypicalPeriods(), mMilpData->NDtTypicalPeriods(), mMilpData->VectTypicalPeriods()) ; 
 
-    // compute initial data for m input parameters to properly fill in Hist* vectors used by submodels to get their initial states.
-    mCompoModel->computeInitialData() ;
-    mCompoModel->setTypicalPeriods(mMilpData->useTypicalPeriods(), mMilpData->TypicalPeriods(), mMilpData->NDtTypicalPeriods(), mMilpData->VectTypicalPeriods()) ;
-
-    ierr = checkPorts() ;
-    if (ierr <0 )
-    {
-       Cairn_Exception error (" ERROR in component "+Name()+" for model "+mCompoModelName ,-1) ;
-       this->setException(error) ;
-       return ierr;
+    //---------------------------------------------------------------------------------------------------------------------
+    if (readParams) {
+        // read dynamic input parameters at Component level    
+        ierr = mInputParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading Parameters of SubModel " << (mName); return -1; }
     }
 
     //---------------------------------------------------------------------------------------------------------------------
-    // read dynamic input parameters at Component level    
-    int ierr00 = mInputParam->readParameters(mComponent);
-    if (ierr00 < 0) { qCritical() << " Error reading Parameters of SubModel " << (mName); return -1; }
 
-    //---------------------------------------------------------------------------------------------------------------------
+    if (readParams) {
+        //read non-configuration parameters
+        ierr = mModelParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading Parameters of SubModel " << (mName); return -1; }
 
-    //read non-configuration parameters
-    ierr = mModelParam->readParameters(mComponent);
-    if (ierr < 0) { qCritical() << " Error reading Parameters of SubModel " << (mName); return -1; }
+        ierr = mModelEnvImpactParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading EnvImpact of SubModel " << (mName); return -1; }
 
-    ierr = mModelEnvImpactParam->readParameters(mComponent);
-    if (ierr < 0) { qCritical() << " Error reading EnvImpact of SubModel " << (mName); return -1; }
+        ierr = mModelPortImpactParam->readParameters(mComponent);
+        if (ierr < 0) { qCritical() << " Error reading PortImpact of SubModel " << (mName); return -1; }
+    }
 
-    ierr = mModelPortImpactParam->readParameters(mComponent);
-    if (ierr < 0) { qCritical() << " Error reading PortImpact of SubModel " << (mName); return -1; }
+    if (readParams || getEnergyVector()) {
+        //GUI (works also for old studies where default ports are not marked) and OptimProblemAPI::initialize()
+        declareIOVariables();
+    }
 
-    //Indicators
-    mCompoModel->declareModelIndicators();
-
-    if (mCompoModel != nullptr)
-    {
-        for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
-        {        
-          QString varName = ivar1D->getName() ;
-          qDebug() << " - AUTO_PlugSubmodelIO MilpComponent and SubModel vector : " <<  mName+"."+varName << npdtTot() << TimeSteps().size();
-          mPlugSubmodelIO->publishData(varName, npdtTot(), NAN) ;
-        }
-    }    
+    /*
+    * Publish all IO variables. Then, in exportSubmodelIO(..), export only the IO variables that have isUsed == True
+    * Note, the value of isUsed may change later on, e.g., in buildModel()
+    */
+    for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
+    {        
+        QString varName = ivar1D->getName() ;
+        qDebug() << " - AUTO_PlugSubmodelIO vector : " <<  mName+"."+varName << npdtTot() << TimeSteps().size();
+        mPlugSubmodelIO->publishData(varName, npdtTot(), NAN) ;
+    }
 
     return 0 ;
 }
@@ -738,16 +775,9 @@ int MilpComponent::initSubModelInput()
      * fill SubModel scalar double from Component scalar double values **/
 
     // read dynamic input parameters at Submodel level
-    mModelParam = mCompoModel->getInputParam() ;
-    mModelPerfParam = mCompoModel->getInputPerfParam();
-    mModelData = mCompoModel->getInputData() ;
-    mModelDataTS = mCompoModel->getInputDataTS();
-    
-    mModelEnvImpactParam = mCompoModel->getInputEnvImpactsParam();
-    mModelPortImpactParam = mCompoModel->getInputPortImpactsParam();
-    mModelPortImpactParamTS = mCompoModel->getInputPortImpactsParamTS();
-
     int ierr = 0;
+
+    mModelPerfParam = mCompoModel->getInputPerfParam();
 
     // if DataFile specified: direct reading of SubModel array parameters (perf maps : vector, double) from file
     QString dataFileValue = mCompoInputParam->getParamQSValue("DataFile");
@@ -765,15 +795,7 @@ int MilpComponent::initSubModelInput()
         //Read
         for (int i = 0; i < dataFiles.size(); i++) {
             QString dataFile_i = dataFiles[i].replace("./", "").replace(".\\", "").trimmed();
-            QFile dataFileName(dataFile_i);
-            if (!dataFileName.exists()) {
-                OptimProblem* optimProblem = dynamic_cast<OptimProblem*> (this->parent());
-                if (optimProblem) {
-                    QString projectDir = QString(optimProblem->getStudyPathManager()->projectDir().c_str());
-                    dataFile_i = projectDir + "/" + dataFile_i;
-                }
-            }
-            mModelPerfParam->readVectorParameters(mName, dataFile_i, perfParamNames);
+            mModelPerfParam->readVectorParameters(mName, QString(getAbsoluteFileName(dataFile_i.toStdString()).c_str()), perfParamNames);
         }
         //Verification
         bool NotFound = false;
@@ -796,33 +818,16 @@ int MilpComponent::initSubModelInput()
         }
     }
 
-    //---------------------------------------------------------------------------------------------------------------------
+    /*
+    * computeInitialData should stay before setParameters
+    * because the intial state data (which set in computeInitialData) for ControlVar 
+    * is used in exportRHVariableInModel() and createHistFXLists()
+    */
+    mCompoModel->computeInitialData();
 
     // set dynamic secondary parameters at Component level
     ierr = setParameters() ;
     if (ierr <0) return ierr ;
-
-    //---------------------------------------------------------------------------------------------------------------------
-
-    // indirect offset reading of SubModel time series (vector, double) (length = futursize) from PEGASE subscribed vectors (length = pastsize+futursize)
-    // fill SubModel vector Double timeseries from VectorXf values
-    ierr = mModelData->fillVectorData(mName, *mCompoToModel, npdtPast()) ;
-    if (ierr <0 ) { qCritical() << " Error filling Vector data of SubModel from Component Time Series "<< (mName)  ; return -1 ; }
-   
-    //---------------------------------------------------------------------------------------------------------------------
-
-    // indirect reading of SubModel data (scalar, double) from Cairn ()
-    // fill SubModel scalar double from Component scalar double values
-    ierr = mModelData->fillData(mName, *mCompoToModel, eDouble) ; // transmit
-    if (ierr <0 ) { qCritical() << " Error filling DBLE scalar data of SubModel from Component data "<< (mName)  ; return -1 ; }
-
-    ierr = mModelData->fillData(mName, *mCompoToModel, eInt) ; // transmit
-    if (ierr <0 ) { qCritical() << " Error filling INT scalar data of SubModel from Component data "<< (mName)  ; return -1 ; }
-
-    ierr = mModelData->fillData(mName, *mCompoToModel, eString) ; // transmit
-    if (ierr <0 ) { qCritical() << " Error filling QS scalar data of SubModel from Component data "<< (mName)  ; return -1 ; }
-
-    //---------------------------------------------------------------------------------------------------------------------
 
     // possible finalization step
     mCompoModel->finalizeModelData() ;
@@ -831,7 +836,23 @@ int MilpComponent::initSubModelInput()
     ierr = mCompoModel->checkConsistency() ;
     if (ierr <0 ) { qCritical() << " Error Model Data are not consistent "<< (mName)  ; return -1 ; }
 
+    ierr = checkPorts();
+    if (ierr < 0)
+    {
+        Cairn_Exception error(" ERROR in component " + Name() + " for model " + mCompoModelName, -1);
+        this->setException(error);
+        return ierr;
+    }
+
+    //After checking ports, in particular defining the value of mVarType, now it is possible to publish port variables 
+    OptimProblem* optimProblem = (OptimProblem*)this->parent();
+    createPortsExportListVars(optimProblem->ListPublishedVariables());
+
     //---------------------------------------------------------------------------------------------------------------------
+    //Indicators : declare only once, not every cycle
+    if (mCompoModel->getInputIndicators()->getIndicators().size() == 0) {
+        mCompoModel->declareModelIndicators();
+    }
 
     return 0 ;
 }
@@ -842,13 +863,12 @@ int MilpComponent::setParameters()
     return MilpComponent::createHistFXLists();
 }
 
-int MilpComponent::initProblem()
+int MilpComponent::initProblem(const bool& readParams)
 {
-    // Send component ports data to Submodel and allocate Ports own variables
     int ierr = initPorts();
     if (ierr < 0) return ierr;
 
-    ierr = initSubModelConfiguration();
+    ierr = initSubModelConfiguration(readParams);
     if (ierr < 0) return ierr;
 
     return ierr;
@@ -863,11 +883,7 @@ int MilpComponent::initPorts()
         qCritical() << "ERROR in defining the port VarNames of component " + mName;
         return ierr;
     }
-
-    //Set the main carrier of the component 
-    defineMainEnergyVector();
-
-    // Use port data to fill in Submodel data
+    
     int iIn = 0 ;
     int iOut = 0;
     int iHeatCarrierIn = 0 ;
@@ -891,7 +907,6 @@ int MilpComponent::initPorts()
         }
         numport++ ;
     }
-
     return ierr ;
 }
 
@@ -924,7 +939,7 @@ int MilpComponent::checkPorts()
 void MilpComponent::deleteCompoModel()
 {
     if (mModelFactory) {
-        mModelFactory->deleteModel(mCompoModelClassName, mName);
+        mModelFactory->deleteModel(mCompoModelClassName.toStdString(), mName.toStdString());
     }
     mCompoModel = nullptr;
 }
@@ -934,9 +949,9 @@ void MilpComponent::createCompoModel()
     if (mCompoModel == nullptr) {
         if (!newCompoModel()) {
             if (mModelFactory) {
-                if (mModelFactory->getModelList().contains(mCompoModelClassName)) {
+                if (CairnUtils::contains(mModelFactory->getModelList(), mCompoModelClassName.toStdString())) {
                     try {
-                        mCompoModel = dynamic_cast <SubModel*> (mModelFactory->createModel(this, mCompoModelClassName, mName));
+                        mCompoModel = dynamic_cast <SubModel*> (mModelFactory->createModel(this, mCompoModelClassName.toStdString(), mName.toStdString()));
                     }
                     catch (...) {
                         Cairn_Exception error("ERROR while loading model " + mCompoModelClassName, -1);
@@ -987,9 +1002,11 @@ void MilpComponent::buildProblem()
     }
 }
 
-void MilpComponent::resetFlags() {
-    mCompoModel->resetFlags();
-}
+//void MilpComponent::resetFlags() {
+//    if (mCompoModel) {
+//        mCompoModel->resetFlags();
+//    }
+//}
 
 void MilpComponent::setBusFluxPortExpression()
 {    
@@ -1121,15 +1138,11 @@ void MilpComponent::setBusSameValuePortExpression()
     }
 }
 
-bool MilpComponent::findFirstCoeff(QString aVarName, QMap<QString, ZEVariables*> aList , float &coeff, float &offset)
-{
-    QMapIterator<QString, ZEVariables*> ivar(aList) ;
-    ZEVariables* lptrvar ;
-    while (ivar.hasNext())
-    {
-       ivar.next() ;
-       lptrvar=ivar.value() ;
-       if (ivar.key() == aVarName && lptrvar!=nullptr)
+bool MilpComponent::findFirstCoeff(QString aVarName, t_mapExchange aList , float &coeff, float &offset)
+{       
+    for (auto& ivar : aList) {
+       ZEVariables* lptrvar=ivar.second ;
+       if (ivar.first == aVarName && lptrvar!=nullptr)
        {
            coeff = lptrvar->CoeffExport() ;
            offset = lptrvar->CoeffOffset() ;
@@ -1170,9 +1183,10 @@ void MilpComponent::exportResults(t_mapExchange& a_Export)
         QString varName = vParam->getName();
         t_mapExchange::iterator vIter = a_Export.find(mName + "." + varName);
         if (vIter != a_Export.end()) {
-            if (vIter.value()->set_Values(vParam, pdtHeure(), TimeSteps(), npdtPast())) {
+            ZEVariables* pVar = vIter->second;
+            if (pVar->set_Values(vParam, pdtHeure(), TimeSteps(), npdtPast())) {
                 if (mFirstInitTS == 0) {
-                    if (vIter.value()->update_PastValues(npdtPast(), timeshift()))
+                    if (pVar->update_PastValues(npdtPast(), timeshift()))
                         modinitTS = 1;
                 }
             }
@@ -1196,9 +1210,10 @@ void MilpComponent::exportPortResults(t_mapExchange& a_Export, uint modinitTS)
             QString varName = port->Variable();
             t_mapExchange::iterator vIter = a_Export.find(mName + "." + port->Name() + "." + varName);
             if (vIter != a_Export.end()) {
-                if (vIter.value()->set_Values(mPlugSubmodelIO->getParameter(varName), pdtHeure(), TimeSteps(), npdtPast())) {
+                ZEVariables* pVar = vIter->second;
+                if (pVar->set_Values(mPlugSubmodelIO->getParameter(varName), pdtHeure(), TimeSteps(), npdtPast())) {
                     if (mFirstInitTS == 0) {
-                        if (vIter.value()->update_PastValues(npdtPast(), timeshift()))
+                        if (pVar->update_PastValues(npdtPast(), timeshift()))
                             modinitTS = 1;
                     }
                 }
@@ -1224,11 +1239,6 @@ void MilpComponent::setDefaultsResults()
             lptr->tail(npdt()).setConstant(0.);
         }
     }
-
-    if (mCompoModel != nullptr)
-    {
-        mCompoModel->cleanExpression();
-    }
 }
 
 void MilpComponent::computeHistNbHours()
@@ -1239,6 +1249,13 @@ void MilpComponent::computeHistNbHours()
         histNbHours += (TimeStep(t));
     }
     setHistNbHours(qCeil(histNbHours));
+}
+
+void MilpComponent::removeIOs()
+{
+    mCompoModel->removeIOs();
+    if (mPlugSubmodelIO) delete mPlugSubmodelIO;
+    mPlugSubmodelIO = new InputParam(this, "PlugSubmodelIO" + mName);
 }
 
 void MilpComponent::exportSubmodelIO(Solver* aSolver, int aNsol)
@@ -1265,41 +1282,51 @@ void MilpComponent::exportSubmodelIO(Solver* aSolver, int aNsol)
     const double* externalOptValue = nullptr;
     double value = 0.;
     for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
-    {    
-        MIPModeler::MIPExpression1D* ptrExp1D = (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(ivar1D->getPtr()));        
-        InputParam::ModelParam *pParam = mPlugSubmodelIO->getParameter(ivar1D->getName());
-        if (pParam) {
-            Eigen::VectorXf* ptrSubmodelIO = std::get< Eigen::VectorXf*>(pParam->getPtr());
-            if (ptrExp1D != nullptr) {
-                if (ptrSubmodelIO != nullptr) { 
-                    if (aSolver->getModelType() == GS::MIPMODELER()) {
-                        std::vector<double> vValues = std::get<vector<double>>(ivar1D->evaluate(vOptimalSolution));
+    {
+        //Only export used IO variables
+        if (ivar1D->IsUsed())
+        {
+            MIPModeler::MIPExpression1D* ptrExp1D = (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(ivar1D->getPtr()));
 
-                        for (unsigned int t = 0; t < npdt(); ++t) {
-                            (*ptrSubmodelIO)[t + npdtPast()] = vValues[t];
-                        }
-                    }
-                    else if (pExternalModeler != nullptr) {
-                        gamsVarName = mName + "_v_" + ivar1D->getName();
-                        externalOptValue = aSolver->getOptimalSolution(aNsol, gamsVarName.toStdString());
-                        for (unsigned int t = 0; t < npdt(); ++t) {
-                            if (externalOptValue != nullptr) {
-                                value = externalOptValue[t];
-                            }
-                            else {
-                                qDebug() << aSolver->getModelType() << "::Variable key: " << gamsVarName << " not defined in " << aSolver->getModelType() << " model";
-                            }
-                            (*ptrSubmodelIO)[t + npdtPast()] = value;
-                        }
-                        delete externalOptValue;                        
-                    }
-                } 
-                else {
-                    qWarning() << " - Solution1D for " << mName << "." << ivar1D->getName() << " of model " << mCompoModelName << " cannot be saved : missing corresponding VectorXf in MilpComponent ! ";
-                }
+            if (ptrExp1D->size() == 0) {
+                qWarning() << "IO variable " + ivar1D->getName() + " has flag isUsed == true. But, the corresponding expression is not allocated.";
+                continue; //skip IO variables whose expressions are not allocated
             }
-            else {
-                qWarning() << " - Vector Expression1D " << mName << "." << ivar1D->getName() << " of model " << mCompoModelName << " has not been allocated in submodel ! ";
+
+            InputParam::ModelParam* pParam = mPlugSubmodelIO->getParameter(ivar1D->getName());
+            if (pParam) {
+                Eigen::VectorXf* ptrSubmodelIO = std::get< Eigen::VectorXf*>(pParam->getPtr());
+                if (ptrExp1D != nullptr) {
+                    if (ptrSubmodelIO != nullptr) {
+                        if (aSolver->getModelType() == GS::MIPMODELER()) {
+                            std::vector<double> vValues = std::get<vector<double>>(ivar1D->evaluate(vOptimalSolution));
+
+                            for (unsigned int t = 0; t < npdt(); ++t) {
+                                (*ptrSubmodelIO)[t + npdtPast()] = vValues[t];
+                            }
+                        }
+                        else if (pExternalModeler != nullptr) {
+                            gamsVarName = mName + "_v_" + ivar1D->getName();
+                            externalOptValue = aSolver->getOptimalSolution(aNsol, gamsVarName.toStdString());
+                            for (unsigned int t = 0; t < npdt(); ++t) {
+                                if (externalOptValue != nullptr) {
+                                    value = externalOptValue[t];
+                                }
+                                else {
+                                    qDebug() << aSolver->getModelType() << "::Variable key: " << gamsVarName << " not defined in " << aSolver->getModelType() << " model";
+                                }
+                                (*ptrSubmodelIO)[t + npdtPast()] = value;
+                            }
+                            delete externalOptValue;
+                        }
+                    }
+                    else {
+                        qWarning() << " - Solution1D for " << mName << "." << ivar1D->getName() << " of model " << mCompoModelName << " cannot be saved : missing corresponding VectorXf in MilpComponent ! ";
+                    }
+                }
+                else {
+                    qWarning() << " - Vector Expression1D " << mName << "." << ivar1D->getName() << " of model " << mCompoModelName << " has not been allocated in submodel ! ";
+                }
             }
         }
     }
@@ -1312,13 +1339,13 @@ void MilpComponent::exportSubmodelIO(Solver* aSolver, int aNsol)
     }
 }
 
-void MilpComponent::cleanExpressions()
-{
-    if (mCompoModel != nullptr)
-    {
-        mCompoModel->cleanExpression();
-    }
-}
+//void MilpComponent::closeExpressions()
+//{
+//    if (mCompoModel) {
+//        mCompoModel->closeExpressions();
+//    }
+//}
+
 QList<MilpPort*> MilpComponent::listSidePorts(const QString& aside)
 {
     QList<MilpPort*> ptrlist;
@@ -1510,8 +1537,6 @@ std::vector<std::string> MilpComponent::get_ModelClassList()
         return std::vector<std::string>();
 }
 
-
-
 bool MilpComponent::newCompoModel()
 {
     // create MIPModel
@@ -1526,4 +1551,15 @@ bool MilpComponent::isBus()
         return true;
     }
     return false;
+}
+
+std::string MilpComponent::getAbsoluteFileName(const std::string& filename)
+{
+    if (!fs::exists(filename)) {
+        OptimProblem* optimProblem = dynamic_cast<OptimProblem*> (this->parent());
+        if (optimProblem) {
+            return (optimProblem->projectDir() + filename);
+        }
+    }
+    return filename;
 }

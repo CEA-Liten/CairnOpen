@@ -1,36 +1,40 @@
-import os
 from os import path, remove
 import pytest
-import sys
 from CairnNRT import CairnNRT
+from cairn import *
 
 @pytest.fixture(autouse=True, scope="module")
 def clean():
     app_home = path.dirname(path.realpath(__file__))
-    file_list = ["formation_persee_Sortie.csv"]
+    file_list = ["cairn_training_Sortie.csv"]
     for f in file_list:
         p = path.join(app_home, "TNR", f)
         if path.exists(p): 
             remove(p)
     yield
 
+
 @pytest.mark.Cairn
-class TestClass:
+def test_runTNR_Json():
+    test_case="cairn_training"
+    
+    app_home = path.dirname(path.realpath(__file__))
+    simu_full =  path.join(app_home, test_case+'.json')    
+    timeseries =  path.join(app_home, test_case+'_dataseries.csv')
+    
+    cairn_instance = CairnAPI(True)
+    problem = cairn_instance.read_study(simu_full)
+    problem.add_timeseries(timeseries)
+    
+    problem.run()
+    
+    tnr = CairnNRT(app_home)
 
-    @pytest.mark.CairnJson
-    def test_runTNR_Json(self):
-        app_home = path.dirname(path.realpath(__file__))
-        tnr = CairnNRT(app_home)
-        
-        testcase="formation_persee"
-
-        lpNew = testcase+"_model.lp"
-        lpRef = testcase+"_model_ref.lp"
-        
-        tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series="formation_persee_dataseries.csv", tnr_name=testcase)
-        tnr.checklp(typeFile='lp', fileNew=lpNew,fileRef=lpRef)
+    lpNew = test_case+"_model.lp"
+    lpRef = test_case+"_model_ref.lp"
+    
+    tnr.checklp(typeFile='lp', fileNew=lpNew,fileRef=lpRef)
         
 
 if __name__ == '__main__':
-    tc = TestClass()
-    tc.test_runTNR_Json
+    test_runTNR_Json()

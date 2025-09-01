@@ -1,7 +1,6 @@
 #ifndef  TIMESERIESMANAGER_H
 #define TIMESERIESMANAGER_H
 #include "MilpData.h"
-#include <QStringList>
 #include "ZEVariables.h"
 #include "TimeSeriesReader.h"
 #include "OrUnitsConverter.h"
@@ -12,16 +11,16 @@ public:
 	TimeSeriesManager(MilpData &aMilpData, const std::string &a_ReaderKind = "csv");
 	~TimeSeriesManager();
 
-	void importTS(const QStringList& aTSfileList, const QMap<QString, ZEVariables*>& aListSubscribedVariables, const int& iShift = 0, bool isCheckTimeSeriesUnits = false);
-	void importTS(const QMap<QString, ZEVariables*>& aListSubscribedVariables);
+	void importTS(const std::vector<std::string>& aTSfileList, const t_mapExchange& aListSubscribedVariables, const int& iShift = 0, bool isCheckTimeSeriesUnits = false);
+	void importTS(const t_mapExchange& aListSubscribedVariables);
 
-	class OrCheckUnits CheckUnits(const QString& a_FileUnit, const QString& a_Units, bool a_Check = true);
+	class OrCheckUnits CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check = true);
 
 protected:
-	void importTS(const QString& aTSfile, const QMap<QString, ZEVariables*>& aListSubscribedVariables, const int& iShift, QStringList& aListNotFoundNames, bool isCheckTimeSeriesUnits = false);
-	void readTimes(const QString& aTSfile, const int& iShift, std::vector<double>& aTimes);
+	void importTS(const std::string& aTSfile, const t_mapExchange& aListSubscribedVariables, const int& iShift, std::vector<std::string>& aListNotFoundNames, bool isCheckTimeSeriesUnits = false);
+	void readTimes(const std::string& aTSfile, const int& iShift, std::vector<double>& aTimes);
 	
-	void extrapolation(const QString& aTSfile, const int& iShift, const TimeSeriesReader::TimeSeriesDescrp &aHeader, const std::vector<double>& aTimes, std::vector<double>& aValues);
+	void extrapolation(const std::string& aTSfile, const int& iShift, const TimeSeriesReader::TimeSeriesDescrp &aHeader, const std::vector<double>& aTimes, std::vector<double>& aValues);
 	void conversion(const OrCheckUnits& checkUnits, std::vector<double>& aValues);
 
 	void importZEVarInterpolation(ZEVariables* var, std::vector<double> aVec, std::vector<double> pdtVec, const int& iShift);

@@ -45,79 +45,67 @@ void NodeLaw::setTimeData()
     mHistBusBalance.resize(mHorizon+mNpdtPast);
 }
 
-void NodeLaw::buildModel()
+
+void NodeLaw::computeModelContribution()
 {
-        // le bus est une contrainte systeme sous forme d'une expression a laquelle chaque composant contribue directement
-        if (mAllocate)
-        {
-            mBusBalance = MIPModeler::MIPExpression1D(mHorizon);
+    /** Build balance constraint once component constraints have created their own expressions
+        Constraint linked to mListPort connected ports */
+	MilpPort* port ;
+	QListIterator<MilpPort*> iport (mListPort);
+
+	while (iport.hasNext())
+	{
+	    port = iport.next() ;
+
+        double aSign = (port->Direction() == GS::KCONS())? -1.: 1.;
+        double portVarTimeDepend = (port->FluxDim()==1) ? 1 : 0;
+        mPortVarSet.push_back(port->GAMSVarName());
+        mPortVarCoeff.push_back(port->VarCoeff());
+        mPortVarOffSet.push_back(port->VarOffset());
+        mPortVarDirection.push_back(aSign);
+        mPortVarTimeDepend.push_back(portVarTimeDepend);
+
+        if(port->FluxDim()==1.){
+            addExpressionToBalance(port->Flux()) ;
         }
-        else
-        {
-            closeExpression1D(mBusBalance) ;
-        }
-
-        /** Build balance constraint once component constraints have created their own expressions
-            Constraint linked to mListPort connected ports */
-	    MilpPort* port ;
-	    QListIterator<MilpPort*> iport (mListPort);
-
-        
-
-	    while (iport.hasNext())
-	    {
-	       port = iport.next() ;
-
-           double aSign = (port->Direction() == GS::KCONS())? -1.: 1.;
-           double portVarTimeDepend = (port->FluxDim()==1) ? 1 : 0;
-           mPortVarSet.push_back(port->GAMSVarName());
-           mPortVarCoeff.push_back(port->VarCoeff());
-           mPortVarOffSet.push_back(port->VarOffset());
-           mPortVarDirection.push_back(aSign);
-           mPortVarTimeDepend.push_back(portVarTimeDepend);
-
-           if(port->FluxDim()==1.){
-               addExpressionToBalance(port->Flux()) ;
-           }
-           else{
-               addExpressionToBalance(port->Flux0D()) ;
-           }
-
-	    }
-
-	    if (mStrictConstraint) addStrictConstraint() ;
-	    if (mMinConstraint) addMinConstraint() ;
-	    if (mMaxConstraint) addMaxConstraint() ;
-	    if (mStrictIntegrateConstraint) addStrictIntegrateConstraint(); 
-
-        if (mMinIntegrateConstraint) {
-            if(mPeriodIntegrateConstraint==0){
-                addMinIntegrateConstraint() ;
-            }
-            else{
-                addMinIntegrateConstraint(mPeriodIntegrateConstraint);
-            }
+        else{
+            addExpressionToBalance(port->Flux0D()) ;
         }
 
-        if (mMaxIntegrateConstraint) {
-            if (mPeriodIntegrateConstraint == 0){
-                addMaxIntegrateConstraint() ;
-            }
-            else{
-                addMaxIntegrateConstraint(mPeriodIntegrateConstraint);
-            }
+	}
+
+	if (mStrictConstraint) addStrictConstraint() ;
+	if (mMinConstraint) addMinConstraint() ;
+	if (mMaxConstraint) addMaxConstraint() ;
+	if (mStrictIntegrateConstraint) addStrictIntegrateConstraint(); 
+
+    if (mMinIntegrateConstraint) {
+        if(mPeriodIntegrateConstraint==0){
+            addMinIntegrateConstraint() ;
         }
-
-        if (mMinIntegrateSeparateConstraint || mMaxIntegrateSeparateConstraint) {
-            addIntegrateSeparateConstraint(mPeriodIntegrateConstraint, mIntervalBetweenIntegrals);
+        else{
+            addMinIntegrateConstraint(mPeriodIntegrateConstraint);
         }
+    }
 
-        if (mMaxFlexIntegrateConstraint) addMaxFlexIntegrateConstraint() ;
+    if (mMaxIntegrateConstraint) {
+        if (mPeriodIntegrateConstraint == 0){
+            addMaxIntegrateConstraint() ;
+        }
+        else{
+            addMaxIntegrateConstraint(mPeriodIntegrateConstraint);
+        }
+    }
 
-	    /** Objective contribution expressed as the sum of Capex and Opex so as to be able to account for actualization rate on Opex part only*/
-        computeAllContribution() ;
+    if (mMinIntegrateSeparateConstraint || mMaxIntegrateSeparateConstraint) {
+        addIntegrateSeparateConstraint(mPeriodIntegrateConstraint, mIntervalBetweenIntegrals);
+    }
 
-        mAllocate = false;
+    if (mMaxFlexIntegrateConstraint) addMaxFlexIntegrateConstraint();
+
+    if (mMaxFlexIntegrateConstraint) {
+        mExpPenaltyConstraintCosts += mExpConstraintGap;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -131,27 +119,7 @@ void NodeLaw::finalizeModelData() {
     }
 }
 
-//------------------------------------------------------------------------------
-void NodeLaw::computeAllContribution()
-{
-    BusSubModel::computeAllContribution() ;
-
-    if (mMaxFlexIntegrateConstraint)
-    {
-        if (mAllocate)
-            mExpPenaltyConstraintCosts = MIPModeler::MIPExpression();
-        else
-            closeExpression(mExpPenaltyConstraintCosts);
-
-        mExpPenaltyConstraintCosts += mExpConstraintGap ;
-    }
-}
 //----------------Parts of buildProblem--------------------------------------------------------------
-
-void NodeLaw::initBalance()
-{
-    closeExpression1D(mBusBalance);
-}
 
 void NodeLaw::addExpressionToBalance(MIPModeler::MIPExpression1D& aFluxExpression)
 {
@@ -347,11 +315,6 @@ void NodeLaw::addStrictIntegrateConstraint()
 void NodeLaw::addMaxIntegrateConstraint()
 {
     MIPModeler::MIPExpression ExprIntegrate ;
-    if (mAllocate)
-        mExprIntegrate = MIPModeler::MIPExpression1D(mHorizon);
-    else
-        closeExpression1D(mExprIntegrate);
-
     if (mTimeIntegration)
     {
         for (unsigned int t = 0; t < mHorizon; ++t)
@@ -410,11 +373,6 @@ void NodeLaw::addMaxIntegrateConstraint()
 void NodeLaw::addMinIntegrateConstraint()
 {
     MIPModeler::MIPExpression ExprIntegrate ;
-    if (mAllocate)
-        mExprIntegrate = MIPModeler::MIPExpression1D(mHorizon);
-    else
-        closeExpression1D(mExprIntegrate);
-
     if (mTimeIntegration)
     {
         for (unsigned int t = 0; t < mHorizon; ++t)
@@ -473,11 +431,6 @@ void NodeLaw::addMaxIntegrateConstraint(int period)
     }
     else
     {
-        if (mAllocate)
-            mExprIntegrate = MIPModeler::MIPExpression1D(mHorizon);
-        else
-            closeExpression1D(mExprIntegrate);
-
         for (int t = 0; t < (int)mHorizon ; ++t)
         {
             for (int k = 0; k < period; ++k)
@@ -564,15 +517,10 @@ void NodeLaw::addMaxFlexIntegrateConstraint()
 {
     if (mAllocate)
     {
-        mVarConstraintGap = MIPModeler::MIPVariable0D( 0.f, 1.e12);
-        mExpConstraintGap = MIPModeler::MIPExpression () ;
-    }
-    else
-    {
-        closeExpression(mExpConstraintGap);
+        mExpConstraintGap = MIPModeler::MIPExpression();
     }
 
-    addVariable(mVarConstraintGap,"Gap");
+    addVariable(mVarConstraintGap,"Gap", 0.f, 1.e12);
 
     mExpConstraintGap += mVarConstraintGap ;
 
@@ -599,11 +547,6 @@ void NodeLaw::addMinIntegrateConstraint(int period)
         addMinIntegrateConstraint();
     }
     else{
-        if (mAllocate)
-            mExprIntegrate = MIPModeler::MIPExpression1D(mHorizon);
-        else
-            closeExpression1D(mExprIntegrate);
-
         for (int t = period; t < (int)mHorizon ; ++t)
         {
             for (int k = 0; k < period; ++k)
@@ -689,12 +632,8 @@ void NodeLaw::addMinIntegrateConstraint(int period)
     }
 }
 
-void NodeLaw::addIntegrateSeparateConstraint(int period, int intervalBetween){
-    if (mAllocate)
-        mExprIntegrate = MIPModeler::MIPExpression1D(mHorizon);
-    else
-        closeExpression1D(mExprIntegrate);
-
+void NodeLaw::addIntegrateSeparateConstraint(int period, int intervalBetween)
+{
     if (intervalBetween==0)
     {
         intervalBetween = period;

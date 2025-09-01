@@ -21,12 +21,17 @@ public:
     void declareConfigurationParameters();
     int setConfigurationParameters(const QMap<QString, QString>& aComponent);
 
+    void resetFlags() {
+        mAllocate = true;
+    }
+
     InputParam* getConfigParam() { return mConfigParam; }
     InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
     InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
     InputParam* getCompoEnvImpactsParam() { return mCompoEnvImpactsParam; }
     QString getParameter(QString paramName) { return mCompoInputParam->getParamQSValue(paramName); }
     std::map<QString, InputParam::ModelParam*> getParameters();
+    InputParam* getInputIndicators() { return mInputIndicators; }
 
     void jsonSaveGuiComponent(QJsonArray& componentsArray);
 
@@ -67,12 +72,10 @@ public:
     //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
     {
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel" });
-
         TechnicalSubModel::declareDefaultModelConfigurationParameters();
 
         //Re-declare parameter "EcoInvestModel" in order to set its default value to false 
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", { "" });    /** Use EcoInvestModel - ie Use Capex and Opex if true */
+        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "");    /** Use EcoInvestModel - ie Use Capex and Opex if true */
 
         //bool
         addParameter("MinConstraint", &mMinConstraint, false, false, true);   /** MinConstraint option enabling */
@@ -91,15 +94,15 @@ public:
     {
         //TecEco total values
         if (mEnergyVector != nullptr) {
-            addIO("Total Capex", &mExpCapex, mEnergyVector->pFluxUnit()); /** Computed initial investment costs Total Capex */
-            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, mEnergyVector->pStorageUnit());     /** Computed operational cost Total Undiscounted Net Opex */
+            addIO("Total Capex", &mExpCapex, true, mEnergyVector->pFluxUnit()); /** Computed initial investment costs Total Capex */
+            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, mEnergyVector->pStorageUnit());     /** Computed operational cost Total Undiscounted Net Opex */
         }
         else {
-            addIO("Total Capex", &mExpCapex, "FluxUnit");             /** Computed initial investment costs Total Capex */
-            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, "StorageUnit");     /** Computed operational cost Total Undiscounted Net Opex */
+            addIO("Total Capex", &mExpCapex, true, "FluxUnit");             /** Computed initial investment costs Total Capex */
+            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, "StorageUnit");     /** Computed operational cost Total Undiscounted Net Opex */
         }
 
-        addIO("Total Undiscounted VariableCosts", &mExpVariableCostsUndiscounted, mCurrency); /** Computed Total undiscounted variable costs resulting from material/fuel consumption */
+        addIO("Total Undiscounted VariableCosts", &mExpVariableCostsUndiscounted, true, mCurrency); /** Computed Total undiscounted variable costs resulting from material/fuel consumption */
 
         /*
             mExpPenaltyConstraintCosts cannot be exported because PenaltyConstraintCosts is a Bus expression
@@ -109,8 +112,8 @@ public:
 
         for (int i = 0; i < mEnvImpactsList.size(); i++)
         {
-            addIO("Total Undiscounted " + mEnvImpactsList[i] + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], mEnvImpactUnitsList[i]); /** "TecEco undiscounted mName Env impact  mass" */
-            addIO("Total Undiscounted " + mEnvImpactsList[i] + " Grey EnvImpact Mass", &mExpEnvGreyImpactMassUndiscountedVec[i], mEnvImpactUnitsList[i]); /** "TecEco undiscounted mName Env grey impact mass" */
+            addIO("Total Undiscounted " + mEnvImpactsList[i] + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, mEnvImpactUnitsList[i]); /** "TecEco undiscounted mName Env impact  mass" */
+            addIO("Total Undiscounted " + mEnvImpactsList[i] + " Grey EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, mEnvImpactUnitsList[i]); /** "TecEco undiscounted mName Env grey impact mass" */
         }
     }
 
@@ -164,7 +167,7 @@ public:
         for (int i = 0; i < mEnvImpactsList.size(); i++) {
             QString aImpactShortName = mParentCompo->EnvImpactsShortNamesList().at(i);
             mInputIndicators->addIndicator("Total Discounted EnvImpact Part (Flow and Grey) " + mEnvImpactsList[i], &mVDEnvImpactsTotalCostDiscounted[i], &mExportIndicators, "Total Discounted EnvImpact Part (Flow and Grey) " + mEnvImpactsList[i], mCurrency, aImpactShortName + "DiscountedEnvImpactPart");
-            mInputIndicators->addIndicator("Total Discounted EnvImpact Mass (Flow and Grey) " + mEnvImpactsList[i], &mVDEnvImpactsTotalMassDiscounted[i], &mExportIndicators, "Total Discounted EnvImpact Mass (Flow and Grey) " + mEnvImpactsList[i], mEnvImpactUnitsList[i], aImpactShortName + "DiscountedEnvImpactMass");
+            mInputIndicators->addIndicator("Total Discounted EnvImpact Mass (Flow + Grey + replacement) " + mEnvImpactsList[i], &mVDEnvImpactsTotalMassDiscounted[i], &mExportIndicators, "Total Discounted EnvImpact Mass (Flow + Grey + replacement) " + mEnvImpactsList[i], mEnvImpactUnitsList[i], aImpactShortName + "DiscountedEnvImpactMass");
         }
 
         for (int i = 0; i < mEnvImpactsList.size(); i++) {
@@ -225,7 +228,6 @@ private :
     QString mName;
     QString mType; 
     QString mModelName;
-    QString mOptimImpactName; //In case of Model Type = OptimEnvImpact
 
     int mXpos;
     int mYpos;
@@ -281,15 +283,16 @@ private :
         There is an assertion to enure the equality.
     */
 
-    std::vector<MIPModeler::MIPExpression> mExpEnvGreyImpactCostVec;
-    std::vector<MIPModeler::MIPExpression> mExpEnvGreyImpactMassVec;
+    std::vector<MIPModeler::MIPExpression> mExpEnvImpactEmbodiedCostVec;
+    std::vector<MIPModeler::MIPExpression> mExpEnvImpactEmbodiedVec;
     std::vector<MIPModeler::MIPExpression1D> mExpEnvImpactCostVec;
     std::vector<MIPModeler::MIPExpression1D> mExpEnvImpactMassVec;
+    std::vector<MIPModeler::MIPExpression1D> mExpEnvImpactReplacementVec;
 
     /* Expressions published on ports */
     MIPModeler::MIPExpression1D mExpOpexUndiscounted;
     MIPModeler::MIPExpression1D mExpVariableCostsUndiscounted;
-    std::vector<MIPModeler::MIPExpression> mExpEnvGreyImpactMassUndiscountedVec;
+    std::vector<MIPModeler::MIPExpression> mExpEnvImpactEmbodiedUndiscountedVec;
     std::vector<MIPModeler::MIPExpression1D> mExpEnvImpactMassUndiscountedVec;
 
     /* 0D-Expressions used to compute Objective and NPV, and to add constraints.
@@ -298,7 +301,10 @@ private :
        There are assertions to ensure that the evaluation of mExpOpexDiscounted and mExpEnvImpactMassVecDiscounted results in the same values.
      */
     MIPModeler::MIPExpression mExpOpexDiscounted;
+
+    std::vector<MIPModeler::MIPExpression> mExpCumulativeEnvImpact;
     std::vector<MIPModeler::MIPExpression> mExpEnvImpactMassVecDiscounted;
+    std::vector<MIPModeler::MIPExpression> mExpEnvImpactReplacementVecDiscounted;
 
     /** ------------------------------- Contributions ------------------------------------ */
 
@@ -346,16 +352,18 @@ private :
 
     // ----------- Env Impacts ------------- 
     // grey
-    std::vector<std::vector<double>> mVDEnvGreyImpactsCostContribution; /** Resulting cost of all the Grey environmental impacts the user wants to consider*/
-    std::vector<std::vector<double>> mVDEnvGreyImpactsMassContribution; /** Resulting cost of all the Grey environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEnvGreyImpactsCostContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEnvGreyImpactsMassContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
 
     // undiscounted
     std::vector<std::vector<double>> mVDEnvImpactsCostContribution; /** Resulting cost of all the Direct environmental impacts the user wants to consider*/
     std::vector<std::vector<double>> mVDEnvImpactsMassContribution; /** Resulting mass of all the Direct environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEnvImpactsReplacementContribution; /** Resulting EnvImpactReplacement contribution*/
 
     // discounted
-    std::vector<std::vector<double>> mVDEnvImpactsCostContributionDiscounted;  /** Resulting EnvImpactCost contribution part*/
-    std::vector<std::vector<double>> mVDEnvImpactsMassContributionDiscounted;  /** Resulting EnvImpactMass contribution part*/
+    std::vector<std::vector<double>> mVDEnvImpactsCostContributionDiscounted;  /** Resulting EnvImpactCost contribution*/
+    std::vector<std::vector<double>> mVDEnvImpactsMassContributionDiscounted;  /** Resulting EnvImpactMass contribution*/
+    std::vector<std::vector<double>> mVDEnvImpactsReplacementContributionDiscounted; /** Resulting EnvImpactReplacement contribution*/
 
     //Flow + Grey
     std::vector<std::vector<double>> mVDEnvImpactsTotalCostDiscounted;

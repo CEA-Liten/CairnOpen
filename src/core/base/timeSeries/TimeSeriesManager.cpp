@@ -1,5 +1,6 @@
 #include "TimeSeriesManager.h"
 #include "Cairn_Exception.h"
+#include "CairnUtils.h"
 #include "GlobalSettings.h"
 
 TimeSeriesManager::TimeSeriesManager(MilpData& aMilpData, const std::string& a_ReaderKind)
@@ -14,46 +15,39 @@ TimeSeriesManager::~TimeSeriesManager()
         delete p_Reader;
 }
 
-void TimeSeriesManager::importTS(const QMap<QString, ZEVariables*>& aListSubscribedVariables)
+void TimeSeriesManager::importTS(const t_mapExchange& aListSubscribedVariables)
 {
     // Reader without files (Pegase)
     importTS({ "" }, aListSubscribedVariables);
 }
 
-void TimeSeriesManager::importTS(const QStringList& aTSfileList, const QMap<QString, ZEVariables*> &aListSubscribedVariables, const int& iShift, bool isCheckTimeSeriesUnits)
+void TimeSeriesManager::importTS(const std::vector<std::string>& aTSfileList, const t_mapExchange &aListSubscribedVariables, const int& iShift, bool isCheckTimeSeriesUnits)
 {
     //Generate a list of required input timeseries names
-    QStringList listNotFoundNames = {};    
-
-    QMapIterator<QString, ZEVariables*> iSubscribedVariable(aListSubscribedVariables);
-    while (iSubscribedVariable.hasNext())
-    {
-        iSubscribedVariable.next();
-        ZEVariables* var = iSubscribedVariable.value();
+    std::vector<std::string> listNotFoundNames = {};
+   
+    for (auto& iSubscribedVariable : aListSubscribedVariables) {
+        ZEVariables* var = iSubscribedVariable.second;
         if (!var->IsMPC())
         {   //Add to the list if it is not a controlled variable
-            listNotFoundNames.push_back(var->Name());
+            listNotFoundNames.push_back(var->Name().toStdString());
         }
     }
 
     //Read all input timeseries files
-    QListIterator<QString> vTSfile(aTSfileList);
-    while (vTSfile.hasNext())
-    {
-        QString file = vTSfile.next();
-
+    for (auto& vFile : aTSfileList) {
         //import a timeseries file
         try {
-            importTS(file, aListSubscribedVariables, iShift, listNotFoundNames, isCheckTimeSeriesUnits);
+            importTS(vFile, aListSubscribedVariables, iShift, listNotFoundNames, isCheckTimeSeriesUnits);
         }
         catch (Cairn_Exception cairn_error) {
             throw cairn_error;
         }
     }
-
+    
     //Verify if all input timeseries are found
     if (listNotFoundNames.size() > 0) {
-        QString errorMessage = "ERROR: The following input dataseries are misssing : ";
+        std::string errorMessage = "ERROR: The following input dataseries are misssing : ";
         for (int i = 0; i < listNotFoundNames.size(); i++) {
             if (i > 0) errorMessage += ", ";
             errorMessage += listNotFoundNames[i];
@@ -63,7 +57,7 @@ void TimeSeriesManager::importTS(const QStringList& aTSfileList, const QMap<QStr
     }
 }
 
-void TimeSeriesManager::importTS(const QString& aTSfile, const QMap<QString, ZEVariables*>& aListSubscribedVariables, const int& iShift, QStringList& aListNotFoundNames, bool isCheckTimeSeriesUnits)
+void TimeSeriesManager::importTS(const std::string& aTSfile, const t_mapExchange& aListSubscribedVariables, const int& iShift, std::vector<std::string>& aListNotFoundNames, bool isCheckTimeSeriesUnits)
 {
     if (p_Reader)
         delete p_Reader;
@@ -71,8 +65,8 @@ void TimeSeriesManager::importTS(const QString& aTSfile, const QMap<QString, ZEV
     p_Reader = TimeSeriesReader::NewReader(m_ReaderKind);
 
     struct SUnitErr {
-        QString zeVar; QString dataUnit; QString zeUnit;
-        SUnitErr(const QString& aVar, const QString& aUnit, const QString& aDataUnit)
+        std::string zeVar; std::string dataUnit; std::string zeUnit;
+        SUnitErr(const std::string& aVar, const std::string& aUnit, const std::string& aDataUnit)
         {
             zeVar = aVar; dataUnit = aDataUnit; zeUnit = aUnit;
         };
@@ -89,17 +83,14 @@ void TimeSeriesManager::importTS(const QString& aTSfile, const QMap<QString, ZEV
         p_Reader->readHeader(aListSubscribedVariables, vHeaders);
         
         //Read timeseries data        
-        QMapIterator<QString, ZEVariables*> iSubscribedVariable(aListSubscribedVariables);        
-        while (iSubscribedVariable.hasNext())
-        {
-            iSubscribedVariable.next();
-            ZEVariables* var = iSubscribedVariable.value();
-            QString zeVarName = var->Name();
+        for (auto& iSubscribedVariable : aListSubscribedVariables) {
+            ZEVariables* var = iSubscribedVariable.second;
+            std::string zeVarName = var->Name().toStdString();
             bool ifound = false;
 
             for (auto& vHeader : vHeaders) {    
                 if (vHeader.Name == zeVarName) {
-                    QString zeVarUnit = var->Unit();
+                    std::string zeVarUnit = var->Unit().toStdString();
                     OrCheckUnits checkUnits = CheckUnits(vHeader.Unit, zeVarUnit, true);
                     if (!checkUnits.isConsistency) {
                         vUnitErrs.push_back(SUnitErr(zeVarName, zeVarUnit, vHeader.Unit));
@@ -138,7 +129,9 @@ void TimeSeriesManager::importTS(const QString& aTSfile, const QMap<QString, ZEV
             }
             if (ifound) {
                 //Remove zeVarName from list of not found names
-                aListNotFoundNames.removeAll(zeVarName);
+                std::vector<std::string>::iterator vIter = find(aListNotFoundNames.begin(), aListNotFoundNames.end(), zeVarName);
+                if (vIter != aListNotFoundNames.end())
+                    aListNotFoundNames.erase (vIter);
             }
         }
         p_Reader->close();
@@ -147,7 +140,7 @@ void TimeSeriesManager::importTS(const QString& aTSfile, const QMap<QString, ZEV
 
 
     if (vUnitErrs.size()) {
-        QString vErrMsg = "Error while importing: " + aTSfile;
+        std::string vErrMsg = "Error while importing: " + aTSfile;
         for (auto& vErr : vUnitErrs) {
             vErrMsg += "\n\nUnits inconsistency for the variable " + vErr.zeVar + ", the reading unit is " + vErr.dataUnit + ", the unit defined is " + vErr.zeUnit;
         }
@@ -159,13 +152,13 @@ void TimeSeriesManager::importTS(const QString& aTSfile, const QMap<QString, ZEV
         }
         else {
             //Write a warnning in the log but continue the simulation
-            qWarning() << vErrMsg;
+            qWarning() << QString(vErrMsg.c_str());
         }
     }
 }
 
 
-void TimeSeriesManager::readTimes(const QString& aTSfile, const int& iShift, std::vector<double>& aTimes)
+void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift, std::vector<double>& aTimes)
 {
     aTimes.clear();
 
@@ -216,7 +209,7 @@ void TimeSeriesManager::readTimes(const QString& aTSfile, const int& iShift, std
                 else if (k == vReadTimes.size() - 1) {
                     if (r_MilpData.rollingMode() == "Periodic" || r_MilpData.rollingMode() == "Persistent") {
                         if (k_periodic == 0) {
-                            qWarning() << "Importing: " + aTSfile;
+                            qWarning() << "Importing: " + QString(aTSfile.c_str());
                             qWarning() << "The TimeShift used is beyond the Time values! Reading recursively - Rolling Mode is : " + r_MilpData.rollingMode();
                             qDebug() << "Number of lines = " << vReadTimes.size() << ", current TimeShift in TimeStep = " << iShift;
                         }
@@ -225,7 +218,7 @@ void TimeSeriesManager::readTimes(const QString& aTSfile, const int& iShift, std
                         continue;
                     }
                     else {
-                        Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe TimeShift used is beyond the Time values! Rolling Mode is : " + r_MilpData.rollingMode(), -1);
+                        Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe TimeShift used is beyond the Time values! Rolling Mode is : " + r_MilpData.rollingMode().toStdString(), -1);
                         qDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
                         throw cairn_error;
                     }
@@ -268,20 +261,20 @@ void TimeSeriesManager::readTimes(const QString& aTSfile, const int& iShift, std
             }
 
             if (isnan(aTimes[l])) {
-                Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe time value at line " + QString::number(p_Reader->getNumLine(l + 1)) + " is NAN!", -1);
+                Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe time value at line " + std::to_string(p_Reader->getNumLine(l + 1)) + " is NAN!", -1);
                 throw cairn_error;
             }
 
             //Verify that time is strictly increasing
             if (l == 0) {
                 if (aTimes[l] < 0) {
-                    Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe Time value at line " + QString::number(p_Reader->getNumLine(0)) + " is negative (first data line)!", -1);
+                    Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe Time value at line " + std::to_string(p_Reader->getNumLine(0)) + " is negative (first data line)!", -1);
                     throw cairn_error;
                 }
             }
             else {
                 if (aTimes[l] <= aTimes[l - 1]) {
-                    Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe Time value at line " + QString::number(p_Reader->getNumLine(l + 1)) + " is less than or equal to a previous value.", -1);
+                    Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe Time value at line " + std::to_string(p_Reader->getNumLine(l + 1)) + " is less than or equal to a previous value.", -1);
                     throw cairn_error;
                 }
             }
@@ -292,7 +285,7 @@ void TimeSeriesManager::readTimes(const QString& aTSfile, const int& iShift, std
     }
 }
 
-void TimeSeriesManager::extrapolation(const QString& aTSfile, const int& iShift, const TimeSeriesReader::TimeSeriesDescrp& aHeader, const std::vector<double>& aTimes, std::vector<double>& aValues)
+void TimeSeriesManager::extrapolation(const std::string& aTSfile, const int& iShift, const TimeSeriesReader::TimeSeriesDescrp& aHeader, const std::vector<double>& aTimes, std::vector<double>& aValues)
 {
     if (aTimes.size()) {
         std::vector<double> vValues(aValues.size());
@@ -307,8 +300,8 @@ void TimeSeriesManager::extrapolation(const QString& aTSfile, const int& iShift,
             }
             else {
                 if (i + m_rowShift == vValues.size()) {
-                    qWarning() << "Last point for " + aHeader.Name + " has been reached!";
-                    qInfo() << r_MilpData.rollingMode() + " mode will be applied for " + aHeader.Name;
+                    qWarning() << "Last point for " + QString(aHeader.Name.c_str()) + " has been reached!";
+                    qInfo() << r_MilpData.rollingMode() + " mode will be applied for " + QString(aHeader.Name.c_str());
                 }
                 if (r_MilpData.rollingMode() == "Periodic") {//loop from the beginning not timeshift
                     if (r > vValues.size() - 1) {
@@ -335,7 +328,7 @@ void TimeSeriesManager::extrapolation(const QString& aTSfile, const int& iShift,
             }
 
             if (isnan(aValues[i])) {
-                Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe value of " + aHeader.Name + " at index " + QString::number(i) + " is NAN!", -1);
+                Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe value of " + aHeader.Name + " at index " + std::to_string(i) + " is NAN!", -1);
                 throw cairn_error;
             }
         }
@@ -354,15 +347,15 @@ void TimeSeriesManager::conversion(const OrCheckUnits& checkUnits, std::vector<d
     }
 }
 
-OrCheckUnits TimeSeriesManager::CheckUnits(const QString& a_FileUnit, const QString& a_Units, bool a_Check)
+OrCheckUnits TimeSeriesManager::CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check)
 {
     OrCheckUnits vRet;
     if (a_Check && (a_FileUnit != a_Units)) {
-        OrUnitsConverter::OrDefUnit vUnit1(a_FileUnit.toStdString());
-        if (a_Units.contains(";")) {
-            QStringList listUnit = a_Units.split(";", QString::SkipEmptyParts);
+        OrUnitsConverter::OrDefUnit vUnit1(a_FileUnit);
+        if (CairnUtils::contains(a_Units, ";")) {
+            t_list listUnit = CairnUtils::split(a_Units, ';');
             for (auto& vUnit : listUnit) {
-                UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit(vUnit.toStdString()), &vRet);
+                UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit(vUnit), &vRet);
                 if (vRet.isConsistency)
                     break;
             }
@@ -371,7 +364,7 @@ OrCheckUnits TimeSeriesManager::CheckUnits(const QString& a_FileUnit, const QStr
             UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit("-"), &vRet);
         }
         else {
-            UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit(a_Units.toStdString()), &vRet);
+            UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit(a_Units), &vRet);
         }
     }
     else {
@@ -464,7 +457,7 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                 sumTime += pdtVec[iRow] - 3600 * iShift * r_MilpData.TimeStep(0);
                 sumValue += aVec[iRow] * (pdtVec[iRow] - 3600 * iShift * r_MilpData.TimeStep(0));
                 if (sumTime < 0) {
-                    Cairn_Exception cairn_error("Error while importing input time series.\n\nNegative time value! Something went wrong!", -1);
+                    Cairn_Exception cairn_error((std::string)"Error while importing input time series. Negative time value! Something went wrong!", -1);
                     throw cairn_error;
                 }
             }

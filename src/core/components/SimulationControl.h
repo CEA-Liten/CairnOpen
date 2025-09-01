@@ -28,7 +28,6 @@ public:
     int getNbCycle() const {return mNbCycle;}
     int getFutureVariableTimestep() const {return mFutureVariableTimestep;}
     QString Name() const { return mSimulationControlName; }
-    QString getModeObjective() const {return mModeObjective;}
     
     InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
     InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
@@ -51,17 +50,16 @@ private:
 
     QString mSimulationControlName ;
     QString mtype ;
-    QString mModeObjective;
     
     int mXpos;
     int mYpos;
 
-    int mTimeStep ;
-    int mPastSize ;
-    int mFutureSize ;
-    int mTimeShift ;
-    int mFutureVariableTimestep ;
-    int mNbCycle ;
+    double mTimeStep; /** TimeStep is double, not int */
+    int mPastSize;
+    int mFutureSize;
+    int mTimeShift;
+    int mFutureVariableTimestep;
+    int mNbCycle;
     QString mRollingMode;
     QString mReadingMode;
     QString mUseTypicalPeriodsFile;

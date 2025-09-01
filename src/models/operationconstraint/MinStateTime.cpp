@@ -96,24 +96,28 @@ int MinStateTime::checkConsistency()
     return 0; // ier;
 }
 
-void MinStateTime::buildModel()
+
+void MinStateTime::computeModelContribution()
 {
-    // allocate variables and expressions
-    if (mAllocate) {
-        mExpInstalled = MIPModeler::MIPExpression();
-        if (mAddStartUpCost) mExpStartUpCosts = MIPModeler::MIPExpression1D(mTimeSteps.size());
-        if (mAddShutDownCost) mExpShutDownCosts = MIPModeler::MIPExpression1D(mTimeSteps.size());
-    }
-    else {
-        if (mAddStartUpCost) closeExpression1D(mExpStartUpCosts);
-        if (mAddShutDownCost) closeExpression1D(mExpShutDownCosts);
-    }
     addVariable(mVarInstalled, "Installed");
     mExpInstalled = mVarInstalled;
 
-    uint64_t nPdtCond = varMilpHorizon();
-    addStateConstraints(mHorizon, mCondensedNpdt);
-    addStartUpShutDown(nPdtCond, mHorizon);
+    addStateConstraints(varMilpHorizon());
+    addStartUpShutDown(varMilpHorizon());
+
+    if (mAddStartUpCost) {
+        for (uint64_t t = 0; t < mHorizon; t++) {
+            mExpStartUpCosts[t] += mExpStartUp[t] * mStartUpCost;
+            mExpVariableCosts[t] += mExpStartUpCosts[t];
+        }
+
+    }
+    if (mAddShutDownCost) {
+        for (uint64_t t = 0; t < mHorizon; t++) {
+            mExpShutDownCosts[t] += mExpShutDown[t] * mShutDownCost;
+            mExpVariableCosts[t] += mExpShutDownCosts[t];
+        }
+    }
 
     // constraints
     // ===========
@@ -124,30 +128,6 @@ void MinStateTime::buildModel()
     }
     if (mAddMinStandbyTime) {
         addMinStandByTime();
-    }
-
-    computeAllContribution() ;
-
-    mAllocate = false ;
-}
-
-//----------------Parts of buildProblem -------------------------------------- 
-void MinStateTime::computeAllContribution()
-{
-    OperationSubModel::computeAllContribution() ;
-
-    if (mAddStartUpCost) {
-        for (uint64_t t = 0; t < mHorizon; t++) {
-            mExpStartUpCosts[t] += mExpStartUp[t] * mStartUpCost;
-            mExpVariableCosts[t] += mExpStartUpCosts[t];
-        }
-            
-    }
-    if (mAddShutDownCost) {
-        for (uint64_t t = 0; t < mHorizon; t++) {
-            mExpShutDownCosts[t] += mExpShutDown[t] * mShutDownCost;
-            mExpVariableCosts[t] += mExpShutDownCosts[t];
-        }
     }
 }
 

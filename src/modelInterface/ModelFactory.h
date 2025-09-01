@@ -1,6 +1,5 @@
 #pragma once
 #include <exception>
-#include <QString>
 #include <map>
 
 #include "ModelInterface_global.h"
@@ -11,32 +10,32 @@ public:
     ModelFactory();
 	
 	static void findModels();
-    static QStringList getModelList();
-    static QObject* createModel(QObject* aParent, const QString& modelName, const QString& instanceName);
-    static void deleteModel(const QString& modelName, const QString& instanceName);
+    static std::vector<std::string> getModelList();
+    static QObject* createModel(QObject* aParent, const std::string& modelName, const std::string& instanceName);
+    static void deleteModel(const std::string& modelName, const std::string& instanceName);
 
 protected:
     class ModelDescriptor
     {
     public:
         ModelDescriptor();
-        const QString getModelName();
-        void setModelName(const QString aModelName);
-        void setDllPath(const QString& a_Path);
-        QObject* createModel(QObject* aParent, const QString& instanceName);
-        void deleteModel(const QString& instanceName);
+        const std::string getModelName();
+        void setModelName(const std::string aModelName);
+        void setDllPath(const std::string& a_Path);
+        QObject* createModel(QObject* aParent, const std::string& instanceName);
+        void deleteModel(const std::string& instanceName);
 
     protected:        
         QObject* loadModel(QObject* aParent);
 
-        typedef std::map<QString, QObject*> t_mapModels;
+        typedef std::map<std::string, QObject*> t_mapModels;
         t_mapModels mModels;
         std::string mDLLAbsoluteName;
-        QString mModelName;
+        std::string mModelName;
     };
 
-    static bool lookupModels(const QString& a_Path);
-    typedef std::map<QString, ModelDescriptor> t_mapPlugIns;
+    static bool lookupModels(const std::string& a_Path);
+    typedef std::map<std::string, ModelDescriptor> t_mapPlugIns;
     static t_mapPlugIns m_PlugIns;
     static std::string sModuleName;
 };

@@ -10,23 +10,27 @@ Electrolyzer::Electrolyzer(QObject* aParent) :
     mPortH2MassFlowRate(nullptr),
     mPci_H2(1.)
 {
-    mAgeingModel = new AgeingRunningHours(mInputParam, mInputData);
 }
 
 Electrolyzer::~Electrolyzer()
 {    
 }
 
-int Electrolyzer::checkConsistency() // DO NOT SHOW 
+int Electrolyzer::checkConsistency()  
 {
     int ier = TechnicalSubModel::checkConsistency();
     return ier;
 }
 
 //-----------------------------------------------------------------------------
-void Electrolyzer::buildModel() 
+void Electrolyzer::computeInitialData() 
 {
-    ConverterSubModel::buildModel();
+    setMaxValue(mMaxPower_H2);
+    setMinValue(mMinSize);
+}
+
+void Electrolyzer::computeModelContribution()
+{
     /**
     * Assumes that the default port "PortH2MassFlowRate" is mandatory to be used and its variable cannot be changed from FluidH2.
     * Otherwise, should loop over all ports and look for a connected output port whose variable is FluidH2.
@@ -35,8 +39,6 @@ void Electrolyzer::buildModel()
         mPci_H2 = mPortH2MassFlowRate->ptrEnergyVector()->LHV();
     }
 
-    // parameters:
-    // ===========   
     /**
     * If use ageing is activated, a model is used to simulate a degradation of efficiency and/or capacity.
     * See :ref:`AgeingRunningHours`
@@ -60,56 +62,18 @@ void Electrolyzer::buildModel()
         aConvertPowToMfr = mEfficiency_Global;
     }
     
-    /**
-    * Max size of electrolyzer is defined by MaxPower_H2
-    */
-    setExpSizeMax(mMaxPower_H2, "MaxPower");
-
     mMinFlow_H2 = mMinPower_H2 * getMaxBound() * aConvertPowToMfr;
     mMaxFlow_H2 = getMaxBound() * aConvertPowToMfr;
 
-    // allocate variables and expressions
-    // =========
-    if (mAllocate) {
-        mVarUsablePower = MIPModeler::MIPVariable0D(0.f, getMaxBound());
-        mVarPower_H2 = MIPModeler::MIPVariable1D(mHorizon, 0., getMaxBound());
-        mVarFlow_H2 = MIPModeler::MIPVariable1D(mHorizon, 0., mMaxFlow_H2);
-        
-        mExpUsablePower = MIPModeler::MIPExpression();
-        mExpPower_H2 = MIPModeler::MIPExpression1D(mHorizon);
-        mExpTotalPower = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlow_H2 = MIPModeler::MIPExpression1D(mHorizon);
-        mExpCost = MIPModeler::MIPExpression1D(mHorizon);
-
-        if (mAddAuxConso) {
-            mVarAuxConso = MIPModeler::MIPVariable1D(mHorizon, 0.f, mAuxConso*getMaxBound());
-            mExpAuxConso = MIPModeler::MIPExpression1D(mHorizon);
-        }
-
-        if (mAddStdByConso) {
-            mVarZ2 = MIPModeler::MIPVariable1D(mHorizon, 0., mStdByConso * getMaxBound());
-            mVarStdByConso = MIPModeler::MIPVariable1D(mHorizon, 0.f, mStdByConso * getMaxBound());
-            mExpStdByConso = MIPModeler::MIPExpression1D(mHorizon);
-        }
-    }
-    else {
-        closeExpression(mExpUsablePower);
-        closeExpression1D(mExpPower_H2);
-        closeExpression1D(mExpTotalPower);
-        closeExpression1D(mExpFlow_H2);
-        closeExpression1D(mExpCost);
-        closeExpression1D(mExpAuxConso);
-        closeExpression1D(mExpStdByConso);
-    }
     // add variables to model
     // =========
-    addVariable(mVarPower_H2, "Pow");
-    addVariable(mVarFlow_H2, "Flow");
-    addVariable(mVarUsablePower, "UsablePow");
-    if (mAddAuxConso) addVariable(mVarAuxConso, "AuxConso");
+    addVariable(mVarPower_H2, "Pow", 0., getMaxBound());
+    addVariable(mVarFlow_H2, "Flow", 0., mMaxFlow_H2);
+    addVariable(mVarUsablePower, "UsablePow", 0.f, getMaxBound());
+    if (mAddAuxConso) addVariable(mVarAuxConso, "AuxConso", 0.f, mAuxConso * getMaxBound());
     if (mAddStdByConso) {
-        addVariable(mVarStdByConso, "StdByConso");
-        addVariable(mVarZ2, "StdByConsoZ2");
+        addVariable(mVarStdByConso, "StdByConso", 0.f, mStdByConso * getMaxBound());
+        addVariable(mVarZ2, "StdByConsoZ2", 0., mStdByConso * getMaxBound());
     }
 
     // fill expressions
@@ -135,7 +99,7 @@ void Electrolyzer::buildModel()
 
     // Integer variables: On/Off
     // -----------------------
-    addStateConstraints(mHorizon, mCondensedNpdt);
+    addStateConstraints(varMilpHorizon());
 
     // constraints
     // ===========
@@ -193,11 +157,6 @@ void Electrolyzer::buildModel()
     for (uint64_t t = 0; t < mHorizon; t++) {
         addConstraint(mExpPower_H2[t] - mExpSizeMax * mConverterUse[t] <= 0, "ConverterUse", t);
     }
-
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false;
 }
 
 //-----------------------------------------------------------------------------

@@ -9,7 +9,6 @@
 
 #include <QtCore>
 #include <QtCore/qglobal.h>
-#include <QSettings>
 #include <QDebug>
 #include <QFile>
 #include <QVector>
@@ -160,15 +159,6 @@ namespace GS
           }
       }
     }
-    inline QVariant getVariantSetting (const QString aString, const QSettings &aSettings)
-    {
-        QString qstringName = (aString) ;
-
-        //qDebug() << "getVariantSetting reading:" << qstringName << aSettings.value(qstringName) ;
-
-           return aSettings.value(qstringName) ;
-
-        }
 
     inline std::vector<std::vector<double>> getDataMatrix(QList<QStringList> data_Inputs, int iskipHead)
     {
@@ -389,7 +379,7 @@ namespace GS
         data_Inputs = readToList(filename, ";");
         return data_Inputs ;
     }
-
+    
     inline std::vector <double> uVecxf2Double(Eigen::VectorXf vIn, uint aSizeOut, const uint aOffset)
     {
       std::vector <double> vOut (aSizeOut) ;

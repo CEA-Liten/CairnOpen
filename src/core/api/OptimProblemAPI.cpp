@@ -39,15 +39,15 @@ void CairnAPI::OptimProblemAPI::save_Study(const std::string& a_filename, const 
 	ECodeError vErr = noCairn;
 	if (m_Problem)	{
 		CairnCore* vCairn = (CairnCore*)m_Problem->parent();
-		QString filename(a_filename.c_str());
+		std::string filename(a_filename);
 		if (filename == "") {
-			filename = vCairn->archFile();
+			filename = vCairn->archFile().toStdString();
 		}
 
-		int iErr = m_Problem->SaveFullArchitecture(filename, QString(a_posAlgorithm.c_str()));
+		int iErr = m_Problem->SaveFullArchitecture(filename, a_posAlgorithm);
 
 		if(iErr == -1) {
-			CairnAPIUtils::setError(errWrite, filename.toStdString());
+			CairnAPIUtils::setError(errWrite, filename);
 		}
 		else {
 			vErr = noError;
@@ -56,63 +56,42 @@ void CairnAPI::OptimProblemAPI::save_Study(const std::string& a_filename, const 
 	CairnAPIUtils::setError(vErr);
 }
 
-// -- EnergyCarriers ---
-t_list CairnAPI::OptimProblemAPI::get_EnergyCarriers()
+// -------------------------- EnergyCarriers ---------------------
+CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::create_EnergyCarrier(const std::string& a_Name, const std::string& a_Type) const
 {
-	t_list vRet;	
+	EnergyVectorAPI vCarrier;
+	ECodeError vErr = noError;
+	std::string vErrMsg = "EnergyCarrier " + a_Name;
 	if (m_Problem) {
-		QList<EnergyVector*> vQList = m_Problem->getEnergyVectorList();
-		for (auto& vComp : vQList) {						
-			vRet.push_back(vComp->Name().toStdString());			
+		vErr = noError;
+		QString name = QString(a_Name.c_str());
+		QString type = QString(a_Type.c_str());
+		EnergyVector* vEnergyVector = m_Problem->getEnergyVector(name);
+		if (!vEnergyVector) {
+			//Create EnergyVector
+			bool vOK = m_Problem->createEnergyVector(name, type);
+			if (vOK)
+			{
+				vEnergyVector = m_Problem->getEnergyVector(name);
+				vCarrier.set_EnergyVector(vEnergyVector);				
+			}
+			else {
+				vErr = errCreate;
+			}
+		}
+		else {
+			//An EnergyVector with the same name already exists 
+			vErr = errAlreadyExist;
 		}
 	}
-	return vRet;
-}
-
-CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std::string &a_Name)
-{
-	EnergyVectorAPI vRet;	
-	if (m_Problem) {
-		QString vComponentName = QString(a_Name.c_str());
-		EnergyVector* vEnergyVector = m_Problem->getEnergyVector(vComponentName);
-		if (vEnergyVector) {
-			vRet.set_EnergyVector(vEnergyVector);			
-		}
-		else
-			CairnAPIUtils::setError(errNotFound, "EnergyVector " + a_Name);
-	}	
-	else
-		CairnAPIUtils::setError(noCairn);
-	return vRet;
-}
-
-void CairnAPI::OptimProblemAPI::add(CairnAPI::EnergyVectorAPI& a_EnergyVector)
-{
-	ECodeError vErr = noCairn;
-	std::string vErrMsg = "";
-	if (m_Problem) {		
-		QString vComponentName = QString(a_EnergyVector.get_Name().c_str());
-		vErrMsg = "EnergyVector " + a_EnergyVector.get_Name();
-		EnergyVector* vEnergyVector = m_Problem->getEnergyVector(vComponentName);
-		if (!vEnergyVector) {
-			// le vecteur n'existe pas, création
-			if (m_Problem->createEnergyVector(vComponentName, QString(a_EnergyVector.get_Type().c_str()))) {
-				vEnergyVector = m_Problem->getEnergyVector(vComponentName);
-				t_dict vParams = a_EnergyVector.get_SettingValues();
-				a_EnergyVector.set_EnergyVector(vEnergyVector);
-				a_EnergyVector.set_SettingValues(vParams);
-				vErr = noError;
-			}
-			else
-				vErr = errCreate;
-		}		
-		else
-			vErr = errAlreadyExist;
+	else{
+		vErr = noCairn;
 	}
 	CairnAPIUtils::setError(vErr, vErrMsg);
+	return vCarrier;
 }
 
-void CairnAPI::OptimProblemAPI::remove(EnergyVectorAPI& a_EnergyVector)
+void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector)
 {
 	if (m_Problem) {
 		// L'EnergyVector ne doit pas être utilisé par d'autres composants du problème
@@ -121,7 +100,7 @@ void CairnAPI::OptimProblemAPI::remove(EnergyVectorAPI& a_EnergyVector)
 		std::string vEVName = a_EnergyVector.get_Name();
 		bool vFound = false;
 		for (auto& vBus : vBuses) {
-			if (get_Bus(vBus).get_EnergyVector() == vEVName) {
+			if (get_Bus(vBus).get_CarrierName() == vEVName) {
 				vFound = true;
 				break;
 			}
@@ -129,7 +108,7 @@ void CairnAPI::OptimProblemAPI::remove(EnergyVectorAPI& a_EnergyVector)
 		// Vérification dans les ports des composants
 		if (!vFound) {
 			t_list vComps = get_Components();
-			for (auto& vComp : vComps) {				
+			for (auto& vComp : vComps) {
 				if (get_Component(vComp).useEnergyVector(vEVName)) {
 					vFound = true;
 					break;
@@ -148,7 +127,40 @@ void CairnAPI::OptimProblemAPI::remove(EnergyVectorAPI& a_EnergyVector)
 	}
 }
 
-// -- Components ---
+//Returns the list of all energy carrier in the problem
+t_list CairnAPI::OptimProblemAPI::get_EnergyCarriers()
+{
+	t_list vRet;	
+	if (m_Problem) {
+		QList<EnergyVector*> vQList = m_Problem->getEnergyVectorList();
+		for (auto& vComp : vQList) {						
+			vRet.push_back(vComp->Name().toStdString());			
+		}
+	}
+	return vRet;
+}
+
+//Returns the energy carrier of a given name 
+CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std::string &a_Name)
+{
+	EnergyVectorAPI vCarrier;
+	if (m_Problem) {
+		QString vComponentName = QString(a_Name.c_str());
+		EnergyVector* vEnergyVector = m_Problem->getEnergyVector(vComponentName);
+		if (vEnergyVector) {
+			vCarrier.set_EnergyVector(vEnergyVector);
+		}
+		else {
+			CairnAPIUtils::setError(errNotFound, "EnergyVector " + a_Name);
+		}
+	}	
+	else {
+		CairnAPIUtils::setError(noCairn);
+	}
+	return vCarrier;
+}
+
+// -------------------------- Components -----------------------
 t_list CairnAPI::OptimProblemAPI::get_Components(const std::string &a_Category)
 {
 	t_list vRet;	
@@ -174,34 +186,125 @@ t_list CairnAPI::OptimProblemAPI::get_Components(const std::string &a_Category)
 }
 
 // -- Indicators ---
-t_list CairnAPI::OptimProblemAPI::get_Indicators(const std::string& a_ComponentName)
+t_list CairnAPI::OptimProblemAPI::get_TecEco_IndicatorNames()
 {
-	t_list vRet;
+	t_list vRet = {};
 	if (m_Problem) {
-		QList<MilpComponent*> vQList = m_Problem->findChildren<MilpComponent*>();;
-		for (auto& vComp : vQList) {
-			BusCompo* lptrIsBus = dynamic_cast<BusCompo*> (vComp);
-			if (!lptrIsBus) {
-				if (vComp->Name().toStdString() == a_ComponentName) {
-					InputParam::t_Indicators vectIndicators = vComp->compoModel()->getInputIndicators()->getIndicators();
-					for (int i=0;i< vectIndicators.size();i++)
-					{
-						vRet.push_back(vectIndicators[i]->getName().toStdString());
-					}
-				}
-			}
-			//User-defined indicators
+		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
+		for (int i = 0; i < vectIndicators.size(); i++)
+		{
+			vRet.push_back(vectIndicators[i]->getName().toStdString());
 		}
 	}
-	else
+	else {
 		CairnAPIUtils::setError(noCairn);
+	}
 	return vRet;
 }
 
-// -- optimized components ---
+t_list CairnAPI::OptimProblemAPI::get_TecEco_IndicatorUnits()
+{
+	t_list vRet = {};
+	if (m_Problem) {
+		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
+		for (int i = 0; i < vectIndicators.size(); i++)
+		{
+			vRet.push_back(vectIndicators[i]->getUnit().toStdString());
+		}
+	}
+	else {
+		CairnAPIUtils::setError(noCairn);
+	}
+	return vRet;
+}
+
+t_list CairnAPI::OptimProblemAPI::get_TecEco_IndicatorShortNames()
+{
+	t_list vRet = {};
+	if (m_Problem) {
+		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
+		for (int i = 0; i < vectIndicators.size(); i++)
+		{
+			vRet.push_back(vectIndicators[i]->getShortName().toStdString());
+		}
+	}
+	else {
+		CairnAPIUtils::setError(noCairn);
+	}
+	return vRet;
+}
+
+t_dict CairnAPI::OptimProblemAPI::get_TecEco_IndicatorValues(const std::string range)
+{
+	t_dict vRet = {};
+	if (m_Problem) {
+		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
+		for (int i = 0; i < vectIndicators.size(); i++)
+		{
+			if (range == "PLAN") {
+				vRet.insert({ vectIndicators[i]->getName().toStdString(), vectIndicators[i]->getValue(0) });
+			}
+			else if (range == "HIST") {
+				vRet.insert({ vectIndicators[i]->getName().toStdString(), vectIndicators[i]->getValue(1) });
+			}
+		}
+	}
+	else {
+		CairnAPIUtils::setError(noCairn);
+	}
+	return vRet;
+}
+
+double CairnAPI::OptimProblemAPI::get_TecEco_IndicatorValue(const std::string& name, const std::string range)
+{
+	double vRet = NAN;
+	if (m_Problem) {
+		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
+		for (int i = 0; i < vectIndicators.size(); i++) {
+			if (vectIndicators[i]->getName().toStdString() == name) {
+				if (range == "PLAN") vRet = vectIndicators[i]->getValue(0);
+				else if (range == "HIST") vRet = vectIndicators[i]->getValue(1);
+			}
+		}
+		if (isnan(vRet)) CairnAPIUtils::setError(errGet, "Indicator name not found");
+	}
+	else {
+		CairnAPIUtils::setError(noCairn);
+	}
+	return vRet;
+}
+
+t_dict CairnAPI::OptimProblemAPI::get_All_IndicatorValues(const std::string range)
+{
+	t_dict vRet = {};
+	if (m_Problem) {
+		//TecEco indicators
+		t_dict tecEco_indicators = get_TecEco_IndicatorValues(range);
+		std::string tecEcoName = m_Problem->getTecEcoAnalysis()->Name().toStdString();
+		for (auto& [key, value] : tecEco_indicators) {
+			vRet.insert({tecEcoName+"."+key, value});
+		}
+
+		//Component indicators (including Bus)
+		QMap<QString, MilpComponent*> milpComponents = m_Problem->getMapMilpComponents();
+		for (auto it = milpComponents.keyValueBegin(); it != milpComponents.keyValueEnd(); ++it) {
+			InputParam::t_Indicators vectIndicators = it->second->compoModel()->getInputIndicators()->getIndicators();
+			std:string compoName = it->second->Name().toStdString();
+			for (int i = 0;i < vectIndicators.size();i++) {
+				if (range == "PLAN") vRet.insert({ compoName+"."+vectIndicators[i]->getName().toStdString(), vectIndicators[i]->getValue(0) });
+				else if (range == "HIST") vRet.insert({ compoName+"."+vectIndicators[i]->getName().toStdString(), vectIndicators[i]->getValue(1) });
+			}
+		}
+	}
+	else {
+		CairnAPIUtils::setError(noCairn);
+	}
+	return vRet;
+}
+
 t_list CairnAPI::OptimProblemAPI::get_optimized_components()
 {
-	t_list vRet;
+	t_list vRet = {};
 	if (m_Problem) {
 		QList<MilpComponent*> vQList = m_Problem->findChildren<MilpComponent*>();;
 		for (auto& vComp : vQList) {
@@ -234,91 +337,61 @@ CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::get_Component(const std::s
 	return vRet;
 }
 
-void CairnAPI::OptimProblemAPI::add(MilpComponentAPI& a_Component)
+CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::create_Component(const std::string& a_Name, const std::string& a_ModelName) const
 {
-	ECodeError vErr = noCairn;
+	MilpComponentAPI vRetCompo;
+	std::string type = CairnAPIUtils::get_Component_Type(a_ModelName);
+	ECodeError vErr = noError;
 	std::string vErrMsg = "";
 	if (m_Problem) {
-		QString vComponentName(QString(a_Component.get_Name().c_str()));
-		MilpComponent* vComp = m_Problem->findChild<MilpComponent*>(vComponentName);
-		if (!vComp) {
+		QString vCompoName(QString(a_Name.c_str()));
+		MilpComponent* vComponent = m_Problem->findChild<MilpComponent*>(vCompoName);
+		if (!vComponent) {
 			//Set the essential parameters of the componenet			
-			QMap<QString, QString> vComponent;
-			vComponent["id"] = vComponentName;
-			vComponent["type"] = QString(a_Component.get_Type().c_str());
-			vComponent["ModelClass"] = QString(a_Component.get_ModelClass().c_str());
+			QMap<QString, QString> paramMap;
+			paramMap["id"] = vCompoName;
+			paramMap["type"] = QString(type.c_str());
+			paramMap["ModelClass"] = QString(a_ModelName.c_str());
 
-			//Add ports
-			t_list vPorts = a_Component.get_Ports();
-			if (!vPorts.size()) {
-				vErrMsg = "component " + a_Component.get_Name() + ". The component doesn't has any port added.";
-				setError(errAdd, vErrMsg);
-				return;
-			}
-			else {
-				QMap < QString, QMap<QString, QString> > vListPorts;
-				int n = 1;
-				for (auto& vPortName : vPorts) {
-					MilpPortAPI vPort = a_Component.get_Port(vPortName);
-					QString vQPortName = QString(vPortName.c_str());
-					QString vPortId = "port" + QString::number(n);
-					n++;
-					QMap<QString, QString> vPortParams;
-					//Get mandatory parameters of the port
-					vPortParams["CompoName"] = vComponentName;
-					vPortParams["Name"] = vQPortName;
-					vPortParams["Carrier"] = QString(vPort.get_Type().c_str());
-					vPortParams["Direction"] = QString(getParamValue(vPort.get_SettingValue("Direction")).c_str());
-					vPortParams["Variable"] = QString(getParamValue(vPort.get_SettingValue("Variable")).c_str());
-					//Get optional parameters of the port
-					t_list vPortParamNames = vPort.get_SettingsList(CairnAPI::optional);
-					t_dict vSettingsMap = vPort.get_SettingValues();
-					for (auto& [vName, vValue] : vSettingsMap) {
-						t_list::iterator vIter = find(vPortParamNames.begin(), vPortParamNames.end(), vName);
-						if (vIter != vPortParamNames.end()) {
-							vPortParams[QString(vName.c_str())] = QString(getParamValue(vValue).c_str());
-						}						
-					}
-					vListPorts.insert(vPortId, vPortParams);
-				}
-				
-				//Get componenet parameters 
-				t_dict vCompoSettingMap = a_Component.get_SettingValues();
-				for (auto& vOption : vCompoSettingMap) {
-					vComponent[QString(vOption.first.c_str())] = QString(getParamValue(vOption.second).c_str());
-				}
-
-				//Create componenet	
-				try {
-					if (m_Problem->createComponent(vComponent, vListPorts)) {
-						vComp = m_Problem->findChild<MilpComponent*>(vComponentName);
-						if (vComp) {							
-							a_Component.set_MilpComponent(vComp);
-							int ierr = vComp->initProblem();
-							vErr = (ierr >= 0) ? noError : errAdd;
-							vErrMsg = (ierr >= 0) ? "" : "error while initializing the component (possibly a mandatory parameter is missing or a necessary port is missing!)";
+			//Create component
+			try {
+				if (m_Problem->createComponent(paramMap, {})) {
+					vComponent = m_Problem->findChild<MilpComponent*>(vCompoName);
+					if (vComponent) {
+						int ierr = vComponent->initProblem(false);
+						if (ierr >= 0) {
+							vRetCompo.set_MilpComponent(vComponent);
 						}
 						else {
-							vErr = errAdd;
-							vErrMsg = "component " + a_Component.get_Name();
+							vErr = errParam;
+							vErrMsg = "error while initializing the component (possibly a mandatory parameter is missing!)";
 						}
 					}
+					else {
+						vErr = errDefault;
+						vErrMsg = "Error : Creation of the component" + a_Name;
+					}
 				}
-				catch (const std::exception& e) {
-					qCritical() << "Error : Creation of the component " << vComponent << "is Failed";
-					qCritical() << " Error : " << e.what();
-				}
+			}
+			catch (const std::exception& e) {
+				qCritical() << " Error : " << e.what();
+				vErr = errDefault;
+				vErrMsg = "Error : Creation of the component " + vCompoName.toStdString() + "is Failed";
 			}
 		}
 		else {
 			vErr = errAlreadyExist;
-			vErrMsg = "component " + a_Component.get_Name();
+			vErrMsg = "component " + a_Name;
 		}
 	}
+	else {
+		vErr = noCairn;
+	}
 	CairnAPIUtils::setError(vErr, vErrMsg);
+	return vRetCompo;
 }
 
-void CairnAPI::OptimProblemAPI::remove(MilpComponentAPI& a_Component)
+void CairnAPI::OptimProblemAPI::remove_Component(MilpComponentAPI& a_Component)
 {
 	ECodeError vErr = noCairn;
 	std::string vErrMsg = "";
@@ -327,7 +400,7 @@ void CairnAPI::OptimProblemAPI::remove(MilpComponentAPI& a_Component)
 		t_list vPorts = a_Component.get_Ports();
 		for (const std::string& vPort : vPorts) {
 			MilpPortAPI vPortObj = a_Component.get_Port(vPort);
-			a_Component.removePort(vPortObj, false);
+			a_Component.remove_Port(vPortObj, true);
 		}
 		// Suppression du composant
 		MilpComponent* vComp = a_Component.get_MilpComponent();
@@ -347,7 +420,7 @@ void CairnAPI::OptimProblemAPI::remove(MilpComponentAPI& a_Component)
 }
 
 
-// -- Bus ---
+// ----------------------- Bus -----------------------
 t_list CairnAPI::OptimProblemAPI::get_Buses()
 {
 	t_list vRet;
@@ -372,7 +445,7 @@ CairnAPI::BusAPI CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name)
 		QString vQName(a_Name.c_str());
 		BusCompo* vComp = m_Problem->findChild<BusCompo*>(vQName);
 		if (vComp) {
-			vRet.set_Bus(vComp);
+			vRet.set_BusCompo(vComp);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "Bus " + a_Name);
@@ -383,61 +456,69 @@ CairnAPI::BusAPI CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name)
 	return vRet;	
 }
 
-void CairnAPI::OptimProblemAPI::add(BusAPI& a_Bus)
+CairnAPI::BusAPI CairnAPI::OptimProblemAPI::create_Bus(const std::string& a_Name, 
+	const std::string& a_ModelName, const EnergyVectorAPI& a_EnergyVector) const
 {
-	ECodeError vErr = noCairn;
+	BusAPI vBus;
+
+	if (!a_EnergyVector.get_EnergyVector()) {
+		CairnAPIUtils::setError(errDefault, "The EnergyCarrier must be defined!");
+	}
+
+	//std::string type = CairnAPIUtils::get_Component_Type(a_ModelName);
+	std::string type = CairnAPIUtils::get_Bus_Type(a_ModelName);
+
+	ECodeError vErr = noError;
 	std::string vErrMsg = "";
 	if (m_Problem) {
-		QString vComponentName(QString(a_Bus.get_Name().c_str()));
-		BusCompo* vComp = m_Problem->findChild<BusCompo*>(vComponentName);
-		if (!vComp) {
-			// création du composant			
-			QMap<QString, QString> vComponent;
-			vComponent["id"] = vComponentName;
-			vComponent["type"] = QString(a_Bus.get_Type().c_str());
-			vComponent["Model"] = QString(a_Bus.get_ModelClass().c_str());
-			vComponent["ModelClass"] = QString(a_Bus.get_ModelClass().c_str());
+		QString vBusName(QString(a_Name.c_str()));
+		BusCompo* vBusCompo = m_Problem->findChild<BusCompo*>(vBusName);
+		if (!vBusCompo) {
+			//Build params map	
+			QMap<QString, QString> paramMap;
+			paramMap["id"] = vBusName;
+			paramMap["type"] = QString(type.c_str());
+			paramMap["ModelClass"] = QString(a_ModelName.c_str());
+			paramMap["VectorName"] = QString(a_EnergyVector.get_Name().c_str());
 
-			std::string vEnergyVectorName = a_Bus.get_EnergyVector();
-			if (vEnergyVectorName == "") {
-				vErrMsg = "Bus " + a_Bus.get_Name() + " because it doesn't have an EnergyVector assigned";
-				CairnAPIUtils::setError(errAdd, vErrMsg);
-			}
-			vComponent["VectorName"] = QString(vEnergyVectorName.c_str());
-
-			// ajoute les options
-			t_dict vParams = a_Bus.get_SettingValues();
-			for (auto& vOption : vParams) {
-				vComponent[QString(vOption.first.c_str())] = QString(getParamValue(vOption.second).c_str());
-			}
-
-			// création
+			//Create Bus component
 			try {
-				if (m_Problem->createComponent(vComponent, {})) {
-					vComp = m_Problem->findChild<BusCompo*>(vComponentName);
-					if (vComp) {
-						a_Bus.set_Bus(vComp);
-						int ierr = vComp->initProblem();
-						vErr = (ierr >= 0) ? noError : errParam;		
-						vErrMsg = (ierr >= 0) ? "" : "error while initializing the component (possibly a mandatory parameter is missing or a necessary port is missing!)";
+				if (m_Problem->createComponent(paramMap, {})) {
+					vBusCompo = m_Problem->findChild<BusCompo*>(vBusName);
+					if (vBusCompo) {
+						vBusCompo->setEnergyVector(a_EnergyVector.get_EnergyVector());
+						int ierr = vBusCompo->initProblem();
+						vBusCompo->declareIOVariables();
+						if (ierr >= 0) {
+							vBus.set_BusCompo(vBusCompo);
+						}
+						else {
+							vErr = errParam;
+							vErrMsg = "error while initializing the component (possibly a mandatory parameter is missing!)";
+						}
 					}
 				}
 			}
 			catch (const std::exception& e)
 			{
-				qCritical() << "Error : Creation of the bus " << vComponent << "is Failed";
 				qCritical() << " Error : " << e.what();
+				vErr = errDefault;
+				vErrMsg = "Error : Creation of the bus " + vBusName.toStdString() + "is Failed";
 			}
 		}
 		else {
 			vErr = errAlreadyExist;
-			vErrMsg = "Bus " + a_Bus.get_Name();
+			vErrMsg = "Bus " + a_Name;
 		}
 	}
+	else {
+		vErr = noCairn;
+	}
 	CairnAPIUtils::setError(vErr, vErrMsg);
+	return vBus;
 }
 
-void CairnAPI::OptimProblemAPI::remove(BusAPI& a_Bus)
+void CairnAPI::OptimProblemAPI::remove_Bus(BusAPI& a_Bus)
 {
 	ECodeError vErr = noCairn;
 	std::string vErrMsg = "";
@@ -453,7 +534,7 @@ void CairnAPI::OptimProblemAPI::remove(BusAPI& a_Bus)
 		try
 		{
 			m_Problem->deleteComponent(vBus);
-			a_Bus.set_Bus(nullptr);
+			a_Bus.set_BusCompo(nullptr);
 			vErr = noError;
 		}
 		catch (const std::exception&)
@@ -484,7 +565,7 @@ void CairnAPI::OptimProblemAPI::add(MilpPortAPI& a_port, BusAPI& a_bus)
 	if (m_Problem) {
 		vErr = errLink;
 		// bus et port doivent avoir le même energyVector
-		if (a_port.get_EnergyVector() == a_bus.get_EnergyVector()) {
+		if (a_port.get_CarrierName() == a_bus.get_CarrierName()) {
 			MilpPort* vPort = a_port.get_MilpPort();
 			BusCompo* vBus = a_bus.get_BusCompo();
 			if (vPort && vBus) {
@@ -523,7 +604,7 @@ void CairnAPI::OptimProblemAPI::remove(MilpPortAPI& a_port, BusAPI& a_bus)
 	std::string vErrMsg = "";
 	if (m_Problem) {
 		vErr = errLink;		
-		if (a_port.get_EnergyVector() == a_bus.get_EnergyVector()) {
+		if (a_port.get_CarrierName() == a_bus.get_CarrierName()) {
 			MilpPort* vPort = a_port.get_MilpPort();
 			BusCompo* vBus = a_bus.get_BusCompo();
 			if (vPort && vBus) {
@@ -557,7 +638,7 @@ void CairnAPI::OptimProblemAPI::remove(BusAPI& a_bus, MilpPortAPI& a_port)
 
 
 // -- Others ---
-t_dict CairnAPI::OptimProblemAPI::get_TechEcoAnalysisSettings()
+t_dict CairnAPI::OptimProblemAPI::get_TecEcoAnalysisSettings()
 {
 	t_dict vRet;
 	ECodeError vErr = noCairn;
@@ -580,7 +661,7 @@ t_dict CairnAPI::OptimProblemAPI::get_TechEcoAnalysisSettings()
 	return vRet;
 }
 
-void CairnAPI::OptimProblemAPI::set_TechEcoAnalysisSettings(const t_dict& a_Settings)
+void CairnAPI::OptimProblemAPI::set_TecEcoAnalysisSettings(const t_dict& a_Settings)
 {
 	ECodeError vRet = noCairn;
 	std::string vErrMsg = "";
@@ -744,7 +825,7 @@ void CairnAPI::OptimProblemAPI::set_SimulationControlSettings(const t_dict& a_Se
 						vParamMap[QString(vSimuParamName.c_str())] = QString(getParamValue(vSimuParamValue).c_str());
 					}
 				}
-				vOk = pMilpData->setMilpDataFromSettings(true, vParamMap);
+				vOk = pMilpData->setMilpDataFromSettings(vSimulationControl->getParameters());
 				m_Problem->setExtrapolationFactor();
 			}
 			vRet = (vOk) ? noError : errParam;
@@ -801,21 +882,22 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 
 	// il faut au moins un fichier timeseries
 	if (!m_timestepfileList.size()) {
-		CairnAPIUtils::setError(errParam, "Please, load at least one timeseries file before running");
+		CairnAPIUtils::setError(errDefault, "Please, load at least one timeseries file before running");
 	}
 	else {
-		// vérificaton des fichiers
+		// vérification des fichiers
 		for (auto& vFileName : m_timestepfileList) {
-			QFile Input_File(QString(vFileName.c_str()));
-			if (!Input_File.open(QIODevice::ReadOnly))
-			{
-				CairnAPIUtils::setError(errParam, "Error : this TimeSeries file name : "  + vFileName + " does not exist");								
+			fs::path vTimeStepFile(vFileName);
+			std::error_code vErrFile;
+			if (!fs::exists(vTimeStepFile, vErrFile)) {			
+				CairnAPIUtils::setError(errParam, "Error : this TimeSeries file name : "  + vFileName + " does not exist, err: " + vErrFile.message());
 			}
-			Input_File.close();
 		}
 	}
 
-	if (m_Problem) {		
+	if (m_Problem) {
+		m_Problem->closeExpressions();
+		m_Problem->resetFlags();
 		vRet.set_Problem(m_Problem);
 		CairnCore* vCairn = (CairnCore*)m_Problem->parent();
 		int iShift = 0;		
@@ -840,15 +922,12 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 		std::ofstream optimLogFile;
 		optimLogFile.open(optimLogFileName.string(), std::ofstream::out | std::ofstream::trunc);
 		optimLogFile.close();
-
-		QStringList QStimestepfileList;
-		for (auto& vFile : m_timestepfileList) QStimestepfileList.push_back(QString(vFile.c_str()));
-		
+			
 		int vNbCycle = vCairn->nbcycle();
 		for (int icycle = 0; icycle < vNbCycle; icycle++)
 		{
 			try {
-				vCairn->importTS(QStimestepfileList, iShift);
+				vCairn->importTS(m_timestepfileList, iShift);
 			}
 			catch (Cairn_Exception cairn_error) {
 				vErr = errRun;				
@@ -886,19 +965,10 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 
 		SimulationControl* vSimulationControl = m_Problem->getSimulationControl();
 		if (vSimulationControl) {
-			// export OUTPUT Time series
-			t_value vExport = CairnAPIUtils::getParameter({ vSimulationControl->getCompoInputParam(), vSimulationControl->getCompoInputSettings() }, "ExportResults");
-			if (CairnAPIUtils::getParamValue(vExport) == "1") 
-				vCairn->exportTS(vCairn->resultFile() + ".csv");
-
-			//ExportJson: generate _self.json //Don't throw an error if failed 
 			t_value vExportJson = CairnAPIUtils::getParameter({ vSimulationControl->getCompoInputParam(), vSimulationControl->getCompoInputSettings() }, "ExportJson");
 			if (CairnAPIUtils::getParamValue(vExportJson) == "1")
 				m_Problem->SaveFullArchitecture();
 		}
-
-		//reset flags
-		m_Problem->resetFlags();
 
 		vErr = noError;
 	}

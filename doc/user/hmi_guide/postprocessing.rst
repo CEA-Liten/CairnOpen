@@ -4,7 +4,7 @@
 Post-processing
 #############################
 
-It is possible to produce automatic HTML reports with graphs to compare Persee studies.
+It is possible to produce automatic HTML reports with graphs to compare |cairn| studies.
 
 An example can be found here: (rajouter le lien).
 

@@ -10,6 +10,10 @@ public:
     ConverterSubModel(QObject* aParent=nullptr);
     ~ConverterSubModel();
     
+    void declareInputParams(const QString& name);
+
+    void computeAgeingModelContribution() override;
+
     void setTimeData();
 
     void setMinPower(MIPModeler::MIPExpression1D aPower, std::vector<double> aMinPowList, double aNomPower);
@@ -18,8 +22,8 @@ public:
 
     void declareDefaultModelConfigurationParameters()
     {
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel"});
         TechnicalSubModel::declareDefaultModelConfigurationParameters();
+        addParameter("UseAgeing", &mUseAgeing, false, false, true, "", "", "Ageing");          /** Use UseAgeing Model if true - default to false. Current Efficiency will be reduced by 1-EfficiencyAgeingCoeff*HistRunnningTime and reset to 1 when HistRunnningTime reaches EfficiencyMaxHours */
     }
     
     void declareDefaultModelParameters()
@@ -106,14 +110,11 @@ public:
 
     void computeDefaultIndicators(const double* optSol);
 
-   
-
     //used in MultiConverter and Cogeneration
     void cleanFluxIOs(QString name); 
     virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr);
     virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr);
     
-    virtual void buildModel();
     double Efficiency() const { 
         if (mAgeingModel && mUseAgeing)
             return mAgeingModel->EfficiencyAgeing();
@@ -135,6 +136,7 @@ protected:
     std::vector <MIPModeler::MIPExpression1D> mExpInput;
     std::vector <MIPModeler::MIPExpression1D> mExpOutput;
 
+    bool mUseAgeing;          /** bool indicating the use of an ageing model if true - default to false */
     AgeingRunningHours* mAgeingModel ;
 };
 

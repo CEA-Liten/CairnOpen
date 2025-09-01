@@ -1,10 +1,8 @@
 import os
 from os import path
 import pytest
-import sys
 import pandas as pd
-
-from PerseeSensParam import run_sensitivity_echantillonnage_manuel
+from cairn import *
 
 """
 def pytest_addoption(parser):
@@ -12,14 +10,20 @@ def pytest_addoption(parser):
 """
 
 def pytest_generate_tests(metafunc):
-    app_home = path.dirname(path.realpath(__file__))
-    
     test_case = "test_compressor"
     
-    run_sensitivity_echantillonnage_manuel(test_case,app_home,"sampling.csv",1000,True,"", [test_case+"_dataseries.csv"])
+    app_home = path.dirname(path.realpath(__file__))
+    simu_full =  path.join(app_home, test_case+'.json')    
+    timeseries =  path.join(app_home, test_case+'_dataseries.csv')
     
-    #Read sampling to know which case to compare
-    df = pd.read_csv(os.path.join(app_home, "sampling.csv"), sep=";", decimal=".", index_col=0)
+    cairn_instance = CairnAPI(True)
+    problem = cairn_instance.read_study(simu_full)
+    problem.add_timeseries(timeseries)
     
+    #Read sampling 
+    df_sens = pd.read_csv(os.path.join(app_home, "sampling.csv"), sep=";", decimal=".", header=[0,1], index_col=0)
+    run_sensitivity(problem, df_sens, 1000)
+    
+    #Send cases to compare
     metafunc.parametrize("test_case", [test_case])
-    metafunc.parametrize("subcase", df.index.tolist())
+    metafunc.parametrize("subcase", df_sens.index.tolist())

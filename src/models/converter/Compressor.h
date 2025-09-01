@@ -44,9 +44,9 @@ public:
 //----------------------------------------------------------------------------------------------------
     int checkConsistency();
 //----------------------------------------------------------------------------------------------------
-    void buildModel();
+    void computeInitialData() override;
+    void computeModelContribution() override;
 //----------------------------------------------------------------------------------------------------
-    void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
     void ComputeElecPowerMapPOut(double aCp_Gas, double ak, double aEta, const bool aRelaxedFormSOE,  const MIPModeler::MIPLinearType& methode);
@@ -63,12 +63,11 @@ public:
     // Time         : Hours
     void declareModelConfigurationParameters() {
         ConverterSubModel::declareDefaultModelConfigurationParameters();
-        mInputParam->addToConfigList({"ConstantEfficiency","VariablePout","VariableTin","SteamInput","PolytropicModel"});
         //bool
-        addParameter("UsePolytropicModel",&mUsePolytropicModel, false, false, true, "If true: use optional model of Polytropic compression of Ideal Gaz - default = false","",{"PolytropicModel"});
-        addParameter("UseVariablePOut", &mUseVariablePOut, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","",{"VariablePout"});
-        addParameter("UseVariableTIn", &mUseVariableTIn, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","",{"VariableTin"});
-        addParameter("UseSteamMap", &mUseSteamMap, false, false, true, "If true: add a map of performance SteamMap which uses steam, pressure out to compute the power used - works in the case of a constant volume in the compressor - see bouin_7_cont for an example of use","",{"SteamInput"});
+        addParameter("UsePolytropicModel",&mUsePolytropicModel, false, false, true, "If true: use optional model of Polytropic compression of Ideal Gaz - default = false","", "PolytropicModel");
+        addParameter("UseVariablePOut", &mUseVariablePOut, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","", "VariablePout");
+        addParameter("UseVariableTIn", &mUseVariableTIn, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","", "VariableTin");
+        addParameter("UseSteamMap", &mUseSteamMap, false, false, true, "If true: add a map of performance SteamMap which uses steam, pressure out to compute the power used - works in the case of a constant volume in the compressor - see bouin_7_cont for an example of use","", "SteamInput");
         addParameter("AddLosses", &mAddLosses, false, false, true, "If true: consider losses during compression");
     }
 
@@ -81,30 +80,30 @@ public:
         // addParameter to mInputData instance for input data coming from Persee/PEGASE memory : time series (coming from PEGASE), state variables...
         
         //bool
-        addParameter("UseLOG", &mUseLOG, true, false, mUseVariablePOut || mUseVariableTIn, "Choose the model of linearization : if true: use MIP_LOG variables (more rapid to reach the optimal). If false: use MIP_SOS variables (more rapid to find first solution) - default true", "", { "VariablePout" });
+        addParameter("UseLOG", &mUseLOG, true, false, mUseVariablePOut || mUseVariableTIn, "Choose the model of linearization : if true: use MIP_LOG variables (more rapid to reach the optimal). If false: use MIP_SOS variables (more rapid to find first solution) - default true", "", "VariablePout");
 
         //int
-        addParameter("PrecisionPressure", &mPrecisionPressure, 0, &mUseVariablePOut, &mUseVariablePOut, "Number of division in pressure axis on the map", "", { "VariablePout" });
-        addParameter("PrecisionTemperature", &mPrecisionTemperature, 0, &mUseVariableTIn, &mUseVariableTIn, "Number of division in temperature axis on the map ", "", { "VariableTin" });
-        addParameter("PrecisionMassFlow", &mPrecisionMassFlow, 0, SFunctionFlag({ eFTypeOrNot, { &mUseVariableTIn, &mUseVariablePOut} }), SFunctionFlag({ eFTypeOrNot, { &mUseVariableTIn, &mUseVariablePOut} }), "Number of division in flow of H2 axis on the map", "", { "VariableTin" });
+        addParameter("PrecisionPressure", &mPrecisionPressure, 0, &mUseVariablePOut, &mUseVariablePOut, "Number of division in pressure axis on the map", "", "VariablePout");
+        addParameter("PrecisionTemperature", &mPrecisionTemperature, 0, &mUseVariableTIn, &mUseVariableTIn, "Number of division in temperature axis on the map ", "", "VariableTin");
+        addParameter("PrecisionMassFlow", &mPrecisionMassFlow, 0, SFunctionFlag({ eFTypeOrNot, { &mUseVariableTIn, &mUseVariablePOut} }), SFunctionFlag({ eFTypeOrNot, { &mUseVariableTIn, &mUseVariablePOut} }), "Number of division in flow of H2 axis on the map", "", "VariableTin");
 
         //double
         addParameter("POutletFixe", &mPOutletFixe, 0., false, true, "Allow the user to give a constant pressure out", "");
-        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow",{"FlowrateUnit"},{""}) ;
-        addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor",{"FlowrateUnit"},{""}) ;
+        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow",{"FlowrateUnit"}) ;
+        addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor",{"FlowrateUnit"}) ;
         addParameter("MotorEfficiency", &mMotorEfficiency, 0., true, true, "Electrical Motor Efficiency", "-");
         addParameter("NbStages", &mNbStages, 0., true, true, "Number of compression stages", "");
         addParameter("TInlet", &mTInlet, 20., true, true, "Inlet Temperature", "degC");
 		addParameter("PowerConsumption", &mPowerConsumption, 0., false, true, "Electrical consumption of the compressor");
-        addParameter("PolytropicEfficiency",&mPolytropicEfficiency, 1., &mUsePolytropicModel, &mUsePolytropicModel, "PolytropicEfficiency efficiency","",{"PolytropicModel"});
-        addParameter("PolytropicCoefficient",&mPolytropicCoefficient, 0., &mUsePolytropicModel, &mUsePolytropicModel, "PolytropicCoefficient","",{"PolytropicModel"});   
-        addParameter("IsentropicEfficiency", &mIsentropicEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mUsePolytropicModel } }), SFunctionFlag({ eFTypeOrNot, {&mUsePolytropicModel} }), "Isentropic efficiency", "");   /**  */
+        addParameter("PolytropicEfficiency",&mPolytropicEfficiency, 1., &mUsePolytropicModel, &mUsePolytropicModel, "PolytropicEfficiency efficiency","", "PolytropicModel");
+        addParameter("PolytropicCoefficient",&mPolytropicCoefficient, 0., &mUsePolytropicModel, &mUsePolytropicModel, "PolytropicCoefficient","", "PolytropicModel");   
+        addParameter("IsentropicEfficiency", &mIsentropicEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mUsePolytropicModel } }), SFunctionFlag({ eFTypeOrNot, {&mUsePolytropicModel} }), "Isentropic efficiency");   /**  */
         addParameter("Losses", &mLosses, 0., &mAddLosses, &mAddLosses, "Percentage of inlet flow lost during compression", "-");
         
         //vector
-        addPerfParam("UsedElecPowerSetPoint", &mUsedElecPowerSetPoint, &mUseSteamMap, &mUseSteamMap, "z-axis in the map steamMap", "", {"SteamInput"});
-        addPerfParam("SteamSetPoint", &mSteamSetPoint, &mUseSteamMap, &mUseSteamMap, "x-axis in the map steamMap", "", {"SteamInput"});
-        addPerfParam("PressureOutSetPoint", &mPressureOutSetPoint, &mUseSteamMap, &mUseSteamMap, "y-axis in the map steamMap", "", {"SteamInput"});
+        addPerfParam("UsedElecPowerSetPoint", &mUsedElecPowerSetPoint, &mUseSteamMap, &mUseSteamMap, "z-axis in the map steamMap", "");
+        addPerfParam("SteamSetPoint", &mSteamSetPoint, &mUseSteamMap, &mUseSteamMap, "x-axis in the map steamMap", "");
+        addPerfParam("PressureOutSetPoint", &mPressureOutSetPoint, &mUseSteamMap, &mUseSteamMap, "y-axis in the map steamMap", "");
     }
 
 
@@ -112,21 +111,22 @@ public:
     {
         ConverterSubModel::declareDefaultModelInterface();
 
-        addIO("UsedPower", &mExpUsedPower, mPortUsedPower->pFluxUnit());       /** Computed power used by the compressor */
-        addIO("MaxPower", &mExpSizeMax, mPortUsedPower->pFluxUnit());        /** Maximal power used by the compressor */
-        addIO("InMassFlowRate", &mExpInMassFlow, mPortInMassFlowRate->pFluxUnit());         /** input flow compressed by the compressor */
-        addIO("OutMassFlowRate", &mExpOutMassFlow, mPortOutMassFlowRate->pFluxUnit());         /** output flow compressed by the compressor, can be different from input flow if losses are considered */
-        addIO("State", &mExpState, mPortUsedPower->pFluxUnit());         /** ON / OFF state of the compressor */
-        addIO("Pressure_out", &mExpPOut, mPortOutMassFlowRate->pPotentialUnit());        /** Pressure at the exit of the compressor */
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit());        /** Maximal power used by the compressor */
 
-        if (mUseSteamMap) {
-            addIO("Steam", &mExpSteam, mPortInMassFlowRate->pFluxUnit());    /** quantity of steam input in the compressor*/
-        }
-        if (mUseVariableTIn) {
-            addIO("TemperatureIn", &mExpTIn, "degC"); /** Temperature before compression */
-        }
-        setOptimalSizeExpression("MaxPower");  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-        setOptimalSizeUnit(mPortUsedPower->pPowerUnit());  // defines default expression should be used for OptimalSize computation and use in Economic analysis
+        addIO("UsedPower", &mExpUsedPower, true, mPortUsedPower->pFluxUnit());       /** Computed power used by the compressor */
+        addIO("InMassFlowRate", &mExpInMassFlow, true, mPortInMassFlowRate->pFluxUnit());         /** input flow compressed by the compressor */
+        addIO("OutMassFlowRate", &mExpOutMassFlow, true, mPortOutMassFlowRate->pFluxUnit());         /** output flow compressed by the compressor, can be different from input flow if losses are considered */
+        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pPotentialUnit());        /** Pressure at the exit of the compressor */
+
+        addIO("Steam", &mExpSteam, &mUseSteamMap, mPortInMassFlowRate->pFluxUnit());    /** quantity of steam input in the compressor*/
+        addIO("TemperatureIn", &mExpTIn, &mUseVariableTIn, "degC"); /** Temperature before compression */
+    
+        /* Register non-IO 0D-expressions in order to automatically allocate and close them */
+        addExp(&mExpTOutlet);
+
+        /* Register non-IO 1D-expressions in order to automatically allocate and close them */
+        //....
     }
 
     void declareModelIndicators() {
@@ -201,6 +201,9 @@ protected:
     MIPModeler::MIPExpression1D mExpSteam;
 
     double mSpecificHeatRatio;
+    double mCp_Gas;
+    double mK;
+    double mEta;
     double mPInlet;  //Inlet Pressure
     double mPOutlet;  //Outlet Pressure
 

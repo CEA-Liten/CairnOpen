@@ -135,8 +135,7 @@ class CAIRNCORESHARED_EXPORT EnergyVector : public QObject
 {
     Q_OBJECT
 public:
-    EnergyVector(QObject* aParent, QString aName, const QMap<QString, QString> aComponent, const QSettings& aSettings);
-    EnergyVector(QObject* aParent, const QString& aName, const QString& aType);
+    EnergyVector(QObject* aParent, const QString& aName, const QString& aType, const QMap<QString, QString> aComponent);
     virtual ~EnergyVector();
 
     GUIData* getGUIData() { return mGUIData; }
@@ -206,8 +205,8 @@ public:
     QString UseProfileBuyPriceSeasonal()  const { return mUseProfileBuyPriceSeasonal; }
 
     void declareCompoInputParam(); //add parameters
-    void setCompoInputParam(const QMap<QString, QString> aComponent);  //set (read from .json) parameter values from paramsMap: mComponent
-    bool InitEnergyVectorParam(); //set params based on EnergyVector type and from QSetting
+    void setCompoInputParam(const QMap<QString, QString> aComponent); 
+    bool InitEnergyVectorParam(const QMap<QString, QString>& aComponent = {});
 
     InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
     InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
@@ -305,8 +304,6 @@ private:
     InputParam* mCompoInputParam ;   /** COMPONENT Input parameter List from XML file -> Options */
     InputParam* mCompoInputSettings ;   /** COMPONENT Input parameter List from Settings File -> Params */
     InputParam* mTimeSeriesParam;
-
-    bool InitEnergyVectorParam(const QMap<QString, QString> &aComponent, const QSettings& aSettings);
 };
 
 #endif // EnergyVector_H

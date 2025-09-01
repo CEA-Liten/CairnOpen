@@ -13,13 +13,13 @@
 namespace fs = std::filesystem;
 
 std::string ModelFactory::sModuleName = "createModel";
-std::map<QString, ModelFactory::ModelDescriptor> ModelFactory::m_PlugIns;
+std::map<std::string, ModelFactory::ModelDescriptor> ModelFactory::m_PlugIns;
 
 ModelFactory::ModelFactory() { }
 
-QStringList ModelFactory::getModelList()
+std::vector<std::string> ModelFactory::getModelList()
 {
-	QStringList aModelList;
+	std::vector<std::string> aModelList;
     t_mapPlugIns::iterator end = m_PlugIns.end();
     for (t_mapPlugIns::iterator it = m_PlugIns.begin(); it != end; it++) {
         aModelList.push_back(it->second.getModelName());
@@ -27,62 +27,64 @@ QStringList ModelFactory::getModelList()
 	return aModelList;
 }
 
-QObject* ModelFactory::createModel(QObject* aParent, const QString& modelName, const QString& instanceName)
+QObject* ModelFactory::createModel(QObject* aParent, const std::string& modelName, const std::string& instanceName)
 {
     t_mapPlugIns::iterator vIter = m_PlugIns.find(modelName);
     if (vIter != m_PlugIns.end()) {
         return vIter->second.createModel(aParent, instanceName);
     }
     else {
-        qWarning() << "Cannot find private model " << modelName << ", " << instanceName;
+        qWarning() << "Cannot find private model " << QString(modelName.c_str()) << ", " << QString(instanceName.c_str());
     }
     return nullptr;
 }
 
-void ModelFactory::deleteModel(const QString& modelName, const QString& instanceName)
+void ModelFactory::deleteModel(const std::string& modelName, const std::string& instanceName)
 {
     t_mapPlugIns::iterator vIter = m_PlugIns.find(modelName);
     if (vIter != m_PlugIns.end()) {
         return vIter->second.deleteModel(instanceName);
     }
     else {
-        qWarning() << "Cannot find private model " << modelName << ", " << instanceName;
+        qWarning() << "Cannot find private model " << QString(modelName.c_str()) << ", " << QString(instanceName.c_str());
     }
 }
 
 void ModelFactory::findModels(){
-	// Search for private models
-    if (!lookupModels(QCoreApplication::applicationDirPath())) {
-        QString appDir = qEnvironmentVariable("CAIRN_BIN", QDir::currentPath());
-        lookupModels(appDir);
+	// Search for models
+    if (!lookupModels(fs::current_path().string())) {
+        lookupModels(std::getenv("CAIRN_BIN"));
     }
 }
 
-bool ModelFactory::lookupModels(const QString& a_Path)
+bool ModelFactory::lookupModels(const std::string& a_Path)
 {
     bool vRet = false;
-    QString filterExt, filterEnd = "CairnModel";
+    std::string filterExt, filterEnd = "CairnModel";
 #if (defined (_WIN32) || defined (_WIN64))
     filterExt = ".dll";    
 #else
     filterExt = ".so";    
 #endif
-    QDir vDir(a_Path, "*"+filterExt);
-    qInfo() << "Search for models in: " << a_Path;
-    QFileInfoList vFiles(vDir.entryInfoList());
-    for (auto& vFile : vFiles) {
-        if (vFile.baseName().endsWith(filterEnd)) {
-            ModelDescriptor modelDesc;
-            modelDesc.setDllPath(vFile.absoluteFilePath());
-            QStringList pathCuts = vFile.absoluteFilePath().split("/");
-            QString dllName = pathCuts.takeLast();
-            QString aModelName = dllName;
-            aModelName = aModelName.replace(filterExt, "").replace(filterEnd, "");
-            modelDesc.setModelName(aModelName);
-            m_PlugIns[aModelName] = modelDesc;
-            qInfo() << "Found model " << aModelName << "(" << dllName << ")";
-            vRet = true;
-        }
+    qDebug() << "Search models in: " << QString(a_Path.c_str());
+    fs::path vPath(a_Path);
+    for (auto const& dir_entry : fs::directory_iterator{ vPath }) {
+        if (!dir_entry.is_directory()) {
+            const fs::path& vFile = dir_entry.path();
+            if (vFile.extension() == filterExt) {
+                std::string vModelName = vFile.stem().string();
+                size_t vPos = vModelName.rfind(filterEnd);
+                if (vPos != std::string::npos) {
+                    ModelDescriptor modelDesc;
+                    modelDesc.setDllPath(fs::absolute(vFile).string());
+                    vModelName.replace(vPos, vPos + filterEnd.size(), "");
+                    modelDesc.setModelName(vModelName);
+                    m_PlugIns[vModelName] = modelDesc;
+                    qInfo() << "Found model " << QString(vModelName.c_str()) << "(" << QString(fs::absolute(vFile).string().c_str()) << ")";
+                    vRet = true;
+                }
+            }
+        }   
     }
     return vRet;
 }
@@ -92,19 +94,19 @@ ModelFactory::ModelDescriptor::ModelDescriptor()
 {       
 }
 
-const QString ModelFactory::ModelDescriptor::getModelName()
+const std::string ModelFactory::ModelDescriptor::getModelName()
 {
     return mModelName;
 }
 
-void ModelFactory::ModelDescriptor::setModelName(const QString aModelName) 
+void ModelFactory::ModelDescriptor::setModelName(const std::string aModelName) 
 {
     mModelName = aModelName;
 }
 
-void ModelFactory::ModelDescriptor::setDllPath(const QString& a_Path) 
+void ModelFactory::ModelDescriptor::setDllPath(const std::string& a_Path) 
 {
-    mDLLAbsoluteName = a_Path.toStdString();
+    mDLLAbsoluteName = a_Path;
 }
 
 QObject* ModelFactory::ModelDescriptor::loadModel(QObject* aParent)
@@ -150,7 +152,7 @@ QObject* ModelFactory::ModelDescriptor::loadModel(QObject* aParent)
     return vRet;
 }
 
-QObject* ModelFactory::ModelDescriptor::createModel(QObject* aParent, const QString& instanceName)
+QObject* ModelFactory::ModelDescriptor::createModel(QObject* aParent, const std::string& instanceName)
 {
     QObject* vRet = nullptr;
     t_mapModels::iterator vIter = mModels.find(instanceName);
@@ -165,7 +167,7 @@ QObject* ModelFactory::ModelDescriptor::createModel(QObject* aParent, const QStr
     return vRet;
 }
 
-void ModelFactory::ModelDescriptor::deleteModel(const QString& instanceName)
+void ModelFactory::ModelDescriptor::deleteModel(const std::string& instanceName)
 {
     t_mapModels::iterator vIter = mModels.find(instanceName);
     if (vIter != mModels.end()) {

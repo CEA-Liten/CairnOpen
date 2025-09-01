@@ -3,8 +3,6 @@
 class JsonDescription ;
 
 #include <QXmlStreamReader>
-#include <QSettings>
-
 #include "MILPComponent_global.h"
 #include "Cairn_Exception.h"
 
@@ -132,116 +130,6 @@ static QJsonObject restoreJsonObject(QMap<QString, QVariant>& map)
         obj.insert(key, tmp);
     }
     return obj;
-}
-static void parseParamData(const QJsonArray& paramList, QMap<QString, QString>& aMap, QSettings::SettingsMap& aSettingsMap)
-{//aMap["id"] + "." is added to filter by component in  QSettings. Not needed in JsonDescription::extractParamData
-    foreach(const QJsonValue & p, paramList)
-    {
-        switch (p["value"].type())
-        {
-        case QJsonValue::Double:
-            qInfo() << "\t\t - " << aMap["id"] << "." << p["key"].toString() << doubleToString(p["value"].toDouble());
-            aSettingsMap.insert(aMap["id"] + "." + p["key"].toString(), doubleToString(p["value"].toDouble()));
-            break;
-        case QJsonValue::Bool:
-            qInfo() << "\t\t - " << aMap["id"] << "." << p["key"].toString() << p["value"].toBool();
-            aSettingsMap.insert(aMap["id"] + "." + p["key"].toString(), QString::number(p["value"].toBool()));
-            break;
-        case QJsonValue::String:
-            qInfo() << "\t\t - " << aMap["id"] << "." << p["key"].toString() << p["value"].toString();
-            aSettingsMap.insert(aMap["id"] + "." + p["key"].toString(), p["value"].toString());
-            break;
-        case QJsonValue::Array:
-            qInfo() << "\t\t - " << p["key"].toString() << p["value"].toArray();
-            aSettingsMap.insert(aMap["id"] + "." + p["key"].toString(), p["value"].toArray());
-            break;
-        case QJsonValue::Object:
-        case QJsonValue::Undefined:
-        case QJsonValue::Null:
-        default:
-            qWarning() << "\t\t !!!!!!!!!!!!!!!!! UNKOWN PARAMETER TYPE - PARAMETER IGNORED - " << p["key"].toString() << p["value"];
-            break;
-        }
-    }
-}
-static void parseComponentData(const QJsonValue& comp, QSettings::SettingsMap &aSettingsMap)
-{
-    QMap<QString, QString> component;
-    component["id"] = comp["nodeName"].toString();
-    if (comp["nodeType"].toString() == "SimulationControl") {
-        aSettingsMap.insert("SimulationControlName", component["id"]);
-    }
-
-    parseParamData(comp["paramListJson"].toArray(), component, aSettingsMap);
-    parseParamData(comp["envImpactsListJson"].toArray(), component, aSettingsMap);
-    parseParamData(comp["portImpactsListJson"].toArray(), component, aSettingsMap);
-
-}
-
-static bool readSettingsJson(QIODevice& device, QSettings::SettingsMap& aSettingsMap)
-{
-    QJsonParseError jsonError;
-    qInfo() << "Youpi readSettingsJson ! ";
-    QJsonObject object = QJsonDocument::fromJson(device.readAll(), &jsonError).object();
-    if (jsonError.error != QJsonParseError::NoError)
-        return false;
-
-    bool oldJsonFormat = false;
-    QJsonArray LinksList;
-    QJsonArray ComponentsList;
-
-    //--------------------------------------------------------------------------//
-    //For old study.json that has only one page
-    if (object.contains("Links")) {
-        //~~~~~~~~~~~~ Get links array ~~~~~~~~~~~~~~~~~~~~
-        QJsonValue links = object.value("Links");
-        LinksList = links.toArray();
-    }
-    if (object.contains("Components")) {
-        oldJsonFormat = true;
-        //~~~~~~~~~~~~ component array ~~~~~~~~~~~~~~~~~~~~
-        QJsonValue components = object.value("Components");
-        ComponentsList = components.toArray();
-    }
-    //--------------------------------------------------------------------------//
-    // 
-    //--------------------------------------------------------------------------//
-    //For new study.json that may have multiple pages
-    if (!oldJsonFormat) {
-        //read pages
-        foreach(const QString & key, object.keys()) {
-            if (key.contains("Page") && key != "numberPages") {
-                QJsonObject pageObject = object.value(key).toObject();
-
-                QJsonValue links = pageObject.value("Links");
-                //LinksList = links.toArray();
-                foreach(const QJsonValue & link, links.toArray()) {
-                    LinksList.append(link);
-                }
-
-                QJsonValue components = pageObject.value("Components");
-                //ComponentsList = components.toArray();
-                foreach(const QJsonValue & comp, components.toArray()) {
-                    ComponentsList.append(comp);
-                }
-            }
-        }
-    }
-    //--------------------------------------------------------------------------//
-
-    foreach(const QJsonValue & comp, ComponentsList)
-    {
-        parseComponentData(comp, aSettingsMap);
-    }
-    return true;
-}
-
-static bool writeSettingsJson(QIODevice& device, const QMap<QString, QVariant>& map)
-{
-    QMap<QString, QVariant> tmp_map = map;
-    QJsonObject buffer = restoreJsonObject(tmp_map);
-    device.write(QJsonDocument(buffer).toJson());
-    return true;
 }
 
 class CAIRNCORESHARED_EXPORT JsonDescription : public QObject

@@ -1,5 +1,6 @@
 #include "TimeSeriesReaderCSV.h"
 #include "GlobalSettings.h"
+#include "CairnUtils.h"
 
 int TimeSeriesReaderCSV::iSkipHead = 4;// à déterminer autrement !
 
@@ -7,20 +8,21 @@ TimeSeriesReaderCSV::TimeSeriesReaderCSV()
 {
 }
 
-bool TimeSeriesReaderCSV::open(const QString& aTSfile)
+bool TimeSeriesReaderCSV::open(const std::string& aTSfile)
 {
-    m_Data = GS::readFromCsvFile(aTSfile, ";");
+    m_Data = CairnUtils::readFromCsvFile(aTSfile, ";");
 
     return m_Data.size()>0;
 }
 
-void TimeSeriesReaderCSV::readHeader(const QMap<QString, ZEVariables*>& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader)
+void TimeSeriesReaderCSV::readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader)
 {
     size_t vSize = m_Data.at(0).size();
     aHeader.resize(vSize);
     for (size_t i = 0;i < vSize;i++) {
         aHeader[i].Name = m_Data.at(0).at(i);
-        aHeader[i].Unit = m_Data.at(2).at(i);
+        if (m_Data.at(2).size() > i) aHeader[i].Unit = m_Data.at(2).at(i);
+        else aHeader[i].Unit = "";
         aHeader[i].Index = i;
     }  
 }
@@ -60,18 +62,18 @@ void TimeSeriesReaderCSV::readColumn(int aCol, int aRowSkipped, std::vector<doub
     aValues.clear();
     for (int i = aRowSkipped; i < m_Data.size(); ++i)
     {
-        QString value = (m_Data.at(i)).at(aCol);
+        std::string value = (m_Data.at(i)).at(aCol);
         if (value == "")
         {
             break;
         }
-        else if (std::isnan(value.toDouble())) {
+        else if (std::isnan(std::stod(value))) {
             qDebug() << "A NAN value is found at row" << i + 1 << ", column" << aCol << "while reading the input time series.";
             break;
         }
         else
         {
-            aValues.push_back(value.toDouble());
+            aValues.push_back(std::stod(value));
         }
     }
 }

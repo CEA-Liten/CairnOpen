@@ -1,66 +1,90 @@
-import os
-from subprocess import Popen
 from os import path
 import pytest
-import shutil
-import sys
 from CairnNRT import CairnNRT
-from PerseeExtractResult import *
+from cairn import *
 
 @pytest.mark.Cairn
 class TestClass:
     def test_runTNR_Json(self):
-        app_home = path.dirname(path.realpath(__file__))
-        tnr = CairnNRT(app_home)
+        test_case="geometry_model"
         
-        testcase="geometry_model"
+        app_home = path.dirname(path.realpath(__file__))
+        simu_full =  path.join(app_home, test_case+'.json')    
+        timeseries =  path.join(app_home, test_case+'_dataseries.csv')
+        
+        cairn_instance = CairnAPI(True)
+        problem = cairn_instance.read_study(simu_full)
+        problem.add_timeseries(timeseries)
+        
+        problem.run()
+        
+        tnr = CairnNRT(app_home)
 
-        fileNew=testcase+"_results_PLAN.csv"
-        fileRef=testcase+"_results_PLAN_REF.csv"
-
-        tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series=testcase+"_dataseries.csv", tnr_name=testcase)
+        fileNew=test_case+"_results_PLAN.csv"
+        fileRef=test_case+"_results_PLAN_REF.csv"
         
         tnr.checkGlobal(typeFile='PLAN', fileNew=fileNew,fileRef=fileRef)
     
     def test_runTNR_Json2(self):
-        app_home = path.dirname(path.realpath(__file__))
-        tnr = CairnNRT(app_home)
-        
-        testcase="geo_wo_relax"
+        test_case="geo_wo_relax"
         ts_name = "geometry_model"
+        
+        app_home = path.dirname(path.realpath(__file__))
+        simu_full =  path.join(app_home, test_case+'.json')    
+        timeseries =  path.join(app_home, ts_name+'_dataseries.csv')
+        
+        cairn_instance = CairnAPI(True)
+        problem = cairn_instance.read_study(simu_full)
+        problem.add_timeseries(timeseries)
+        
+        problem.run()
+        
+        tnr = CairnNRT(app_home)
 
-        fileNew=testcase+"_results_PLAN.csv"
-        fileRef=testcase+"_results_PLAN_REF.csv"
-
-        tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series=ts_name+"_dataseries.csv", tnr_name=testcase)
+        fileNew=test_case+"_results_PLAN.csv"
+        fileRef=test_case+"_results_PLAN_REF.csv"
         
         tnr.checkGlobal(typeFile='PLAN', fileNew=fileNew,fileRef=fileRef)
         
     def test_runTNR_Json3(self):
-        app_home = path.dirname(path.realpath(__file__))
-        tnr = CairnNRT(app_home)
-        
-        testcase="linear"
+        test_case="linear"
         ts_name = "geometry_model"
 
-        fileNew=testcase+"_results_PLAN.csv"
-        fileRef=testcase+"_results_PLAN_REF.csv"
+        app_home = path.dirname(path.realpath(__file__))
+        simu_full =  path.join(app_home, test_case+'.json')    
+        timeseries =  path.join(app_home, ts_name+'_dataseries.csv')
+        
+        cairn_instance = CairnAPI(True)
+        problem = cairn_instance.read_study(simu_full)
+        problem.add_timeseries(timeseries)
+        
+        problem.run()
+        
+        tnr = CairnNRT(app_home)
 
-        tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series=ts_name+"_dataseries.csv", tnr_name=testcase)
+        fileNew=test_case+"_results_PLAN.csv"
+        fileRef=test_case+"_results_PLAN_REF.csv"
         
         tnr.checkGlobal(typeFile='PLAN', fileNew=fileNew,fileRef=fileRef)
         
     def test_runTNR_Json4(self):
-        app_home = path.dirname(path.realpath(__file__))
-        tnr = CairnNRT(app_home)
-        
-        testcase="constraint"
+        test_case="constraint"
         ts_name = "geometry_model"
 
-        fileNew=testcase+"_results_PLAN.csv"
-        fileRef=testcase+"_results_PLAN_REF.csv"
+        app_home = path.dirname(path.realpath(__file__))
+        simu_full =  path.join(app_home, test_case+'.json')    
+        timeseries =  path.join(app_home, ts_name+'_dataseries.csv')
+        
+        cairn_instance = CairnAPI(True)
+        problem = cairn_instance.read_study(simu_full)
+        problem.add_timeseries(timeseries)
+        
+        problem.run()
+        
+        tnr = CairnNRT(app_home)
 
-        tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series=ts_name+"_dataseries.csv", tnr_name=testcase)
+        fileNew=test_case+"_results_PLAN.csv"
+        fileRef=test_case+"_results_PLAN_REF.csv"
         
         tnr.checkGlobal(typeFile='PLAN', fileNew=fileNew,fileRef=fileRef)
      

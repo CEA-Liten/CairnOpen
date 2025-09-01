@@ -4,7 +4,7 @@
 
 ## 🏔️ Description
 Cairn is a simulation and optimization software for energy and environmental systems. It allows for the modeling of technical components and the simulation of their behavior in various scenarios. Cairn is designed to be used in research and engineering environments to evaluate the environmental and economic impacts of energy systems. 🌍🔍
-Cairn is developped by the CEA-Liten in Grenoble. 
+Cairn is developped by the CEA-Liten in Grenoble and Chambéry. 
 
 ## 🌟Features
 - 🛠️ Modeling of technical components. 
@@ -29,22 +29,22 @@ Before installing Cairn, ensure your system meets the following prerequisites:
 - [LSET CMakeTools](https://github.com/CEA-Liten/LSET_CMakeTools)
 
 ## 📦 Installation
-There are have several options to use Cairn:
-- **Cairn Viewer**, a graphical interface, can be installed on Windows PC.
-- **Cairn Python API** wheels are available on releases.
-  
-Download the installers [here](https://github.com/CEA-Liten/CairnOpen/releases/tag/5.0.0).
+They are have several options to use Cairn:
+- **Cairn Viewer**, a graphical interface, can be installed on Windows PC : see releases.
+- **Cairn Python API** wheels are available on releases. 
 
 ## 🚀 Usage
 To use Cairn, follow these steps:
 
-- Install Cairn. 
+- Insall Cairn. 
 - Build and configure your model parameters using the graphical user interface or the API.
 - Run the simulation by clicking the "Run" button.
 - View the results in the visualization tabs.
 
 ## 📚 Documentation
 For more information on using Cairn, refer to the online [documentation](https://cea-liten.github.io/CairnOpen/).
+
+The documentation of the ongoing version can be found here: [integration documentation](https://pages-gitlab.deeplab.intra.cea.fr/lset/outils/cairn/cairnopen/integration/)
 
 ## 📞 Support
 If you encounter any issues or have questions, you can consult the contact technical support at pimprenelle.parmentier at cea point fr. 
@@ -53,9 +53,7 @@ If you encounter any issues or have questions, you can consult the contact techn
 If you wish to contribute to the development of Cairn, please refer to the CONTRIBUTING.md file for more information on how to submit pull requests and report bugs. 
 
 ## 📜 License
-Cairn is distributed under the Eclipse Public Licence V2. Please cite 'Cairn Open by CEA' in any publication or redistribution involving this software.
-
-For more information, see the LICENSE file. 
+Cairn is distributed under the Eclipse Public Licence V2. For more information, see the LICENSE file. 
 
 # 📖 Cite Cairn
 

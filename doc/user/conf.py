@@ -136,5 +136,6 @@ rst_prolog = """
 .. |turpe|   replace:: :term:`TURPE`
 .. |ancillary|   replace:: :term:`Ancillary services`
 .. |lhv|   replace:: :term:`LHV`
+.. |phase of investment| replace:: :term:`phase of investment`
 
 """

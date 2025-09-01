@@ -40,14 +40,11 @@ public:
         MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
 
     virtual ~SourceLoadCompo();
-
-    
-    int initProblem();
   
-    
     void declareCompoInputParam();
     void setCompoInputParam(const QMap<QString, QString> aComponent);
 
+    void setCompoSens(const QString& direction);
 };
 
 #endif // SourceLoadCompo_H

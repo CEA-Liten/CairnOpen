@@ -72,13 +72,13 @@ void Solver::declareCompoInputParam()
 {
     mCompoInputParam = new InputParam(this, "CompoInputParam" + mName);
     //QString
-    mCompoInputParam->addParameter("type", &mComponentCairnType, "Solver", true, true, "Component type", "", { "DONOTSHOW" });
-    mCompoInputParam->addParameter("id", &mName, "Solver", true, true, "Component name", "", { "DONOTSHOW" });
+    mCompoInputParam->addParameter("type", &mComponentCairnType, "Solver", true, true, "Component type", "", "DONOTSHOW");
+    mCompoInputParam->addParameter("id", &mName, "Solver", true, true, "Component name", "", "DONOTSHOW");
     mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used");
     mCompoInputParam->addParameter("Solver", &mSolverName, CAIRN_DEFAULTSOLVER, true, true, "Solver name: Cbc or Cplex or Highs ..");
     mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Model type");
-    mCompoInputParam->addParameter("Xpos", &mXpos, 75, false, true, "X position on planteditor", "", { "DONOTSHOW" });
-    mCompoInputParam->addParameter("Ypos", &mYpos, 10, false, true, "Y position on planteditor", "", { "DONOTSHOW" });
+    mCompoInputParam->addParameter("Xpos", &mXpos, 75, false, true, "X position on planteditor", "", "DONOTSHOW");
+    mCompoInputParam->addParameter("Ypos", &mYpos, 10, false, true, "Y position on planteditor", "", "DONOTSHOW");
     mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default NO");
     mCompoInputParam->addParameter("ReadParamFile", &mReadParamFile, "NO", false, true, "Read a study_cplexParam.prm file to parameter cplex solving");
     mCompoInputParam->addParameter("WriteMipStart", &mWriteMipStart, "NO", false, true, "Write mst cplex file");
@@ -87,7 +87,7 @@ void Solver::declareCompoInputParam()
     mCompoInputSettings = new InputParam(this, "CompoInputSettings" + mName);
     //int
     mCompoInputSettings->addParameter("Threads", &mThreads, 8, false, true, "Number of threads for solving step", "-");
-    mCompoInputSettings->addParameter("TreeMemoryLimit", &mTreeMemoryLimit, 50000, false, true, "Memory limit of the branch-and-cut tree of CPLEX solver (in MB). If this limit is exceeded, CPLEX terminates the optimization. Be careful to have enough available RAM memory before increasing the default value!", "MB");
+    mCompoInputSettings->addParameter("TreeMemoryLimit", &mTreeMemoryLimit, 50000, false, true, "Memory limit of the branch-and-cut tree of CPLEX solver (in MB). If this limit is exceeded then CPLEX terminates the optimization. Be careful to have enough available RAM memory before increasing the default value!", "MB");
     mCompoInputSettings->addParameter("NbSolToKeep", &mNbSolToKeep, 1, false, true, "max number of solutions", "");
     //double
     mCompoInputSettings->addParameter("TimeLimit", &mTimeLimit, 1e4, false, true, "Max Cpu time for solving process", "s");
@@ -143,7 +143,7 @@ void Solver::InitSolverParam() {
                 mProblemType != "DNLP" &&
                 mProblemType != "QCP" &&
                 mProblemType != "MIQCP") {
-                mException = Cairn_Exception("Error: possible problem types are \"LP\", \"MIP\", \"NLP\", \"MINLP\", \"DNLP\", \"QCP\" or \"MIQCP\".", -1);
+                mException = Cairn_Exception((std::string)"Error: possible problem types are \"LP\", \"MIP\", \"NLP\", \"MINLP\", \"DNLP\", \"QCP\" or \"MIQCP\".", -1);
                 throw mException;
             }
         }

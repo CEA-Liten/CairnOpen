@@ -1,28 +1,27 @@
-import os
-from subprocess import Popen
 from os import path
 import pytest
-import shutil
-import sys
 from CairnNRT import CairnNRT
-from PerseeExtractResult import *
+from cairn import *
 
-class TestClass:
-    def test_runTNR_Json(self, test_case):
-        app_home = path.dirname(path.realpath(__file__))
-        tnr = CairnNRT(app_home)
-        
-        tnr.runPersee(tnr_dir=r".", tnr_xml=test_case+".json", tnr_series=test_case+"_dataseries.csv", tnr_name=test_case)
-        
-        tnr.check(r"", test_case+"_results_Results.csv", test_case+"_results_Results_Ref.csv")
-        tnr.checkGlobal(typeFile='HIST', fileNew=test_case+"_results_HIST.csv", fileRef=test_case+"_results_HIST_Ref.csv")
-        tnr.checkGlobal(typeFile='PLAN', fileNew=test_case+"_results_PLAN.csv", fileRef=test_case+"_results_PLAN_Ref.csv")
+@pytest.mark.Cairn
+def test_runTNR_Json():
+    test_case="test_gridfree"
     
-    @pytest.mark.Cairn
-    def test_run_base(self):
-        self.test_runTNR_Json("test_gridfree")
+    app_home = path.dirname(path.realpath(__file__))
+    simu_full =  path.join(app_home, test_case+'.json')    
+    timeseries =  path.join(app_home, test_case+'_dataseries.csv')
+    
+    cairn_instance = CairnAPI(True)
+    problem = cairn_instance.read_study(simu_full)
+    problem.add_timeseries(timeseries)
+    
+    problem.run()
+    
+    tnr = CairnNRT(app_home)
+
+    tnr.checkGlobal(typeFile='PLAN', fileNew=test_case+"_results_PLAN.csv", fileRef=test_case+"_results_PLAN_Ref.csv")
+    tnr.checkGlobal(typeFile='HIST', fileNew=test_case+"_results_HIST.csv", fileRef=test_case+"_results_HIST_Ref.csv")
+    tnr.check("", test_case+"_results_Results.csv",test_case+"_results_Results_Ref.csv")
 
 if __name__ == '__main__':
-    tc = TestClass()
-    test_case = "test_gridfree"
-    tc.test_runTNR_Json(test_case)
+    test_runTNR_Json()

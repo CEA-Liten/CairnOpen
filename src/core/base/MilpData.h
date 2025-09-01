@@ -2,6 +2,8 @@
 #define MILPDATA_H
 class MilpData ;
 
+#include "InputParam.h"
+
 #include "CairnCore_global.h"
 #include <QObject>
 
@@ -15,15 +17,7 @@ public:
 
     virtual ~MilpData();
 
-    void setSettings(const QSettings* aSettings);
-    void updateSettings(QMap<QString, QString>& paramMap);
-
-    bool setMilpDataFromSettings(const bool isStdAloneMode=true, const QMap<QString, QString> paramMap = {});
-    bool configureFromSettingsFile(const bool isStdAloneMode = true);
-    bool configureFromParam(QMap<QString, QString> paramMap, const bool isStdAloneMode = true);
-
-    const QSettings& Settings() const { return (*mSettings); }
-
+    bool setMilpDataFromSettings(const std::map<QString, InputParam::ModelParam*>& paramMap = {}, const bool& isStdAloneMode = true);
 
     virtual void prepareOptim() ;
 
@@ -34,6 +28,7 @@ public:
     uint64_t TimeStepBeginLP() const {return mTimeStepBeginLP ;}
     uint64_t TimeStepBeginForecast() const {return mTimeStepBeginForecast ;}
     uint64_t DecreaseOptimizationHorizon() const {return mDecreaseOptimizationHorizon ;}
+    bool useVariableTimeSteps() const { return mUseVariableTimeSteps; }
 
     void setTypicalPeriods (QString aCsvTimeStepFileName);
     std::vector<int> VectTypicalPeriods() const {return mVectTypicalPeriods;}    //TimeStep list in HOUR
@@ -55,14 +50,10 @@ public:
     bool ExportResultsEveryCycle() const { return mExportResultsEveryCycle; }
     bool UseExtrapolationFactor() const { return mUseExtrapolationFactor; }
 
-    QString ModeObjective () const {return mModeObjective;}
-
     uint startingAbsoluteTimeStep () const {return mStartingAbsoluteTimeStep ;} /** Starting absolute timestep number for the current optimization */
     const uint* getAbsoluteTimeStep () const {return &mStartingAbsoluteTimeStep ;} /** Starting absolute timestep number for the current optimization */
     const uint* getTimeshift () const {return &mTimeshift ;} /** Starting absolute timestep number for the current optimization */
     const uint* getIHMFuturSize () const {return &mIHMFuturSize ;} /** Starting absolute timestep number for the current optimization */
-
-    const QString* getModeObjective () const {return  &mModeObjective ;}
 
     void setStartingAbsoluteTimeStep (const uint val) {mStartingAbsoluteTimeStep = val;}
 
@@ -72,9 +63,6 @@ public:
     void setVariableTimeStepsFile(const QString& a_FileName) { mGlobalTimeStepFile = a_FileName; }
     void setTypicalPeriodsFile(const QString& a_FileName) { mGlobalTypicalPeriodFile = a_FileName; }
 protected:
-
-    const QSettings* mSettings ;
-
     double mPdt;         /** Pas de temps en secondes */
     double mPdtHeure;    /** La meme grandeur mais en heures */
     uint mNpdtPast;     /** Nombre de pas de temps passe */
@@ -88,7 +76,6 @@ protected:
     bool mRunUntilSimulationEnd; //if true run until the end of all cycles; if false stop at cycle where there is a problem (no solution)
     bool mExportResultsEveryCycle; //if true generate PLAN/HIST every cycle
     bool mUseExtrapolationFactor;
-    QString mModeObjective;
     QString mGlobalTimeStepFile ; /** Timestep file name */
     QString mGlobalTypicalPeriodFile ; /** Typical Period file name */
 
@@ -100,6 +87,7 @@ protected:
     uint64_t mTimeStepBeginForecast ;        //First timestep of the LP model- For smaller Timesteps, MILP model may be used, for larger Timesteps, use LP model only
     uint64_t mPlanHorizon ;          // for convenience, number of timesteps = length of mTimeSteps, due to variable time step
     uint64_t mDecreaseOptimizationHorizon ;
+    bool mUseVariableTimeSteps;
 
     //typical periods
     std::vector<int> mVectTypicalPeriods ; //Vector of Timesteps over planning horizon. Past timesteps use small timestep

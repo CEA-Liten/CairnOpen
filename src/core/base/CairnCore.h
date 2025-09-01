@@ -40,13 +40,13 @@ public:
     int doStep(const QString encoding="UTF-8", const QMap<QString, bool> paramMap=QMap<QString, bool>());
     int doTerminate();
 
-    void importTS(const QStringList &aTSfileList, const int &iShift) ;
+    void importTS(const t_list &aTSfileList, const int &iShift) ;
 
-    int exportTS(const QString &aTSfile, int iter = 0, bool rh = false, QString encoding="UTF-8");
-    int exportTS(const QString& aTSfile, std::map<std::string, std::vector<double>>& resultats, QString encoding = "UTF-8");
+    int exportTS(const std::string &aTSfile, int iter = 0, bool rh = false, std::string encoding="UTF-8");
+    int exportTS(const std::string& aTSfile, std::map<std::string, std::vector<double>>& resultats, std::string encoding = "UTF-8");
   
-    const QMap<QString, ZEVariables*> ListSubscribedVariables() { return mProblem->ListSubscribedVariables() ;}
-    const QMap<QString, ZEVariables*> ListPublishedVariables() { return mProblem->ListPublishedVariables() ;}
+    const t_mapExchange &ListSubscribedVariables() { return mProblem->ListSubscribedVariables() ;}
+    t_mapExchange &ListPublishedVariables() { return mProblem->ListPublishedVariables() ;}
 
     //Other API functions
     QString StudyName() { return QString(mStudy.StudyName().c_str()); }
@@ -94,9 +94,9 @@ public:
     // void setValue(MilpComponent* aMilpComponent, const QString & aParam, const QVariant & aValue);
 
    
-    void exportTotalTimeResolutionAllCycles(const QString& aFileName);
-    int exportResults(const int& aNsol, const bool& isRollingHorizon, const int& istat, QString encoding = "UTF-8");
-    void exportAnalysis(const int& aNsol, const bool& isRollingHorizon, QString encoding = "UTF-8");
+    void exportTotalTimeResolutionAllCycles(const std::string& aFileName);
+    int exportResults(const int& aNsol, const bool& isRollingHorizon, const int& istat, std::string encoding = "UTF-8");
+    void exportAnalysis(const int& aNsol, const bool& isRollingHorizon, std::string encoding = "UTF-8");
 
     void setStudyName(const QString& aStudyName, const QString& aResultFile="");
     void setResultFile(const QString& aResultFile);
@@ -105,7 +105,7 @@ public:
     void setTimeStepFile(const QString& aTimeStepFile);
     void setTypicalPeriodsFile(const QString& aTypicalPeriodsFile);
 
-    class OrCheckUnits CheckUnits(const QString& a_FileUnit, const QString& a_Units, bool a_Check = true);
+    class OrCheckUnits CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check = true);
 
     /* 
         Get Possible parameter values for GUI
@@ -125,8 +125,8 @@ public:
    
     int getNumberOfSolutions() { return mProblem->getNumberOfSolutions();  }
     QString getOptimLogFile() { return mOptimLogFile; }
-    QString getResultsTimeSeriesFileName(const int& aNsol) { return QString(mStudy.getScenarioFile("_Results.csv", aNsol).c_str()); }
-    QString getGlobalResultsFileName(const int& aNsol) { return QString(mStudy.getScenarioFile("_PLAN.csv", aNsol).c_str()); }
+    std::string getResultsTimeSeriesFileName(const int& aNsol) { return mStudy.getScenarioFile("_Results.csv", aNsol); }
+    std::string getGlobalResultsFileName(const int& aNsol) { return mStudy.getScenarioFile("_PLAN.csv", aNsol); }
 
 private:
     OptimProblem* mProblem ;

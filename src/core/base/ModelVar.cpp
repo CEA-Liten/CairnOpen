@@ -168,20 +168,22 @@ void ControlVar::set_Value(size_t i, double a_Value)
 
 /*****************************************************************************************************/
 ModelIO::ModelIO(const QString& aName,
+    t_flag a_IsUsed,
     const QString& a_Unit,
     const QString& aCurrency)
     : ModelVar(aName, a_Unit, aCurrency)
 {
     m_Type = EIOModelType::eMIPUndefined;
-
+    m_IsUsed.set_Value(a_IsUsed);
 }
 
 ModelIO::ModelIO(const QString& aName,
     MIPModeler::MIPExpression* aPtr,
+    t_flag a_IsUsed,
     const QString& a_Unit,
     const QString& aCurrency
 )
-    : ModelIO(aName, a_Unit, aCurrency)
+    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
 {
     m_Type = EIOModelType::eMIPExpression;
     p_Expr = aPtr;
@@ -189,31 +191,34 @@ ModelIO::ModelIO(const QString& aName,
 
 ModelIO::ModelIO(const QString& aName,
     MIPModeler::MIPExpression1D* aPtr,
+    t_flag a_IsUsed,
     const QString& a_Unit,
     const QString& aCurrency
 )
-    : ModelIO(aName, a_Unit, aCurrency)
+    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
 {
     m_Type = EIOModelType::eMIPExpression1D;
     p_Expr = aPtr;
 }
 //pointer
 ModelIO::ModelIO(const QString& aName,
+    t_flag a_IsUsed,
     const QString* a_Unit,
     const QString& aCurrency
 )
     : ModelVar(aName, a_Unit, aCurrency)
 {
     m_Type = EIOModelType::eMIPUndefined;
-
+    m_IsUsed.set_Value(a_IsUsed);
 }
 
 ModelIO::ModelIO(const QString& aName,
     MIPModeler::MIPExpression* aPtr,
+    t_flag a_IsUsed,
     const QString* a_Unit,
     const QString& aCurrency
 )
-    : ModelIO(aName, a_Unit, aCurrency)
+    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
 {
     m_Type = EIOModelType::eMIPExpression;
     p_Expr = aPtr;
@@ -221,10 +226,11 @@ ModelIO::ModelIO(const QString& aName,
 
 ModelIO::ModelIO(const QString& aName,
     MIPModeler::MIPExpression1D* aPtr,
+    t_flag a_IsUsed,
     const QString* a_Unit,
     const QString& aCurrency
 )
-    : ModelIO(aName, a_Unit, aCurrency)
+    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
 {
     m_Type = EIOModelType::eMIPExpression1D;
     p_Expr = aPtr;

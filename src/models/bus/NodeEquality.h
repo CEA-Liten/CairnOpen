@@ -27,6 +27,7 @@ public:
     NodeEquality(QObject* aParent);
     ~NodeEquality();
 //----------------------------------------------------------------------------------------------------
+    void computeModelContribution() override;
     void setTimeData();
 //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
@@ -51,7 +52,7 @@ public:
     void declareModelInterface()
     {
         declareDefaultModelInterface();
-        addIO("BusValue", &mExprBusValue, "unknown") ;
+        addIO("BusValue", &mExprBusValue, true, "unknown") ;
     }
 
     void declareModelIndicators() {
@@ -62,7 +63,6 @@ public:
 //----------------------------------------------------------------------------------------------------
     void setParameters(double aBusValue, double aMaxBusValue);
 //----------------------------------------------------------------------------------------------------
-    void buildModel();                                                              // build minimum formulation
 //----------------------------------------------------------------------------------------------------
     MIPModeler::MIPExpression1D busValue() {return mExprBusValue;}
 //----------------------------------------------------------------------------------------------------

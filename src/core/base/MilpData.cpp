@@ -29,11 +29,10 @@ MilpData::MilpData(QObject* aParent, const QString& aName, const double& aPdt,
     mUseExtrapolationFactor(true),
     mGlobalTimeStepFile(aGlobalTimeStepFile),
     mGlobalTypicalPeriodFile(aGlobalTypicalPeriodFile),
+    mUseVariableTimeSteps(false),
     mTypicalPeriods(365),
     mNDtTypicalPeriods(24),
-    mUseTypicalPeriods(false),
-    mModeObjective("Mono"),
-    mSettings(nullptr)
+    mUseTypicalPeriods(false)
 {
     this->setObjectName(aName);
 
@@ -70,11 +69,10 @@ MilpData::MilpData(QObject *aParent, const QString& aName, const QString &aGloba
     mUseExtrapolationFactor(true),
     mGlobalTimeStepFile(aGlobalTimeStepFile),
     mGlobalTypicalPeriodFile(aGlobalTypicalPeriodFile),
+    mUseVariableTimeSteps(false),
     mTypicalPeriods(365),
     mNDtTypicalPeriods(24),
-    mUseTypicalPeriods(false),
-    mModeObjective("Mono"),
-    mSettings(nullptr)
+    mUseTypicalPeriods(false)
 {
     this->setObjectName(aName);
 
@@ -83,117 +81,45 @@ MilpData::MilpData(QObject *aParent, const QString& aName, const QString &aGloba
     mTimeStepBeginForecast = mNpdt ;
     mDecreaseOptimizationHorizon = 0. ;
     mPlanHorizon = mNpdt; 
-} // MilpData()
-
-void MilpData::setSettings(const QSettings* aSettings)
-{
-    mSettings = aSettings; 
 } 
+
 MilpData::~MilpData()
 {
-} // ~MilpData()
-bool MilpData::configureFromSettingsFile(const bool isStdAloneMode)
+}  
+
+bool MilpData::setMilpDataFromSettings(const std::map<QString, InputParam::ModelParam*>& paramMap, const bool& isStdAloneMode)
 {
-    QString simulationControlName = getVariantSetting("SimulationControlName", Settings()).toString();
+    bool ierr = true;
+    //if (mSettings) {
+    //    ierr = configureFromSettingsFile(isStdAloneMode);
+    //}
+    //else {//isStdAloneMode is always true in this case (API) ? 
+    //    ierr = configureFromParam(paramMap, isStdAloneMode);
+    //}
 
-    if(isStdAloneMode){
-        if (getVariantSetting(simulationControlName + ".TimeStep", Settings()) != QVariant())      
-            mPdt = getVariantSetting(simulationControlName + ".TimeStep", Settings()).toDouble();
-        if (getVariantSetting(simulationControlName + ".PastSize", Settings()) != QVariant())     
-            mNpdtPast = getVariantSetting(simulationControlName + ".PastSize", Settings()).toInt();
-        if (getVariantSetting(simulationControlName + ".FutureSize", Settings()) != QVariant())    
-            mNpdt = getVariantSetting(simulationControlName + ".FutureSize", Settings()).toInt();
-        if (getVariantSetting(simulationControlName + ".TimeShift", Settings()) != QVariant())             
-            mTimeshift = getVariantSetting(simulationControlName + ".TimeShift", Settings()).toInt();
-        if (getVariantSetting(simulationControlName + ".FutureVariableTimestep", Settings()) != QVariant()) 
-            mIHMFuturSize = getVariantSetting(simulationControlName + ".FutureVariableTimestep", Settings()).toInt();
-    
-        //Value is not used in case of non-StdAloneMode
-        if (getVariantSetting(simulationControlName + ".NbCycle", Settings()) != QVariant())  
-            mNbCycle = getVariantSetting(simulationControlName + ".NbCycle", Settings()).toInt();
-    }
-
-    if (getVariantSetting(simulationControlName + ".RollingMode", Settings()) != QVariant())            
-        mRollingMode = getVariantSetting(simulationControlName + ".RollingMode", Settings()).toString();
-    if (getVariantSetting(simulationControlName + ".ReadingMode", Settings()) != QVariant())            
-        mReadingMode = getVariantSetting(simulationControlName + ".ReadingMode", Settings()).toString();
-    if (getVariantSetting(simulationControlName + ".ModeObjective", Settings()) != QVariant())           
-        mModeObjective = getVariantSetting(simulationControlName + ".ModeObjective", Settings()).toString();
-    if (getVariantSetting(simulationControlName + ".RunUntilSimulationEnd", Settings()) != QVariant())  
-        mRunUntilSimulationEnd = getVariantSetting(simulationControlName + ".RunUntilSimulationEnd", Settings()).toBool();
-    if (getVariantSetting(simulationControlName + ".ExportResultsEveryCycle", Settings()) != QVariant()) 
-        mExportResultsEveryCycle = getVariantSetting(simulationControlName + ".ExportResultsEveryCycle", Settings()).toBool();
-    if (getVariantSetting(simulationControlName + ".UseExtrapolationFactor", Settings()) != QVariant())  
-        mUseExtrapolationFactor = getVariantSetting(simulationControlName + ".UseExtrapolationFactor", Settings()).toBool();
-
-    if (mPdt == 0 || mNpdt ==0  || mIHMFuturSize == 0)
+    for (auto const& [key, param] : paramMap) 
     {
-        return false ;
+        double value;
+        if (isStdAloneMode) {
+            if (key == "TimeStep")  param->getNumValue(mPdt);
+            if (key == "TimeShift" && param->getNumValue(value))   mTimeshift = int(value);
+            if (key == "PastSize" && param->getNumValue(value))    mNpdtPast = int(value);
+            if (key == "FutureSize" && param->getNumValue(value))  mNpdt = int(value);
+            if (key == "FutureVariableTimestep" && param->getNumValue(value))  mIHMFuturSize = int(value);
+            if (key == "NbCycle" && param->getNumValue(value))   mNbCycle = int(value);
+        }
+
+        if (key == "RunUntilSimulationEnd" && param->getNumValue(value))    mRunUntilSimulationEnd = bool(value);
+        if (key == "ExportResultsEveryCycle" && param->getNumValue(value))  mExportResultsEveryCycle = bool(value);
+        if (key == "UseExtrapolationFactor" && param->getNumValue(value))   mUseExtrapolationFactor = bool(value);
+
+        if (key == "RollingMode")    mRollingMode   = param->toString();
+        if (key == "ReadingMode")    mReadingMode   = param->toString();
     }
-    return true ;
-}
-
-bool MilpData::configureFromParam(QMap<QString, QString> paramMap, const bool isStdAloneMode)
-{
-    if (isStdAloneMode) {
-        if (paramMap.contains("TimeStep"))    mPdt = (paramMap["TimeStep"]).toDouble();
-        if (paramMap.contains("PastSize"))    mNpdtPast = (paramMap["PastSize"]).toInt();
-        if (paramMap.contains("FutureSize"))  mNpdt = (paramMap["FutureSize"]).toInt();
-        if (paramMap.contains("TimeShift"))   mTimeshift = (paramMap["TimeShift"]).toInt();
-        if (paramMap.contains("FutureVariableTimestep"))  mIHMFuturSize = (paramMap["FutureVariableTimestep"]).toInt();
-
-        //Value is not used in case of non-StdAloneMode
-        if (paramMap.contains("NbCycle"))     mNbCycle = (paramMap["NbCycle"]).toInt();
-    }
-
-    if (paramMap.contains("RollingMode")) mRollingMode = paramMap["RollingMode"];
-    if (paramMap.contains("ReadingMode")) mReadingMode = paramMap["ReadingMode"];
-    if (paramMap.contains("RunUntilSimulationEnd"))   mRunUntilSimulationEnd = (bool)(paramMap["RunUntilSimulationEnd"]).toInt();
-    if (paramMap.contains("ExportResultsEveryCycle")) mExportResultsEveryCycle = (bool)(paramMap["ExportResultsEveryCycle"]).toInt();
-    if (paramMap.contains("UseExtrapolationFactor"))  mUseExtrapolationFactor = (bool)(paramMap["UseExtrapolationFactor"]).toInt();
-    if (paramMap.contains("ModeObjective")) mModeObjective = paramMap["ModeObjective"];
 
     if (mPdt == 0 || mNpdt == 0 || mIHMFuturSize == 0)
     {
-        return false;
-    }
-
-    //update mSettings from paramMap
-    updateSettings(paramMap);
-
-    return true;
-}
-
-void MilpData::updateSettings(QMap<QString, QString>& paramMap)
-{
-    QSettings* settings = new QSettings();
-
-    //initialize from mSettings
-    if (mSettings) {
-        settings = const_cast<QSettings*>(mSettings);
-    }
-
-    //update from paramMap
-    QMapIterator <QString, QString> iParam(paramMap);
-    while (iParam.hasNext())
-    {
-        iParam.next();
-        settings->setValue(iParam.key(), iParam.value());
-    }
-
-    //set mSettings
-    setSettings(settings);
-}
-
-
-bool MilpData::setMilpDataFromSettings(const bool isStdAloneMode, const QMap<QString, QString> paramMap)
-{
-    bool ierr = true;
-    if (mSettings) {
-        ierr = configureFromSettingsFile(isStdAloneMode);
-    }
-    else {//isStdAloneMode is always true in this case (API) ? 
-        ierr = configureFromParam(paramMap, isStdAloneMode);
+        ierr = false;
     }
 
     mPdtHeure = mPdt/3600. ;
@@ -224,6 +150,7 @@ void MilpData::setTimeSteps (QString aCsvTimeStepFileName)
     else {
         // timesteps are expected in column #0, in HOUR
         qInfo() << "Using variable timesteps from file " << aCsvTimeStepFileName ;
+        mUseVariableTimeSteps = true;
         mTimeSteps = getDataArray(data_Inputs, 0, 0) ;
         mTimeStepBeginLP = getIntDataArray(data_Inputs, 1, 0).at(0) ; // first row of column #1 indicates value for mTimeStepBeginLP
         mTimeStepBeginForecast = getIntDataArray(data_Inputs, 2, 0).at(0) ; // first row of column #1 indicates value for mTimeStepBeginForecast

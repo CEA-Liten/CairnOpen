@@ -48,6 +48,7 @@ set(${COMPONENT}_INTERFACE_INCLUDE_DIRECTORIES
 
 # -- create/setup component target --
 set(${COMPONENT}_INSTALLRESOURCES
+  ${CMAKE_SOURCE_DIR}/resources/modelTypes.txt
   ${CMAKE_SOURCE_DIR}/resources/DefUnits.json
   ${CMAKE_SOURCE_DIR}/resources/images/cairn_logo.png
   ${CMAKE_SOURCE_DIR}/resources/images/cairn.ico
@@ -59,6 +60,11 @@ create_component(${COMPONENT})
 target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
 target_compile_definitions(${COMPONENT} PRIVATE -DCAIRNCORE_LIBRARY)
 target_compile_definitions(${COMPONENT} PRIVATE -DMILPCOMPONENT_LIBRARY)
+
+if (WITH_PRIVATEMODELS)
+	target_compile_definitions(${COMPONENT} PRIVATE -DPRIVATE_MODELS)
+endif()
+
 if(MSVC)
   target_compile_options(${COMPONENT} PRIVATE "/bigobj")
 endif()
@@ -133,6 +139,10 @@ if (WITH_PYBIND)
 	target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
 	target_compile_definitions(${COMPONENT} PRIVATE -DCAIRNCORE_LIBRARY)
 	target_compile_definitions(${COMPONENT} PRIVATE -DMILPCOMPONENT_LIBRARY)
+
+	if (WITH_PRIVATEMODELS)
+		target_compile_definitions(${COMPONENT} PRIVATE -DPRIVATE_MODELS)
+	endif()
 
 	target_link_libraries(${COMPONENT} PRIVATE pybind11::headers)
 	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPModeler)

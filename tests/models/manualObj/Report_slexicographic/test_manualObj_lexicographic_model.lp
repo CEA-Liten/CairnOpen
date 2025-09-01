@@ -14,10 +14,11 @@ Minimize multi-objectives
  obj1: Priority=0 Weight=1 AbsTol=0 RelTol=0
                   
 Subject To
- csMaxValGridFree#10:            vMaxFluxGridFree#1  = 10000
+ csMaxValGridFree#10:            vMaxFlowGridFree#1  = 10000
  csInstalledGridFree#10:         vInstalledGridFree#1  = 1
- csBigMInstalledGridFree#10:     vMaxFluxGridFree#1
+ csBigMInstalledGridFree#10:     vMaxFlowGridFree#1
                                  - 10000 vInstalledGridFree#1 <= 0
+ csMinSizeInstalledGridFree#10:  vMaxFlowGridFree#1 >= 0
  cNotRunningIfNotInstalledGridFree#10: - vInstalledGridFree#1
                                  + vStateGridFree#1(0) <= 0
  cNotRunningIfNotInstalledGridFree#11: - vInstalledGridFree#1
@@ -78,25 +79,26 @@ Subject To
                                  - 10000 vStateGridFree#1(13) <= 0
  cStateGridGridFree#114:         vGFxGridFree#1(14)
                                  - 10000 vStateGridFree#1(14) <= 0
- cMaxGFxGridFree#10:             - vMaxFluxGridFree#1 + vGFxGridFree#1(0) <= 0
- cMaxGFxGridFree#11:             - vMaxFluxGridFree#1 + vGFxGridFree#1(1) <= 0
- cMaxGFxGridFree#12:             - vMaxFluxGridFree#1 + vGFxGridFree#1(2) <= 0
- cMaxGFxGridFree#13:             - vMaxFluxGridFree#1 + vGFxGridFree#1(3) <= 0
- cMaxGFxGridFree#14:             - vMaxFluxGridFree#1 + vGFxGridFree#1(4) <= 0
- cMaxGFxGridFree#15:             - vMaxFluxGridFree#1 + vGFxGridFree#1(5) <= 0
- cMaxGFxGridFree#16:             - vMaxFluxGridFree#1 + vGFxGridFree#1(6) <= 0
- cMaxGFxGridFree#17:             - vMaxFluxGridFree#1 + vGFxGridFree#1(7) <= 0
- cMaxGFxGridFree#18:             - vMaxFluxGridFree#1 + vGFxGridFree#1(8) <= 0
- cMaxGFxGridFree#19:             - vMaxFluxGridFree#1 + vGFxGridFree#1(9) <= 0
- cMaxGFxGridFree#110:            - vMaxFluxGridFree#1 + vGFxGridFree#1(10) <= 0
- cMaxGFxGridFree#111:            - vMaxFluxGridFree#1 + vGFxGridFree#1(11) <= 0
- cMaxGFxGridFree#112:            - vMaxFluxGridFree#1 + vGFxGridFree#1(12) <= 0
- cMaxGFxGridFree#113:            - vMaxFluxGridFree#1 + vGFxGridFree#1(13) <= 0
- cMaxGFxGridFree#114:            - vMaxFluxGridFree#1 + vGFxGridFree#1(14) <= 0
- csMaxValGridFree#20:            vMaxFluxGridFree#2  = 10000
+ cMaxGFxGridFree#10:             - vMaxFlowGridFree#1 + vGFxGridFree#1(0) <= 0
+ cMaxGFxGridFree#11:             - vMaxFlowGridFree#1 + vGFxGridFree#1(1) <= 0
+ cMaxGFxGridFree#12:             - vMaxFlowGridFree#1 + vGFxGridFree#1(2) <= 0
+ cMaxGFxGridFree#13:             - vMaxFlowGridFree#1 + vGFxGridFree#1(3) <= 0
+ cMaxGFxGridFree#14:             - vMaxFlowGridFree#1 + vGFxGridFree#1(4) <= 0
+ cMaxGFxGridFree#15:             - vMaxFlowGridFree#1 + vGFxGridFree#1(5) <= 0
+ cMaxGFxGridFree#16:             - vMaxFlowGridFree#1 + vGFxGridFree#1(6) <= 0
+ cMaxGFxGridFree#17:             - vMaxFlowGridFree#1 + vGFxGridFree#1(7) <= 0
+ cMaxGFxGridFree#18:             - vMaxFlowGridFree#1 + vGFxGridFree#1(8) <= 0
+ cMaxGFxGridFree#19:             - vMaxFlowGridFree#1 + vGFxGridFree#1(9) <= 0
+ cMaxGFxGridFree#110:            - vMaxFlowGridFree#1 + vGFxGridFree#1(10) <= 0
+ cMaxGFxGridFree#111:            - vMaxFlowGridFree#1 + vGFxGridFree#1(11) <= 0
+ cMaxGFxGridFree#112:            - vMaxFlowGridFree#1 + vGFxGridFree#1(12) <= 0
+ cMaxGFxGridFree#113:            - vMaxFlowGridFree#1 + vGFxGridFree#1(13) <= 0
+ cMaxGFxGridFree#114:            - vMaxFlowGridFree#1 + vGFxGridFree#1(14) <= 0
+ csMaxValGridFree#20:            vMaxFlowGridFree#2  = 10000
  csInstalledGridFree#20:         vInstalledGridFree#2  = 1
- csBigMInstalledGridFree#20:     vMaxFluxGridFree#2
+ csBigMInstalledGridFree#20:     vMaxFlowGridFree#2
                                  - 10000 vInstalledGridFree#2 <= 0
+ csMinSizeInstalledGridFree#20:  vMaxFlowGridFree#2 >= 0
  cNotRunningIfNotInstalledGridFree#20: - vInstalledGridFree#2
                                  + vStateGridFree#2(0) <= 0
  cNotRunningIfNotInstalledGridFree#21: - vInstalledGridFree#2
@@ -157,25 +159,26 @@ Subject To
                                  - 10000 vStateGridFree#2(13) <= 0
  cStateGridGridFree#214:         vGFxGridFree#2(14)
                                  - 10000 vStateGridFree#2(14) <= 0
- cMaxGFxGridFree#20:             - vMaxFluxGridFree#2 + vGFxGridFree#2(0) <= 0
- cMaxGFxGridFree#21:             - vMaxFluxGridFree#2 + vGFxGridFree#2(1) <= 0
- cMaxGFxGridFree#22:             - vMaxFluxGridFree#2 + vGFxGridFree#2(2) <= 0
- cMaxGFxGridFree#23:             - vMaxFluxGridFree#2 + vGFxGridFree#2(3) <= 0
- cMaxGFxGridFree#24:             - vMaxFluxGridFree#2 + vGFxGridFree#2(4) <= 0
- cMaxGFxGridFree#25:             - vMaxFluxGridFree#2 + vGFxGridFree#2(5) <= 0
- cMaxGFxGridFree#26:             - vMaxFluxGridFree#2 + vGFxGridFree#2(6) <= 0
- cMaxGFxGridFree#27:             - vMaxFluxGridFree#2 + vGFxGridFree#2(7) <= 0
- cMaxGFxGridFree#28:             - vMaxFluxGridFree#2 + vGFxGridFree#2(8) <= 0
- cMaxGFxGridFree#29:             - vMaxFluxGridFree#2 + vGFxGridFree#2(9) <= 0
- cMaxGFxGridFree#210:            - vMaxFluxGridFree#2 + vGFxGridFree#2(10) <= 0
- cMaxGFxGridFree#211:            - vMaxFluxGridFree#2 + vGFxGridFree#2(11) <= 0
- cMaxGFxGridFree#212:            - vMaxFluxGridFree#2 + vGFxGridFree#2(12) <= 0
- cMaxGFxGridFree#213:            - vMaxFluxGridFree#2 + vGFxGridFree#2(13) <= 0
- cMaxGFxGridFree#214:            - vMaxFluxGridFree#2 + vGFxGridFree#2(14) <= 0
+ cMaxGFxGridFree#20:             - vMaxFlowGridFree#2 + vGFxGridFree#2(0) <= 0
+ cMaxGFxGridFree#21:             - vMaxFlowGridFree#2 + vGFxGridFree#2(1) <= 0
+ cMaxGFxGridFree#22:             - vMaxFlowGridFree#2 + vGFxGridFree#2(2) <= 0
+ cMaxGFxGridFree#23:             - vMaxFlowGridFree#2 + vGFxGridFree#2(3) <= 0
+ cMaxGFxGridFree#24:             - vMaxFlowGridFree#2 + vGFxGridFree#2(4) <= 0
+ cMaxGFxGridFree#25:             - vMaxFlowGridFree#2 + vGFxGridFree#2(5) <= 0
+ cMaxGFxGridFree#26:             - vMaxFlowGridFree#2 + vGFxGridFree#2(6) <= 0
+ cMaxGFxGridFree#27:             - vMaxFlowGridFree#2 + vGFxGridFree#2(7) <= 0
+ cMaxGFxGridFree#28:             - vMaxFlowGridFree#2 + vGFxGridFree#2(8) <= 0
+ cMaxGFxGridFree#29:             - vMaxFlowGridFree#2 + vGFxGridFree#2(9) <= 0
+ cMaxGFxGridFree#210:            - vMaxFlowGridFree#2 + vGFxGridFree#2(10) <= 0
+ cMaxGFxGridFree#211:            - vMaxFlowGridFree#2 + vGFxGridFree#2(11) <= 0
+ cMaxGFxGridFree#212:            - vMaxFlowGridFree#2 + vGFxGridFree#2(12) <= 0
+ cMaxGFxGridFree#213:            - vMaxFlowGridFree#2 + vGFxGridFree#2(13) <= 0
+ cMaxGFxGridFree#214:            - vMaxFlowGridFree#2 + vGFxGridFree#2(14) <= 0
  csWeightSourceLoad#10:          vMWeightSourceLoad#1  = 1
  csInstalledSourceLoad#10:       vInstalledSourceLoad#1  = 1
  csBigMInstalledSourceLoad#10:   vMWeightSourceLoad#1 - vInstalledSourceLoad#1
                                  <= 0
+ csMinSizeInstalledSourceLoad#10: vMWeightSourceLoad#1 >= 0
  cMSFxSourceLoad#10:             <= 10000
  cMSFxSourceLoad#11:             <= 10000
  cMSFxSourceLoad#12:             <= 10000
@@ -183,75 +186,72 @@ Subject To
  cMSFxSourceLoad#14:             <= 10000
  cMSFxSourceLoad#15:             <= 10000
  cMSFxSourceLoad#16:             <= 10000
- cMSFxSourceLoad#17:             1.67519998550415 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#18:             3.57848000526428 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#19:             4.53728008270264 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#110:            4.90568017959595 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#111:            4.9521598815918 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#112:            4.89767980575562 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#113:            4.47976016998291 vMWeightSourceLoad#1 <= 10000
- cMSFxSourceLoad#114:            3.38696002960205 vMWeightSourceLoad#1 <= 10000
+ cMSFxSourceLoad#17:             <= 10000
+ cMSFxSourceLoad#18:             <= 10000
+ cMSFxSourceLoad#19:             <= 10000
+ cMSFxSourceLoad#110:            <= 10000
+ cMSFxSourceLoad#111:            <= 10000
+ cMSFxSourceLoad#112:            <= 10000
+ cMSFxSourceLoad#113:            <= 10000
+ cMSFxSourceLoad#114:            <= 10000
  csBigMInstalledSourceLoad#20:   vMWeightSourceLoad#2
                                  - 10 vInstalledSourceLoad#2 <= 0
- cMSFxSourceLoad#20:             1.84581899642944 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#21:             2.19129395484924 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#22:             2.32618689537048 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#23:             2.48392105102539 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#24:             2.67351007461548 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#25:             2.85777997970581 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#26:             2.98878002166748 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#27:             3.03338098526001 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#28:             2.80703902244568 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#29:             2.31119203567505 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#210:            1.65278303623199 vMWeightSourceLoad#2 <= 10000
- cMSFxSourceLoad#211:            0.980934023857117 vMWeightSourceLoad#2
-                                 <= 10000
- cMSFxSourceLoad#212:            0.432370007038116 vMWeightSourceLoad#2
-                                 <= 10000
- cMSFxSourceLoad#213:            0.0903650000691414 vMWeightSourceLoad#2
-                                 <= 10000
- cMSFxSourceLoad#214:            0.0893049985170364 vMWeightSourceLoad#2
-                                 <= 10000
- cSNodeLaw#10:                   vGFxGridFree#1(0) - vGFxGridFree#2(0)
+ csMinSizeInstalledSourceLoad#20: vMWeightSourceLoad#2 >= 0
+ cMSFxSourceLoad#20:             <= 10000
+ cMSFxSourceLoad#21:             <= 10000
+ cMSFxSourceLoad#22:             <= 10000
+ cMSFxSourceLoad#23:             <= 10000
+ cMSFxSourceLoad#24:             <= 10000
+ cMSFxSourceLoad#25:             <= 10000
+ cMSFxSourceLoad#26:             <= 10000
+ cMSFxSourceLoad#27:             <= 10000
+ cMSFxSourceLoad#28:             <= 10000
+ cMSFxSourceLoad#29:             <= 10000
+ cMSFxSourceLoad#210:            <= 10000
+ cMSFxSourceLoad#211:            <= 10000
+ cMSFxSourceLoad#212:            <= 10000
+ cMSFxSourceLoad#213:            <= 10000
+ cMSFxSourceLoad#214:            <= 10000
+ cSNodeLaw#10:                   vGFxGridFree#1(0) - 3 vGFxGridFree#2(0)
                                  + 1.84581899642944 vMWeightSourceLoad#2  = 0
- cSNodeLaw#11:                   vGFxGridFree#1(1) - vGFxGridFree#2(1)
+ cSNodeLaw#11:                   vGFxGridFree#1(1) - 3 vGFxGridFree#2(1)
                                  + 2.19129395484924 vMWeightSourceLoad#2  = 0
- cSNodeLaw#12:                   vGFxGridFree#1(2) - vGFxGridFree#2(2)
+ cSNodeLaw#12:                   vGFxGridFree#1(2) - 3 vGFxGridFree#2(2)
                                  + 2.32618689537048 vMWeightSourceLoad#2  = 0
- cSNodeLaw#13:                   vGFxGridFree#1(3) - vGFxGridFree#2(3)
+ cSNodeLaw#13:                   vGFxGridFree#1(3) - 3 vGFxGridFree#2(3)
                                  + 2.48392105102539 vMWeightSourceLoad#2  = 0
- cSNodeLaw#14:                   vGFxGridFree#1(4) - vGFxGridFree#2(4)
+ cSNodeLaw#14:                   vGFxGridFree#1(4) - 3 vGFxGridFree#2(4)
                                  + 2.67351007461548 vMWeightSourceLoad#2  = 0
- cSNodeLaw#15:                   vGFxGridFree#1(5) - vGFxGridFree#2(5)
+ cSNodeLaw#15:                   vGFxGridFree#1(5) - 3 vGFxGridFree#2(5)
                                  + 2.85777997970581 vMWeightSourceLoad#2  = 0
- cSNodeLaw#16:                   vGFxGridFree#1(6) - vGFxGridFree#2(6)
+ cSNodeLaw#16:                   vGFxGridFree#1(6) - 3 vGFxGridFree#2(6)
                                  + 2.98878002166748 vMWeightSourceLoad#2  = 0
- cSNodeLaw#17:                   vGFxGridFree#1(7) - vGFxGridFree#2(7)
+ cSNodeLaw#17:                   vGFxGridFree#1(7) - 3 vGFxGridFree#2(7)
                                  - 1.67519998550415 vMWeightSourceLoad#1
                                  + 3.03338098526001 vMWeightSourceLoad#2  = 0
- cSNodeLaw#18:                   vGFxGridFree#1(8) - vGFxGridFree#2(8)
+ cSNodeLaw#18:                   vGFxGridFree#1(8) - 3 vGFxGridFree#2(8)
                                  - 3.57848000526428 vMWeightSourceLoad#1
                                  + 2.80703902244568 vMWeightSourceLoad#2  = 0
- cSNodeLaw#19:                   vGFxGridFree#1(9) - vGFxGridFree#2(9)
+ cSNodeLaw#19:                   vGFxGridFree#1(9) - 3 vGFxGridFree#2(9)
                                  - 4.53728008270264 vMWeightSourceLoad#1
                                  + 2.31119203567505 vMWeightSourceLoad#2  = 0
- cSNodeLaw#110:                  vGFxGridFree#1(10) - vGFxGridFree#2(10)
+ cSNodeLaw#110:                  vGFxGridFree#1(10) - 3 vGFxGridFree#2(10)
                                  - 4.90568017959595 vMWeightSourceLoad#1
                                  + 1.65278303623199 vMWeightSourceLoad#2  = 0
- cSNodeLaw#111:                  vGFxGridFree#1(11) - vGFxGridFree#2(11)
+ cSNodeLaw#111:                  vGFxGridFree#1(11) - 3 vGFxGridFree#2(11)
                                  - 4.9521598815918 vMWeightSourceLoad#1
                                  + 0.980934023857117 vMWeightSourceLoad#2  = 0
- cSNodeLaw#112:                  vGFxGridFree#1(12) - vGFxGridFree#2(12)
+ cSNodeLaw#112:                  vGFxGridFree#1(12) - 3 vGFxGridFree#2(12)
                                  - 4.89767980575562 vMWeightSourceLoad#1
                                  + 0.432370007038116 vMWeightSourceLoad#2  = 0
- cSNodeLaw#113:                  vGFxGridFree#1(13) - vGFxGridFree#2(13)
+ cSNodeLaw#113:                  vGFxGridFree#1(13) - 3 vGFxGridFree#2(13)
                                  - 4.47976016998291 vMWeightSourceLoad#1
                                  + 0.0903650000691414 vMWeightSourceLoad#2  = 0
- cSNodeLaw#114:                  vGFxGridFree#1(14) - vGFxGridFree#2(14)
+ cSNodeLaw#114:                  vGFxGridFree#1(14) - 3 vGFxGridFree#2(14)
                                  - 3.38696002960205 vMWeightSourceLoad#1
                                  + 0.0893049985170364 vMWeightSourceLoad#2  = 0
 Bounds
- 0 <= vMaxFluxGridFree#1 <= 10000
+ 0 <= vMaxFlowGridFree#1 <= 10000
  0 <= vInstalledGridFree#1 <= 1
  0 <= vGFxGridFree#1(0) <= 10000
  0 <= vGFxGridFree#1(1) <= 10000
@@ -283,7 +283,7 @@ Bounds
  0 <= vStateGridFree#1(12) <= 1
  0 <= vStateGridFree#1(13) <= 1
  0 <= vStateGridFree#1(14) <= 1
- 0 <= vMaxFluxGridFree#2 <= 10000
+ 0 <= vMaxFlowGridFree#2 <= 10000
  0 <= vInstalledGridFree#2 <= 1
  0 <= vGFxGridFree#2(0) <= 10000
  0 <= vGFxGridFree#2(1) <= 10000

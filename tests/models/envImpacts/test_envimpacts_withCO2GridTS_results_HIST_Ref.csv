@@ -22,9 +22,9 @@ TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
 TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
 TecEcoAnalysis#1;Total Discounted Buy Part;50000;EUR;DiscountedBuyPart
 TecEcoAnalysis#1;Total Discounted EnvImpact Part (Flow and Grey) Climate change#Global Warming Potential 100;102250;EUR;GWPDiscountedEnvImpactPart
-TecEcoAnalysis#1;Total Discounted EnvImpact Mass (Flow and Grey) Climate change#Global Warming Potential 100;102250;kg CO2 eq;GWPDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total Discounted EnvImpact Mass (Flow + Grey + replacement) Climate change#Global Warming Potential 100;102250;kg CO2 eq;GWPDiscountedEnvImpactMass
 TecEcoAnalysis#1;Total Discounted EnvImpact Part (Flow and Grey) Water use#User Deprivation Potential;6000.02;EUR;WUDiscountedEnvImpactPart
-TecEcoAnalysis#1;Total Discounted EnvImpact Mass (Flow and Grey) Water use#User Deprivation Potential;12000;kg world eq deprived;WUDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total Discounted EnvImpact Mass (Flow + Grey + replacement) Water use#User Deprivation Potential;12000;kg world eq deprived;WUDiscountedEnvImpactMass
 TecEcoAnalysis#1;Total GreyEnvImpact Part Climate change#Global Warming Potential 100;100250;EUR;GWPGreyEnvImpactPart
 TecEcoAnalysis#1;Total GreyEnvImpact Mass Climate change#Global Warming Potential 100;100250;kg CO2 eq;GWPGreyEnvImpactMass
 TecEcoAnalysis#1;Total GreyEnvImpact Part Water use#User Deprivation Potential;5000;EUR;WUGreyEnvImpactPart
@@ -52,12 +52,12 @@ Converter;Climate change#Global Warming Potential 100 Env impact penalty part;0;
 Converter;Climate change#Global Warming Potential 100 Env impact mass;0;kg CO2 eq;GWPDirectMass
 Converter;Climate change#Global Warming Potential 100 EnvGrey impact cost;100250;EUR;GWPGreyCost
 Converter;Climate change#Global Warming Potential 100 EnvGrey impact mass;100250;kg CO2 eq;GWPGreyMass
-Converter;Climate change#Global Warming Potential 100 Env grey impact replacement part;0;EUR;GWPReplacementCost
+Converter;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Converter;Water use#User Deprivation Potential Env impact penalty part;0;EUR;WUDirectCost
 Converter;Water use#User Deprivation Potential Env impact mass;0;kg world eq deprived;WUDirectMass
 Converter;Water use#User Deprivation Potential EnvGrey impact cost;5000;EUR;WUGreyCost
 Converter;Water use#User Deprivation Potential EnvGrey impact mass;10000;kg world eq deprived;WUGreyMass
-Converter;Water use#User Deprivation Potential Env grey impact replacement part;0;EUR;WUReplacementCost
+Converter;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
 Converter;Sum up at;1;-;SumUp
 Converter;Installed Optimal Size;1000;MW;Size
 Converter;Running time at power >0.;1;h;RunningTime
@@ -77,12 +77,12 @@ Elec_Grid;Climate change#Global Warming Potential 100 Env impact penalty part;10
 Elec_Grid;Climate change#Global Warming Potential 100 Env impact mass;100;kg CO2 eq;GWPDirectMass
 Elec_Grid;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
 Elec_Grid;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
-Elec_Grid;Climate change#Global Warming Potential 100 Env grey impact replacement part;0;EUR;GWPReplacementCost
+Elec_Grid;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Elec_Grid;Water use#User Deprivation Potential Env impact penalty part;50.001;EUR;WUDirectCost
 Elec_Grid;Water use#User Deprivation Potential Env impact mass;100.002;kg world eq deprived;WUDirectMass
 Elec_Grid;Water use#User Deprivation Potential EnvGrey impact cost;0;EUR;WUGreyCost
 Elec_Grid;Water use#User Deprivation Potential EnvGrey impact mass;0;kg world eq deprived;WUGreyMass
-Elec_Grid;Water use#User Deprivation Potential Env grey impact replacement part;0;EUR;WUReplacementCost
+Elec_Grid;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
 Elec_Grid;Grid extraction time;1;h;extraction Time
 Elec_Grid;Grid extraction ElectricalEnergy GridFlow;500;MWh;TotGridFlow
 Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;10000;MWh;LvlzdTotGridFlow

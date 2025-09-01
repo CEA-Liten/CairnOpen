@@ -47,13 +47,22 @@ CairnAPI::CairnAPI(bool a_Log)
 		outLogFile.close();
 	}	
 	qInstallMessageHandler(myMessageHandler);
+
+	//create a map of model types
+	QString sourceDir = qEnvironmentVariable("CAIRN_APP");
+	if (sourceDir != "") {
+		sourceDir += "/src";
+	}
+	else {
+		sourceDir = QDir::currentPath() + "/../../../../src";
+	}
+	CairnAPIUtils::initModelTypesMap(sourceDir.toStdString());
 }
 
 CairnAPI::~CairnAPI()
 {
 	close_Study();
 }
-
 
 //------------ Get Lists ------------------------
 t_list CairnAPI::get_PossibleModelNames()
@@ -170,7 +179,6 @@ CairnAPI::OptimProblemAPI CairnAPI::create_Study(const std::string& a_StudyName)
 	return vRet;
 }
 
-
 CairnAPI::OptimProblemAPI CairnAPI::read_Study(const std::string& a_filename)
 {
 	OptimProblemAPI vRet;
@@ -183,7 +191,7 @@ CairnAPI::OptimProblemAPI CairnAPI::read_Study(const std::string& a_filename)
 		}
 		catch (Cairn_Exception& error)
 		{
-			CairnAPIUtils::setError(CairnAPIUtils::errRead, a_filename);
+			CairnAPIUtils::setError(CairnAPIUtils::errRead, "study" + a_filename);
 		}
 	}
 	else

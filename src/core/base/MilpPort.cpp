@@ -151,13 +151,21 @@ QString MilpPort::getPotentialUnit() const
 void MilpPort::setEnergyVector(EnergyVector* aptrEnergyVector) 
 { 
     mEnergyVector = aptrEnergyVector; 
-    mFluxUnit = mEnergyVector->pFluxUnit(); 
-    mStorageUnit = mEnergyVector->pStorageUnit(); 
-    mPowerUnit = mEnergyVector->pPowerUnit(); 
-    mMassUnit = mEnergyVector->pMassUnit(); 
-    mPotentialUnit = mEnergyVector->pPotentialUnit(); 
+    if (mEnergyVector) {
+        mCarrierName = mEnergyVector->Name();
+        mFluxUnit = mEnergyVector->pFluxUnit();
+        mStorageUnit = mEnergyVector->pStorageUnit();
+        mPowerUnit = mEnergyVector->pPowerUnit();
+        mMassUnit = mEnergyVector->pMassUnit();
+        mPotentialUnit = mEnergyVector->pPotentialUnit();
+        //if (mIsDefaultPort) { //What about old studies?!
+        //    MilpComponent* lptrCompo = (MilpComponent*)this->parent();
+        //    if (lptrCompo) {
+        //        lptrCompo->declareIOVariables();
+        //    }
+        //}
+    }
 }
-
 
 void MilpPort::setptrLinkedComponent(MilpComponent* aptrLinkedComponent) {
     mptrLinkedComponent = aptrLinkedComponent;
@@ -212,7 +220,7 @@ void MilpPort::jsonSaveGUIPortsData(QJsonArray &nodePortArray, const bool& isBus
     nodePort.insert("id", portId);
     nodePort.insert("name", portName);
     nodePort.insert("position", position);
-    nodePort.insert("carrier", mEnergyVector->Name()); //==mCarrierName
+    nodePort.insert("carrier", mCarrierName); 
     nodePort.insert("carrierType", mCarrierType);
     nodePort.insert("direction", mDirection);
     nodePort.insert("variable", mVariable);

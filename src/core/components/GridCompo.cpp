@@ -26,12 +26,15 @@ GridCompo::~GridCompo()
 void GridCompo::declareCompoInputParam()
 {
     MilpComponent::declareCompoInputParam();
-    mCompoInputParam->addParameter("Direction", &mDirection, "InjectToGrid", true, true, "Direction for gird injection or extraction - Equals to InjectToGrid or ExtractFromGrid");
+    mCompoInputParam->addParameter("Direction", &mDirection, "InjectToGrid", false, true, "Direction for gird injection or extraction - Equals to InjectToGrid or ExtractFromGrid");
 }
 
 void GridCompo::setCompoInputParam(const QMap<QString, QString> aComponent) {
     MilpComponent::setCompoInputParam(aComponent);
+    setCompoSens(mDirection);
+}
 
+void GridCompo::setCompoSens(const QString& direction) {
     if (mDirection == "InjectToGrid") {
         mSens = -1;
     }
@@ -45,8 +48,10 @@ void GridCompo::setCompoInputParam(const QMap<QString, QString> aComponent) {
         Cairn_Exception erreur("Invald <Direction> attribute : InjectToGrid or ExtractFromGrid expected " + mName + " instead of " + mDirection + ".", -1);
         throw& erreur;
     }
+    if (mCompoModel) {
+        mCompoModel->setSens(mSens);
+    }
 }
-
 
 int GridCompo::setParameters()
 {
@@ -164,9 +169,7 @@ void GridCompo::setDefaultsResults()
 
 
 
-int GridCompo::initProblem()
+int GridCompo::initProblem(const bool& readParams)
 {
-    //Always make this available to SubModel
-     mCompoToModel->publishData("Direction", &mSens);
-     return MilpComponent::initProblem();
+     return MilpComponent::initProblem(readParams);
 }

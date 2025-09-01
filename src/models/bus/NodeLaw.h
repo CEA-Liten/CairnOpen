@@ -27,6 +27,7 @@ public:
     NodeLaw(QObject* aParent);
     ~NodeLaw();
 //----------------------------------------------------------------------------------------------------
+    void computeModelContribution() override;
     void setTimeData();
     //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
@@ -74,15 +75,13 @@ public:
     {
         BusSubModel::declareDefaultModelInterface();
 
-        addIO("PenaltyConstraintCosts", &mExpPenaltyConstraintCosts, mCurrency);    /** Computed penalty costs */
+        addIO("PenaltyConstraintCosts", &mExpPenaltyConstraintCosts, true, mCurrency);    /** Computed penalty costs */
         setPenaltyConstraintExpression("PenaltyConstraintCosts");
-        addControlIO("BusBalance", &mBusBalance, mEnergyVector->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
+       
+        addControlIO("BusBalance", &mBusBalance, true, mEnergyVector->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
+        addIO("BusConstraintGap", &mExpConstraintGap, true, mEnergyVector->pFluxUnit());
 
-        addIO("BusConstraintGap", &mExpConstraintGap, mEnergyVector->pFluxUnit());
-        if(mMaxIntegrateConstraint || mMinIntegrateConstraint || mMinIntegrateSeparateConstraint || mMaxIntegrateSeparateConstraint)
-        {
-            addIO("Integration", &mExprIntegrate, mEnergyVector->pStorageUnit());
-        }
+        addIO("Integration", &mExprIntegrate, SFunctionFlag({ eFTypeOrNot, { &mMaxIntegrateConstraint, &mMinIntegrateConstraint, &mMinIntegrateSeparateConstraint, &mMaxIntegrateSeparateConstraint} }), mEnergyVector->pStorageUnit());
     }
 
     void declareModelIndicators() {
@@ -95,12 +94,9 @@ public:
     void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue, double aMinIntegrateConstraintBusValue, 
         double aMaxIntegrateConstraintBusValue, double aStrictIntegrateConstraintBusValue, double aMaxFlexIntegrateConstraintBusValue) ;
 //----------------------------------------------------------------------------------------------------
-    void buildModel();                                                              // build minimum formulation
     void finalizeModelData();
-    void computeAllContribution();
 //----------------------------------------------------------------------------------------------------
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance;}
-    void initBalance() ;
     void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression) ;
     void addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression) ;
     void addStrictConstraint() ;
@@ -144,13 +140,13 @@ protected:
     int mPeriodIntegrateConstraint; /** Size of the period of integration to compute contraint over time */
 
     MIPModeler::MIPExpression   mExpPenaltyConstraintCosts;      /** Scalar penalty for not meeting constraint */
+    MIPModeler::MIPExpression mExpConstraintGap;
     MIPModeler::MIPExpression1D mBusBalance ;
+    MIPModeler::MIPExpression1D  mExprIntegrate;
 
-    MIPModeler::MIPExpression mExpConstraintGap ;
     MIPModeler::MIPVariable0D mVarConstraintGap;
 
     MIPModeler::MIPData1D mHistBusBalance;
-    MIPModeler::MIPExpression1D  mExprIntegrate ;
 
     // for GAMS
     std::vector<std::string> mPortVarSet;

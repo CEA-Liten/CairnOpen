@@ -1,3 +1,4 @@
-;Compressor__paramListJson__AddLosses
+;Compressor
+;AddLosses
 withoutLosses;false
 withLosses;true

@@ -16,7 +16,6 @@
 #include "MIPModeler.h"
 #include "TechnicalSubModel.h"
 
-
 /**
 * \details
  * Description: ManualObjective is used to parametrize manually the objective function. By default, objective function is written by TecEcoAnalysis component
@@ -34,6 +33,7 @@ public:
     ManualObjective(QObject* aParent);
     ~ManualObjective();
 //----------------------------------------------------------------------------------------------------
+    void closeExpressions() override;
     void setTimeData();
     //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
@@ -41,19 +41,18 @@ public:
     void declareModelConfigurationParameters()
     {
         TechnicalSubModel::declareDefaultModelConfigurationParameters() ;
-        mInputParam->addToConfigList({ "LexicographicObjective","CommonVariables","Constraints"});
 
         //bool
         //re-declare and set EcoInvestModel to false
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", { "hide" });
+        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "DONOTSHOW");
         addParameter("TimeIntegration", &mTimeIntegration, false, false, true);  /** If True then uses time integration for Add and Lexicographic objective types otherwise uses simple summation - default = false */
-        addParameter("StrictConstraint",&mStrictConstraint, false, false, true, "Strictconstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true","",{"Constraints"});
-        addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false", "", { "Constraints" });
-        addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false ", "", { "Constraints" });
-        addParameter("CommonMinVariable", &mUseCommonMinVariable, false, false, true, "Creates a variable CommonBound which is smaller than all connected variables.", "",{"CommonVariables"});
-        addParameter("CommonMaxVariable", &mUseCommonMaxVariable, false, false, true, "Creates a variable CommonBound which is greater than all connected variables.", "", {"CommonVariables"});
+        addParameter("StrictConstraint",&mStrictConstraint, false, false, true, "Strictconstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true","", "Constraints");
+        addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false", "", "Constraints");
+        addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false ", "", "Constraints");
+        addParameter("CommonMinVariable", &mUseCommonMinVariable, false, false, true, "Creates a variable CommonBound which is smaller than all connected variables.", "", "CommonVariables");
+        addParameter("CommonMaxVariable", &mUseCommonMaxVariable, false, false, true, "Creates a variable CommonBound which is greater than all connected variables.", "", "CommonVariables");
         //QString
-        addConfig("ObjectiveType", &mObjectiveType, "Add", false, true, " void - not in objective - Add or Blended or Lexicographic");
+        addParameter("ObjectiveType", &mObjectiveType, "Add", false, true, " void - not in objective - Add or Blended or Lexicographic");
     }
 
 //----------------------------------------------------------------------------------------------------
@@ -62,36 +61,35 @@ public:
         declareDefaultModelParameters();
         //bool
         addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, false, SFunctionFlag({ eFTypeOrNot, { &mMinConstraint, &mMaxConstraint, &mStrictConstraint} }), true, "When true the values of *BusValue are assumed over one year instead of optimization horizon");
-        //addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, false, mMinConstraint || mMaxConstraint || mStrictConstraint, true, "When true the values of *BusValue are assumed over one year instead of optimization horizon");        
         //int
-        addParameter("ObjectiveLevel", &mObjectiveLevel, 0, false, true, "In case of lexicographic optimization, gives the rank -default 0-", "", { "LexicographicObjective" });
+        addParameter("ObjectiveLevel", &mObjectiveLevel, 0, false, true, "In case of lexicographic optimization, gives the rank -default 0-", "", "LexicographicObjective");
         //double
-        addParameter("StrictConstraintBusValue", &mStrictConstraintBusValue, 0., false, &mStrictConstraint, "if Strictconstraint = true at each time sum of connected flows should be equal to this value - default is 0 - use for flow balance for example", "", { "Constraints" });
-        addParameter("MinConstraintBusValue", &mMinConstraintBusValue, 0., &mMinConstraint, &mMinConstraint, "if MinConstraint = true at each time sum of connected flows should be >= this value", "", { "Constraints" });
+        addParameter("StrictConstraintBusValue", &mStrictConstraintBusValue, 0., false, &mStrictConstraint, "if Strictconstraint = true at each time sum of connected flows should be equal to this value - default is 0 - use for flow balance for example", "", "Constraints");
+        addParameter("MinConstraintBusValue", &mMinConstraintBusValue, 0., &mMinConstraint, &mMinConstraint, "if MinConstraint = true at each time sum of connected flows should be >= this value", "", "Constraints");
         addParameter("MaxConstraintBusValue", &mMaxConstraintBusValue, INFINITY_VAL, &mMaxConstraint, &mMaxConstraint);/** if MaxConstraint=true at each time sum of connected flows should be <= this value */
         addParameter("ObjectiveCoefficient", &mObjectiveCoefficient, 1., false, true, "In case of blended objective the coefficient of objective in the linear combinaison(default 1)");
-        addParameter("AbsTol", &mAbsTol, 0., false, true, "Absolute tolerance or degradation of the objective (lexicographic optim)","",{"LexicographicObjective"});
-        addParameter("RelTol", &mRelTol, 0., false, true, "Relative tolerance or degradation of the objective (lexicographic optim)","",{"LexicographicObjective"});
+        addParameter("AbsTol", &mAbsTol, 0., false, true, "Absolute tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
+        addParameter("RelTol", &mRelTol, 0., false, true, "Relative tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
         //vector
-        addTimeSeries("UseProfileObjectiveCoeff", &mObjectiveCoeffTS, false, "time series coefficient ");
+        addTimeSeries("UseProfileObjectiveCoeff", &mObjectiveCoeffTS, false, "time series coefficient");
     }
 //----------------------------------------------------------------------------------------------------
     void declareModelInterface()
     {
         declareDefaultModelInterface();
-        addIO("BusBalance", &mBusBalance, mEnergyVector->pFluxUnit()) ; //FluxUnit of First Port
-        addIO("BusBalance0D", &mBusBalance0D, mEnergyVector->pFluxUnit()) ;
-        addIO("BusBalance1D", &mBusBalance1D, mEnergyVector->pFluxUnit()) ;
-        addIO("BusConstraintGap", &mExpConstraintGap, mEnergyVector->pFluxUnit()) ;
-        addIO("SubObjectiveExpression", &mSubObjective, "-");
-        addIO("MinVar", &mExpCommonMinVariable, mEnergyVector->pFluxUnit());
-        addIO("MaxVar", &mExpCommonMaxVariable, mEnergyVector->pFluxUnit());
-        if (mObjectiveType == "Blended") {
-            addIO("Capex", &mExpCapex, mEnergyVector->pFluxUnit()); /** Computed initial investment costs Capex */
-            addIO("Opex", &mExpOpex, mEnergyVector->pStorageUnit());      /** Computed operational cost Net Opex */
-            addIO("PureOpex", &mExpPureOpex, mEnergyVector->pStorageUnit());      /** Computed operational cost Pure Opex */
-            addIO("Replacement", &mExpReplacement, mEnergyVector->pFluxUnit());      /** Computed variable replacement cost */
-        }
+        addIO("BusBalance", &mBusBalance, true, mEnergyVector->pFluxUnit()) ; //FluxUnit of First Port
+        addIO("BusBalance0D", &mBusBalance0D, true, mEnergyVector->pFluxUnit()) ;
+        addIO("BusBalance1D", &mBusBalance1D, true, mEnergyVector->pFluxUnit()) ;
+        addIO("SubObjectiveExpression", &mSubObjective, true, "-");
+        addIO("MinVar", &mExpCommonMinVariable, true, mEnergyVector->pFluxUnit());
+        addIO("MaxVar", &mExpCommonMaxVariable, true, mEnergyVector->pFluxUnit());
+
+        //ObjectiveType == "Blended"
+        addIO("Capex", &mExpCapex, SExtFunctionFlag({ &isBlended, this }), mEnergyVector->pFluxUnit()); /** Computed initial investment costs Capex */
+        addIO("Opex", &mExpOpex, SExtFunctionFlag({ &isBlended, this }), mEnergyVector->pStorageUnit());      /** Computed operational cost Net Opex */
+        addIO("PureOpex", &mExpPureOpex, SExtFunctionFlag({ &isBlended, this }), mEnergyVector->pStorageUnit());      /** Computed operational cost Pure Opex */
+        addIO("Replacement", &mExpReplacement, SExtFunctionFlag({ &isBlended, this }), mEnergyVector->pFluxUnit());      /** Computed variable replacement cost */
+        
         setSubobjectiveExpression("SubObjectiveExpression");
     }
 
@@ -116,8 +114,6 @@ public:
     void addStrictConstraint() ;
     void addMinConstraint() ;
     void addMaxConstraint() ;
-//----------------------------------------------------------------------------------------------------
-    QString ObjectiveType() { return mObjectiveType; };
 //----------------------------------------------------------------------------------------------------
     virtual void initDefaultPorts() { }; //Bus doesn't have default ports!
 
@@ -146,14 +142,12 @@ protected:
     MIPModeler::MIPExpression1D mBusBalance0D ;
     MIPModeler::MIPExpression mBusBalance;
     MIPModeler::MIPExpression mSubObjective;
-    MIPModeler::MIPExpression mExpConstraintGap ;
 
     std::vector<double> mObjectiveCoeffTS;
     MIPModeler::MIPVariable0D mCommonMinVariable;
     MIPModeler::MIPExpression mExpCommonMinVariable;
     MIPModeler::MIPVariable0D mCommonMaxVariable;
     MIPModeler::MIPExpression mExpCommonMaxVariable;
-    QString mObjectiveType;
 
     //Indicateurs
     std::vector<double> mBusEnergyBalance;

@@ -3,7 +3,7 @@
 .. _cairn_timeseriesfile:
 
 |cairn| timeseries files
----------------------------------------
+------------------------
 
 .. raw:: html
 

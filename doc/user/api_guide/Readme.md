@@ -2,7 +2,7 @@ To generate automatically the Cairn Python API documentation:
 
 1) uninstall cairn package from envDocCairn
 
-2) Modify PerseeBind.cpp to include additional comments for instance
+2) Modify CairnBind.cpp to include additional comments for instance
 
 3) Build the wheel with deployWheel.bat
 

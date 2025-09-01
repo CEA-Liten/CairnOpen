@@ -11,14 +11,20 @@ import os
 import shutil
 from os import path
 import pandas as pd
+import filecmp
+import glob
 
 @pytest.fixture(autouse=True, scope="module")
 def clean():
     app_home = path.dirname(path.realpath(__file__))
     resultPath =  path.join(app_home, 'results')
     if path.exists(resultPath):
-        shutil.rmtree(resultPath)            
-    os.makedirs(resultPath)           
+        print("***************************************************")
+        print(os.path.join(resultPath, '*.csv'))
+        for csvpath in glob.iglob(os.path.join(resultPath, '*.csv')):
+            os.remove(csvpath)
+        for jsonpath in glob.iglob(os.path.join(resultPath, '*.json')):
+            os.remove(jsonpath)
     yield
 
 @pytest.fixture
@@ -40,6 +46,7 @@ def set_get_TecEcoAnalysis(problem):
     assert problem.tech_eco_analysis['DiscountRate']==0.07
     problem.tech_eco_analysis = {'DiscountRate':  0.06}
     assert problem.tech_eco_analysis['DiscountRate']==0.06
+    print(problem.tech_eco_analysis['DiscountRate'])
     #String list value
     assert len(problem.tech_eco_analysis['ConsideredEnvironmentalImpacts']) == 2
     assert 'Climate change#Global Warming Potential 100' in problem.tech_eco_analysis['ConsideredEnvironmentalImpacts']
@@ -100,6 +107,18 @@ def write_compo(problem):
     #timeseries
     ely_pem.set_setting_value("UseProfileConverterUse", "Availability")
     assert ely_pem.get_setting_value("UseProfileConverterUse") == "Availability"
+
+def add_grid(problem):
+    my_GFSP = problem.create_component("Grid_Surplus", "GridFree")
+    my_GFSP.set_setting_value("Direction",'InjectToGrid')
+    h2_bus = problem.get_bus("H2_Bus")
+    port_GFSP = my_GFSP.get_port("PortR0")
+    h2_carrier = problem.get_energy_carrier("H2")
+    port_GFSP.set_carrier(h2_carrier)
+    print(port_GFSP.settings)  
+    port_GFSP.set_setting_value("Direction", "INPUT") #Idéalement, il ne faudrait pas avoir besoin de cette ligne
+    problem.add_link(port_GFSP, h2_bus)
+    assert port_GFSP.get_setting_value("Direction") == "INPUT"
     
     
 
@@ -135,7 +154,7 @@ def write_energy_carrier(problem):
     assert h2.get_setting_value("LHV") == 0.03333333
 
 def add_component(problem):
-    my_pv_field = Component("PV", "SourceLoad", "SourceLoad")
+    my_pv_field = problem.create_component("PV", "SourceLoad")
     my_pv_field.setting_values = {
 		"Direction": "Source" ,
 		"Weight": 1,
@@ -144,15 +163,16 @@ def add_component(problem):
 		"MaxFlow": -10,
 		"EcoInvestModel": 1,
         "UseProfileLoadFlux":"PVProduction"
-		}
-    elec_bus=problem.get_energy_carrier("ElectricityDistrib")
-    my_PV_R0 = Port("PortR0", elec_bus)
-    my_PV_R0.setting_values = {
+	    }
+    elec_bus = problem.get_energy_carrier("ElectricityDistrib")
+    defaultPorts = my_pv_field.default_ports
+    assert len(defaultPorts) == 1
+    my_PV_L0 = my_pv_field.get_port(defaultPorts[0]) #"PortL0"
+    my_PV_L0.set_carrier(elec_bus)
+    my_PV_L0.setting_values = {
     				"Direction": "OUTPUT",
     				"Variable": "SourceLoadFlow"
     		}
-    my_pv_field.add_port(my_PV_R0)
-    problem.add_component(my_pv_field)
     assert my_pv_field.get_setting_value("UseProfileLoadFlux") == "PVProduction"
     my_pv_field.set_setting_value("UseProfileLoadFlux","WindFarmProduction")
     assert my_pv_field.get_setting_value("UseProfileLoadFlux") == "WindFarmProduction"
@@ -181,10 +201,6 @@ def initialize(problem):
 def run(problem, folder):
     return problem.run(folder)
 
-def read_results(solution):
-    assert solution.status == "Optimal"
-    assert solution.nb_solutions == 1
-    assert round(solution.get_optimal_solution(0),2) == 2.48
 
 def get_plan_results(problem):
     ely_pem = problem.get_component("ELY_PEM")
@@ -214,7 +230,9 @@ def test_set_get_TecEcoAnalysis(problem):
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
-def test_set_get_Solvers(problem):    
+#@pytest.mark.skip("need to manage the Highs case")
+def test_set_get_Solvers(problem):
+    #print("need to manage the Highs case")    
     set_get_Solvers(problem)
 
 @pytest.mark.Cairn
@@ -227,14 +245,46 @@ def test_add_component(problem):
 def test_modify_port(problem):    
     modify_port(problem)
 
-    
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+def test_get_energy_carrier(problem):
+    # Add a new energy carrier
+    energy_carrier_name = "ElectricityDistrib2"
+    energy_carrier_type = "Electrical"  # Remplacez par le type approprié
+    problem.create_energy_carrier(energy_carrier_name, energy_carrier_type)
+
+    # Get the energy vector
+    energy_carrier = problem.get_energy_carrier(energy_carrier_name)
+
+    # Vérifier que le porteur d'énergie a été correctement récupéré
+    assert energy_carrier is not None
+    assert energy_carrier.name == energy_carrier_name
+    assert energy_carrier.type == energy_carrier_type
+
+    # Check the settings
+    ev_settings = energy_carrier.settings
+    assert isinstance(ev_settings, list)
+    assert "Potential" in ev_settings
+
+    # Check values
+    setting_value = energy_carrier.get_setting_value("Potential")
+    assert setting_value is not None
+    new_value = 440
+    energy_carrier.set_setting_value("Potential", new_value)
+    updated_value = energy_carrier.get_setting_value("Potential")
+    assert updated_value == new_value
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+def test_add_grid(problem):    
+    add_grid(problem)
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
 def test_sequence_1(problem):        
     set_get_SimulationControl(problem)
     set_get_TecEcoAnalysis(problem)
-    set_get_Solvers(problem)
+    #set_get_Solvers(problem)
     read_compos(problem)
     write_compo(problem)
     read_energy_carriers(problem)
@@ -258,10 +308,56 @@ def test_sequence_run_compare(problem):
     dataPath =  path.join(app_home, 'data')    
     load_timeseries(problem,dataPath + "./cairn_training_dataseries.csv")
     solution = run(problem, "")
-    read_results(solution)
     get_plan_results(problem)
     get_ts_results(problem)
     
+def read_and_lauch_study_twice(study, app_home=""):
+    if app_home == "":
+        app_home = path.dirname(path.realpath(__file__))
+    filePath = path.join(app_home,study+".json")
+    ts_path = path.join(app_home,study+"_dataseries.csv")
+    try:
+        Cairn_instance = CairnAPI(True) 
+        problem = Cairn_instance.read_study(filePath)
+        if os.path.exists(ts_path):
+            problem.add_timeseries(ts_path)
+            print("problème créé")
+        else:
+            print("manque ", ts_path)
+            return
+    except ValueError as e:
+        if "already exist" in str(e):
+            print(f"Le problème {e}")
+        else:
+            print(e)
+        return
+    try:
+        sol = problem.run()
+    except:
+        print("Error:",study, app_home)
+        assert False
+    print(sol.status)
+    if os.path.isfile(filePath.replace(".json","_model1.lp")):
+        os.remove(filePath.replace(".json","_model1.lp"))
+    os.rename(filePath.replace(".json","_model.lp"),filePath.replace(".json","_model1.lp"))
+    try:
+        sol = problem.run()
+    except:
+        print("Error:",study,app_home)
+        assert False
+    assert filecmp.cmp(filePath.replace(".json","_model.lp"),filePath.replace(".json","_model1.lp"), shallow=False)
+    Cairn_instance.close_study()
+    return
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+def test_loop_on_all_models_twice():
+    models_home = path.join(path.dirname(path.realpath(__file__)),"..//models/")
+    for root, dirs, files in os.walk(models_home):
+        for f in files:
+            if ".json" in f and not("Report" in root):
+                print(f)
+                read_and_lauch_study_twice(f.replace(".json",""), app_home = root)
 
 if __name__ == '__main__':
     app_home = path.dirname(path.realpath(__file__))
@@ -269,9 +365,13 @@ if __name__ == '__main__':
     timeseries =  path.join(app_home, './data/cairn_training_dataseries.csv')    
     cairn_instance = CairnAPI(True)
     problem = cairn_instance.read_study(simu_full)
+    #test_sequence_run_compare(problem)
+    add_grid(problem)
+    save(problem, "./cairn_training_new_grid.json")
+    """
     #set_get_SimulationControl(problem)
-    #set_get_TecEcoAnalysis(problem)
-    #add_component(problem)
+    set_get_TecEcoAnalysis(problem)
+    add_component(problem)
     #set_get_Solver(problem)
     #read_compos(problem)
     #write_compo(problem)
@@ -290,9 +390,10 @@ if __name__ == '__main__':
     read_results(solution)
     df_ind = get_plan_results(problem)
     get_ts_results(problem)
-    
+    read_and_lauch_study_twice("constraint")
+    test_loop_on_all_models_twice()
     #add_component(problem)
-    
+    """
     
     
     

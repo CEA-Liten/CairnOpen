@@ -43,16 +43,16 @@ del %TESTED_DIR%\%REPORT:~0,-4%.html
 set PYTHONPATH=%SCRIPT_DIR%
 
 REM Activation de l'environnement Python
-call %~dp0\\pythonEnv.bat
 
+call %~dp0\\pythonEnv.bat %PYTHON_VENV%
 
 cd /D %TESTED_DIR%
 echo Executing pytest in "%CD%"
+echo Using %PYTHON_VENV%
 
 echo "%MARKER%"
 if "%MARKER%" == "" goto :no_marker
 if not "%MARKER%" == "" goto :marker
-
 
 :marker	
 if "%MARKER%" == "''" goto :no_marker

@@ -10,6 +10,7 @@
 //-------------------------------------------------------------------------------------------
 AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam, InputParam *aInputData)
     : OperationSubModel(),
+    mHistRunningTime(0.),
     mHistRunningTime_save(0.),
     mLastReplacementTime(0.),
     mEfficiencyAgeing(1.),
@@ -26,7 +27,7 @@ AgeingRunningHours::~AgeingRunningHours()
 }
 //-------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------
-void AgeingRunningHours::buildModel()
+void AgeingRunningHours::computeModelContribution()
 {
     if (mHistRunningTime - mLastReplacementTime >= mEfficiencyMaxHours)
     {

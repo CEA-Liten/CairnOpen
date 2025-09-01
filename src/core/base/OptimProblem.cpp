@@ -9,14 +9,13 @@ using namespace CairnUtils;
 using Eigen::Map;
 using namespace GS ;
 
-static const QSettings::Format JsonFormat = QSettings::registerFormat("json", &readSettingsJson, &writeSettingsJson);
-
-OptimProblem::OptimProblem(QObject* aParent, QString aName, MilpData* aMilpData, TecEcoEnv &aTecEcoEnv, const QMap<QString, QString> &aComponent) : 
+OptimProblem::OptimProblem(QObject* aParent, QString aName, MilpData* aMilpData, TecEcoEnv &aTecEcoEnv, 
+    const bool& aStdAloneMode, const QMap<QString, QString> &aComponent) :
     MilpComponent(aParent, aName, aMilpData, aTecEcoEnv, aComponent, {}),
     mSolver(nullptr),
     mSimulationControl(nullptr),
-    mStdAloneMode(true),
-    mExportIndicators(true), //used for TecEco indicators
+    mStdAloneMode(aStdAloneMode),
+    mExportIndicators(true),  
     mOptimStatus(2)
 {
     this->setObjectName(aName);
@@ -46,13 +45,13 @@ OptimProblem::OptimProblem(QObject* aParent, QString aName, MilpData* aMilpData,
 
     //Default Solver 
     if (!createSolver()) {
-        Cairn_Exception cairn_error("Error creating the default Solver!", -1);
+        Cairn_Exception cairn_error((std::string)"Error creating the default Solver!", -1);
         throw cairn_error;
     }
 
     //Default SimulationControl 
     if (!createSimulationControl()) {
-        Cairn_Exception cairn_error("Error creating the default createSimulationControl!", -1);
+        Cairn_Exception cairn_error((std::string)"Error creating the default createSimulationControl!", -1);
         throw cairn_error;
     }
 
@@ -64,12 +63,9 @@ OptimProblem::~OptimProblem()
     if (mSimulationControl) delete mSimulationControl;
     if (mJsonDescription) delete mJsonDescription ;
     if (mModelFactory) delete mModelFactory;
-
-    QMapIterator<QString, ZEVariables*> iPublishedVariable(mListPublishedVars);
-    while (iPublishedVariable.hasNext())
-    {
-        iPublishedVariable.next();
-        ZEVariables* var = iPublishedVariable.value();
+   
+    for (auto& iPublishedVariable : mListPublishedVars) {
+        ZEVariables* var = iPublishedVariable.second;
         if (var) delete var;
         var = nullptr;
     }
@@ -146,8 +142,8 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
         
         /* Initialization of Optimization problem from input Values */
 
-        //mMilpData->setMilpDataFromSettings(mStdAloneMode);
         setExtrapolationFactor();
+
         int ierr3 = 0;
         try {
             ierr3 = initProblem();
@@ -158,7 +154,7 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
         }
 
         if (ierr3 < 0) {
-            Cairn_Exception cairn_error("Error in initialization of OptimProblem !", -1);
+            Cairn_Exception cairn_error((std::string)"Error in initialization of OptimProblem !", -1);
             throw cairn_error;
         }
 
@@ -168,8 +164,6 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
     else {
         /* Initialization of Optimization problem from input Values */
         QString vStudyFile = QString(mStudyFile->archFile().c_str());
-        QSettings settingsJson(vStudyFile, JsonFormat);
-
         try {
             qInfo() << " Use JSON input file ";
             mMilpComponents = mJsonDescription->parseJsonDescription(vStudyFile);
@@ -180,11 +174,6 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
                 Cairn_Exception cairn_error("Fatal error parsing file " + vStudyFile, -1);
                 throw cairn_error;
             }
-
-            QString dir = QFileInfo(vStudyFile).absoluteDir().absolutePath();
-            settingsJson.setPath(JsonFormat, QSettings::UserScope, dir);
-            mMilpData->setSettings(&settingsJson);
-            qInfo() << " Use Json SettingsFile : " << vStudyFile;
         }
         catch (Cairn_Exception& cairn_err) {
             Cairn_Exception cairn_error("Fatal error parsing file " + vStudyFile, -1);
@@ -196,15 +185,12 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
             throw cairn_error;
         }
 
-        mMilpData->setMilpDataFromSettings(mStdAloneMode);
-
-        setExtrapolationFactor();
-
         // create components from Milp description map mMilpComponents
         try {
             createTecEcoAnalysis(); //FromParamMap
+            createSimulationControlFromParamMap();
             createMilpComponentsFromParamMap();
-            createPortsAndLinksToBus();
+            createLinksToBus();
             createDynamicIndicators();
         }
         catch (Cairn_Exception& cairn_error) {
@@ -223,15 +209,12 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
         }
 
         if (ierr3 < 0) {
-            Cairn_Exception cairn_error("Error in initialization of OptimProblem !", -1);
+            Cairn_Exception cairn_error((std::string)"Error in initialization of OptimProblem !", -1);
             throw cairn_error;
         }
 
         // Now EnergyVectors have been associated with Ports, create ZEvariable list by component, and register them at Problem level.
         createZEVariablesList();
-
-        // make sure no attempt to read settings later on as local QSettings will have been destroyed 
-        mMilpData->setSettings(nullptr);
     }
 }
 
@@ -326,7 +309,7 @@ void OptimProblem::createMilpComponentsFromParamMap()
     while (icomponent.hasNext())
     {
         QMap<QString, QString> comp = icomponent.next();
-        if (comp["type"] == "TecEcoAnalysis")
+        if (comp["type"] == "TecEcoAnalysis" || comp["type"] == "SimulationControl")
             continue; //already created
         if (comp["type"] == "Solver") {
             bool vOK = createSolver(comp["Solver"], comp);
@@ -335,15 +318,8 @@ void OptimProblem::createMilpComponentsFromParamMap()
                 throw cairn_error;
             }
         }
-        else if (comp["type"] == "SimulationControl") {
-            bool vOK = createSimulationControl(comp["id"], comp);
-            if (!vOK) {
-                Cairn_Exception cairn_error("Error creating SimulationControl " + comp["id"], -1);
-                throw cairn_error;
-            }
-        }
         else if (comp["type"] == "EnergyVector") {
-            bool vOK = createEnergyVector(comp["id"], comp["type"], comp, mMilpData->Settings());
+            bool vOK = createEnergyVector(comp["id"], comp["Type"], comp);
             if (!vOK) {
                 Cairn_Exception cairn_error("Error creating EnergyVector " + comp["id"], -1);
                 throw cairn_error;
@@ -425,7 +401,7 @@ void OptimProblem::deleteComponent(MilpComponent* lptrComponent)
     }
     catch (...)
     {
-        Cairn_Exception erreur("Error Deleting Compoenet ");
+        Cairn_Exception erreur((std::string)"Error Deleting Compoenet ");
         this->setException(erreur);
         return;
     }
@@ -552,23 +528,45 @@ bool OptimProblem::createSolver(const QString& aSolverName, const QMap<QString, 
     return (mSolver != nullptr);
 }
 
+void OptimProblem::createSimulationControlFromParamMap()
+{
+    bool found = false;
+    QVectorIterator<QMap<QString, QString>> icomponent(mMilpComponents);
+    while (icomponent.hasNext())
+    {
+        QMap<QString, QString> comp = icomponent.next();
+        if (comp["type"] == "SimulationControl") {
+            bool vOK = createSimulationControl(comp["id"], comp);
+            if (!vOK) {
+                Cairn_Exception cairn_error("Error creating SimulationControl " + comp["id"], -1);
+                throw cairn_error;
+            }
+            found = true;
+        }
+    }
+    if (!found) {
+        qWarning() << "No SimulationControl found. The default SimulationControl will be used.";
+    }
+}
+
 bool OptimProblem::createSimulationControl(const QString& mSimulationControlName, const QMap<QString, QString>& paramMap)
 {
     if (mSimulationControl) delete mSimulationControl;
     mSimulationControl = new SimulationControl(mSimulationControlName, paramMap);
     //TODO: use mException
-    return (mSimulationControl != nullptr);
+    if (mSimulationControl) {
+        //Set MilpData from SimulationControl params
+        mMilpData->setMilpDataFromSettings(mSimulationControl->getParameters(), mStdAloneMode); 
+        setExtrapolationFactor();
+        return true;
+    }
+    return false;
 }
 
-bool OptimProblem::createEnergyVector(const QString& aName, const QString& aType, const QMap<QString, QString> paramMap, const QSettings& aSettings)
+bool OptimProblem::createEnergyVector(const QString& aName, const QString& aType, const QMap<QString, QString> paramMap)
 {
     EnergyVector* lptr_EV = nullptr;
-    if (paramMap.size() != 0 || aSettings.allKeys().size() !=0) {
-        lptr_EV = new EnergyVector(this, aName, paramMap, aSettings);
-    }
-    else {
-        lptr_EV = new EnergyVector(this, aName, aType);
-    }
+    lptr_EV = new EnergyVector(this, aName, aType, paramMap);
     registerEnergyVector(aName, lptr_EV);
     return (lptr_EV != nullptr);
 }
@@ -611,19 +609,19 @@ f_MilpComponent OptimProblem::LoadDllMilpComponent(QString Filename, QString Mod
   return funci;
 }
 
-void OptimProblem::createPortsAndLinksToBus()
+void OptimProblem::createLinksToBus()
 {
     QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents) ;
     while (icomponent.hasNext())
     {
         icomponent.next() ;
-        createPortsAndLinksToBus(icomponent.value());                
+        createLinksToBus(icomponent.value());
     }
     //Create TecEcoAnalysis links
-    createPortsAndLinksToBus(this);
+    createLinksToBus(this);
 }
 
-void OptimProblem::createPortsAndLinksToBus(MilpComponent* aComponent)
+void OptimProblem::createLinksToBus(MilpComponent* aComponent)
 {
     BusCompo* lptrIsBus = dynamic_cast<BusCompo*> (aComponent);
     if (lptrIsBus != nullptr) return;
@@ -747,7 +745,7 @@ void OptimProblem::computeGUIBusLocations()
         if (lptrIsBus == nullptr) continue;
 
         if (Xbus > 100) {
-            Xbus += int(MAX_X / 20);
+            Xbus += int(MAX_X / 4);
 
             if (Xbus > MAX_X)
             {
@@ -829,16 +827,18 @@ void OptimProblem::computeGUIComponentLocations()
     }
 }
 
-int OptimProblem::SaveFullArchitecture(QString& filename, QString& posAlgorithm)
+int OptimProblem::SaveFullArchitecture(const std::string& filename, const std::string& posAlgorithm)
 {
-    if (filename == "") {        
-        filename = QString(mStudyFile->getScenarioFile("_self.json", 0, false).c_str());
+    std::string vFileName = filename;
+    if (vFileName == "") {
+        vFileName = mStudyFile->getScenarioFile("_self.json", 0, false);
     }
 
-    QFile jsonOutputFile(filename);
-    if (!CairnUtils::openFileForWriting(jsonOutputFile))
+    QFile jsonOutputFile(QString(vFileName.c_str()));
+    
+    if (!jsonOutputFile.open(QIODevice::WriteOnly | QIODevice::Text))        
     {
-        qCritical() << "Error when saving self generated json File " << filename;
+        qCritical() << "Error when saving self generated json File " << QString(vFileName.c_str());
         return -1;
     }
 
@@ -855,7 +855,7 @@ int OptimProblem::SaveFullArchitecture(QString& filename, QString& posAlgorithm)
     }
 
     if (generatePositions) {
-        if (posAlgorithm.toUpper() != "GRADIENT") {
+        if (CairnUtils::toUpper(posAlgorithm) != "GRADIENT") {
             computeGUIBusLocations();
             computeGUIComponentLocations();
         }
@@ -866,7 +866,7 @@ int OptimProblem::SaveFullArchitecture(QString& filename, QString& posAlgorithm)
 
     jsonSaveDocument(&jsonOutputFile);
     jsonOutputFile.close();
-   
+
     return 0;
 }
 
@@ -878,9 +878,6 @@ void OptimProblem::computeGUICompoAndBusLocations() {
     int nbCompo = mMapMilpComponents.size();
     int i = 0;
 
-    Eigen::MatrixXf positions = MatrixXf::Zero(nbCompo, 2);
-    positions.setConstant(0); //positions.setConstant(100);
-
     // création d'une matrice d'adjacence
     // index des composants pour pouvoir écrire la matrice
     qDebug() << "- Ecriture de la matrice d'adjacence";
@@ -889,14 +886,6 @@ void OptimProblem::computeGUICompoAndBusLocations() {
         icomponent1.next();
         indiceCompo[i] = icomponent1.key();
         compoIndice[icomponent1.key()] = i;
-
-        //Initial position
-        if ((icomponent1.value())->getXpos() != 0){
-            positions(i, 0) = (icomponent1.value())->getXpos();
-        }
-        if ((icomponent1.value())->getYpos() != 0) {
-            positions(i, 1) = (icomponent1.value())->getYpos();
-        }
         i++;
     }
 
@@ -947,15 +936,13 @@ void OptimProblem::computeGUICompoAndBusLocations() {
 
     // calcul de la fonction Energie
     qDebug()<<"Calcul de la fonction Energie";
+    Eigen::MatrixXf positions = MatrixXf::Zero(nbCompo, 2);
+    positions.setConstant(0); 
     int nIteration = 1000;  
     double gab = 0.001;
     for (int i = 0; i < nbCompo; i++) {
-        if (positions(i, 0) == 0) {
-            positions(i, 0) = cos((double(i) / double(nbCompo)) * 2 * 3.14) * maxDist;
-        }
-        if (positions(i, 1) == 0) {
-            positions(i, 1) = sin((double(i) / double(nbCompo)) * 2 * 3.14) * maxDist;
-        }
+        positions(i, 0) = cos((double(i) / double(nbCompo)) * 2 * 3.14) * maxDist;
+        positions(i, 1) = sin((double(i) / double(nbCompo)) * 2 * 3.14) * maxDist;
     }
     GradDescResult calcPos;
     qDebug()<<"Debut de la descente de gradient";
@@ -1034,7 +1021,9 @@ void OptimProblem::jsonSaveGuiComponents(QJsonArray &componentsArray)
     {
         icomponent.next() ;
         MilpComponent* lptrCompo = icomponent.value() ;
-        lptrCompo->jsonSaveGuiComponent(componentsArray, lptrCompo->getEnergyVector()->Name());
+        QString componentCarrier = "";
+        if (lptrCompo->getEnergyVector()) componentCarrier = lptrCompo->getEnergyVector()->Name();
+        lptrCompo->jsonSaveGuiComponent(componentsArray, componentCarrier);
     }
 }
 
@@ -1182,7 +1171,7 @@ int OptimProblem::initProblem()
     if (mMilpData->iHMFuturSize() < mMilpData->timeshift())
     {
         qCritical() << "DoInit timeShift " << mMilpData->timeshift() << " should be < futursize " << mMilpData->iHMFuturSize() << " !! ";
-        Cairn_Exception cairn_error("Error in doInit of Cairn!", -1);
+        Cairn_Exception cairn_error((std::string)"Error in doInit of Cairn!", -1);
         //throw cairn_error;
         return -1 ;
     }
@@ -1223,10 +1212,10 @@ int OptimProblem::initProblem()
 
     // Send component ports data to Submodel and allocate Ports own variables
 
-    ierr = MilpComponent::initPorts() ;
+    ierr = MilpComponent::initPorts();
     if (ierr <0) return ierr ;
 
-    ierr = initSubModelConfiguration() ;
+    ierr = initSubModelConfiguration();
 
     return ierr ;
 }
@@ -1363,14 +1352,17 @@ void OptimProblem::computeObjectiveFunction(MIPModeler::MIPExpression& aObjectiv
     }
 }
 
-void OptimProblem::resetFlags() {
-    //Needed at the end of a problem run to avoid issues when having two consecutive runs! 
-    QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
-    while (icomponent.hasNext())
-    {
-        icomponent.next();
-        MilpComponent* lptr = icomponent.value();
-        lptr->resetFlags();
+void OptimProblem::resetFlags() 
+{
+    //QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
+    //while (icomponent.hasNext())
+    //{
+    //    icomponent.next();
+    //    MilpComponent* lptr = icomponent.value();
+    //    lptr->resetFlags();
+    //}
+    if (mTecEcoAnalysis) {
+        mTecEcoAnalysis->resetFlags();
     }
 }
 
@@ -1386,14 +1378,13 @@ bool OptimProblem::newCompoModel()
 void OptimProblem::buildProblem()
 {
     QString vStudyFile = QString(mStudyFile->archFile().c_str());
-    QSettings settingsJson(vStudyFile, JsonFormat);
 
     mRateOfReturnDiscountFactor = 0; // Why it is always 0 ?!!
 
     int ierr = initSubModelInput();
 
     if (ierr <0) {
-        Cairn_Exception erreur ("Error in OptimProblem init ",ierr);
+        Cairn_Exception erreur ((std::string)"Error in OptimProblem init ",ierr);
         //        throw erreur ; not functionnal because of QWidget in FBSF ??
         this->setException(erreur) ;
         return ;
@@ -1421,7 +1412,7 @@ void OptimProblem::buildProblem()
     }
     catch (...)
     {
-        Cairn_Exception error(" ERROR in component setting the ports of TecEcoAnalysis", -1);
+        Cairn_Exception error((std::string)" ERROR in component setting the ports of TecEcoAnalysis", -1);
         this->setException(error);
         return;
     }
@@ -1512,23 +1503,23 @@ void OptimProblem::readSolution(int aNsol)
     {
         icomponent.next() ;
         MilpComponent* lptr = icomponent.value() ;
-
         //computeAllIndicators assumes mSolver->getModelType() == GS::MIPMODELER()
         lptr->compoModel()->computeAllIndicators(mSolver->getOptimalSolution(aNsol));
-        //
         lptr->exportSubmodelIO(mSolver, aNsol);
-        //lptr->cleanExpressions(aNsol);
     }
 }
 
-void OptimProblem::cleanExpressions()
+void OptimProblem::closeExpressions()
 {
-    QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
-    while (icomponent.hasNext())
-    {
-        icomponent.next();
-        MilpComponent* lptr = icomponent.value();
-        lptr->cleanExpressions();
+    //QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
+    //while (icomponent.hasNext())
+    //{
+    //    icomponent.next();
+    //    MilpComponent* lptr = icomponent.value();
+    //    lptr->closeExpressions();
+    //}
+    if (mTecEcoAnalysis) {
+        mTecEcoAnalysis->closeExpressions();
     }
 }
 
@@ -1617,10 +1608,11 @@ void OptimProblem::computeTecEcoEnvAnalysis(const int& aNsol, const int& istat)
     computeDynamicIndicators(aNsol); 
 }
 
-void OptimProblem::exportEnvImpactMassIndicators(QString& aFileName, QString& encoding) {
+void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, const std::string& encoding) {
     //FileName
-    if (aFileName == "") {
-        aFileName = "study_results_EnvImpactMass.csv";
+    std::string vFileName = aFileName;
+    if (vFileName == "") {
+        vFileName = "study_results_EnvImpactMass.csv";
     }
     //----------------- Generate the Table -----------------
     QString headerNames1 = QString("");
@@ -1680,33 +1672,31 @@ void OptimProblem::exportEnvImpactMassIndicators(QString& aFileName, QString& en
     }
 
     //----------------- Open the File ----------------- 
-    QFile FileOut(aFileName);
-    if (!CairnUtils::openFileForWriting(FileOut)) {
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, vFileName)) {
         return; //error!
     }
 
-    QTextStream out(&FileOut);
-    out.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-
     //-----------------  Write the Table ----------------- 
-    out << headerNames1 << "\n";
-    out << headerNames2 << "\n";
-    out << headerUnits << "\n";
+    FileOut << headerNames1.toStdString() << std::endl;
+    FileOut << headerNames2.toStdString() << std::endl;
+    FileOut << headerUnits.toStdString() << std::endl;
     
     QMapIterator<QString, QString> iLine(valuesMap);
     while (iLine.hasNext())
     {
         iLine.next();
-        out << iLine.key() << iLine.value() << "\n";
+        FileOut << iLine.key().toStdString() << iLine.value().toStdString() << "\n";
     }
 
     FileOut.close();
 }
 
-void OptimProblem::exportEnvImpactParameters(QString& aFileName, QString& encoding) {
+void OptimProblem::exportEnvImpactParameters(const std::string& aFileName, const std::string& encoding) {
     //FileName
-    if (aFileName == "") {
-        aFileName = "study_EnvImpactParameters.csv";
+    std::string vFileName = aFileName;
+    if (vFileName == "") {
+        vFileName = "study_EnvImpactParameters.csv";
     }
     //----------------- Generate the Table -----------------
     QString header = QString("");
@@ -1751,30 +1741,29 @@ void OptimProblem::exportEnvImpactParameters(QString& aFileName, QString& encodi
     }
 
     //----------------- Open the File ----------------- 
-    QFile FileOut(aFileName);
-    if(!CairnUtils::openFileForWriting(FileOut)) {
+    std::fstream FileOut;
+    if(!CairnUtils::openFileForWriting(FileOut, vFileName)) {
         return; //error!
     }
 
-    QTextStream out(&FileOut);
-    out.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-
+    
     //-----------------  Write the Table ----------------- 
-    out << header << "\n";
+    FileOut << header.toStdString() << std::endl;
     QMapIterator<QString, QString> iLine(valuesMap);
     while (iLine.hasNext())
     {
         iLine.next();
-        out << iLine.key() << iLine.value() << "\n";
+        FileOut << iLine.key().toStdString() << iLine.value().toStdString() << std::endl;
     }
 
     FileOut.close();
 }
 
-void OptimProblem::exportPortEnvImpactParameters(QString& aFileName, QString& encoding) {
+void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, const std::string& encoding) {
     //FileName
-    if (aFileName == "") {
-        aFileName = "study_PortEnvImpactParameters.csv";
+    std::string vFileName = aFileName;
+    if (vFileName == "") {
+        vFileName = "study_PortEnvImpactParameters.csv";
     }
     //----------------- Generate the Table -----------------
     QString header = QString("");
@@ -1832,56 +1821,51 @@ void OptimProblem::exportPortEnvImpactParameters(QString& aFileName, QString& en
     }
 
     //----------------- Open the File ----------------- 
-    QFile FileOut(aFileName);
-    if (!CairnUtils::openFileForWriting(FileOut)) {
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, vFileName)) {
         return; //error!
     }
-
-    QTextStream out(&FileOut);
-    out.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-
+    
     //-----------------  Write the Table ----------------- 
-    out << header << "\n";
+    FileOut << header.toStdString() << std::endl;
     QMapIterator<QString, QString> iLine(valuesMap);
     while (iLine.hasNext())
     {
         iLine.next();
-        out << iLine.key() << iLine.value() << "\n";
+        FileOut << iLine.key().toStdString() << iLine.value().toStdString() << std::endl;
     }
 
     FileOut.close();
 }
 
-void OptimProblem::exportParameters(QString& aFileName, QString& encoding) {
+void OptimProblem::exportParameters(const std::string& aFileName, const std::string& encoding) {
     //FileName
-    if (aFileName == "") {
-        aFileName = "study_parameters.csv";
+    std::string vFileName = aFileName;
+    if (vFileName == "") {
+        vFileName = "study_parameters.csv";
     }
 
     //Open the File
-    QFile FileOut(aFileName);
-    if (!CairnUtils::openFileForWriting(FileOut)) {
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, vFileName)) {
         return; //error!
     }
 
-    QTextStream out(&FileOut);
-    out.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-
     //header
-    out << "Component;Parameter;Value;Unit;Description\n";
+    FileOut << "Component;Parameter;Value;Unit;Description" << std::endl;
     
     //Solver 
     std::map<QString, InputParam::ModelParam*> paramMap = mSolver->getParameters();
-    exportParameters(out, mSolver->Name(), paramMap);
+    exportParameters(FileOut, mSolver->Name(), paramMap);
 
     //SimulationControl
     paramMap = mSimulationControl->getParameters();
-    exportParameters(out, mSimulationControl->Name(), paramMap);
+    exportParameters(FileOut, mSimulationControl->Name(), paramMap);
 
     //TecEcoAnalysis 
     paramMap = {};
     if (mTecEcoAnalysis) paramMap = mTecEcoAnalysis->getParameters();
-    exportParameters(out, mName, paramMap);
+    exportParameters(FileOut, mName, paramMap);
 
     //MilpComponents
     QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
@@ -1890,12 +1874,12 @@ void OptimProblem::exportParameters(QString& aFileName, QString& encoding) {
         icomponent.next();
         MilpComponent* lptr = icomponent.value();
         paramMap = lptr->getParameters();
-        exportParameters(out, lptr->Name(), paramMap, lptr->PortList()[0]->ptrEnergyVector(), lptr->getTimeSeriesNames());
+        exportParameters(FileOut, lptr->Name(), paramMap, lptr->PortList()[0]->ptrEnergyVector(), lptr->getTimeSeriesNames());
     }
     FileOut.close();
 }
 
-void OptimProblem::exportParameters(QTextStream& out, QString& name, std::map<QString, InputParam::ModelParam*>& paramMap, EnergyVector* aEnergyVector, QMap<QString, QString> aTimeSeriesNames)
+void OptimProblem::exportParameters(std::fstream& out, QString& name, std::map<QString, InputParam::ModelParam*>& paramMap, EnergyVector* aEnergyVector, QMap<QString, QString> aTimeSeriesNames)
 {
     for (auto const& [key, param] : paramMap) {
         //Only mandatory and modified parameters (and optional timeseries if value is not empty)
@@ -1920,12 +1904,12 @@ void OptimProblem::exportParameters(QTextStream& out, QString& name, std::map<QS
                 value = param->toString();
     }
 
-            out << name + ";" + param->getName() + ";" + value + ";" + unit + ";" + param->getDescription() + "\n";
+            out << name.toStdString() << ";" << param->getName().toStdString() << ";" << value.toStdString() << ";" << unit.toStdString() << ";" << param->getDescription().toStdString() << std::endl;
         }
     }
 }
 
-void OptimProblem::exportMultiObjFile(QTextStream& out, int aNsol)
+void OptimProblem::exportMultiObjFile(std::fstream& out, int aNsol)
 {
     if (mTecEcoAnalysis != nullptr) {
         QMap<QString, MIPModeler::MIPExpression*> mapSubObjective = mTecEcoAnalysis->mapSubObjective();
@@ -1937,25 +1921,21 @@ void OptimProblem::exportMultiObjFile(QTextStream& out, int aNsol)
     }
 }
 
-void OptimProblem::exportAllTecEcoEnvAnalysis(QString aResultFile, QString range, QString encoding, const bool isRollingHorizon, const int aNsol)
+void OptimProblem::exportAllTecEcoEnvAnalysis(const std::string& aResultFile, const std::string& range, const std::string& encoding, const bool isRollingHorizon, const int aNsol)
 {
-    QFile FileOut((aResultFile));
-    if (!CairnUtils::openFileForWriting(FileOut)) {
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, aResultFile)) {
             Cairn_Exception cairn_error("OptimProblem: couldn't open result file for writing : "+ aResultFile, -1);
             throw cairn_error;
      }
 
-    QTextStream out(&FileOut) ;
-    out.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-    QString Qrange = (range) ;
-
-    out << "Model" << ";Indicator" << ";Value" << ";Unit" << ";Alias" << "\n";
+    FileOut << "Model" << ";Indicator" << ";Value" << ";Unit" << ";Alias" << "\n";
 
     //TecEco
     InputParam* modelIndicators = mCompoModel->getInputIndicators();
     const InputParam::t_Indicators& vIndicators = modelIndicators->getIndicators();
     for (size_t i = 0; i < vIndicators.size(); i++) {
-        vIndicators[i]->Export(out, mName, range, mForceExportAllIndicators);
+        vIndicators[i]->Export(FileOut, mName, range, mForceExportAllIndicators);
     }
 
     // DETAILED DATA; BY COMPONENTS 
@@ -1965,19 +1945,19 @@ void OptimProblem::exportAllTecEcoEnvAnalysis(QString aResultFile, QString range
         icomponent.next();
         MilpComponent* lptr = icomponent.value();
 
-        lptr->setRange(range);
-        lptr->compoModel()->exportIndicators(out, lptr->Name(), range, mForceExportAllIndicators, isRollingHorizon);
+        lptr->setRange(QString(range.c_str()));
+        lptr->compoModel()->exportIndicators(FileOut, lptr->Name(), range, mForceExportAllIndicators, isRollingHorizon);
     }
 
     //Add multiObj results
     if (range == "PLAN") {
-        exportMultiObjFile(out, aNsol);
+        exportMultiObjFile(FileOut, aNsol);
     }
 
     //User-defined indicators
     if (range == "PLAN") {
         for (int i = 0; i < mDynamicIndicators.size(); i++) {
-            CairnUtils::outputIndicator(out, "User-Defined", mDynamicIndicators[i]->getName(), mDynamicIndicators[i]->compute(), "UNIT", mDynamicIndicators[i]->getName());
+            CairnUtils::outputIndicator(FileOut, "User-Defined", mDynamicIndicators[i]->getName(), mDynamicIndicators[i]->compute(), "UNIT", mDynamicIndicators[i]->getName());
         }
     }
 
@@ -2020,50 +2000,47 @@ void OptimProblem::setDefaultsResults()
     }
 }
 
-void OptimProblem::exportOptimaSizeAllCycles(const QString& aFileName, const int cycle, QString encoding)
+void OptimProblem::exportOptimaSizeAllCycles(const std::string& aFileName, const int cycle, const std::string &encoding)
 {
-    QFile FileOut(aFileName);
-    if (!CairnUtils::openFileForWriting(FileOut)) {
-        Cairn_Exception cairn_error("OptimProblem: couldn't open file optimalSize.csv for writing.", -1);
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, aFileName)) {
+        Cairn_Exception cairn_error((std::string)"OptimProblem: couldn't open file optimalSize.csv for writing.", -1);
         throw cairn_error;
     }
+   
+    FileOut << "sep=;\n";
 
-    QTextStream out(&FileOut);
-    out.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-
-    out << "sep=;\n";
-
-    QString header = "";
+    std::string header = "";
     QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
     while (icomponent.hasNext())
     {
         icomponent.next();
         MilpComponent* lptr = icomponent.value();
         if (lptr->compoModel()->getOptimalSizeAllCycles().size() > 0) { 
-            header += ";" + lptr->compoModel()->getCompoName();
+            header += ";" + lptr->compoModel()->getCompoName().toStdString();
         }
         else {
             //Must be a Bus component. In case of Bus, mOptimalSizeAllCycles is empty. 
         }
     }
-    out << header << "\n";
+    FileOut << header << std::endl;
     
     for (int i = 0; i < cycle; i++) {
-        QString optimalSizeValues = "Cycle " + QString::number(i + 1);
+        std::string optimalSizeValues = "Cycle " + std::to_string(i + 1);
         QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
         while (icomponent.hasNext())
         {
             icomponent.next();
             MilpComponent* lptr = icomponent.value();
             if (i < lptr->compoModel()->getOptimalSizeAllCycles().size()) {
-                optimalSizeValues += ";" + QString::number((lptr->compoModel()->getOptimalSizeAllCycles())[i]);
+                optimalSizeValues += ";" + std::to_string((lptr->compoModel()->getOptimalSizeAllCycles())[i]);
             }
-            else if (header.contains(lptr->compoModel()->getCompoName())) { //lptr->compoModel()->getOptimalSizeAllCycles().size() > 0
+            else if (CairnUtils::contains(header, lptr->compoModel()->getCompoName().toStdString())) {            
                 //This means that there is a non-Bus component with mOptimalSizeAllCycles.size > 0 but < nCycles. 
                 //If happened then there must be something wrong!
                 optimalSizeValues += ";"; 
             }
         }
-        out << optimalSizeValues << "\n";
+        FileOut << optimalSizeValues << "\n";
     }
 }

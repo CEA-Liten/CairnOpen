@@ -1,6 +1,7 @@
 from os import path, remove
 import pytest
 from CairnNRT import CairnNRT
+from cairn import *
 
 @pytest.fixture(autouse=True, scope="module")
 def clean():
@@ -14,33 +15,41 @@ def clean():
 
 @pytest.mark.Cairn
 def test_runTNR_Json():
+    test_case="cairn_training"
+    
     app_home = path.dirname(path.realpath(__file__))
+    simu_full =  path.join(app_home, test_case+'.json')    
+    timeseries =  path.join(app_home, test_case+'_dataseries.csv')
+    
+    cairn_instance = CairnAPI(True)
+    problem = cairn_instance.read_study(simu_full)
+    problem.add_timeseries(timeseries)
+    
+    problem.run()
+    
     tnr = CairnNRT(app_home)
     
-    testcase="cairn_training"
-
-    fileNew=testcase+"_results_PLAN.csv"
-    fileRef=testcase+"_results_PLAN_REF.csv"
-
-    tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series=testcase+"_dataseries.csv", tnr_name=testcase)
-    
-    tnr.checkGlobal(typeFile='PLAN', fileNew=fileNew,fileRef=fileRef)
-    tnr.checkGlobal(typeFile='HIST', fileNew=testcase+"_results_HIST.csv",fileRef=testcase+"_results_HIST_REF.csv")
+    tnr.checkGlobal(typeFile='HIST', fileNew=test_case+"_results_PLAN.csv",fileRef=test_case+"_results_PLAN_REF.csv")
+    tnr.checkGlobal(typeFile='HIST', fileNew=test_case+"_results_HIST.csv",fileRef=test_case+"_results_HIST_REF.csv")
 
    
 @pytest.mark.Cairn
 def test_runTNRHighs_Json():
+    test_case="cairn_training_HiGHS"
+    
     app_home = path.dirname(path.realpath(__file__))
+    simu_full =  path.join(app_home, test_case+'.json')    
+    timeseries =  path.join(app_home, 'cairn_training_dataseries.csv')
+    
+    cairn_instance = CairnAPI(True)
+    problem = cairn_instance.read_study(simu_full)
+    problem.add_timeseries(timeseries)
+    
+    problem.run()
+    
     tnr = CairnNRT(app_home)
     
-    testcase="cairn_training_HiGHS"
-
-    fileNew=testcase+"_results_PLAN.csv"
-    fileRef=testcase+"_results_PLAN_REF.csv"
-    
-    tnr.runPersee(tnr_dir=r".", tnr_xml=testcase+".json", tnr_series="cairn_training_dataseries.csv", tnr_name=testcase)
-    
-    tnr.checkGlobal(typeFile='PLAN', fileNew=fileNew,fileRef=fileRef) 	
+    tnr.checkGlobal(typeFile='HIST', fileNew=test_case+"_results_PLAN.csv",fileRef=test_case+"_results_PLAN_REF.csv")	
     
 
 if __name__ == '__main__':

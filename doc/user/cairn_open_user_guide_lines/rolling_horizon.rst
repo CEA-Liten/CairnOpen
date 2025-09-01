@@ -37,7 +37,7 @@ A rolling horizon approach solves a sequence of optimization problems over a mov
 How to set the rolling horizon mode?
 ================================
 
-On |cairn|, the rolling horizon can be set by using the PERSEE component and set the following parameters: 
+On |cairn|, the rolling horizon can be set by using the |cairn| component and set the following parameters: 
 - Futuresize: size of the moving window to be optimized
 - NbCycle: N° of windows to be optimized
 - Timeshift: Shifting value of the window for the next cycle

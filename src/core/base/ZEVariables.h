@@ -54,6 +54,6 @@ private:
     bool m_IsExt{ false };
 };
 
-typedef QMap<QString, ZEVariables*> t_mapExchange;
+typedef std::map<QString, ZEVariables*> t_mapExchange;
 
 #endif // ZEVariables_H

@@ -15,6 +15,7 @@ endif()
   
 # extra files
 if (WITH_GENERICAPPENV)
+    set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envCairn${PROJECT_VERSION})
     if(CMAKE_SYSTEM_NAME MATCHES Windows)
         msys_to_win_path( ${Qt5_HOME} Qt5_HOME)
         configure_file(${CMAKE_SOURCE_DIR}/cmake/GenericAppEnv.in ${CMAKE_BINARY_DIR}/GenericAppEnv.bat @ONLY)
@@ -31,6 +32,11 @@ if (WITH_GENERICAPPENV)
     endif()
 endif()
 
+# Generate resources/modelTypes.txt (needed for api)
+execute_process(COMMAND python generateModelTypes.py ${WITH_PRIVATEMODELS}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts)
+
+
 
 if (WITH_PYBIND)
     if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)
@@ -39,7 +45,7 @@ if (WITH_PYBIND)
         set(PROJECT_OPTION1 "-DWITH_PRIVATEMODELS:BOOL=${WITH_PRIVATEMODELS}")
         set(PROJECT_OPTION2 "-DCPLEX_ROOT:STRING=${CPLEX_ROOT}")
 	    configure_file(${CMAKE_SOURCE_DIR}/cmake/setup.py.in ${CMAKE_HOME_DIRECTORY}/setup.py @ONLY)
-        configure_file(${CMAKE_SOURCE_DIR}/cmake/pyproject.toml.in ${CMAKE_HOME_DIRECTORY}/pyproject.toml @ONLY)
+	    configure_file(${CMAKE_SOURCE_DIR}/cmake/pyproject.toml.in ${CMAKE_HOME_DIRECTORY}/pyproject.toml @ONLY)      
 	    install(
               FILES ${CMAKE_BINARY_DIR}/__init__.py
               DESTINATION .

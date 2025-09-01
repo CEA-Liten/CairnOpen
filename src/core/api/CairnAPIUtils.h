@@ -33,19 +33,21 @@ namespace CairnAPIUtils {
 		errLink = 16
 	};
 
-	static std::map<std::string, t_list> mModelsMap = {
-		{ "BusFlowBalance", {"NodeLaw"} },
-		{ "BusSameValue", {"NodeEquality"} },
-		{ "MultiObjCompo", {"ManualObjective"} },
-		{ "Grid", {"GridFree", "GridaFRRService", "GridFCRService"} },
-		{ "SourceLoad", {"SourceLoad", "SourceLoadFlexible", "SourceLoadMinMax", "BuildingFlexibleBasic", "BuildingFlexible"} },
-		{ "Storage", {"StorageGen", "StorageLinearBounds", "StorageThermal", "Battery_V1", "StorageSeasonal", "ResourceStock"}},
-		{ "Converter", {"Electrolyzer", "ElectrolyzerDetailed", "PipelineBasic", "ThermalGroup", "ProductionUC", "Cogeneration", "FuelCell", 
-		    "Dam", "Mixer", "Transportation", "NeuralNetwork", "HeatPump", "SMReformer", "Methaner", "Methanizer", "Compressor", "Converter",
-			"MultiConverter", "HeatExchange", "PowerToFluidT", "PowerToFluidH", "Cluster"} },
-		{ "OperationConstraint", {"Ramp", "MinStateTime", "ConstantProduction"} },
-		{ "PhysicalEquation", {"HeatEquation","HeatExchangeEquation"} }
-	};
+	static std::vector<std::string> mNonModifiableParams = {
+		"id", "type", "ModelClass", "Xpos", "Ypos"
+	}; //list of parameters that cannot be modified
+
+	std::map<std::string, std::string> ParserTxt(const std::string& filename);
+
+	std::string convertTypeToUpperCase(const std::string type);
+
+	// Return the list of all sub-directories of dirPath
+	t_list lookupSubDirectories(const std::string& dirPath);
+
+	// Lookup model types in sourceDir
+	static std::map<std::string, std::string> mModelTypes;
+	void initModelTypesMap(const std::string& sourceDir);
+	//void lookupModelTypes(const std::string& sourceDir);
 
 	// Return the list of the all possibles model names
 	t_list get_Possible_Model_Names();
@@ -55,6 +57,9 @@ namespace CairnAPIUtils {
 
 	// Return the type of Component given its Model name
 	std::string get_Component_Type(const std::string& a_Model);
+
+	// Return the type of Bus given its Model name
+	std::string get_Bus_Type(const std::string& a_Model);
 
 	t_list getParametersName(std::vector<InputParam*> a_Inputs, CairnAPI::ESettingsLimited a_setLimited);
 
@@ -68,6 +73,9 @@ namespace CairnAPIUtils {
 	bool setParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const t_value& a_Value);
 
 	bool setParameters(std::vector<InputParam*> a_Inputs, const t_dict& a_Params);
+
+	t_list getShowConfigList(std::vector<InputParam*> a_Inputs);
+	t_value getShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 
 	void setError(ECodeError a_Err, const std::string& a_msg = "");	
 }

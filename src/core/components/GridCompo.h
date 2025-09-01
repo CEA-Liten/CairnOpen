@@ -49,9 +49,10 @@ public:
     void declareCompoInputParam();
     void setCompoInputParam(const QMap<QString, QString> aComponent);
 
-    int initProblem();
+    int initProblem(const bool& readParams=true);
     int setParameters();
     
+    void setCompoSens(const QString& direction);
 
 protected:
     // Model interface

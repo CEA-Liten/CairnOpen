@@ -12,17 +12,15 @@ public:
     ~GridSubModel();
     //-----------------------------------------------------------------------------------------------------
     virtual void setTimeData();
+    virtual void computeInitialData();
 
     void declareDefaultModelConfigurationParameters()
     {
         TechnicalSubModel::declareDefaultModelConfigurationParameters();
         //Re-declare parameter "EcoInvestModel" in order to set its default value to false in case of Grid
         //bool
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", { "" });    /** Use EcoInvestModel - ie Use Capex and Opex if true */
+        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "");    /** Use EcoInvestModel - ie Use Capex and Opex if true */
         addParameter("AddVariableMaxFlow", &mAddVariableMaxFlow, false, false, true, "If true: use time variable maximum flow limitation defined by <UseGridVariableMaxFlow> if true - Default is false");
-
-        //double
-        addConfig("Direction", &mSens, 1., true, true, "Injection / Extraction direction");
     }
     
     void declareDefaultModelParameters()
@@ -34,7 +32,7 @@ public:
 
         addTimeSeries("UseProfileSellPrice", &mSellPrice, SExtFunctionFlag({ &isInjection, this }), SExtFunctionFlag({ &isInjection, this }), "Grid specific profile sell price overwriting EnergyVector default value or profile", "Currency/StorageUnit");
         addTimeSeries("UseProfileBuyPrice", &mBuyPrice, SExtFunctionFlag({ &isExtraction, this }), SExtFunctionFlag({ &isExtraction, this }), "Grid specific Profile buy price overwriting EnergyVector default value or profile", "Currency/StorageUnit");
-        addTimeSeries("UseProfileBuyPriceSeasonal", &mBuyPriceSeasonal, SFunctionFlag({ eFTypeNotAnd, {}, { &mSeasonalPrevisions}, SExtFunctionFlag({ &isExtraction, this }) }), SExtFunctionFlag({ &isExtraction, this }), "Time Series of Purchase (Extraction) price of energy - See energy vector", "Currency/StorageUnit", { "TimeSeriesForecast" });
+        addTimeSeries("UseProfileBuyPriceSeasonal", &mBuyPriceSeasonal, SFunctionFlag({ eFTypeNotAnd, {}, { &mSeasonalPrevisions}, SExtFunctionFlag({ &isExtraction, this }) }), SExtFunctionFlag({ &isExtraction, this }), "Time Series of Purchase (Extraction) price of energy - See energy vector", "Currency/StorageUnit", "TimeSeriesForecast");
         addTimeSeries("UseProfileGrid", &mGridUse, false, true, "Time Series of grid extraction allowance if 1 forbidden if 0 - Use to prevent extraction on basis of carbon content knowledge or grid unavailability");
         addTimeSeries("UseVariableMaximumGridFlow", &mGridVariableMaxFlow, false, true, "Time Series of grid maximum flow extraction or injection", "FluxUnit");
 
@@ -43,13 +41,11 @@ public:
     void declareDefaultModelInterface()
     {
         TechnicalSubModel::declareDefaultModelInterface();
-        // register expression for model Interface with global MilpProblem, Bus, other MilpComponent
-        addIO("GridFlow", &mExpFlux, mEnergyVector->pFluxUnit());       /** Grid flow injected or extracted - Positive value means extraction (injection) if ExtractFromGrid (InjectToGrid) field is used */
-        addIO("MaxFlow", &mExpSizeMax, mEnergyVector->pFluxUnit()); /** Sizing Grid flow - Name must be that used for mInputParam MaxFlow imposed value !*/
-        addIO("GridPrice", &mExpGridPrice, mEnergyVector->pFluxUnit(), mCurrency);
 
-        setOptimalSizeExpression("MaxFlow");  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-        setOptimalSizeUnit(mEnergyVector->pFluxUnit());  // defines default expression should be used for OptimalSize computation and use in Economic analysis
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
+        addSizeMaxIO("MaxFlow", &mExpSizeMax, true, mEnergyVector->pFluxUnit()); /** Sizing Grid flow - Name must be that used for mInputParam MaxFlow imposed value !*/
+        addIO("GridFlow", &mExpFlux, true, mEnergyVector->pFluxUnit());       /** Grid flow injected or extracted - Positive value means extraction (injection) if ExtractFromGrid (InjectToGrid) field is used */
+        addIO("GridPrice", &mExpGridPrice, true, mEnergyVector->pFluxUnit(), mCurrency);
     }
 
     void declareDefaultModelIndicators(bool* exp)
@@ -129,12 +125,11 @@ protected:
     //MILP Variable
     MIPModeler::MIPVariable1D mVarFluxGrid;
 
-  //technical output
+    //technical output
     MIPModeler::MIPExpression1D mExpFlux;
     MIPModeler::MIPExpression1D mExpGridPrice;
 
     //technical input
-    double mSens;
     bool mAddVariableMaxFlow;
     double mMaxFlux;
     double mMinFlux;

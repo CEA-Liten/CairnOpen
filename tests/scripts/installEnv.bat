@@ -1,6 +1,6 @@
 rem Install all packages from reqs_core.txt and reqs_TNR inside the virtual environment latest
 rem Installation d'un python env au niveau du serveur ?
-call pythonEnv.bat
+call %~dp0\\pythonEnv.bat %1
 
 python.exe -m venv %PYTHON_VENV%
 call %PYTHON_VENV%\scripts\activate.bat

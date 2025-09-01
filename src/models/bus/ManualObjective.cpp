@@ -37,21 +37,32 @@ void ManualObjective::setTimeData()
     mObjectiveCoeffTS.resize(mHorizon);
 }
 
+void ManualObjective::closeExpressions()
+{
+    SubModel::closeExpressions();
+
+    closeExpression(mBusBalance);
+    closeExpression(mSubObjective);
+    closeExpression(mExpCommonMinVariable);
+    closeExpression(mExpCommonMaxVariable);
+
+    closeExpression1D(mBusBalance0D);
+    closeExpression1D(mBusBalance1D);
+}
+
 void ManualObjective::buildModel()
 {
-        // le bus est une contrainte systeme sous forme d'une expression a laquelle chaque composant contribue directement
+    // le bus est une contrainte systeme sous forme d'une expression a laquelle chaque composant contribue directement
     if (mAllocate)
     {
-        mCommonMaxVariable = MIPModeler::MIPVariable0D();
-        mCommonMinVariable = MIPModeler::MIPVariable0D();
         mBusBalance1D = MIPModeler::MIPExpression1D(mHorizon);
         mBusBalance0D = MIPModeler::MIPExpression1D(mHorizon);
     }
     else
     {
-        closeExpression1D(mBusBalance1D);
-        closeExpression1D(mBusBalance0D);
+        closeExpressions();
     }
+
 	/** Build balance constraint once component constraints have created their own expressions */
     addVariable(mCommonMinVariable, "CommonMin");
     addVariable(mCommonMaxVariable, "CommonMax");

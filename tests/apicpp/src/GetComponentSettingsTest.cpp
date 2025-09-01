@@ -8,13 +8,13 @@ using namespace std;
 int main()
 {
 	//Files Paths
-	std::string vFileName = TEST_DATA + (std::string)"/formation_persee.json";
+	std::string vFileName = TEST_DATA + (std::string)"/formation_cairn.json";
 
-	CairnAPI m_Persee;
+	CairnAPI m_Cairn;
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	TESTAPI("read study",
-		m_Problem = m_Persee.read_Study(vFileName)
+		m_Problem = m_Cairn.read_Study(vFileName)
 	)
 
 	t_list vComponents = m_Problem.get_Components();

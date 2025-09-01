@@ -1,5 +1,5 @@
 {
-	"Saved with Cairn version": "4.5.9",
+	"Saved with Cairn version": "5.0.12",
 	"numberPages": 1,
 	"studyComment": "",
 	"mapParameters": {
@@ -288,7 +288,7 @@
 								"carrier": "Electricity#1",
 								"carrierType": "ANY_TYPE",
 								"direction": "DATAEXCHANGE",
-								"variable": "SizeMax",
+								"variable": "Weight",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -329,7 +329,7 @@
 				],
 				"nodePorts": {
 					"left": 1,
-					"right": 1,
+					"right": 2,
 					"top": 1,
 					"bottom": 1
 				},
@@ -366,6 +366,20 @@
 								"variable": "SourceLoadFlow",
 								"checkunit": "Yes",
 								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							},
+							{
+								"id": "port5",
+								"name": "PortR1",
+								"position": "right",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 2,
 								"offset": 0,
 								"defaultport": "No",
 								"enabled": "true"
@@ -544,8 +558,8 @@
 				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 40,
-				"x": 672,
-				"y": 304,
+				"x": 860,
+				"y": 352,
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -606,6 +620,7 @@
 				],
 				"nodePorts": {
 					"right": 1,
+					"top": 1,
 					"bottom": 1
 				},
 				"nodePortsData": [
@@ -624,6 +639,25 @@
 								"coeff": 1,
 								"offset": 0,
 								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "top",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortT0",
+								"position": "top",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 2,
+								"offset": 0,
+								"defaultport": "No",
 								"enabled": "true"
 							}
 						]
@@ -868,7 +902,7 @@
 								"carrier": "Electricity#1",
 								"carrierType": "ANY_TYPE",
 								"direction": "DATAEXCHANGE",
-								"variable": "SizeMax",
+								"variable": "Weight",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -895,12 +929,25 @@
 				"headSocketName": "PortL0",
 				"listPoint": [
 					{
-						"x": 692,
+						"x": 880,
 						"y": 440
 					},
 					{
 						"x": 112,
 						"y": 440
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "GridFree#2",
+				"tailSocketName": "PortT0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "PortR1",
+				"listPoint": [
+					{
+						"x": 880,
+						"y": 220
 					}
 				]
 			},
@@ -912,7 +959,7 @@
 				"headSocketName": "PortR0",
 				"listPoint": [
 					{
-						"x": 446,
+						"x": 448,
 						"y": 328
 					}
 				]
@@ -925,8 +972,8 @@
 				"headSocketName": "PortR0",
 				"listPoint": [
 					{
-						"x": 446,
-						"y": 324
+						"x": 448,
+						"y": 372
 					}
 				]
 			},
@@ -939,7 +986,7 @@
 				"listPoint": [
 					{
 						"x": 584,
-						"y": 212
+						"y": 208
 					},
 					{
 						"x": 584,
@@ -956,7 +1003,7 @@
 				"listPoint": [
 					{
 						"x": 346,
-						"y": 212
+						"y": 214
 					},
 					{
 						"x": 346,

@@ -31,34 +31,24 @@ const QMap<QString, double> EnergyVector::mEnergyToMWh = { {"GWh",1.e3}, {"MWh" 
 const QMap<QString, double> EnergyVector::mMassToKg    = { {"t"  ,1.e3}, {"kg"  ,1.}, {"g"  ,1.e-3} };
 const QMap<QString, double> EnergyVector::mFlowToKgPh  = { {"t/h",1.e3}, {"kg/h",1.} };
 
-//TODO virtualize and create FluidVectors, ThermalVectors, ElectricalVectors
-EnergyVector::EnergyVector(QObject* aParent, QString aName, const QMap<QString, QString> aComponent, const QSettings &aSettings): QObject(aParent),
-    mEnergyColour(""),
-    mBuyPriceSeasonal(0.0) //Is it needed ?
+EnergyVector::EnergyVector(QObject* aParent, const QString& aName, const QString& aType, const QMap<QString, QString> aComponent)
+    : QObject(aParent),
+    mName(aName),
+    mType(aType),
+    mEnergyColour("")
 {
     this->setObjectName(aName);    
     declareCompoInputParam();
     setCompoInputParam(aComponent);
-    InitEnergyVectorParam(aComponent, aSettings);
+    if (!aComponent.contains("Type")) {
+        mType = aType;
+    }
+    InitEnergyVectorParam(aComponent);
 
     qInfo() << " Energy Vector " << mName << " of type " << mType ;
     qInfo() << " Energy Vector " << mName << " use MassCarrier property " << isMassCarrier() << " RHO " << mRHO ;
     qInfo() << " Energy Vector " << mName << " use HeatCarrier property " << isHeatCarrier() << " CP  " << mCP  ;
     qInfo() << " Energy Vector " << mName << " use FuelCarrier property " << isFuelCarrier() << " LHV " << mLHV ;
-}
-
-EnergyVector::EnergyVector(QObject* aParent, 
-    const QString &aName, const QString& aType):
-    mEnergyColour(""),
-    mBuyPriceSeasonal(0.0)
-{
-    this->setObjectName(aName);
-    declareCompoInputParam();
-    //should be set after declareCompoInputParam because it set params to their default values
-    mName = aName;
-    mType = aType;
-    //
-    InitEnergyVectorParam();
 }
 
 EnergyVector::~EnergyVector()
@@ -73,26 +63,24 @@ void EnergyVector::declareCompoInputParam()
 {
     //------------------------------ options ------------------------------
     mCompoInputParam = new InputParam (this,"CompoInputParam"+ mName) ;
-    mCompoInputParam->addToConfigList({"UnitNames"});
     //QString
-    mCompoInputParam->addParameter("id", &mName, "EnergyVector", true, true, "Energy vector name", "", {"DONOTSHOW"});
     mCompoInputParam->addParameter("Type", &mType, "", false, true,"Energy vector type specifying the energy form among: Electrical - Thermal - Fluid - Material");
-    mCompoInputParam->addParameter("Xpos", &mXpos, 0, false, true, "User interface positioning of the object", "", {"DONOTSHOW"});
-    mCompoInputParam->addParameter("Ypos", &mYpos, 0, false, true, "User interface positioning of the object", "", {"DONOTSHOW"});
-    mCompoInputParam->addParameter("MassUnit", &mMassUnit, "kg", true, true,"Unit to be used for mass - default is kg","-");
-    mCompoInputParam->addParameter("EnergyUnit", &mEnergyUnit, "MWh", true, true,"Unit to be used for energy - default is MWh","-");
-    mCompoInputParam->addParameter("PowerUnit", &mPowerUnit, "MW", true, true,"Unit to be used for power - default is MW","-");
-    mCompoInputParam->addParameter("FlowrateUnit", &mFlowrateUnit, "kg/h", true, true,"Unit to be used for mass flow - default is kg/h","-");
-    mCompoInputParam->addParameter("FluxUnit", &mFluxUnit, "", false, true,"Unit to be used for Flow","",{"NOTSHOWN"});
-    mCompoInputParam->addParameter("FluxName", &mFluxName, "", false, true, "Name to be used for Flow", "", { "UnitNames" });
-    mCompoInputParam->addParameter("StorageName", &mStorageName, "", false, true, "Name to be used for storage capacity", "", { "UnitNames" });
-    mCompoInputParam->addParameter("StorageUnit", &mStorageUnit, "", false, true, "Unit to be used for storage capacity", "", { "NOTSHOWN" });
+    mCompoInputParam->addParameter("Xpos", &mXpos, 0, false, true, "User interface positioning of the object", "", "DONOTSHOW");
+    mCompoInputParam->addParameter("Ypos", &mYpos, 0, false, true, "User interface positioning of the object", "", "DONOTSHOW");
+    mCompoInputParam->addParameter("MassUnit", &mMassUnit, "kg", false, true,"Unit to be used for mass - default is kg","-");
+    mCompoInputParam->addParameter("EnergyUnit", &mEnergyUnit, "MWh", false, true,"Unit to be used for energy - default is MWh","-");
+    mCompoInputParam->addParameter("PowerUnit", &mPowerUnit, "MW", false, true,"Unit to be used for power - default is MW","-");
+    mCompoInputParam->addParameter("FlowrateUnit", &mFlowrateUnit, "kg/h", false, true,"Unit to be used for mass flow - default is kg/h","-");
+    mCompoInputParam->addParameter("FluxUnit", &mFluxUnit, "", false, true,"Unit to be used for Flow","", "DONOTSHOW");
+    mCompoInputParam->addParameter("FluxName", &mFluxName, "", false, true, "Name to be used for Flow", "", "UnitNames");
+    mCompoInputParam->addParameter("StorageName", &mStorageName, "", false, true, "Name to be used for storage capacity", "", "UnitNames");
+    mCompoInputParam->addParameter("StorageUnit", &mStorageUnit, "", false, true, "Unit to be used for storage capacity", "", "DONOTSHOW");
     mCompoInputParam->addParameter("PotentialName", &mPotentialName, "", false, true,"Name to be used for potential eg Pressure - Temperature...");
     mCompoInputParam->addParameter("PotentialUnit", &mPotentialUnit, "", false, true,"Unit to be used for constant potential","Bar");
-    mCompoInputParam->addParameter("SurfaceUnit", &mSurfaceUnit, "m2", true, true, "Unit to be used for surface - default is m2", "-");
-    mCompoInputParam->addParameter("PeakUnit", &mPeakUnit, "MWc", true, true, "Unit to be used for peak - default is Megawatt-crete ", "-");
-    mCompoInputParam->addParameter("EnergyName", &mEnergyName, "Energy", false, true,"Name to be used for Energy","",{"UnitNames"});
-    mCompoInputParam->addParameter("PowerName", &mPowerName, "Power", false, true,"Name to be used for Power","",{"UnitNames"});
+    mCompoInputParam->addParameter("SurfaceUnit", &mSurfaceUnit, "m2", false, true, "Unit to be used for surface - default is m2", "-");
+    mCompoInputParam->addParameter("PeakUnit", &mPeakUnit, "MWc", false, true, "Unit to be used for peak - default is Megawatt-crete ", "-");
+    mCompoInputParam->addParameter("EnergyName", &mEnergyName, "Energy", false, true,"Name to be used for Energy","", "UnitNames");
+    mCompoInputParam->addParameter("PowerName", &mPowerName, "Power", false, true,"Name to be used for Power","", "UnitNames");
     //bool
     mCompoInputParam->addParameter("IsMassCarrier",&mIsMassCarrier, false, false, true,"Option meaning mass is carried by energy vector - Default to false for Electrical and Thermal types - true for Fluids and Material");
     mCompoInputParam->addParameter("IsHeatCarrier",&mIsHeatCarrier, false, false, true,"Option giving heat capacity ability to energy vector - Default to true for Electrical and Thermal types - false for Fluids and Material");
@@ -106,66 +94,31 @@ void EnergyVector::declareCompoInputParam()
     //------------------------------ parameters ------------------------------
     mCompoInputSettings = new InputParam (this,"CompoInputSettings"+ mName) ;
     //double
-    mCompoInputSettings->addParameter("Potential", &mPotential, 0., true, true, "Voltage- Pressure- Temperature","V-Bar-degC");
+    mCompoInputSettings->addParameter("Potential", &mPotential, 0., false, true, "Voltage- Pressure- Temperature","V-Bar-degC");
     mCompoInputSettings->addParameter("LHV", &mLHV, 1., &mIsFuelCarrier, true, "Heat Value of fuel type carriers - Use 1. for pure energy model ","EnergyUnit/MassUnit");
     mCompoInputSettings->addParameter("CP", &mCP, 0., &mIsHeatCarrier, true, "Heat Capacity of heat carriers ","J/K/kg");
-    mCompoInputSettings->addParameter("GHV", &mGHV, 0., &mIsFuelCarrier, true, "Gross Heat Value - Use 1. for pure energy model ","EnergyUnit/MassUnit",{"NOTUSED"});
+    mCompoInputSettings->addParameter("GHV", &mGHV, 0., &mIsFuelCarrier, true, "Gross Heat Value - Use 1. for pure energy model ","EnergyUnit/MassUnit");
     mCompoInputSettings->addParameter("RHO", &mRHO, 0., &mIsMassCarrier, true, "Density of fluid type carriers","kg/m3");
-    mCompoInputSettings->addParameter("BuyPrice", &mBuyPrice, 0., true, true, "Constant BuyPrice per mass or energy units","EUR/StorageUnit");
-    mCompoInputSettings->addParameter("SellPrice", &mSellPrice, 0., true, true, "Constant SellPrice per mass or energy units","EUR/StorageUnit");
+    mCompoInputSettings->addParameter("BuyPrice", &mBuyPrice, 0., false, true, "Constant BuyPrice per mass or energy units","EUR/StorageUnit");
+    mCompoInputSettings->addParameter("BuyPriceSeasonal", &mBuyPriceSeasonal, 0., false, true, "Constant BuyPriceSeasonal per mass or energy units", "EUR/StorageUnit");
+    mCompoInputSettings->addParameter("SellPrice", &mSellPrice, 0., false, true, "Constant SellPrice per mass or energy units","EUR/StorageUnit");
 }
 
-void EnergyVector::setCompoInputParam(const QMap<QString, QString> aComponent) {
-    mName = aComponent["id"];
-    mType = aComponent["Type"];
-    mXpos = aComponent["Xpos"].toInt();
-    mYpos = aComponent["Ypos"].toInt();
+void EnergyVector::setCompoInputParam(const QMap<QString, QString> aComponent)
+{
+    int ierr1 = mCompoInputParam->readParameters(aComponent); //Should stay at the beginning. It contains configuration parameters
+    int ierr2 = mCompoInputSettings->readParameters(aComponent);
+    int ierr3 = mTimeSeriesParam->readParameters(aComponent);
+    if (ierr1 < 0 || ierr2 < 0 || ierr3 < 0) { 
+        Cairn_Exception error("Error while initializing EnergyVector " + mName + ". A mandatory parameter is missing!", -1);
+        throw& error;
+    }  
+
     mEnergyColour = aComponent["EnergyColor"];
     mModel = aComponent["Model"];
-    //units
-    mFluxUnit = aComponent["FluxUnit"];
-    mStorageUnit = aComponent["StorageUnit"];
-    mPotentialUnit = aComponent["PotentialUnit"];
-    if (aComponent["PowerUnit"] != "")  {
-        mPowerUnit = aComponent["PowerUnit"];
-    }
-    if (aComponent["EnergyUnit"] != "") {
-        mEnergyUnit = aComponent["EnergyUnit"];
-    }
-    if (aComponent["MassUnit"] != "")  {
-        mMassUnit = aComponent["MassUnit"];
-    }
-    if (aComponent["FlowrateUnit"] != "") {
-        mFlowrateUnit = aComponent["FlowrateUnit"];
-    }
-    setSurfaceUnit(aComponent["SurfaceUnit"]);
-    setPeakUnit(aComponent["PeakUnit"]);
-    //names 
-    mFluxName = aComponent["FluxName"];
-    mStorageName = aComponent["StorageName"];
-    mPotentialName = aComponent["PotentialName"];
-    if (aComponent["EnergyName"] != "") {
-        QString energyName = aComponent["EnergyName"];
-        setEnergyName(energyName);
-    }
-    if (aComponent["PowerName"] != "") {
-        QString powerName = aComponent["PowerName"];
-        setPowerName(powerName);
-    }
-    //names of price time series
-    mUseProfileBuyPrice = aComponent["UseProfileBuyPrice"];
-    mUseProfileBuyPriceSeasonal = aComponent["UseProfileBuyPriceSeasonal"];
-    mUseProfileSellPrice = aComponent["UseProfileSellPrice"];
 }
 
-bool EnergyVector::InitEnergyVectorParam()
-{
-    QSettings vSettings;
-    QMap<QString, QString> vComponent;
-    return InitEnergyVectorParam(vComponent, vSettings);
-}
-
-bool EnergyVector::InitEnergyVectorParam(const QMap<QString, QString> &aComponent, const QSettings& aSettings)
+bool EnergyVector::InitEnergyVectorParam(const QMap<QString, QString> &aComponent)
 {
     if (mGUIData) delete mGUIData;
     mGUIData = new GUIData(parent(), mName);
@@ -332,16 +285,8 @@ bool EnergyVector::InitEnergyVectorParam(const QMap<QString, QString> &aComponen
         }
     }
     
-    if (isFuelCarrier())    {
-        if (getVariantSetting(mName + ".LHV", aSettings).isValid()) {
-            double lhv = getVariantSetting(mName + ".LHV", aSettings).toDouble();
-            if (lhv > 0.) // si initialisé par Settings
-            {
-                mLHV = lhv;
-            }
-        }
-
-        if (mLHV <=0.) // si initialisé avant
+    if (isFuelCarrier()) {
+        if (mLHV <=0.)  
         {
             QString energyUnit = mCompoInputParam->getParamQSValue("EnergyUnit");
             if (energyUnit != "") setEnergyUnit(energyUnit);
@@ -366,7 +311,7 @@ bool EnergyVector::InitEnergyVectorParam(const QMap<QString, QString> &aComponen
             {
                 qCritical() << "To use LHV predefined values, you must use consistent EnergyUnit or MassUnit for fluid vector " + mName + " !";
                 qCritical() << "Instead, we found Energy Unit " << mEnergyUnit << " and Mass unit " << mMassUnit;
-                Cairn_Exception erreur("Mass Unit must be multiple of kg or t, Energy Unit mut be multiple of MWh or J ", -1);
+                Cairn_Exception erreur((std::string)"Mass Unit must be multiple of kg or t, Energy Unit mut be multiple of MWh or J ", -1);
                 throw& erreur;
             }
         }
@@ -399,40 +344,14 @@ bool EnergyVector::InitEnergyVectorParam(const QMap<QString, QString> &aComponen
         qInfo() << mName << ".CP=" << mCP;
     }
 
-    if (getVariantSetting(mName + ".Potential", aSettings).isValid())
-        mPotential = getVariantSetting(mName + ".Potential", aSettings).toDouble();
-
-    if (isHeatCarrier())
-    {
-        if (getVariantSetting(mName + ".CP", aSettings).isValid())
-            mCP = getVariantSetting(mName + ".CP", aSettings).toDouble();
-    }
-    if (isFuelCarrier())
-    {
-        if (getVariantSetting(mName + ".GHV", aSettings).isValid())
-            mGHV = getVariantSetting(mName + ".GHV", aSettings).toDouble();
-    }
-
     if (isMassCarrier())
     {
-        if (getVariantSetting(mName + ".RHO", aSettings).isValid())
-            mRHO = getVariantSetting(mName + ".RHO", aSettings).toDouble();
-
         if (mRHO <= 0.)
         {
             if (getFluidTypeFromQString(mType) != UnknownFluid) mRHO = Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(mType))->RHO_NormalConditions; // MWh/kg
             if (mType == "FluidH2O") mRHO = 1.0e3;
         }
     }
-
-    if (getVariantSetting(mName + ".BuyPrice", aSettings).isValid())
-        mBuyPrice = getVariantSetting(mName + ".BuyPrice", aSettings).toDouble();
-
-    if (getVariantSetting(mName + ".BuyPriceSeasonal", aSettings).isValid())
-        mBuyPriceSeasonal = getVariantSetting(mName + ".BuyPriceSeasonal", aSettings).toDouble();
-
-    if (getVariantSetting(mName + ".SellPrice", aSettings).isValid())
-        mSellPrice = getVariantSetting(mName + ".SellPrice", aSettings).toDouble();
 
     return true;
 }

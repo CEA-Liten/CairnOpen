@@ -1,14 +1,21 @@
 #include "ConverterSubModel.h"
 
 ConverterSubModel::ConverterSubModel(QObject* aParent) :
-TechnicalSubModel(aParent)
+TechnicalSubModel(aParent),
+mUseAgeing(false),
+mAgeingModel(nullptr)
 {
-    mAgeingModel = nullptr;
 }
 
 ConverterSubModel::~ConverterSubModel()
 {
     if (mAgeingModel) delete mAgeingModel;
+}
+
+void ConverterSubModel::declareInputParams(const QString& name)
+{
+    SubModel::declareInputParams(name);
+    mAgeingModel = new AgeingRunningHours(mInputParam, mInputData);
 }
 
 void ConverterSubModel::setTimeData()
@@ -22,10 +29,10 @@ void ConverterSubModel::setTimeData()
     }
 }
 
-void ConverterSubModel::buildModel()
+void ConverterSubModel::computeAgeingModelContribution()
 {
     if (mUseAgeing && mAgeingModel) {
-        mAgeingModel->buildModel();
+        mAgeingModel->computeModelContribution();
     }
 }
 
@@ -33,9 +40,7 @@ void ConverterSubModel::setMinPower(MIPModeler::MIPExpression1D aPower, std::vec
     /** Minimum power:
     * Linearization of function :math:`Z(t) = varMinPowerH2 * Yonoff(t) (linearization)`,  :math:`mPowerH2(t) >= varMinPowerH2 * YonOff(t)` with mPowerH2 >= Z
     */
-    if (mAllocate) {
-        mZ = MIPModeler::MIPVariable1D(mHorizon);
-    }
+
     addVariable(mZ, "Pmin");
 
     if (!mLPModelOnly)
@@ -128,7 +133,7 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     }
     // set running to Ageing
     if (mUseAgeing && mAgeingModel) {
-        mInputData->setParameterValue("HistRunningTime", mRunningTime.at(1));
+        mAgeingModel->setHistRunningTime(mRunningTime.at(1));
     }
 
     iport = mListPort;
@@ -239,7 +244,7 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
             {
                 if (lptrport->Variable() == "INPUTFlux" + QString::number(i + 1))
                 {
-                    addIO("INPUTFlux" + QString::number(i + 1), &mExpInput[i], lptrport->pFluxUnit()); /** Computed input flow at port N_i */
+                    addIO("INPUTFlux" + QString::number(i + 1), &mExpInput[i], true, lptrport->pFluxUnit()); /** Computed input flow at port N_i */
                     found = true;
                     break; //InnerLoop
                 }
@@ -247,7 +252,7 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
             if (!found) {//Use default port mPortINPUTFlux1. Don't use a dynamic unit!
                 QString unit = "FluxUnit";
                 if (defaultPort) unit = defaultPort->ptrEnergyVector()->FluxUnit();
-                addIO("INPUTFlux" + QString::number(i + 1), &mExpInput[i], unit); /** Computed input flow at port N_i */
+                addIO("INPUTFlux" + QString::number(i + 1), &mExpInput[i], true, unit); /** Computed input flow at port N_i */
             }
         }
     }
@@ -272,7 +277,7 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
             {
                 if (lptrport->Variable() == "OUTPUTFlux" + QString::number(i + 1))
                 {
-                    addIO("OUTPUTFlux" + QString::number(i + 1), &mExpOutput[i], lptrport->pFluxUnit()); /** Computed output flow at port N_i */
+                    addIO("OUTPUTFlux" + QString::number(i + 1), &mExpOutput[i], true, lptrport->pFluxUnit()); /** Computed output flow at port N_i */
                     found = true;
                     break; //InnerLoop
                 }
@@ -280,7 +285,7 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
             if (!found) {//Use default port PortOUTPUTFlux1 ! Don't use a dynamic unit!
                 QString unit = "FluxUnit";
                 if (defaultPort) unit = defaultPort->ptrEnergyVector()->FluxUnit();
-                addIO("OUTPUTFlux" + QString::number(i + 1), &mExpOutput[i], unit); /** Computed output flow at port N_i */
+                addIO("OUTPUTFlux" + QString::number(i + 1), &mExpOutput[i], true, unit); /** Computed output flow at port N_i */
             }
         }
     }

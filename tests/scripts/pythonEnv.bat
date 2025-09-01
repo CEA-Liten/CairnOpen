@@ -2,8 +2,14 @@ rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rem Path for Python
 rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 set PYTHON_HOME=C:\PythonPegase\3_10_9\python\
-set PYTHON_VENV=%PYTHON_HOME%\..\envPegase
 set PYTHON_LIB=python310.lib
+
+set PYTHON_VENV=%1
+if "%PYTHON_VENV%"=="" (
+	set PYTHON_VENV=%PYTHON_HOME%\..\envPegase
+)
+
+echo python environment is %1
 
 call %PYTHON_VENV%\scripts\deactivate.bat
 

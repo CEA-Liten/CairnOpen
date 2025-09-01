@@ -49,18 +49,18 @@ public:
     MinStateTime(QObject* aParent);
     ~MinStateTime();
 //----------------------------------------------------------------------------------------------------
+    void computeModelContribution() override;
     void setTimeData();
     int checkConsistency();
 //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
     {
         OperationSubModel::declareDefaultModelConfigurationParameters() ;
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel" });
         //bool
-        addParameter("AddMinProductionTime", &mAddMinProductionTime, false, false, true, "If true: imposes a minimum production time", "bool", { "" });
-        addParameter("AddMinStandByTime", &mAddMinStandbyTime, false, false, true, "If true : imposes a minimum stand by time", "bool", { "" });
-        addParameter("AddStartUpCost", &mAddStartUpCost, false, false, true, "If true: add start up cost", "", { "" });                            
-        addParameter("AddShutDownCost", &mAddShutDownCost, false, false, true, "If true: add shut down cost", "", { "" });
+        addParameter("AddMinProductionTime", &mAddMinProductionTime, false, false, true, "If true: imposes a minimum production time", "bool");
+        addParameter("AddMinStandByTime", &mAddMinStandbyTime, false, false, true, "If true : imposes a minimum stand by time", "bool");
+        addParameter("AddStartUpCost", &mAddStartUpCost, false, false, true, "If true: add start up cost", "");                            
+        addParameter("AddShutDownCost", &mAddShutDownCost, false, false, true, "If true: add shut down cost", "");
 
     }
 //----------------------------------------------------------------------------------------------------
@@ -68,19 +68,28 @@ public:
     {
         OperationSubModel::declareDefaultModelParameters();
         //double
-        addParameter("MinProductionTime", &mMinProductionTime, 0., false, true, "Minimal number of hours to keep the production on", "hour", { "" });
-        addParameter("MinStandByTime", &mMinStandbyTime, 0., false, true, "Minimal number of hours to stay in stand by", "hour", { "" });
-        addParameter("StartUpCost", &mStartUpCost, 0., &mAddStartUpCost, &mAddStartUpCost, "Cost paid when moving from \"off\" to \"on\" status while cold", "Currency", { "" });
-        addParameter("ShutDownCost", &mShutDownCost, 0., &mAddShutDownCost, &mAddShutDownCost, "Cost paid when moving from \"on\" to \"off\" status", "Currency", { "" });
+        addParameter("MinProductionTime", &mMinProductionTime, 0., false, true, "Minimal number of hours to keep the production on", "hour");
+        addParameter("MinStandByTime", &mMinStandbyTime, 0., false, true, "Minimal number of hours to stay in stand by", "hour");
+        addParameter("StartUpCost", &mStartUpCost, 0., &mAddStartUpCost, &mAddStartUpCost, "Cost paid when moving from \"off\" to \"on\" status while cold", "Currency");
+        addParameter("ShutDownCost", &mShutDownCost, 0., &mAddShutDownCost, &mAddShutDownCost, "Cost paid when moving from \"on\" to \"off\" status", "Currency");
 
     }
 //----------------------------------------------------------------------------------------------------
     void declareModelInterface()
     {
         declareDefaultModelInterface();
-        addIO("State", &mExpState, "bool") ;      /** ON OFF state of the element connected to ramp */
-        addControlIO("StartUp", &mExpStartUp, "bool", &mHistStartUp);
-        addControlIO("ShutDown", &mExpShutDown, "bool", &mHistShutDown);        
+
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
+        addIO("State", &mExpState, true, "bool") ;      /** ON OFF state of the element connected to ramp */
+        addControlIO("StartUp", &mExpStartUp, true, "bool", &mHistStartUp);
+        addControlIO("ShutDown", &mExpShutDown, true, "bool", &mHistShutDown);
+
+        /* Register non-IO 0D-expressions in order to automatically allocate and close them */
+        // no ...
+
+        /* Register non-IO 1D-expressions in order to automatically allocate and close them */
+        addExp(&mExpStartUpCosts, &mHorizon);
+        addExp(&mExpShutDownCosts, &mHorizon);
     }
 
     void declareModelIndicators() {
@@ -98,13 +107,7 @@ public:
     void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue) ;
     void addMinProductionTime();
     void addMinStandByTime();
-    
- //----------------------------------------------------------------------------------------------------
-    void buildModel();                                                              // build minimum formulation
-    void computeAllContribution();
-//----------------------------------------------------------------------------------------------------
-
-
+   
     void initDefaultPorts() {
         mDefaultPorts.clear();
         //PortState - bottom

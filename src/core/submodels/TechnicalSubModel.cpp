@@ -3,6 +3,7 @@
 
 TechnicalSubModel::TechnicalSubModel(QObject* aParent) :
 SubModel(aParent),
+mObjectiveType(""),
 mHistPureOpexContributionDiscounted(0.),
 mHistReplacementPartDiscounted(0.),
 mOptimalSize(2, 0.),
@@ -33,13 +34,54 @@ TechnicalSubModel::~TechnicalSubModel()
 {
 }
 
+void TechnicalSubModel::resetHistStoredVaues()
+{
+    mHistPureOpexContributionDiscounted = 0.;
+    mHistReplacementPartDiscounted = 0.;
+    mHistVariableCostsDiscounted = 0.;
+
+    mMaxRunningTime = std::vector<double>(2, 0.);
+
+    mExpEchData = {};
+    mConsumptionMap = {};
+    mConsLvlTotMap = {};
+    mConsPFMap = {};
+    mRateOfUse = {};
+    mConsMeanMap = {};
+    mProductionMap = {};
+    mProdLvlTotMap = {};
+    mProdMeanMap = {};
+    mProdContributionMap = {};
+    mChargedEnergyMap = {};
+    mDischargedEnergyMap = {};
+    mNLevChargedEnergyMap = {};
+    mNLevDischargedEnergyMap = {};
+    mChargedMeanMap = {};
+    mDischargedMeanMap = {};
+    mNbCylesMap = {};
+}
+
+void TechnicalSubModel::buildModel()
+{
+    if (mAllocate) {
+        allocateExpressions();
+    }
+    else {
+        closeExpressions();
+    }
+
+    /* set SizeMax expression and add constraints on SizeMax and Installed variables */
+    setExpSizeMax();
+    
+    /** compute expressions, add variables and add constraints */
+    computeAllContribution();
+
+    mAllocate = false;
+}
+
 void TechnicalSubModel::addMinimumCapacity(double& aMaxSize)
 {
-    if (mAllocate)
-    {
-        mInvest = MIPModeler::MIPVariable0D(0, 1, MIPModeler::MIP_INT);
-    }
-    addVariable(mInvest, "Invest");
+    addVariable(mInvest, "Invest", 0, 1, MIPModeler::MIP_INT);
     addConstraint(mVarSizeMax <= mInvest * aMaxSize, "maximumCapacity");
     addConstraint(mInvest * mMinSize <= mExpSizeMax, "minimumCapacity");
 }
@@ -66,23 +108,27 @@ int TechnicalSubModel::checkConsistency()
 
 void TechnicalSubModel::computeAllContribution()
 {
-    /** Compute possible geometric expressions and add corresponding constraints, if GeometryModel=true */
+    /* Compute Ageing Contribution */
+    computeAgeingModelContribution();
+
+    /* Compute Model particular Contribution */
+    computeModelContribution();
+
+    /* Compute possible geometric expressions and add corresponding constraints, if GeometryModel=true */
     computeGeometricContribution();
-    /** Compute possible environment expressions and add corresponding constraints, if EnvironmentModel=true */
+    
+    /* Compute possible environment expressions and add corresponding constraints, if EnvironmentModel=true */
     computeEnvContribution();
-    /** Compute economical expressions and add corresponding constraints, if EncoInvestModel=true */
+    
+    /* Compute economical expressions and add corresponding constraints, if EncoInvestModel=true */
     computeEconomicalContribution();
-    //Next Opex (PureOpex + Replacement + VarCost + EnvImpactCost) should be computet at the end because it is a sum of other expressions
+
+    /* Next Opex(PureOpex + Replacement + VarCost + EnvImpactCost) should be computet at the end because it is a sum of other expressions */
     computeNetOpexContribution();
 }
 
-void TechnicalSubModel::computeGeometricContribution() {
-    if (mGeometryModel) {
-        closeExpression(mExpArea);
-        closeExpression(mExpVolume);
-        closeExpression(mExpMass);
-    }
-
+void TechnicalSubModel::computeGeometricContribution() 
+{
     if (mGeometryModel) {
         if (mPiecewiseArea) {
             qInfo() << "Add Piecewise Area. Try Relaxation : " << mTryRelaxationArea;
@@ -121,10 +167,7 @@ void TechnicalSubModel::computeEnvContribution()
         {
             for (EnvImpact* impact : mEnvImpacts) impact->allocateExpressions(mTimeSteps.size());
         }
-        else
-        {
-            for (EnvImpact* impact : mEnvImpacts) impact->closeExpressions();
-        }
+
         //Environmental impacts
         //Direct emissions
         for (EnvImpact* impact : mEnvImpacts) {
@@ -146,17 +189,17 @@ void TechnicalSubModel::computeEnvContribution()
                 j++;
             }
         }
-        //Grey emissions
+        //Embodied emissions
         for (EnvImpact* impact : mEnvImpacts) {
             if (impact->PiecewiseEnvGreyContentCoeff()) {
                 qInfo() << "Add Piecewise EnvGreyContentCoeff. Try Relaxation : " << impact->TryRelaxationEnvGreyContentCoeff();
                 computePiecewiseContribution(impact->CapacitySetPoint(), impact->SetPoint(), impact->TryRelaxationEnvGreyContentCoeff(),
-                    impact->EnvGreyContentOffset(), *(impact->getExpEnvGreyMass()));
+                    impact->EnvGreyContentOffset(), *(impact->getExpEnvEmbodied()));
             }
             else {
-                impact->computeEnvGreyImpactContribution(mExpSizeMax);
+                impact->computeEmbodiedEnvImpactContribution(mExpSizeMax);
             }
-            impact->computeEnvGreyImpactReplacement(mExpSizeMax);
+            impact->computeReplacementEnvImpactContribution(mExpSizeMax);
         }
     }
     //
@@ -206,17 +249,6 @@ void TechnicalSubModel::computeEconomicalContribution()
             mExpReplacement = MIPModeler::MIPExpression1D(mTimeSteps.size());
         }
         mExpVariableCosts = MIPModeler::MIPExpression1D(mTimeSteps.size());
-    }
-    else
-    {
-        if (mEcoInvestModel)
-        {
-            closeExpression(mExpCapex);
-            closeExpression1D(mExpOpex);
-            closeExpression1D(mExpPureOpex);
-            closeExpression1D(mExpReplacement);
-        }
-        closeExpression1D(mExpVariableCosts);
     }
 
     if (mEcoInvestModel)
@@ -273,7 +305,7 @@ void TechnicalSubModel::computeNetOpexContribution() {
             mExpOpex[t] = mExpPureOpex[t] + mExpReplacement[t] + mExpVariableCosts[t];
             if (mEnvironmentModel) {
                 for (int i = 0; i < mEnvImpacts.size(); i++) {
-                    mExpOpex[t] += mEnvImpacts[i]->getExpEnvCost()->at(t);
+                    mExpOpex[t] += mEnvImpacts[i]->getExpEnvOpCost()->at(t);
                 }
             }
         }
@@ -318,8 +350,8 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     {
         for (EnvImpact* impact : mEnvImpacts)
         {
-            computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvCost(), optSol, 1., 0., *impact->getEnvImpactPartPLAN());
-            computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvCost(), optSol, 1., 0., *impact->getEnvImpactPartHIST());
+            computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartPLAN());
+            computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartHIST());
             mEnvImpactPart.at(0) += *impact->getEnvImpactPartPLAN();
             mEnvImpactPart.at(1) += *impact->getEnvImpactPartHIST();
             //Use getExpEnvFlow instead of getExpEnvMass to compute getEnvImpactMassPLAN and getEnvImpactMassHIST because computeProduction multiplies by TimeStep
@@ -348,7 +380,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
 
     if (mEnvironmentModel) for (EnvImpact* impact : mEnvImpacts) {
         //Use getExpEnvFlow instead of getExpEnvMass to compute getEnvImpactMassDiscountedPLAN because computeLvlImpact multiplies by TimeStep
-        computeLvlImpact(true, mHorizon, mNpdtPast, *impact->getExpEnvCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedPLAN());
+        computeLvlImpact(true, mHorizon, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedPLAN());
         computeLvlImpact(true, mHorizon, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassDiscountedPLAN());
         envImpactPartDiscounted += *impact->getEnvImpactPartDiscountedPLAN();
     }
@@ -363,7 +395,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
 
     if (mEnvironmentModel) for (EnvImpact* impact : mEnvImpacts) {
         //Use getExpEnvFlow instead of getExpEnvMass to compute getEnvImpactMassDiscountedHIST because computeLvlImpact multiplies by TimeStep
-        computeLvlImpact(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedHIST());
+        computeLvlImpact(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedHIST());
         computeLvlImpact(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassDiscountedHIST());
         envHistImpactPartDiscounted += *impact->getEnvImpactPartDiscountedHIST();
     }

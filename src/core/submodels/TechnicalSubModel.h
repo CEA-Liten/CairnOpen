@@ -3,36 +3,40 @@
 
 #include "SubModel.h"
 
+extern bool CAIRNCORESHARED_EXPORT isBlended(class SubModel* ap_Model);
+
 class CAIRNCORESHARED_EXPORT TechnicalSubModel : public SubModel
 {
 public:
     TechnicalSubModel(QObject* aParent=nullptr);
     ~TechnicalSubModel();
     /** -------------------------------------------------------------------------------------------------------------- */
+    void buildModel() override;
     virtual void computeGeometricContribution();   /** MILP Model description : geometric expressions */
     virtual void computeEnvContribution();        /** MILP Model description : environment expressions */
     virtual void computeEconomicalContribution(); /** MILP Model description : economical expressions */
     void computeNetOpexContribution();            /** Compute Net Opex contribution expression, pureOpex + replacement + varcost */
+    virtual void computeAgeingModelContribution() { /* only relevant for ConverterSubModel */ };
     virtual void computeAllContribution();       /** MILP Model description : all expressions */
     virtual void computeDefaultIndicators(const double* optSol);
+    void resetHistStoredVaues();
     // ------------------------- Defaul Parameters ----------------------------------------
     virtual void declareDefaultModelConfigurationParameters() 
     {
         SubModel::declareDefaultModelConfigurationParameters();
         //bool
-        addParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", { "EcoInvestModel" });    /** Use EcoInvestModel - ie Use Capex and Opex if true */
-        addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", { "GeometryModel" });    /** Use GeometryModel */
-        addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel - ie Use EnvEmissionCost if true", "", { "EnvironmentModel" }); /** Use EnvironmentModel - ie Use EnvEmissionCost if true  */
-        addParameter("UseWeightOptimization", &mUseWeightOptimization, false, false, true, "Use sizing based on Weight if true", "", { "" }); /** Use sizing based on Weight if true - default is false*/
-        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "", { "" });          /** Use LP Model - ie binary variable imposed if true */
-        addParameter("UseAgeing", &mUseAgeing, false, false, true, "", "", { "Ageing" });          /** Use UseAgeing Model if true - default to false. Current Efficiency will be reduced by 1-EfficiencyAgeingCoeff*HistRunnningTime and reset to 1 when HistRunnningTime reaches EfficiencyMaxHours */
-        addParameter("AddMinimumCapacity", &mAddMinimumCapacity, false, false, true, "Give a minimal size for the component", "", { "" });
-        addParameter("PiecewiseCapex", &mPiecewiseCapex, false, false, true, "Provide a map of capex and sizes - see performances maps in doc", "", { "EcoInvestModel" });
-        addParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", { "GeometryModel" });
-        addParameter("PiecewiseVolume", &mPiecewiseVolume, false, false, true, "Provide a map of volumes and sizes - see performances maps in doc", "", {"GeometryModel"});
-        addParameter("PiecewiseMass", &mPiecewiseMass, false, false, true, "Provide a map of masses and sizes - see performances maps in doc", "", { "GeometryModel" });
-        addParameter("CondenseVariablesOnTP", &mCondenseVariablesOnTP, false, false, true, "", "", { "AddOperationConstraints" }); /** to condense variables on the typical periods definition except for the storage state : allows storage between typical periods, not available for constraints linking several time steps for the moment */
-        addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Use long term time series forecasts", "", { "TimeSeriesForecast" });
+        addParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");    /** Use EcoInvestModel - ie Use Capex and Opex if true */
+        addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel - ie Use EnvEmissionCost if true", "", "EnvironmentModel"); /** Use EnvironmentModel - ie Use EnvEmissionCost if true  */
+        addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "GeometryModel");    /** Use GeometryModel */
+        addParameter("UseWeightOptimization", &mUseWeightOptimization, false, false, true, "Use sizing based on Weight if true", ""); /** Use sizing based on Weight if true - default is false*/
+        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");          /** Use LP Model - ie binary variable imposed if true */
+        addParameter("AddMinimumCapacity", &mAddMinimumCapacity, false, false, true, "Give a minimal size for the component", "");
+        addParameter("PiecewiseCapex", &mPiecewiseCapex, false, false, true, "Provide a map of capex and sizes - see performances maps in doc", "", "EcoInvestModel");
+        addParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", "GeometryModel");
+        addParameter("PiecewiseVolume", &mPiecewiseVolume, false, false, true, "Provide a map of volumes and sizes - see performances maps in doc", "", "GeometryModel");
+        addParameter("PiecewiseMass", &mPiecewiseMass, false, false, true, "Provide a map of masses and sizes - see performances maps in doc", "", "GeometryModel");
+        addParameter("CondenseVariablesOnTP", &mCondenseVariablesOnTP, false, false, true, "", "", "AddOperationConstraints"); /** to condense variables on the typical periods definition except for the storage state : allows storage between typical periods, not available for constraints linking several time steps for the moment */
+        addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Use long term time series forecasts", "", "TimeSeriesForecast");
 
         //int
         mNbInputPorts = getNbPorts(KCONS());
@@ -65,42 +69,42 @@ public:
     virtual void declareDefaultModelParameters()
     {
         //bool
-        addParameter("LPWeightOptimization", &mLPWeightOptimization, false, false, true, "Use integer Weight if false ", "", { "" }); /** Use sizing based on Weight if true - default is false*/
+        addParameter("LPWeightOptimization", &mLPWeightOptimization, false, false, true, "Use integer Weight if false ", ""); /** Use sizing based on Weight if true - default is false*/
         //double 
         addParameter("Weight", &mWeight, 1., &mUseWeightOptimization, true);	/** Weight of identical component, use negative value for optimization */
-        addParameter("LifeTime", &mLifeTime, 1., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", { "EcoInvestModel","EnvironmentModel"});              /** LifeTime in years */
-        addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", mCurrency+"/OptimalSizeUnit", { "EcoInvestModel" });                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
-        addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., false, &mEcoInvestModel, "Multiplicative coefficient on elementary Capex", "-", { "EcoInvestModel" });  /** Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
-        addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", mCurrency, { "EcoInvestModel" });  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
-        addParameter("Opex", &mOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Opex in proportion of Elementary Capex", "-", { "EcoInvestModel" });					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
-        addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", mCurrency+"/OptimalSizeUnit", { "EcoInvestModel" });   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
-        addParameter("OpexConstant", &mOpexConstant, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", { "EcoInvestModel" });					/** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant */
-        addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", mCurrency, { "EcoInvestModel" });   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
-        addParameter("MinSize", &mMinSize, 0., &mAddMinimumCapacity, &mAddMinimumCapacity, "Storage minimum content in energy for electrical or thermal carriers or mass of fluids", "StorageUnit", { "" }); /** Minimum capacity  */
+        addParameter("LifeTime", &mLifeTime, 1., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");              /** LifeTime in years */
+        addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", mCurrency+"/OptimalSizeUnit", "EcoInvestModel");                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
+        addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., false, &mEcoInvestModel, "Multiplicative coefficient on elementary Capex", "-", "EcoInvestModel");  /** Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
+        addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", mCurrency, "EcoInvestModel");  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
+        addParameter("Opex", &mOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Opex in proportion of Elementary Capex", "-", "EcoInvestModel");					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
+        addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", mCurrency+"/OptimalSizeUnit", "EcoInvestModel");   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
+        addParameter("OpexConstant", &mOpexConstant, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", "EcoInvestModel");					/** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant */
+        addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", mCurrency, "EcoInvestModel");   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
+        addParameter("MinSize", &mMinSize, 0., false, 1, "Minimal size of the component", "StorageUnit", "EcoInvestModel"); /** Minimum capacity  */
 
         //bool
-        addParameter("TryRelaxationCapex", &mTryRelaxationCapex, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "If the CAPEX is a convex function of size the linearization variables will be continuous", "bool", { "EcoInvestModel" });
-        addParameter("TryRelaxationArea", &mTryRelaxationArea, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), "If the Area is a convex function of size the linearization variables will be continuous", "bool", { "GeometryModel" });
-        addParameter("TryRelaxationVolume", &mTryRelaxationVolume, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), "If the Volume is a convex function of size the linearization variables will be continuous", "bool", { "GeometryModel" });
-        addParameter("TryRelaxationMass", &mTryRelaxationMass, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "If the Mass is a convex function of size the linearization variables will be continuous", "bool", { "GeometryModel" });
+        addParameter("TryRelaxationCapex", &mTryRelaxationCapex, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "If the CAPEX is a convex function of size the linearization variables will be continuous", "bool", "EcoInvestModel");
+        addParameter("TryRelaxationArea", &mTryRelaxationArea, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), "If the Area is a convex function of size the linearization variables will be continuous", "bool", "GeometryModel");
+        addParameter("TryRelaxationVolume", &mTryRelaxationVolume, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), "If the Volume is a convex function of size the linearization variables will be continuous", "bool", "GeometryModel");
+        addParameter("TryRelaxationMass", &mTryRelaxationMass, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "If the Mass is a convex function of size the linearization variables will be continuous", "bool", "GeometryModel");
 
         //double
-        addParameter("Area", &mArea, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "m2/OptimalSizeUnit",{"GeometryModel"});
-        addParameter("Volume", &mVolume, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseVolume}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "m3/OptimalSizeUnit", { "GeometryModel" });
-        addParameter("Mass", &mMass, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseMass}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "kg/OptimalSizeUnit", { "GeometryModel" });
+        addParameter("Area", &mArea, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "m2/OptimalSizeUnit", "GeometryModel");
+        addParameter("Volume", &mVolume, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseVolume}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "m3/OptimalSizeUnit", "GeometryModel");
+        addParameter("Mass", &mMass, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseMass}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "kg/OptimalSizeUnit", "GeometryModel");
 
         //vector
-        addPerfParam("CapexCapacitySetPoint", &mCapexCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "name of vector capacity that will be defined from DataFile specification by the User", "", { "EcoInvestModel" }); /** length of vectors of capacity that will be defined from DataFile specification by the User */
-        addPerfParam("CapexSetPoint", &mCapexSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "name of vector cost that will be defined from DataFile specification by the User", "", { "EcoInvestModel" }); /** length of vectors of cost that will be defined from DataFile specification by the User */
+        addPerfParam("CapexCapacitySetPoint", &mCapexCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "name of vector capacity that will be defined from DataFile specification by the User", ""); /** length of vectors of capacity that will be defined from DataFile specification by the User */
+        addPerfParam("CapexSetPoint", &mCapexSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "name of vector cost that will be defined from DataFile specification by the User", ""); /** length of vectors of cost that will be defined from DataFile specification by the User */
 
-        addPerfParam("AreaCapacitySetPoint", &mAreaCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), "name of vector area capacity that will be defined from DataFile specification by the User", "", { "GeometryModel" });
-        addPerfParam("AreaSetPoint", &mAreaSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), "name of vector area SetPoint that will be defined from DataFile specification by the User", "", { "GeometryModel" });
+        addPerfParam("AreaCapacitySetPoint", &mAreaCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), "name of vector area capacity that will be defined from DataFile specification by the User", "");
+        addPerfParam("AreaSetPoint", &mAreaSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseArea} }), "name of vector area SetPoint that will be defined from DataFile specification by the User", "");
           
-        addPerfParam("VolumeCapacitySetPoint", &mVolumeCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), "name of vector volume capacity that will be defined from DataFile specification by the User", "", { "GeometryModel" });
-        addPerfParam("VolumeSetPoint", &mVolumeSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), "name of vector volume SetPoint that will be defined from DataFile specification by the User", "", { "GeometryModel" });
+        addPerfParam("VolumeCapacitySetPoint", &mVolumeCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), "name of vector volume capacity that will be defined from DataFile specification by the User", "");
+        addPerfParam("VolumeSetPoint", &mVolumeSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseVolume} }), "name of vector volume SetPoint that will be defined from DataFile specification by the User", "");
        
-        addPerfParam("MassCapacitySetPoint", &mMassCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "name of vector mass capacity that will be defined from DataFile specification by the User", "", { "GeometryModel" });
-        addPerfParam("MassSetPoint", &mMassSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "name of vector mass SetPoint that will be defined from DataFile specification by the User", "", { "GeometryModel" });
+        addPerfParam("MassCapacitySetPoint", &mMassCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "name of vector mass capacity that will be defined from DataFile specification by the User", "");
+        addPerfParam("MassSetPoint", &mMassSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "name of vector mass SetPoint that will be defined from DataFile specification by the User", "");
         
         //EnvImpacts
         mEnvImpacts.resize(mEnvImpactsList.size(), new EnvImpact());
@@ -135,54 +139,48 @@ public:
 
     virtual void declareDefaultModelInterface()
     {
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase)
+           Note, the size of 1D IO expressions is always equal to mHorizon
+        */
         SubModel::declareDefaultModelInterface();
 
-        setOptimalSizeExpression("SizeMax");  // defines default expression to be used for OptimalSize computation and use in Economic analysis 
-        addIO("SizeMax", &mExpSizeMax, "Size");    /** Computed variable costs resulting from material/fuel consumption */
-
-        addIO("VariableCosts", &mExpVariableCosts, "Currency");    /** Computed variable costs resulting from material/fuel consumption */
+        //General
+        addIO("VariableCosts", &mExpVariableCosts, true, "Currency");    /** Computed variable costs resulting from material/fuel consumption */
         setVariableCostsExpression("VariableCosts");  // defines default expression to be used for VariableCosts computation and use in Economic analysis
 
-        if (mEcoInvestModel) {
-            addIO("Capex", &mExpCapex, mEnergyVector->pFluxUnit()); /** Computed initial investment costs Capex */
-            addIO("Opex", &mExpOpex, mEnergyVector->pStorageUnit());      /** Computed operational cost Net Opex */
-            addIO("PureOpex", &mExpPureOpex, mEnergyVector->pStorageUnit());      /** Computed operational cost Pure Opex */
-            addIO("Replacement", &mExpReplacement, mEnergyVector->pFluxUnit());      /** Computed variable replacement cost */
+        //EcoInvestModel
+        addIO("Capex", &mExpCapex, &mEcoInvestModel, mEnergyVector->pFluxUnit()); /** Computed initial investment costs Capex */
+        addIO("Opex", &mExpOpex, &mEcoInvestModel, mEnergyVector->pStorageUnit());      /** Computed operational cost Net Opex */
+        addIO("PureOpex", &mExpPureOpex, &mEcoInvestModel, mEnergyVector->pStorageUnit());      /** Computed operational cost Pure Opex */
+        addIO("Replacement", &mExpReplacement, &mEcoInvestModel, mEnergyVector->pFluxUnit());      /** Computed variable replacement cost */
+
+        setCapexExpression("Capex");        // defines default expression to be used for OptimalSize computation and use in Economic analysis
+        setOpexExpression("Opex");          // defines default expression to be used for OptimalSize computation and use in Economic analysis
+        setPureOpexExpression("PureOpex");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
+        setReplacementExpression("Replacement");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
+
+        //EnvironmentModel
+        for (EnvImpact* impact : mEnvImpacts)
+        {
+            impact->addIOs(this, &mEnvironmentModel);
         }
 
-        if (mGeometryModel) {
-            addIO("Area", &mExpArea, "m2");
-            addIO("Volume", &mExpVolume, "m3");
-            addIO("Mass", &mExpMass, "kg");
+        clearEnvImpactExpressionLists();
+        for (int i = 0; i < mEnvImpactsList.size(); i++)
+        {
+            setEnvImpactCostExpression(mEnvImpactsList[i] + " Env impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
+            setEnvImpactMassExpression(mEnvImpactsList[i] + " Env impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
+            setEnvGreyImpactCostExpression(mEnvImpactsList[i] + " Env grey impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
+            setEnvGreyImpactMassExpression(mEnvImpactsList[i] + " Env grey impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
         }
 
-        if (mEnvironmentModel) {
-            for (EnvImpact* impact : mEnvImpacts)
-            {
-                impact->addIOs(this);
-            }
-        }
+        //GeometryModel
+        addIO("Area", &mExpArea, &mGeometryModel, "m2");
+        addIO("Volume", &mExpVolume, &mGeometryModel, "m3");
+        addIO("Mass", &mExpMass, &mGeometryModel, "kg");
 
-        if (mAddStateVariable) {
-            addControlIO("State", &mExpState, "bool", &mHistState); /* state of the component : 1 if on 0 if off */
-        }
-
-        if (mEcoInvestModel) {
-            setCapexExpression("Capex");        // defines default expression to be used for OptimalSize computation and use in Economic analysis
-            setOpexExpression("Opex");          // defines default expression to be used for OptimalSize computation and use in Economic analysis
-            setPureOpexExpression("PureOpex");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
-            setReplacementExpression("Replacement");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
-        }
-
-        if (mEnvironmentModel) {
-            for (int i = 0; i < mEnvImpactsList.size(); i++)
-            {
-                setEnvImpactCostExpression(mEnvImpactsList[i] + " Env impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
-                setEnvImpactMassExpression(mEnvImpactsList[i] + " Env impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
-                setEnvGreyImpactCostExpression(mEnvImpactsList[i] + " Env grey impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
-                setEnvGreyImpactMassExpression(mEnvImpactsList[i] + " Env grey impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
-            }
-        }
+        //State
+        addControlIO("State", &mExpState, &mAddStateVariable, "bool", &mHistState); /* state of the component : 1 if on 0 if off */
     }
 
     virtual void declareDefaultModelIndicators()
@@ -229,6 +227,8 @@ public:
         return nbPorts;
     }
 
+    QString ObjectiveType() { return mObjectiveType; };
+
 protected:
     /** Flags */
     bool mEcoInvestModel;               /** bool indicating use of Economic Model if = true - default to true*/
@@ -247,7 +247,6 @@ protected:
     bool mAddMinimumCapacity;
     double mMinSize;            /**  minimum storage capacity for size optimization (kg mass on fluid vectors, MWh energy for electrical and thermal vectors) */
 
-
     /** Expressions */
     MIPModeler::MIPExpression mExpCapex;                        /** Capex contribution expression */
     MIPModeler::MIPExpression1D mExpOpex;                       /** Net Opex contribution expression, pureOpex + replacement + varcost */
@@ -258,8 +257,6 @@ protected:
     MIPModeler::MIPExpression mExpArea;
     MIPModeler::MIPExpression mExpVolume;
     MIPModeler::MIPExpression mExpMass;
-
-    MIPModeler::MIPExpression1D mExpAuxiliaryPower;  /** if AddAuxiliaryPower : model output expressions */ //Only ProductionUC and ThermalGroup
 
     /** Indicators calculation */
     //Vector of two elements: first one is _PLAN and second one is HIST
@@ -338,6 +335,8 @@ protected:
     double mLifeTime;                           /** Component LifeTime in years **/
     double mOpexConstant;                       /** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant **/
     double mReplacementConstant;                /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant**/
+
+    QString mObjectiveType;
 };
 
 #endif // TechnicalSubModel_H

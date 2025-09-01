@@ -49,10 +49,11 @@ public:
 //----------------------------------------------------------------------------------------------------
     Converter(QObject* aParent);
     ~Converter();
-//----------------------------------------------------------------------------------------------------
+
+    void computeInitialData() override;
+    void computeModelContribution() override;
+
     void setTimeData() ;
-//----------------------------------------------------------------------------------------------------
-    void buildModel();
     int checkConsistency();
 
 //----------------------------------------------------------------------------------------------------
@@ -64,26 +65,21 @@ public:
         // Caution : Flux must be signed wrt to Bus balance impact : >0 if energy source, <0 else.
         ConverterSubModel::declareDefaultModelInterface();
 
-        addIO("PowerIn", &mExpPower_In, mPortPowerIn->pFluxUnit()); /* Input power at voltage1 */
-        addIO("MaxPower", &mExpSizeMax, mPortPowerIn->pFluxUnit()); /* Maximum sizing power, ie optimal power if negative maximum power was given in input */
-        addIO("PowerOut", &mExpPower_Out, mPortPowerOut->pFluxUnit()); /* Output power */
-
-        setOptimalSizeExpression("MaxPower") ;  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-
-        //setOptimalSizeUnit("Electrical","Flux") ;  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-        setOptimalSizeUnit(mPortPowerIn->pFluxUnit());  // defines default expression should be used for OptimalSize computation and use in Economic analysis
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortPowerIn->pFluxUnit()); /* Maximum sizing power, ie optimal power if negative maximum power was given in input */
+        addIO("PowerIn", &mExpPower_In, true, mPortPowerIn->pFluxUnit()); /* Input power at voltage1 */
+        addIO("PowerOut", &mExpPower_Out, true, mPortPowerOut->pFluxUnit()); /* Output power */
     }
 
     //----------------------------------------------------------------------------
     void declareModelConfigurationParameters() {
         ConverterSubModel::declareDefaultModelConfigurationParameters();
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel", "AddOperationConstraints","PiecewiseEfficiency" });
         //bool
-        addParameter("PiecewiseEfficiency", &mPiecewiseEfficiency, false, false, true, "Add optional production piecewise efficiency if true - default = false", "", {"PiecewiseEfficiency"});
+        addParameter("PiecewiseEfficiency", &mPiecewiseEfficiency, false, false, true, "Add optional production piecewise efficiency if true - default = false", "", "PiecewiseEfficiency");
         //The default value of mTimeSeriesPiecewiseEfficiency should be false. Otherwise, the parameter "NbSetpoints" will become always mandatory. 
         //This is because parameter "NbSetpoints" is declared before reading the value of "TimeSeriesPiecewiseEfficiency" from .json. Maybe we should consider passing isBlocking by reference to addParameter
         //Note, "NbSetpoints" should stay in declareModelConfigurationParameters
-        addParameter("TimeSeriesPiecewiseEfficiency", &mTimeSeriesPiecewiseEfficiency, false, false, true, "", "", { "" }); /** Add optional production piecewise efficiency if true - default = false */
+        addParameter("TimeSeriesPiecewiseEfficiency", &mTimeSeriesPiecewiseEfficiency, false, false, true, "", ""); /** Add optional production piecewise efficiency if true - default = false */
         //int
         addParameter("NbSetpoints", &mNbSetpoints, 0, &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency); /** Number of Setpoints : CompoName.InputSetPoint#1, .., CompoName.InputSetPoint#NbSetpoints and CompoName.OutputSetPoint#1, .., CompoName.OutputSetPoint#NbSetpoints */
     }
@@ -97,15 +93,15 @@ public:
         // InputData instance for input data coming from Persee/PEGASE memory : time series (coming from PEGASE), state variables...
 
         //double
-        addParameter("Efficiency", &mEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency} }), true, "", "", { "" }); /** Total constant Converter efficiency*/
-        addParameter("Offset", &mOffset, 0., false, true, " Offset of consumption to add to PowerIn (PowerIn is then an affine function of PowerOut)","FluxUnit", { "" });
+        addParameter("Efficiency", &mEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency} }), true, "", ""); /** Total constant Converter efficiency*/
+        addParameter("Offset", &mOffset, 0., false, true, " Offset of consumption to add to PowerIn (PowerIn is then an affine function of PowerOut)","FluxUnit");
         addParameter("MaxPower",&mMaxPower, INFINITY_VAL, true, true, "maximum input flux through converter", "FluxUnit",{""});
-        addParameter("MinPower", &mMinPower, 0., false, true, "optional minimum flux through converter - 0 by default.Relative value to MaxPower", "%MaxPower",{""});
+        addParameter("MinPower", &mMinPower, 0., false, true, "optional minimum flux through converter - 0 by default.Relative value to MaxPower", "%MaxPower");
         //vectors
-        addTimeSeries("UseProfileConverterCoeff", &mConverterCoeff, false, true, "time series coeff for the efficiency", "", {""});
-        addTimeSeries("UseProfileConverterLowerBound", &mConverterLowerBound, false, true, "time series coeff for the powerMin", "", {""});
-        addTimeSeries("UseProfileConverterUpperBound", &mConverterUpperBound,false, true, "time series coeff for the powerMax", "", {""});
-        addTimeSeries("UseProfileConverterUse", &mConverterUse, false, true, "Time Series of converter allowance used to simulate unavailability for failures or maintenance", "", {""});
+        addTimeSeries("UseProfileConverterCoeff", &mConverterCoeff, false, true, "time series coeff for the efficiency", "");
+        addTimeSeries("UseProfileConverterLowerBound", &mConverterLowerBound, false, true, "time series coeff for the powerMin", "");
+        addTimeSeries("UseProfileConverterUpperBound", &mConverterUpperBound,false, true, "time series coeff for the powerMax", "");
+        addTimeSeries("UseProfileConverterUse", &mConverterUse, false, true, "Time Series of converter allowance used to simulate unavailability for failures or maintenance", "");
         //
         mPowerInSetPointVec.resize(mNbSetpoints);
         mPowerOutSetPointVec.resize(mNbSetpoints);
@@ -119,8 +115,8 @@ public:
             addTimeSeries(aName + ".OutputSetPoint#" + QString::number(i + 1), &mPowerOutSetPointVec[i], &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency);
         }
         //
-        addPerfParam("PowerInSetPoint", &mPowerInSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, " z-axis in the 1D-map of efficiency", "PowerUnit", { "PiecewiseEfficiency" });
-        addPerfParam("PowerOutSetPoint", &mPowerOutSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, "x-axis in the 1D-map of efficiency", "PowerUnit", { "PiecewiseEfficiency" });
+        addPerfParam("PowerInSetPoint", &mPowerInSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, " z-axis in the 1D-map of efficiency", "PowerUnit");
+        addPerfParam("PowerOutSetPoint", &mPowerOutSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, "x-axis in the 1D-map of efficiency", "PowerUnit");
     }
 
     void declareModelIndicators() {

@@ -42,23 +42,12 @@ void GridFree::setTimeData() {
 }
 //---------------------------------------------------------------------------
 
-void GridFree::buildModel()
+void GridFree::computeModelContribution()
 {
-    setExpSizeMax(mMaxFlux, "MaxFlux");
-
-    if (mAllocate) {
-        mVarFluxGrid = MIPModeler::MIPVariable1D( mHorizon, fabs(mMinFlux), fabs(mMaxFlux)); // puissance max de soutirage, mis a jour dynamiquement
-        //mVarSizeMax = MIPModeler::MIPVariable0D( 0., fabs(mMaxFlux)); // puissance de dimensionnement max du composant. negative means optimization, absolute value gives max range value
-        mExpFlux = MIPModeler::MIPExpression1D(mHorizon);
-        mExpGridPrice = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else {
-        closeExpression1D(mExpFlux);
-        closeExpression1D(mExpGridPrice);
-    }
-    addVariable(mVarFluxGrid,"GFx");
+    //setExpSizeMax(mMinSize, mMaxFlux, "MaxFlux");
+    addVariable(mVarFluxGrid,"GFx", fabs(mMinFlux), fabs(mMaxFlux));
     
-    SubModel::addStateConstraints(mHorizon, mCondensedNpdt);
+    addStateConstraints(varMilpHorizon());
 
     for (uint64_t t = 0; t < mHorizon; t++) {
         mExpFlux[t] = mVarFluxGrid(t) * mGridUse[t];
@@ -80,15 +69,11 @@ void GridFree::buildModel()
 
     // Muting last time steps if pre-computed seasonalCosts model
     if (mSeasonalCosts) {
-        //qDebug() << "GridFree, mSeasonalCosts = " << mSeasonalCosts ;
         for (uint64_t t = mMilpNpdt; t < mHorizon; t++) {
             addConstraint(mExpFlux[t] == 0, "seasonalMute", t);
         }
     }
 
-    /** Objective contribution expressed as the sum of Capex and Opex so as
-     * to be able to account for actualization rate on Opex part only*/
-    
     if (mSens < 0) {
         mEnergyPrice = mSellPrice;
     }
@@ -100,7 +85,6 @@ void GridFree::buildModel()
     mTemporalPrice.assign(mEnergyPrice.begin(), mEnergyPrice.end());
     if (mUseConstantPrice) {
         qInfo() << "Using grid constant price instead of the one defined in the energy vector.";
-        
         for (uint64_t t = 0; t < mHorizon; t++) {
             if (mSens > 0) {
                 mTemporalPrice[t] = mConstantBuyPrice * mPriceMultiplier;
@@ -134,11 +118,6 @@ void GridFree::buildModel()
         mExpGridPrice[t] += mTemporalPrice[t];
     }
 
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false ;
-
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
         std::string compoName = SubModel::parent()->objectName().toStdString();
@@ -170,5 +149,4 @@ void GridFree::computeEconomicalContribution() {
             mExpVariableCosts[t] += mSens * TimeStep(t) * mExpFlux[t] * mTemporalPrice[t];
         }
     }
-
 }

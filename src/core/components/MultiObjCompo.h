@@ -26,13 +26,10 @@ public:
 
     virtual ~MultiObjCompo();
     
-    int initProblem();
     void declareCompoInputParam();    
-    QString ObjectiveType() {return mObjectiveType;}
 
 
 protected:
-    QString mObjectiveType;
 };
 
 #endif // MultiObjCompo_H

@@ -1463,7 +1463,7 @@
 					},
 					{
 						"key": "O0.Flux",
-						"value": "SizeMax"
+						"value": "MaxEsto"
 					}
 				],
 				"nodePorts": {
@@ -1500,7 +1500,7 @@
 								"carrier": "Materiaux",
 								"carrierType": "ANY_TYPE",
 								"direction": "DATAEXCHANGE",
-								"variable": "SizeMax",
+								"variable": "MaxEsto",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -2860,7 +2860,7 @@
 								"carrier": "Materiaux",
 								"carrierType": "ANY_TYPE",
 								"direction": "DATAEXCHANGE",
-								"variable": "SizeMax",
+								"variable": "MaxEsto",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,

@@ -21,18 +21,15 @@ void CairnAPI::SolutionAPI::set_Results(int a_Step)
 		CairnCore* vCairn = (CairnCore*)m_Problem->parent();
 		int previousSize = 0;
 		int ts = vCairn->npdtFutur();
-		QMap<QString, ZEVariables*> ListPublishedVariables = m_Problem->ListPublishedVariables();
+		t_mapExchange &vListPublishedVariables = m_Problem->ListPublishedVariables();
 		if (!a_Step) {
 			// initialisation
 			m_timeSeries.clear();
 			m_timeSeries[s_Time] = t_values(ts);
-			QMapIterator<QString, ZEVariables*> iPublishedVariable(ListPublishedVariables);
-			while (iPublishedVariable.hasNext())
-			{
-				iPublishedVariable.next();
-				ZEVariables* var = iPublishedVariable.value();
-				m_timeSeries[var->Name().toStdString()] = t_values(ts);				
-			}
+			for (auto& iPublishedVariable : vListPublishedVariables) {
+				ZEVariables* var = iPublishedVariable.second;
+				m_timeSeries[var->Name().toStdString()] = t_values(ts);	
+			}			
 		}
 		else {
 			// next step
@@ -46,11 +43,8 @@ void CairnAPI::SolutionAPI::set_Results(int a_Step)
 		for (size_t j = 0; j < ts; j++)	{
 			m_timeSeries["Time"][j+previousSize] = ((int)j + 1 + ts * a_Step) * pdt;
 			
-			QMapIterator<QString, ZEVariables*> iPublishedVariable2(ListPublishedVariables);
-			while (iPublishedVariable2.hasNext())
-			{
-				iPublishedVariable2.next();
-				ZEVariables* var = iPublishedVariable2.value();
+			for (auto& iPublishedVariable : vListPublishedVariables) {			
+				ZEVariables* var = iPublishedVariable.second;
 				QString zeVarName = var->Name();
 				if (var->ptrVariable()->size() > 0)	{
 					m_timeSeries[var->Name().toStdString()][j+previousSize] = var->ptrVariable()->at(j + npdtPast);					
@@ -108,10 +102,10 @@ void CairnAPI::SolutionAPI::exportTimeSeries(const std::string& a_path, int a_nu
 			CairnCore* vCairn = (CairnCore*)m_Problem->parent();
 			QString vTSFileName = QString(a_path.c_str());
 			if (vTSFileName == "") {
-				vTSFileName = vCairn->StudyName() + "_Results.csv";
+				vTSFileName = vCairn->projectDir() + vCairn->StudyName() + "_Results.csv";
 			}
 			// export OUTPUT Time series					
-			if (vCairn->exportTS(vTSFileName)) {
+			if (vCairn->exportTS(vTSFileName.toStdString())) {
 				CairnAPIUtils::setError(errWrite, vTSFileName.toStdString());
 			}
 		}

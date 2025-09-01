@@ -1,8 +1,6 @@
 #ifndef  TIMESERIESREADERCSV_H
 #define TIMESERIESREADERCSV_H
 #include "TimeSeriesReader.h"
-#include <QList>
-#include <QStringList>
 
 class TimeSeriesReaderCSV
 	: public TimeSeriesReader
@@ -10,8 +8,8 @@ class TimeSeriesReaderCSV
 public:
 	TimeSeriesReaderCSV();
 
-	bool open(const QString& aTSfile);
-	void readHeader(const QMap<QString, class ZEVariables*>& aListSubscribedVariables, std::vector<TimeSeriesDescrp> &aHeader);
+	bool open(const std::string& aTSfile);
+	void readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp> &aHeader);
 	bool readTimes(std::vector<double>& aTimes);
 	void readValues(int a_index, std::vector<double>& aTimes);
 	void close();
@@ -21,7 +19,7 @@ public:
 protected:
 	static int iSkipHead;
 
-	QList<QStringList> m_Data;
+	std::vector<std::vector<std::string>> m_Data;
 
 	void readColumn(int aCol, int aRowSkipped, std::vector<double> &aValues);
 };

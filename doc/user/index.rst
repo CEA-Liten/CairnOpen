@@ -89,17 +89,18 @@
     api_guide/commands
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :caption: Components description
     
     models/models
-    privateDoc/models/modelSolus_toc
 
-.. toctree::
-    :maxdepth: 2
-    :caption: Cairn Solus components detailed description
+.. ifconfig:: cea_content
+
+   .. toctree::
+      :maxdepth: 2
+      :caption: Cairn Solus components
     
-    privateDoc/models
+      privateDoc/models/modelSolus_toc
 
 .. toctree::
     :maxdepth: 2

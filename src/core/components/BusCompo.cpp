@@ -26,7 +26,7 @@ BusCompo::~BusCompo()
 void BusCompo::declareCompoInputParam()
 {
     MilpComponent::declareCompoInputParam(); //Common component input param
-    mCompoInputParam->addParameter("VectorName", &mVectorName, "", true, true, "VectorName", "string", {"DO NOT SHOW"});
+    mCompoInputParam->addParameter("VectorName", &mVectorName, "", true, true, "VectorName", "string", "DONOTSHOW");
 }
 
 void BusCompo::setCompoInputParam(const QMap<QString, QString> aComponent)
@@ -39,6 +39,14 @@ void BusCompo::setCompoInputParam(const QMap<QString, QString> aComponent)
         throw& erreur;
     }
     Q_ASSERT(mVectorName != "");
+}
+
+void BusCompo::declareIOVariables()
+{
+    //Declare IO variables
+    if (mCompoModel) {
+        mCompoModel->declareModelInterface();
+    }
 }
 
 void BusCompo::DeleteBusPort(MilpPort* lptrport)

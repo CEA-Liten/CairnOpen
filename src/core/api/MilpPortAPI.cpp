@@ -3,51 +3,80 @@
 #include "CairnAPIUtils.h"
 using namespace CairnAPIUtils;
 
-CairnAPI::MilpPortAPI::MilpPortAPI()
+CairnAPI::MilpPortAPI::MilpPortAPI(MilpPort* ap_Port)
 {
+	set_MilpPort(ap_Port);
 }
 
-CairnAPI::MilpPortAPI::MilpPortAPI(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector)
-	: CairnAPI::ObjectAPI(a_Name, a_EnergyVector.get_Name())
-{
-	m_EnergyVector = a_EnergyVector.get_EnergyVector();
-}
-
-void CairnAPI::MilpPortAPI::set_Port(MilpPort* ap_Port)
-{
-	m_Port = ap_Port;
-	if (ap_Port) {
-		m_Name = ap_Port->Name().toStdString();
-		if (!m_EnergyVector) {
-			m_EnergyVector = ap_Port->ptrEnergyVector();
-		}
-		if (!m_EnergyVector) {
-			CairnAPIUtils::setError(errAdd, "port " + m_Name + " because EnergyVector doesn't exist");
-		}
-		m_Type = get_EnergyVector();
-		ap_Port->setEnergyVector(m_EnergyVector);
-	}	
-}
-
-std::string CairnAPI::MilpPortAPI::get_EnergyVector() const
-{
-	if (m_EnergyVector)
-		return m_EnergyVector->Name().toStdString();
-	else
-		return "";	
-}
 
 MilpPort* CairnAPI::MilpPortAPI::get_MilpPort() const
 {
 	return m_Port;
 }
 
-
-// -- Settings ---
-// Returns the list of names 
-t_list CairnAPI::MilpPortAPI::get_SettingsList(ESettingsLimited a_setLimited)
+CairnAPI::MilpPortAPI::MilpPortAPI(MilpComponentAPI& a_Component, const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
+	const std::string& a_Direction, const std::string& a_Variable)
 {
-	t_list vRet;	
+	*this = a_Component.add_Port(a_Name, a_EnergyVector, a_Direction, a_Variable);
+}
+
+void CairnAPI::MilpPortAPI::set_MilpPort(MilpPort* ap_Port)
+{
+	m_Port = ap_Port;
+}
+
+std::string CairnAPI::MilpPortAPI::get_ID() const
+{
+	if (m_Port) {
+		return m_Port->ID().toStdString();
+	}
+	return "";
+}
+
+std::string CairnAPI::MilpPortAPI::get_Name() const
+{
+	if (m_Port) {
+		return m_Port->Name().toStdString();
+	}
+	return "";
+}
+
+std::string CairnAPI::MilpPortAPI::get_CarrierName() const
+{
+	if (m_Port && m_Port->ptrEnergyVector()) {
+		return m_Port->ptrEnergyVector()->Name().toStdString();
+	}
+	return "";	
+}
+
+void CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector)
+{
+	if (m_Port) {
+		m_Port->setEnergyVector(a_EnergyVector.get_EnergyVector());
+		if (m_Port->IsDefaultPort()) {
+			MilpComponent* lptrCompo = (MilpComponent*)m_Port->parent();
+			if (lptrCompo) {
+				//Declare IOs only after EnergyVectors of all default ports are set
+				lptrCompo->declareIOVariables();
+			}
+		}
+	}
+}
+
+// ------------------ Parameters ------------------
+// Returns the list of parameter names 
+
+t_list CairnAPI::MilpPortAPI::get_SettingsList()
+{
+ /*
+  * property in CairnBind.cpp
+ */
+	return get_SettingsListByType(ESettingsLimited::all);
+}
+
+t_list CairnAPI::MilpPortAPI::get_SettingsListByType(ESettingsLimited a_setLimited)
+{
+	t_list vRet = {};
 	if (m_Port) {
 		vRet = CairnAPIUtils::getParametersName({
 			m_Port->getInputParam() }
@@ -56,38 +85,33 @@ t_list CairnAPI::MilpPortAPI::get_SettingsList(ESettingsLimited a_setLimited)
 	return vRet;
 }
 
-// Returns the value of an existing setting
+// Returns the value of a parameter
 t_value CairnAPI::MilpPortAPI::get_SettingValue(const std::string& a_SettingName)
 {
-	t_value vRet;
+	t_value vRet = "";
 	if (m_Port) {		
 		vRet = CairnAPIUtils::getParameter({
 			m_Port->getInputParam() }
 		, a_SettingName);
 	}
-	else {
-		vRet = ObjectAPI::get_SettingValue(a_SettingName);
-	}
 	return vRet;
 }
 
+// Returns the value of all parameters
 t_dict CairnAPI::MilpPortAPI::get_SettingValues()
 {
-	t_dict vRet;
+	t_dict vRet = {};
 	if (m_Port) {
 		t_list vAttrNames = get_SettingsList();
 		for (auto& vAttrName : vAttrNames) {
 			vRet[vAttrName] = get_SettingValue(vAttrName);
 		}
 	}
-	else {
-		vRet = ObjectAPI::get_SettingValues();
-	}
 	return vRet;
 }
 
 
-// Set the value of an existing setting
+// Set the value of a parameter
 void CairnAPI::MilpPortAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue)
 {
 	ECodeError vRet = noError;
@@ -98,12 +122,10 @@ void CairnAPI::MilpPortAPI::set_SettingValue(const std::string& a_SettingName, c
 
 		vRet = (vOk) ? noError : errParam;
 	}
-	else {
-		ObjectAPI::set_SettingValue(a_SettingName, a_SettingValue);
-	}
 	CairnAPIUtils::setError(vRet);
 }
 
+// Set the value of several parameter
 void CairnAPI::MilpPortAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
 	ECodeError vRet = noError;
@@ -112,28 +134,5 @@ void CairnAPI::MilpPortAPI::set_SettingValues(const t_dict& a_SettingValues)
 			set_SettingValue(vAttrName, vAttrValue);
 		}
 	}
-	else {
-		ObjectAPI::set_SettingValues(a_SettingValues);
-	}
 	CairnAPIUtils::setError(vRet);
-}
-
-bool CairnAPI::MilpPortAPI::checkSettings(std::string& a_ErrMsg)
-{
-	bool vRet = false;
-	t_list vMandatories = get_SettingsList(ESettingsLimited::mandatory);
-	for (const auto& [key, value] : m_Params) {
-		t_list::iterator vIter = find(vMandatories.begin(), vMandatories.end(), key);
-		if (vIter != vMandatories.end()) {
-			vMandatories.erase(vIter);
-		}		
-	}
-	if (vMandatories.size()) {
-		for (auto& vParam : vMandatories) {
-			// messages
-			a_ErrMsg += " - mandatory setting " + vParam + " is missing!";
-		}
-		return false;
-	}		
-	return true;
 }

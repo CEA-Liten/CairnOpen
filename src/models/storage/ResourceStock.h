@@ -22,9 +22,9 @@ public:
     //----------------------------------------------------------------------------------------------------
     int checkConsistency();
     void setTimeData();
-    void computeInitialData();
     //----------------------------------------------------------------------------------------------------
-    void buildModel();
+    void closeExpressions() override;
+    void buildModel() override;
     //----------------------------------------------------------------------------------------------------
     void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol) override;
@@ -33,43 +33,33 @@ public:
     void declareModelInterface()
     {
         StorageSubModel::declareDefaultModelInterface();
-        //StorageSubModel::declareDefaultModelInterface();
+
         // register model expression to be used for Interfacing with global MilpProblem, Bus, other MilpComponent
         // Caution : Flux will be signed wrt to Bus balance impact : >0 if energy source, <0 else.
-        addIO("ResourceUsed", &mExpSizeMax, mPortFlux->pStorageUnit());	/** Storage balance of flows (including CapcityMuliplier) = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
-        //addIO("ResourceTotalCost", &mExpResourceCost, mPortFlux->pStorageUnit());	/** Storage discharged flow (including CapcityMuliplier) */
-    
-        setOptimalSizeExpression("ResourceUsed");  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-        setOptimalSizeUnit(mPortFlux->pStorageUnit());
+        addSizeMaxIO("ResourceUsed", &mExpSizeMax, true, mPortFlux->pStorageUnit());	/** Storage balance of flows (including CapcityMuliplier) = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
     }
     //----------------------------------------------------------------------------------------------------
 
     void declareModelConfigurationParameters()
     {
         StorageSubModel::declareDefaultModelConfigurationParameters();
-        //bool
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel"});
-        
   }
 
     void declareModelParameters()
     {
         StorageSubModel::declareDefaultModelParameters();
         //double
-        //addParameter("TotalMaxSize", &mTotalMaxSize, 0., true, true, "total size of the stock", "", {""});
-        addParameter("TotalMaxSize", &mTotalMaxSize, 1., false, true, "Nb of available stocks", "", { "" });
+        addParameter("TotalMaxSize", &mTotalMaxSize, 1., false, true, "Nb of available stocks", "");
     }
 
     void declareModelIndicators()
     {
         StorageSubModel::declareDefaultModelIndicators(&mExportIndicators);
-        QString InstalledSizeUnit = getOptimalSizeUnit();
     }
-
 
     void initDefaultPorts() {
         mDefaultPorts.clear();
-        //PortElecPower - left
+        //PortFlux - left
         QMap<QString, QString> portFlux;
         portFlux["Name"] = "PortL0";
         portFlux["Direction"] = KDATA();
@@ -82,19 +72,8 @@ public:
         mPortFlux = getPort("PortFlux");
     }
 
-    //----------------------------------------------------------------------------------------------------
-        //void setEnvParameters(double aCO2emission, std::vector <double> aCO2PriceProfile) ;
 protected:
-
     MilpPort* mPortFlux;
-
-    // MILP Variables
-
-    // output for the resource stock
-
     double mTotalMaxSize;
-
-
-
 };
 #endif

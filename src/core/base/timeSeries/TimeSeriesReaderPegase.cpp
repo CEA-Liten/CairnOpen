@@ -5,20 +5,17 @@ TimeSeriesReaderPegase::TimeSeriesReaderPegase()
 {
 }
 
-bool TimeSeriesReaderPegase::open(const QString& aTSfile)
+bool TimeSeriesReaderPegase::open(const std::string& aTSfile)
 {    
     return true;
 }
 
-void TimeSeriesReaderPegase::readHeader(const QMap<QString, ZEVariables*>& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader)
+void TimeSeriesReaderPegase::readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader)
 {
-    m_Data.clear();
-    QMapIterator<QString, ZEVariables*> iSubscribedVariable(aListSubscribedVariables);    
-    while (iSubscribedVariable.hasNext())
-    {
-        iSubscribedVariable.next();
-        ZEVariables* var = iSubscribedVariable.value();
-        aHeader.push_back({ var->Name() , var->Unit(), (int) aHeader.size()});
+    m_Data.clear();       
+    for (auto& iSubscribedVariable : aListSubscribedVariables) {
+        ZEVariables* var = iSubscribedVariable.second;
+        aHeader.push_back({ var->Name().toStdString() , var->Unit().toStdString(), (int)aHeader.size()});
         m_Data.push_back(var->ptrVariable());
     }    
 }

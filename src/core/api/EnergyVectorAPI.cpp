@@ -3,22 +3,15 @@
 #include "CairnAPIUtils.h"
 using namespace CairnAPIUtils;
 
-CairnAPI::EnergyVectorAPI::EnergyVectorAPI()
+CairnAPI::EnergyVectorAPI::EnergyVectorAPI(EnergyVector* ap_EnergyVector)
 {	
+	set_EnergyVector(ap_EnergyVector);
 }
 
-CairnAPI::EnergyVectorAPI::EnergyVectorAPI(const std::string& a_Name, const std::string& a_Type)
-	: CairnAPI::ObjectAPI(a_Name, a_Type)
+CairnAPI::EnergyVectorAPI::EnergyVectorAPI(const OptimProblemAPI& a_Problem, 
+	const std::string& a_Name, const std::string& a_Type)
 {
-}
-
-void CairnAPI::EnergyVectorAPI::set_EnergyVector(EnergyVector* ap_EnergyVector)
-{
-	m_EnergyVector = ap_EnergyVector;
-	if (ap_EnergyVector) {
-		m_Name = ap_EnergyVector->Name().toStdString();
-		m_Type = ap_EnergyVector->Type().toStdString();
-	}
+	*this = a_Problem.create_EnergyCarrier(a_Name, a_Type);
 }
 
 EnergyVector* CairnAPI::EnergyVectorAPI::get_EnergyVector() const
@@ -26,11 +19,38 @@ EnergyVector* CairnAPI::EnergyVectorAPI::get_EnergyVector() const
 	return m_EnergyVector;
 }
 
-// -- Settings ---
-// Returns the list of names 
-t_list CairnAPI::EnergyVectorAPI::get_SettingsList(ESettingsLimited a_setLimited)
+void CairnAPI::EnergyVectorAPI::set_EnergyVector(EnergyVector* ap_EnergyVector)
 {
-	t_list vRet;
+	m_EnergyVector = ap_EnergyVector;
+}
+
+std::string CairnAPI::EnergyVectorAPI::get_Name() const
+{
+	if (m_EnergyVector) {
+		return m_EnergyVector->Name().toStdString();
+	}
+	return "";
+}
+
+std::string CairnAPI::EnergyVectorAPI::get_Type() const
+{
+	if (m_EnergyVector) {
+		return m_EnergyVector->Type().toStdString();
+	}
+	return "";
+}
+
+// Returns the list of parameter names 
+t_list CairnAPI::EnergyVectorAPI::get_SettingsList()
+{
+	/*
+	* property in CairnBind.cpp
+	*/
+	return get_SettingsListByType(ESettingsLimited::all);
+}
+t_list CairnAPI::EnergyVectorAPI::get_SettingsListByType(ESettingsLimited a_setLimited)
+{
+	t_list vRet = {};
 	if (m_EnergyVector) {
 		vRet = CairnAPIUtils::getParametersName({
 			m_EnergyVector->getCompoInputParam(),
@@ -41,10 +61,10 @@ t_list CairnAPI::EnergyVectorAPI::get_SettingsList(ESettingsLimited a_setLimited
 	return vRet;
 }
 
-// Returns the value of an existing setting
+// Returns the value of a parameter 
 t_value CairnAPI::EnergyVectorAPI::get_SettingValue(const std::string& a_SettingName)
 {	
-	t_value vRet;
+	t_value vRet = "";
 	if (m_EnergyVector) {
 		vRet = CairnAPIUtils::getParameter({
 			m_EnergyVector->getCompoInputParam(),
@@ -52,15 +72,13 @@ t_value CairnAPI::EnergyVectorAPI::get_SettingValue(const std::string& a_Setting
 			m_EnergyVector->getTimeSeriesParam() }
 		, a_SettingName);	
 	}
-	else {
-		vRet = ObjectAPI::get_SettingValue(a_SettingName);
-	}	
 	return vRet;
 }
 
+// Returns a dict of all parameter values
 t_dict CairnAPI::EnergyVectorAPI::get_SettingValues()
 {
-	t_dict vRet;
+	t_dict vRet = {};
 	if (m_EnergyVector) {
 		CairnAPIUtils::getParameters({
 			m_EnergyVector->getCompoInputParam(),
@@ -68,13 +86,10 @@ t_dict CairnAPI::EnergyVectorAPI::get_SettingValues()
 			m_EnergyVector->getTimeSeriesParam() }
 			, vRet);		
 	}
-	else {
-		vRet = ObjectAPI::get_SettingValues();
-	}
 	return vRet;
 }
 
-// Set the value of an existing setting
+// Set the value of a parameter
 void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue)
 {
 	ECodeError vRet = noError;
@@ -90,12 +105,10 @@ void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingNam
 		}
 		vRet = (vOk) ? noError : errParam;
 	}
-	else {
-		ObjectAPI::set_SettingValue(a_SettingName, a_SettingValue);
-	}
 	CairnAPIUtils::setError(vRet);	
 }
 
+// Set the values of several parameters
 void CairnAPI::EnergyVectorAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
 	ECodeError vRet = noError;
@@ -110,9 +123,6 @@ void CairnAPI::EnergyVectorAPI::set_SettingValues(const t_dict& a_SettingValues)
 			vOk = m_EnergyVector->InitEnergyVectorParam();
 		}
 		vRet = (vOk) ? noError : errParam;		
-	}
-	else {
-		ObjectAPI::set_SettingValues(a_SettingValues);
 	}
 	CairnAPIUtils::setError(vRet);	
 }

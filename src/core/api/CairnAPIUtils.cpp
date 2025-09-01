@@ -2,37 +2,163 @@
 #include "CairnCore.h"
 #include "Cairn_Exception.h"
 
+#include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <map>
 
 namespace CairnAPIUtils {
 	
-	t_list get_Possible_Model_Names()
+	t_list lookupSubDirectories(const std::string& dirPath)
 	{
-		//Dynamics list from *CairnModel.dll
-		t_list vRet;
-		ModelFactory vModelFactory;
-		vModelFactory.findModels();
-		QStringList vModels = vModelFactory.getModelList();
-		for (auto& vModel : vModels) {
-			vRet.push_back(vModel.toStdString());
+		std::vector<std::string> vRet = {};
+		for (auto& dir : std::filesystem::recursive_directory_iterator(dirPath))
+		{
+			if (dir.is_directory())
+			{
+				vRet.push_back(dir.path().string());
+			}
 		}
 		return vRet;
 	}
 
+	std::string convertTypeToUpperCase(const std::string type)
+	{
+		if (type == "converter") return "Converter";
+		else if (type == "storage") return "Storage";
+		else if (type == "grid") return "Grid";
+		else if (type == "sourceload") return "SourceLoad";
+		else if (type == "operationconstraint") return "OperationConstraint";
+		else if (type == "physicalequation") return "PhysicalEquation";
+		else if (type == "busflowbalance") return "BusFlowBalance";
+		else if (type == "bussamevalue") return "BusSameValue";
+		else if (type == "multiobjcompo") return "MultiObjCompo";
+		else return "";
+	}
+
+	//void lookupModelTypes(const std::string& modelsDir)
+	//{
+	//	t_list modelsList = get_Possible_Model_Names();
+	//	std::vector<std::string> dirList = lookupSubDirectories(modelsDir);
+
+	//	for (size_t i = 0; i < modelsList.size(); ++i)
+	//	{
+	//		bool exists = false;
+	//		std:string model = modelsList[i];
+	//		//look in which directory the model exist
+	//		for (size_t j = 0; j < dirList.size(); ++j)
+	//		{
+	//			exists = std::filesystem::exists(dirList[j] + "/" + model + ".h");
+	//			if (exists) {
+	//				std::string type = std::filesystem::path(dirList[j]).filename().string();
+	//				//if(type.size()) type[0] = toupper(type[0]);
+	//				convertTypeToUpperCase(type);
+	//				if (mModelTypes.find(type) != mModelTypes.end()) {
+	//					mModelTypes[type].push_back(model);
+	//				}
+	//				else {
+	//					mModelTypes[type] = { model };
+	//				}
+	//				break;
+	//			}
+	//		}
+	//		if (!exists) {
+	//			qWarning() << "The type of " + QString::fromStdString(model) + " is unknown!";
+	//		}
+	//	}
+	//}
+
+	std::map<std::string, std::string> ParserTxt(const std::string& filename)
+	{
+		std::string line;
+		std::map<std::string, std::string> dataMap = {};
+
+		// Open File
+		std::ifstream iFile(filename);
+		if (!iFile.is_open())
+		{
+			cerr << "Error : cannot open the file " << filename << endl;
+			return dataMap;
+		}
+
+		// Read File - string Format
+		std::stringstream buffer;
+		buffer << iFile.rdbuf();
+		string inputData = buffer.str();
+
+		// Close File
+		iFile.close();
+
+		// Parse File - Line-Line
+		std::istringstream iDataStream(inputData);
+		while (getline(iDataStream, line))
+		{
+			// Parse line with seperator ','			
+			std::string cell;
+			std::istringstream iLineStream(line);
+			t_list lineVec;
+
+			while (getline(iLineStream, cell, ','))
+			{
+				lineVec.push_back(cell);
+			}
+			//Add line to dataMap
+			if (lineVec.size() > 1) {
+				dataMap.insert({ lineVec.at(0), lineVec.at(1) });
+			}
+		}
+		return dataMap;
+	}
+
+	void initModelTypesMap(const std::string& sourceDir)
+	{
+		//read model types from .txt file
+		QString exeDir = qEnvironmentVariable("CAIRN_BIN", QDir::currentPath());
+		std::string modelTypesFileName = exeDir.toStdString() + (std::string)"/../resources/modelTypes.txt";
+		mModelTypes = ParserTxt(modelTypesFileName);
+
+//		lookupModelTypes(sourceDir + "/models");
+//#ifdef PRIVATE_MODELS
+//	lookupModelTypes(sourceDir + "/privateModels");
+//#endif
+	}
+
+	t_list get_Possible_Model_Names()
+	{
+		//Dynamics list from *CairnModel.dll		
+		ModelFactory vModelFactory;
+		vModelFactory.findModels();
+		return vModelFactory.getModelList();		
+	}
+
 	t_list get_Possible_Component_Types() {
-		t_list vRet;
-		for (auto const& vItem : CairnAPIUtils::mModelsMap) {
-			vRet.push_back(vItem.first);
+		t_list vRet = { "BusFlowBalance", "BusSameValue", "MultiObjCompo" };
+		for (auto const& vItem : mModelTypes) 
+		{
+			if (vItem.second == "bus" 
+				|| (std::find(vRet.begin(), vRet.end(), vItem.second) != vRet.end()))
+				continue;
+			vRet.push_back(convertTypeToUpperCase(vItem.second));
 		}
 		return vRet;
 	}
 
 	std::string get_Component_Type(const std::string& a_Model) {
-		for (auto const& vItem : mModelsMap) {
-			if (std::find(vItem.second.begin(), vItem.second.end(), a_Model) != vItem.second.end()) {
-				return vItem.first;
+		for (auto const& vItem : mModelTypes) {
+			if (mModelTypes.find(a_Model) != mModelTypes.end())
+			{
+				return convertTypeToUpperCase(mModelTypes[a_Model]);
 			}
 		}
 		return "Unknown";
+	}
+
+	std::string get_Bus_Type(const std::string& a_Model) 
+	{
+		if (a_Model == "NodeLaw") return "BusFlowBalance";
+		else if (a_Model == "NodeEquality") return "BusSameValue";
+		else if (a_Model == "ManualObjective") return "MultiObjCompo";
+		else return "Unknown";
 	}
 
 	t_list getParametersName(std::vector<InputParam*> a_Inputs, CairnAPI::ESettingsLimited a_setLimited)
@@ -84,7 +210,7 @@ namespace CairnAPIUtils {
 	}
 
 	t_value getParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name) {
-		t_value vRet = "N/A";
+		t_value vRet = "parameter doesn't exist";
 		QString vQName = QString(a_Name.c_str());
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {				
@@ -112,10 +238,10 @@ namespace CairnAPIUtils {
 
 	bool setParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const t_value& a_Value) {
 		bool vOk = true;
-		if (a_Name != "id" && a_Name != "type") // ne pas changer le nom et le type!
+		if (find(mNonModifiableParams.begin(), mNonModifiableParams.end(), a_Name) == mNonModifiableParams.end())
 		{
 			QString vQName = QString(a_Name.c_str());
-			QString vQValue = QString(CairnAPIUtils::getParamValue(a_Value).c_str());
+			QString vQValue = QString(getParamValue(a_Value).c_str());
 			std::vector<double> vVectValue;
 			if (vQValue == "NON_COMPATIBLE") {
 				//try vector of double
@@ -135,24 +261,56 @@ namespace CairnAPIUtils {
 			}
 			vOk &= vFind;
 		}
+		else {
+			setError(errDefault, a_Name + " cannot be modified!");
+		}
 		return vOk;
 	}
 
 	bool setParameters(std::vector<InputParam*> a_Inputs, const t_dict& a_Params) {
 		bool vOk = true;
 		for (auto& vParam : a_Params) {
-			QString vQValue = QString(CairnAPIUtils::getParamValue(vParam.second).c_str());
-			QString vQName = QString(vParam.first.c_str());
-			bool vFind = false;
-			for (auto& vInput : a_Inputs) {
-				if (vInput) {
-					vFind = vInput->setParameterValue(vQName, vQValue);
-					if (vFind) break;
-				}
+			if (find(mNonModifiableParams.begin(), mNonModifiableParams.end(), vParam.first) != mNonModifiableParams.end()) 
+			{
+				//qWarning() << (vParam.first+" cannot be modified!").c_str();
+				continue;
 			}
-			vOk &= vFind;
+			vOk &= setParameter(a_Inputs, vParam.first, vParam.second);
 		}
 		return vOk;
+	}
+
+	t_value getShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	{
+		t_value vRet = "parameter doesn't exist";
+		QString vQName = QString(a_Name.c_str());
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vInput->getParameter(vQName))
+				{
+					vRet = vInput->getParameter(vQName)->getShowConfig();
+					break;
+				}
+			}
+		}
+		return vRet;
+	}
+
+	t_list getShowConfigList(std::vector<InputParam*> a_Inputs)
+	{
+		t_list vRet;
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				std::vector <std::string> vList = vInput->getShowConfigList();
+				for (auto& vConfig : vList) {
+					if (find(vRet.begin(), vRet.end(), vConfig) == vRet.end())
+					{
+						vRet.push_back(vConfig);
+					}
+				}
+			}
+		}
+		return vRet;
 	}
 
 	void setError(ECodeError a_Err, const std::string& a_msg) {
@@ -167,7 +325,7 @@ namespace CairnAPIUtils {
 				cairn_error.setMessage("Error when Initializing the problem");
 				break;
 			case errRead:
-				cairn_error.setMessage("Failed to read model, " + vErrMsg);
+				cairn_error.setMessage("Failed to read " + vErrMsg);
 				break;
 			case errFile:
 				cairn_error.setMessage("File does not exist, " + vErrMsg);

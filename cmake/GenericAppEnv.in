@@ -9,7 +9,7 @@ rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 set CAIRN_APP=@CAIRN_APP@
 set "CAIRN_APP=%CAIRN_APP:/=\%"
 set WORKSPACE=%CAIRN_APP%
-set USER_DOC_HOME=https://pages-gitlab.deeplab.intra.cea.fr/cairnopen-2c83de/
+set USER_DOC_HOME=https://cea-liten.github.io/CairnOpen/
 set IMPORT_HOME=%CAIRN_APP%\lib
 set EXPORT_HOME=%CAIRN_APP%\lib
 set PEGASE_INSTALL=%IMPORT_HOME%\PegaseInstall
@@ -25,7 +25,11 @@ rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 set PYTHONPATH=%IMPORT_HOME%\TestingScripts\RunPegaseTests
 set PYTHON_HOME=@PYTHON_HOME@
 set "PYTHON_HOME=%PYTHON_HOME:/=\%"
-set PYTHON_VENV=@PYTHON_VENV@
+
+set PYTHON_VENV=%2
+if "%PYTHON_VENV%" == "" (
+set PYTHON_VENV=@PYTHON_VENV_PROJECT@
+)
 set "PYTHON_VENV=%PYTHON_VENV:/=\%"
 
 call %PYTHON_VENV%\scripts\deactivate.bat

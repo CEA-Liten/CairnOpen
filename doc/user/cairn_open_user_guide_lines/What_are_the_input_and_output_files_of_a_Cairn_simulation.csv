@@ -5,7 +5,7 @@ myproject_dataseries.lp;output;The equation system used by the solver
 myproject.log;output;The log file of the GUI process
 myproject_optim.log;output;The log file given by the solver about the solving solution
 myproject_cplex.log;output;The log file given by CPLEX about the solving steps
-Persee.log;output;The log file of the API process
+Cairn.log;output;The log file of the API process
 myproject_results_PLAN.csv;output;The global and levelized results for only one cycle
 myproject_results_HIST.csv;output;The global and levelized results for all cycles
 myproject_Results.csv;output;The results for only one cycle (1 row for 1 time step)

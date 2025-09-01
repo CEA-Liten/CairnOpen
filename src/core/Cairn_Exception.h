@@ -15,6 +15,8 @@ public:
     void raise() const { throw *this; }
     Cairn_Exception *clone() const { return new Cairn_Exception(*this); }
     Cairn_Exception (const QString &message="", const int &level=0) ;
+    Cairn_Exception(const std::string& message, const int& level = 0);
+    Cairn_Exception(const char* message, const int& level = 0);
 
     // because throw is not functionnal in FBSF up to now
     void setMessage (const QString &message) {mMessage=message;}

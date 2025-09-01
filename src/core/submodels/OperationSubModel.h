@@ -9,14 +9,15 @@ public:
     OperationSubModel(QObject* aParent=nullptr);
     ~OperationSubModel();
 
+    void buildModel();
+    virtual void closeExpressions();
     void computeDefaultIndicators(const double* optSol);
-    virtual void computeAllContribution(); /** MILP Model description : objective contribution */
 
     // --------------- Default Parameters (common to all operation models) ------------------ //
     void declareDefaultModelConfigurationParameters() { 
         SubModel::declareDefaultModelConfigurationParameters();  
         //bool
-        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "", { "" });          /** Use LP Model - ie binary variable imposed if true */
+        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");          /** Use LP Model - ie binary variable imposed if true */
     }
 
     void declareDefaultModelParameters() { 
@@ -25,7 +26,7 @@ public:
     void declareDefaultModelInterface()
     {
         SubModel::declareDefaultModelInterface();
-        addIO("VariableCosts", &mExpVariableCosts, mCurrency);    /** Computed variable costs resulting from ramp cost */
+        addIO("VariableCosts", &mExpVariableCosts, true, mCurrency);    /** Computed variable costs resulting from ramp cost */
     }
 
     void declareDefaultModelIndicators() {

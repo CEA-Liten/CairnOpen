@@ -12,8 +12,19 @@ void BusSubModel::computeDefaultIndicators(const double* optSol)
 {
 }
 
-void BusSubModel::computeAllContribution()
+void BusSubModel::buildModel()
 {
+    if (mAllocate) {
+        allocateExpressions();
+    }
+    else {
+        closeExpressions();
+    }
+
+    /** compute expressions, add variables and add constraints */
+    computeModelContribution();
+
+    mAllocate = false;
 }
 
 

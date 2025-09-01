@@ -5,23 +5,23 @@
 
 using namespace std;
 
-/* This test reads study formation_persee.json and formation_persee_dataseries.csv,
+/* This test reads study formation_cairn.json and formation_cairn_dataseries.csv,
    and compare the values of some parameters before executing a simulation.
    
-   Then, it executes a simulation and compares the result to the reference formation_persee_Results_Reference.csv 
+   Then, it executes a simulation and compares the result to the reference formation_cairn_Results_Reference.csv 
    which is generated using the GUI.
 */
 
 int main()
 {
-	CairnAPI m_Persee;
+	CairnAPI m_Cairn;
 	CairnAPI::OptimProblemAPI m_Problem;
 
-	//File Paths
+	//File PathsPersee
 	string const StudyRoot = TEST_RESULTS + (std::string)"/readStudy/";
-	std::string vFileName = StudyRoot + (std::string)"/formation_persee.json";
-	string const TimeseriesFileName = StudyRoot + (std::string)"/formation_persee_dataseries.csv";
-	string const ResultFileName = StudyRoot + "formation_persee_Results.csv";
+	std::string vFileName = StudyRoot + (std::string)"/formation_cairn.json";
+	string const TimeseriesFileName = StudyRoot + (std::string)"/formation_cairn_dataseries.csv";
+	string const ResultFileName = StudyRoot + "formation_cairn_results_Results.csv";
 
 	if (fs::exists(StudyRoot)) {
 		fs::remove_all(StudyRoot);
@@ -30,13 +30,14 @@ int main()
 		fs::create_directory(TEST_RESULTS);
 	}
 	fs::create_directory(StudyRoot);
-	fs::copy_file(TEST_DATA + (std::string)"/formation_persee.json", vFileName);
-	fs::copy_file(TEST_DATA + (std::string)"/formation_persee_dataseries.csv", TimeseriesFileName);
+	fs::copy_file(TEST_DATA + (std::string)"/formation_cairn.json", vFileName);
+	fs::copy_file(TEST_DATA + (std::string)"/formation_cairn_dataseries.csv", TimeseriesFileName);
 
-	string const ReferenceResultFileName = TEST_DATA + (std::string)"/formation_persee_Results_Reference.csv";
+	string const ReferenceResultFileName = TEST_DATA + (std::string)"/formation_cairn_Results_Reference.csv";
+	string const ReferenceResultFileName_2 = TEST_DATA + (std::string)"/formation_cairn_Results_Reference_run2.csv";
 
 	TESTAPI("read study file from the file path: " + vFileName,
-		m_Problem = m_Persee.read_Study(vFileName)
+		m_Problem = m_Cairn.read_Study(vFileName)
 	)
 
 	//Verify the values of some parameters with static ref values
@@ -84,11 +85,11 @@ int main()
 
 	TESTAPI2("Verify the value of SimulationControl.UseExtrapolationFactor.",
 		TestUtils::compare_scalar(m_Problem.get_SimulationControlSettings()["UseExtrapolationFactor"], true, eBool)
-	)//true is the default value. Parameter UseExtrapolationFactor doesn't exist in formation_persee.json
+	)//true is the default value. Parameter UseExtrapolationFactor doesn't exist in formation_cairn.json
 
 	TESTAPI2("Verify the value of Solver.NbSolToKeep.",
 		TestUtils::compare_scalar(m_Problem.get_MIPSolverSettings()["NbSolToKeep"], 1, eInt)
-	)//1 is the default value. Parameter NbSolToKeep doesn't exist in formation_persee.json
+	)//1 is the default value. Parameter NbSolToKeep doesn't exist in formation_cairn.json
 
 	TESTAPI2("Verify the value of Solver.Gap.",
 		TestUtils::compare_scalar(m_Problem.get_MIPSolverSettings()["Gap"], 0.001, eDouble)
@@ -97,7 +98,7 @@ int main()
 	std::vector<std::string> ConsideredEnvironmentalImpacts = { "Climate change#Global Warming Potential 100",
 																"Acidification#Accumulated Exceedance" };
 	TESTAPI2("Verify the value of TecEco.ConsideredEnvironmentalImpacts.",
-		TestUtils::compare_scalar(m_Problem.get_TechEcoAnalysisSettings()["ConsideredEnvironmentalImpacts"], ConsideredEnvironmentalImpacts, eStringList)
+		TestUtils::compare_scalar(m_Problem.get_TecEcoAnalysisSettings()["ConsideredEnvironmentalImpacts"], ConsideredEnvironmentalImpacts, eStringList)
 	)
 		
 
@@ -109,14 +110,37 @@ int main()
 
 	CairnAPI::SolutionAPI vSolution;
 
-	TESTAPI("Run",
+	TESTAPI("Run 1",
 		vSolution = m_Problem.run()
 	)
-	vSolution.exportTimeSeries();
 
 	TESTAPI2("Compare results", 
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
-	
+
+	vSolution.exportTimeSeries();
+
+	TESTAPI("Modify FutureSize",
+		m_Problem.set_SimulationControlSettings({
+			{"FutureSize", 156}
+		})
+	)
+
+	TESTAPI("Run 2",
+		vSolution = m_Problem.run()
+	)
+
+	TESTAPI2("Compare results for run 2",
+		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName_2)
+	)
+
+	TESTAPI("Run 3",
+		vSolution = m_Problem.run()
+	)
+
+	TESTAPI2("Compare results from the last two runs",
+		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName_2)
+	)
+
 	return noError;
 }

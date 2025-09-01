@@ -4,6 +4,9 @@
 #include <fstream>
 #include <vector>
 #include <assert.h>
+#include <fstream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 
 #include "MIPModeler.h"
@@ -59,8 +62,7 @@ CairnCore::CairnCore(QObject *aParent,
     QMap<QString,QString> aMilpComponents ;
     aMilpComponents["id"]=QString("SYSTEM") ;
 
-    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, aTecEcoEnv, aMilpComponents) ;
-    mProblem->setStdAloneMode(mStdAloneMode) ;
+    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, aTecEcoEnv, mStdAloneMode, aMilpComponents) ;
 
     mTimeSeriesManager = new TimeSeriesManager(*mMilpData, "pegase");
 }
@@ -83,9 +85,9 @@ CairnCore::CairnCore(QObject *aParent,
     GS::iVerbose=0 ;
     CairnUtils::resetInfoParam() ;
     CairnUtils::resetMissingParam();
-    QString exeDir = qEnvironmentVariable("CAIRN_BIN", QDir::currentPath());
+    std::string exeDir = std::getenv("CAIRN_BIN");
 
-    UnitsConverter::UnitsConverter(exeDir.toStdString() + (std::string)"/../resources/DefUnits.json");
+    UnitsConverter::UnitsConverter(exeDir + (std::string)"/../resources/DefUnits.json");
 
     mMilpData = new MilpData(this, "MilpData", aGlobalTimeStepFile, aGlobalTypicalPeriodsFile);
 
@@ -96,8 +98,7 @@ CairnCore::CairnCore(QObject *aParent,
     QMap<QString,QString> aMilpComponents ;
     aMilpComponents["id"]=QString("SYSTEM") ;
 
-    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, aTecEcoEnv, aMilpComponents) ;
-    mProblem->setStdAloneMode(mStdAloneMode) ;
+    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, aTecEcoEnv, mStdAloneMode, aMilpComponents) ;
 
     mTimeSeriesManager = new TimeSeriesManager(*mMilpData);
 }
@@ -178,48 +179,40 @@ void CairnCore::setStopSignal(int* stopSignal){
     mStopSignal=stopSignal;
 }
 
-void CairnCore::importTS(const QStringList& aTSfileList, const int& iShift = 0)
+void CairnCore::importTS(const t_list& aTSfileList, const int& iShift = 0)
 {
     mTimeSeriesManager->importTS(aTSfileList, mProblem->ListSubscribedVariables(), iShift, mProblem->getSimulationControl()->isCheckTimeSeriesUnits());
 }
 
-OrCheckUnits CairnCore::CheckUnits(const QString& a_FileUnit, const QString& a_Units, bool a_Check)
+OrCheckUnits CairnCore::CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check)
 {
     return mTimeSeriesManager->CheckUnits(a_FileUnit, a_Units, a_Check);
 }
 
-int CairnCore::exportTS(const QString &aTSfile, int iter, bool rh, QString encoding)
+int CairnCore::exportTS(const std::string &aTSfile, int iter, bool rh, std::string encoding)
 {
     // #######################################
     // ############## EXPORT #################
-    // #######################################
-    QString TSfileMod;
-
-    TSfileMod = aTSfile;
-    QFile FileOut(TSfileMod);
-    QIODevice::OpenMode openMode = QIODevice::WriteOnly;
+    // #######################################   
+    std::ios_base::openmode openMode = std::ios_base::out;
     if (iter>0){
-        openMode = QIODevice::Append;
+        openMode = std::ios_base::app;
     }
-    if (!CairnUtils::openFileForWriting(FileOut, openMode)) {
-        qWarning () << "OptimProblem: couldn't open result file for writing : " << TSfileMod;
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, aTSfile, openMode)) {
+        qWarning () << "OptimProblem: couldn't open result file for writing : " << QString(aTSfile.c_str());
         return 1;
     }
-    qCInfo(log) << " - Export RollingHorizon result timeseries "<<TSfileMod;
-    QTextStream io(&FileOut) ;
-    io.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-    QMap<QString, ZEVariables*> ListPublishedVariables = mProblem->ListPublishedVariables() ;
-    if(iter==0){
-        QMapIterator<QString, ZEVariables*> iPublishedVariable(ListPublishedVariables) ;
-        io << "Time" << ";" ;
-        while (iPublishedVariable.hasNext())
-        {
-            iPublishedVariable.next() ;
-            ZEVariables* var = iPublishedVariable.value() ;
-            QString zeVarName = var->Name();
-            io << zeVarName << ";" ;
+    qCInfo(log) << " - Export RollingHorizon result timeseries " << QString(aTSfile.c_str());
+   
+    t_mapExchange &vListPublishedVariables = mProblem->ListPublishedVariables() ;
+    if(iter==0){        
+        FileOut << "Time" << ";" ;
+        for (auto& iPublishedVariable : vListPublishedVariables) {                    
+            ZEVariables* var = iPublishedVariable.second ;            
+            FileOut << var->Name().toStdString() << ";" ;
         }
-        io << Qt::endl ;
+        FileOut << std::endl ;
     }
     int ts; //nombre de pdt à écrire : si rolling horizon, que ce qui ne sera pas recalculé (donc timeshift), sinon tout le futur size.
     if (rh)
@@ -228,48 +221,42 @@ int CairnCore::exportTS(const QString &aTSfile, int iter, bool rh, QString encod
         ts = mMilpData->npdt();
     for ( size_t j = 0; j < ts; j++)
     {
-        io << (j+1+ts*iter)*mMilpData->pdt() << ";" ;
-        QMapIterator<QString, ZEVariables*> iPublishedVariable2(ListPublishedVariables) ;
-        while (iPublishedVariable2.hasNext())
-        {
-            iPublishedVariable2.next() ;
-            ZEVariables* var = iPublishedVariable2.value() ;
-            QString zeVarName = var->Name();
+        FileOut << (j+1+ts*iter)*mMilpData->pdt() << ";" ;
+        for (auto& iPublishedVariable : vListPublishedVariables) {        
+            ZEVariables* var = iPublishedVariable.second ;            
             if (var->ptrVariable()->size() > 0)
             {
-                io << var->ptrVariable()->at(j + npdtPast()) << ";" ;
+                FileOut << var->ptrVariable()->at(j + npdtPast()) << ";" ;
             }
         }
-        io << Qt::endl ;
+        FileOut << std::endl ;
     }
 
     FileOut.close() ;
     return 0;
 }
 
-int CairnCore::exportTS(const QString& aTSfile, std::map<std::string, std::vector<double>>& resultats, QString encoding)
+int CairnCore::exportTS(const std::string& aTSfile, std::map<std::string, std::vector<double>>& resultats, std::string encoding)
 {
-    QFile FileOut(aTSfile);
-    if (!CairnUtils::openFileForWriting(FileOut)) {
-        qWarning() << "OptimProblem Couldn't open result file for writing : " << aTSfile;
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, aTSfile)) {
+        qWarning() << "OptimProblem Couldn't open result file for writing : " << QString(aTSfile.c_str());
         return 1;
     }
-
-    QTextStream io(&FileOut);
-    io.setCodec(QTextCodec::codecForName(encoding.toUtf8()));
-    io << "Time" << ";";
+    
+    FileOut << "Time" << ";";
     for (auto& [key, value] : resultats) {
-        io << QString(key.c_str()) << ";";
+        FileOut << key << ";";
     }    
-    io << Qt::endl;
+    FileOut << std::endl;
 
     for (size_t j = mMilpData->npdtPast(); j < mMilpData->npdtTot(); j++)
     {
-        io << j * (mMilpData->pdt()) << ";";
+        FileOut << j * (mMilpData->pdt()) << ";";
         for (auto& [key, value] : resultats) {
-            io << value[j] << ";";
+            FileOut << value[j] << ";";
         }
-        io << Qt::endl;
+        FileOut << std::endl;
     }
 
     FileOut.close();
@@ -298,7 +285,7 @@ int CairnCore::doStep(const QString encoding, const QMap<QString, bool> paramMap
             throw cairn_error;
         }
     } catch (...) {
-        Cairn_Exception cairn_error("Fatal Error in prepareOptim Optim Problem", -1);
+        Cairn_Exception cairn_error((std::string)"Fatal Error in prepareOptim Optim Problem", -1);
         throw cairn_error;
     }
 
@@ -329,14 +316,14 @@ int CairnCore::doStep(const QString encoding, const QMap<QString, bool> paramMap
         }
     }
     catch (std::exception std_exp) {
-        Cairn_Exception cairn_error(std_exp.what(), -1);
+        Cairn_Exception cairn_error((std::string)std_exp.what(), -1);
         throw cairn_error;
     }
     catch (...) {
         if (mProblem->getException().error() != 0)
             throw mProblem->getException();//TODO: why checked twice? and unify the exception handling 
         else {
-            Cairn_Exception cairn_error("Fatal Error in building Optim Problem", -1);
+            Cairn_Exception cairn_error((std::string)"Fatal Error in building Optim Problem", -1);
             throw cairn_error;
         }
     }
@@ -388,13 +375,12 @@ int CairnCore::doStep(const QString encoding, const QMap<QString, bool> paramMap
         qCWarning(log) << "CairnCore default solution due to no solution with status =" << status;
         mProblem->setDefaultsResults();
         if (isExportResults)        
-            istat = exportResults(0, isRollingHorizon, istat, encoding);
+            istat = exportResults(0, isRollingHorizon, istat);
     }
     else {
         for (int i = nbSol - 1;i >= 0;i--) {            
             mProblem->readSolution(i);            
-            if (istat == 0)
-            {
+            if (istat == 0) {
                 qCInfo(log) << "CairnCore solution optimale " << status << ", solution: " << i;                
             }
             else {
@@ -403,49 +389,46 @@ int CairnCore::doStep(const QString encoding, const QMap<QString, bool> paramMap
             if (i > 0 && isExportResults) {
                 std::map<std::string, std::vector<double>> vResults;
                 mProblem->writeSolution(i, vResults);
-                exportTS(QString(mStudy.getScenarioFile(".csv", i).c_str()), vResults, encoding);
+                exportTS(mStudy.getScenarioFile(".csv", i), vResults);
             }
             /** Export results */
-            if (isExportResults)
-                istat = exportResults(i, isRollingHorizon, istat, encoding);
+            if (isExportResults) {
+                istat = exportResults(i, isRollingHorizon, istat);
+            }
         }        
     }
-
-    mProblem->cleanExpressions();
     return istat ;
 }
 
-void CairnCore::exportTotalTimeResolutionAllCycles(const QString& aFileName)
+void CairnCore::exportTotalTimeResolutionAllCycles(const std::string& aFileName)
 {
-    QFile FileOut(aFileName);
-    if (!CairnUtils::openFileForWriting(FileOut))
+    std::fstream FileOut;
+    if (!CairnUtils::openFileForWriting(FileOut, aFileName))
     {
-        Cairn_Exception cairn_error("CairnCore: Couldn't open file solverRunningTime.csv for writing.", -1);
+        Cairn_Exception cairn_error((std::string)"CairnCore: Couldn't open file solverRunningTime.csv for writing.", -1);
         throw cairn_error;
     }
+    
+    FileOut << "sep=;\n";
 
-    QTextStream out(&FileOut);
+    std::string header = "; Solver Running Time ; Cumulative Time";
 
-    out << "sep=;\n";
-
-    QString header = "; Solver Running Time ; Cumulative Time";
-
-    out << header << "\n";
+    FileOut << header << "\n";
 
     for (int i = 0; i < mSolverRunningTimeAllCycles.size(); i++)
     {
-        QString iCycleLine = "Cycle " + QString::number(i + 1);
+        std::string iCycleLine = "Cycle " + std::to_string(i + 1);
         double cumulativeTime = 0.0;
         for (int j = 0; j < i+1; j++)
             cumulativeTime += mSolverRunningTimeAllCycles[j];
-        iCycleLine += ";" + QString::number(mSolverRunningTimeAllCycles[i]) + ";" + QString::number(cumulativeTime) + "\n";
-        out << iCycleLine;
+        iCycleLine += ";" + std::to_string(mSolverRunningTimeAllCycles[i]) + ";" + std::to_string(cumulativeTime) + "\n";
+        FileOut << iCycleLine;
     }
 }
 
 
 //------------------------------------------------------------------------------
-int CairnCore::exportResults(const int& aNsol, const bool& isRollingHorizon, const int &istat, QString encoding)
+int CairnCore::exportResults(const int& aNsol, const bool& isRollingHorizon, const int &istat, std::string encoding)
 {
     /** Export results */    
     mProblem->exportResults();
@@ -454,14 +437,14 @@ int CairnCore::exportResults(const int& aNsol, const bool& isRollingHorizon, con
         //iter = 0, and rh = false to save all the npdt() points of this cycle
         exportTS(getResultsTimeSeriesFileName(aNsol));
         if (isRollingHorizon && ExportResultsEveryCycle()) {
-            QString vName = "_Results_RH_" + QString::number(mIter+1) + ".csv";
-            exportTS(QString(mStudy.getScenarioFile(vName.toStdString(), aNsol).c_str()), 0, false, encoding);
+            std::string vName = "_Results_RH_" + std::to_string(mIter+1) + ".csv";
+            exportTS(mStudy.getScenarioFile(vName, aNsol), 0, false, encoding);
         }
     }
 
     /** Save rollinghorizon results. Standard format: it takes only timeShift points from each iteration if nbcycle() > 1 or Pegase */ 
     if (isRollingHorizon || !mStdAloneMode) {
-        exportTS(QString(mStudy.getScenarioFile("_rollinghorizon.csv", aNsol).c_str()), mIter, (isRollingHorizon || !mStdAloneMode), encoding);
+        exportTS(std::string(mStudy.getScenarioFile("_rollinghorizon.csv", aNsol).c_str()), mIter, (isRollingHorizon || !mStdAloneMode), encoding);
     }
 
     /** Perform TecEcoEnv analysis */
@@ -483,7 +466,7 @@ int CairnCore::exportResults(const int& aNsol, const bool& isRollingHorizon, con
     return istat;
 }
 
-void CairnCore::exportAnalysis(const int &aNsol, const bool& isRollingHorizon, QString encoding)
+void CairnCore::exportAnalysis(const int &aNsol, const bool& isRollingHorizon, std::string encoding)
 {
     int ierr = 0;
     if (mProblem->getTecEcoEnv() != nullptr)
@@ -491,14 +474,14 @@ void CairnCore::exportAnalysis(const int &aNsol, const bool& isRollingHorizon, Q
         if (mProblem->getTecEcoEnv()->Range() == "HIST" || mProblem->getTecEcoEnv()->Range() == "HISTandPLAN")
         {
             try {
-                mProblem->exportAllTecEcoEnvAnalysis(QString(mStudy.getScenarioFile("_HIST.csv", aNsol).c_str()), "HIST", encoding, false);
+                mProblem->exportAllTecEcoEnvAnalysis(mStudy.getScenarioFile("_HIST.csv", aNsol), "HIST", encoding, false);
                 if (isRollingHorizon && ExportResultsEveryCycle()) {
-                    QString vName = "_HIST_RH_" + QString::number(mIter + 1) + ".csv";
-                    mProblem->exportAllTecEcoEnvAnalysis(QString(mStudy.getScenarioFile(vName.toStdString(), aNsol).c_str()), "HIST", encoding, isRollingHorizon);
+                    std::string vName = "_HIST_RH_" + std::to_string(mIter + 1) + ".csv";
+                    mProblem->exportAllTecEcoEnvAnalysis(mStudy.getScenarioFile(vName, aNsol), "HIST", encoding, isRollingHorizon);
                 }
             }
             catch (Cairn_Exception& cairn_err) {
-                Cairn_Exception cairn_error("export analysis failed!!", -1);
+                Cairn_Exception cairn_error((std::string)"export analysis failed!!", -1);
                 throw cairn_error;
             }
         }
@@ -507,21 +490,21 @@ void CairnCore::exportAnalysis(const int &aNsol, const bool& isRollingHorizon, Q
         {
             try {
                 mProblem->exportAllTecEcoEnvAnalysis(getGlobalResultsFileName(aNsol), "PLAN", encoding, false, aNsol); // always isRollingHorizon=false // main _PLAN.csv
-                if (mProblem->getSimulationControl()->isExportParameters()) mProblem->exportParameters(QString(mStudy.getScenarioFile("_Parameters.csv", aNsol, false).c_str()), encoding);
+                if (mProblem->getSimulationControl()->isExportParameters()) mProblem->exportParameters(mStudy.getScenarioFile("_Parameters.csv", aNsol, false), encoding);
                 //Env Impacts coeff and results - special files
-                mProblem->exportEnvImpactParameters(QString(mStudy.getScenarioFile("_EnvImpactParameters.csv", aNsol, false).c_str()), encoding);
-                mProblem->exportPortEnvImpactParameters(QString(mStudy.getScenarioFile("_PortEnvImpactParameters.csv", aNsol, false).c_str()), encoding);
-                mProblem->exportEnvImpactMassIndicators(QString(mStudy.getScenarioFile("_EnvImpactMass.csv", aNsol).c_str()), encoding);
+                mProblem->exportEnvImpactParameters(mStudy.getScenarioFile("_EnvImpactParameters.csv", aNsol, false), encoding);
+                mProblem->exportPortEnvImpactParameters(mStudy.getScenarioFile("_PortEnvImpactParameters.csv", aNsol, false), encoding);
+                mProblem->exportEnvImpactMassIndicators(mStudy.getScenarioFile("_EnvImpactMass.csv", aNsol), encoding);
                 //
                 if (isRollingHorizon && ExportResultsEveryCycle()) {
-                    QString vName = "_PLAN_RH_" + QString::number(mIter + 1) + ".csv";
-                    mProblem->exportAllTecEcoEnvAnalysis(QString(mStudy.getScenarioFile(vName.toStdString(), aNsol).c_str()), "PLAN", encoding, isRollingHorizon, aNsol);
+                    std::string vName = "_PLAN_RH_" + std::to_string(mIter + 1) + ".csv";
+                    mProblem->exportAllTecEcoEnvAnalysis(std::string(mStudy.getScenarioFile(vName, aNsol).c_str()), "PLAN", encoding, isRollingHorizon, aNsol);
                 }
-                if (isRollingHorizon) mProblem->exportOptimaSizeAllCycles(QString(mStudy.getScenarioFile("_optimalSize.csv", aNsol, false).c_str()), mIter + 1);
-                exportTotalTimeResolutionAllCycles(QString(mStudy.getScenarioFile("_solverRunningTime.csv", aNsol, false).c_str()));
+                if (isRollingHorizon) mProblem->exportOptimaSizeAllCycles(mStudy.getScenarioFile("_optimalSize.csv", aNsol, false), mIter + 1);
+                exportTotalTimeResolutionAllCycles(mStudy.getScenarioFile("_solverRunningTime.csv", aNsol, false));
             }
             catch (Cairn_Exception& cairn_err) {
-                Cairn_Exception cairn_error("export analysis failed!!", -1);
+                Cairn_Exception cairn_error((std::string)"export analysis failed!!", -1);
                 throw cairn_error;
             }
         }
@@ -541,18 +524,17 @@ int CairnCore::doTerminate()
     //Delete _rollingHorizon.csv if non-RollingHorizon because it is the same as _Results.csv in this case (case Pegase)
     if(mIter == 0 && !mStdAloneMode){
         for (int aNsol = 0; aNsol < mProblem->getNumberOfSolutions(); aNsol++) {
-            QString filename = QString(mStudy.getScenarioFile("_rollinghorizon.csv", aNsol).c_str());
-            QFile rhFile(filename);
-            if (rhFile.exists()) {
-                rhFile.remove();
-            }
+            fs::path filename = mStudy.getScenarioFile("_rollinghorizon.csv", aNsol);
+            if (fs::exists(filename)) {
+                fs::remove(filename);
+            }            
         }
     }
-    
-    // make sure no attempt to read settings later on as local QSettings will have been destroyed 
-    mMilpData->setSettings(nullptr);
 
-    if(mProblem) delete mProblem;
+    if (mProblem) {
+        mProblem->closeExpressions();
+        delete mProblem;
+    }
 	mProblem = nullptr;
     if(mMilpData) delete mMilpData;
 	mMilpData = nullptr;

@@ -42,6 +42,8 @@ public:
     void declareCompoInputParam();
     void setCompoInputParam(const QMap<QString, QString> aComponent);
 
+    void declareIOVariables();
+
     void exportPortResults(t_mapExchange& a_Export, uint modinitTS);
 
     void jsonSaveGUIlistPortsData(QJsonArray& nodePortArray, const QString& aSide);

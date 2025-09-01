@@ -13,6 +13,7 @@ class InputParam ;
 #include <string>
 #endif
 #include "CairnAPI.h"
+#include "FlagParam.h"
 #include <cmath>
 
 const double INFINITY_VAL = 1.e12;
@@ -37,26 +38,6 @@ enum EParamType {
 };
 typedef std::variant<double*, int*, bool*, QString*, QStringList*, std::vector<double>*, std::vector<int>*, Eigen::VectorXf*, QVector<float>*> t_pvalue;
 
-enum EFunctFlagType {
-    eFTypeUndefined = -1,
-    eFTypeNotAnd = 0,   // !Flags_i && !Flags_i ... && Flags2_j && Flags2_j ...
-    eFTypeOrNot,         // Flags_i || Flags_i ... || !Flags2_j || !Flags2_j ...        
-    eFTypeNotAndOr      // !Flags_i && !Flags_i ... && (Flags2_j || Flags2_j ...)
-};
-struct SExtFunctionFlag {
-    bool (*pFunct)(class SubModel* ap_Model) { nullptr };
-    class SubModel* pModel{ nullptr };
-};
-struct SFunctionFlag {
-    EFunctFlagType Type;
-    std::vector<bool*> Flags;
-    std::vector<bool*> Flags2;  
-    SExtFunctionFlag ExtFunct;
-};
-
-typedef std::variant<bool, bool*, SFunctionFlag, SExtFunctionFlag> t_flag;
-
-
 /**
  * \brief The InputParam class defines MilpComponent & MilpModel Input Parameter variables
  * Provides functionnality to read MilpComponent parameter values from settings and to set these values to Submodel Input Parameters
@@ -70,6 +51,7 @@ public:
     virtual ~InputParam();
 
     void removeParameter(const QString& aParamName);
+    void removeParameters();
 
     /** @brief
     @param aParamName QString: param name
@@ -81,9 +63,8 @@ public:
     @param aUnit QString&: unit of the parameter
     @param aConfigList QList<QString>: to be used to gather parameters in the same filter
     */
-    void addParameter(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const QList<QString>& aconfigList = { "" });
+    void addParameter(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const std::string aShowConfig = "Base");
 
-    //scalar: takes default value:
     /** @brief
     @param aParamName QString: param name
     @param aBoolPtr bool*: pointer on the bool value
@@ -94,7 +75,7 @@ public:
     @param aUnit QString&: unit of the parameter
     @param aConfigList QList<QString>: to be used to gather parameters in the same filter
     */
-    void addParameter(const QString &aParamName, bool* aBoolPtr, bool aDefaultValue, t_flag aIsBlocking=true, t_flag aIsUsed=true, const QString &aDescription="", const QString &aUnit="", const QList<QString> &aconfigList={""}) ;
+    void addParameter(const QString &aParamName, bool* aBoolPtr, bool aDefaultValue, t_flag aIsBlocking=true, t_flag aIsUsed=true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
     /** @brief
     @param aParamName QString: param name
     @param aQStringPtr QString*: pointer on the QString value
@@ -105,7 +86,7 @@ public:
     @param aUnit QString&: unit of the parameter
     @param aConfigList QList<QString>: to be used to gather parameters in the same filter
     */
-    void addParameter(const QString &aParamName, QString* aQstring, QString aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const QList<QString> &aconfigList={""}) ;
+    void addParameter(const QString &aParamName, QString* aQstring, QString aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
     /** @brief
     @param aParamName QString: param name
     @param aIntPtr int*: pointer on the int value
@@ -116,7 +97,7 @@ public:
     @param aUnit QString&: unit of the parameter
     @param aConfigList QList<QString>: to be used to gather parameters in the same filter
     */
-    void addParameter(const QString &aParamName, int* aIntPtr, int aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed=true, const QString &aDescription="", const QString &aUnit="", const QList<QString> &aconfigList={""}) ;
+    void addParameter(const QString &aParamName, int* aIntPtr, int aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed=true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
     /** @brief
     @param aParamName QString: param name
     @param aDblePtr double*: pointer on the double value
@@ -127,19 +108,17 @@ public:
     @param aUnit QString&: unit of the parameter
     @param aConfigList QList<QString>: to be used to gather parameters in the same filter
     */
-    void addParameter(const QString &aParamName, double* aDblePtr, double aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const QList<QString> &aconfigList={""}) ;
+    void addParameter(const QString &aParamName, double* aDblePtr, double aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
     
-    //vector : doesn't take default value
-    void addParameter(const QString& aParamName, QStringList* aQSLPtr, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const QList<QString>& aconfigList = { "" });
-    void addParameter(const QString &aParamName, std::vector<int>* aIntPtr, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const QList<QString> &aconfigList={""}) ;
-    void addParameter(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString& aDescription="", const QString& aUnit = "", const QList<QString>& aconfigList = { "" });
-    void addParameter(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking, t_flag aIsUsed, const QString& aDescription, const QList<QString>& aQuantities, const QList<QString>& aconfigList = {""});
+    void addParameter(const QString& aParamName, QStringList* aQSLPtr, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const std::string aShowConfig = "Base");
+
+    void addPerfParam(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "");
 
     void addTimeSeries(const QString& aParamName, std::vector<double>* aDblePtr, 
         double a_default = 1.0,        
         t_flag IsBlocking = true, t_flag aIsUsed = true,
         const QString& aDescription = "", const QString& aUnit = "",
-        const QList<QString>& aconfigList = { "" },
+        const std::string& aShowConfig = "Base",
         double a_min = std::nan("1"), double a_max = std::nan("1"));
 
 
@@ -155,11 +134,9 @@ public:
     void addIndicator(const QString& aIndicatorName, std::vector<double>* aDblePtr, bool* aBoolPtr, const QString& aDescription = "", const QString& aUnit = "", const QString& aShortName = "");
 
     int readParameters(const QMap<QString, QString>& aSettings);
-    int readParameters(const QString& aName, const QSettings& aSettings);
     void readVectorParameters (const QString &aName, const QString &aFileName, QList<QString>& aPerfParamNames) ;
     
     int fillVectorData(const QString& aName, const InputParam &aSrc, const uint& aOffset);
-    int fillData(const QString& aName, const InputParam& aSrc, const EParamType& aType);
 
     QString getParamQSValue(const QString& aParamName);
     void getParameters(QList<QString>& a_List, const EParamType& a_Type);
@@ -169,8 +146,7 @@ public:
     bool setParameterValue(const QString& a_SettingsName, const QString& a_SettingsValue);
     bool setParameterValue(const QString& a_SettingsName, const t_value& a_SettingsValue);
 
-    void addToConfigList(const QList<QString> aConfigsList) { mConfigsList = aConfigsList; }
-    void checkConfigParameter (const QString &aParamName, const QList<QString> &aconfigList) ;
+    void addToShowConfigList(const std::string& aConfig);
     static int checkProfile(const QString aName, const Eigen::VectorXf& aProfile, const float aInf, const float aSup);
 
     void jsonSaveGUIInputParam(QJsonArray& paramArray);
@@ -183,14 +159,16 @@ public:
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QString& a_Unit = "");        
+            const QString& a_Unit = "", 
+            const std::string& a_ShowConfig = "");
         ModelParam(const QString& a_Name,
             const t_pvalue &ap_Value,
             t_value a_defaultValue,
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QString& a_Unit = "");
+            const QString& a_Unit = "",
+            const std::string& a_ShowConfig = "");
         // bool
         ModelParam(const QString& a_Name, bool* ap_Value);
         ModelParam(const QString& a_Name,
@@ -198,7 +176,8 @@ public:
             bool a_defaultValue, 
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
-            const QString& a_Comment = "");
+            const QString& a_Comment = "",
+            const std::string& a_ShowConfig = "");
         // string
         ModelParam(const QString& a_Name, QString* ap_Value);
         ModelParam(const QString& a_Name,
@@ -207,7 +186,8 @@ public:
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QString& a_Unit = "");
+            const QString& a_Unit = "",
+            const std::string& a_ShowConfig = "");
         // double
         ModelParam(const QString& a_Name, double* ap_Value);
         ModelParam(const QString& a_Name,
@@ -218,7 +198,8 @@ public:
             const QString& a_Comment = "",
             const QString& a_Unit = "",
             double a_min = std::nan("1"),
-            double a_max = std::nan("1"));        
+            double a_max = std::nan("1"),
+            const std::string& a_ShowConfig = "");
         // int
         ModelParam(const QString& a_Name, int* ap_Value);
         ModelParam(const QString& a_Name,
@@ -229,26 +210,30 @@ public:
             const QString& a_Comment = "",
             const QString& a_Unit = "",
             int a_min = std::numeric_limits<int>::max(),
-            int a_max = std::numeric_limits<int>::max());
+            int a_max = std::numeric_limits<int>::max(),
+            const std::string& a_ShowConfig = "");
         // string list
         ModelParam(const QString& a_Name,
             QStringList* ap_Value,
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
-            const QString& a_Comment = "");
+            const QString& a_Comment = "",
+            const std::string& a_ShowConfig = "");
         // vector double
         ModelParam(const QString& a_Name,
             std::vector<double>* ap_Value,
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QString& a_Unit = "");
+            const QString& a_Unit = "",
+            const std::string& a_ShowConfig = "");
         ModelParam(const QString& a_Name,
             std::vector<double>* ap_Value,
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QList<QString>& a_Quantities = { "" });
+            const QList<QString>& a_Quantities = { "" },
+            const std::string& a_ShowConfig = "");
         ModelParam(const QString& a_Name,
             std::vector<double>* ap_Value,
             double a_default = 1.0,
@@ -257,14 +242,16 @@ public:
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QString& a_Unit = "");
+            const QString& a_Unit = "",
+            const std::string& a_ShowConfig = "");
         // vector int
         ModelParam(const QString& a_Name,
             std::vector<int>* ap_Value,
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
             const QString& a_Comment = "",
-            const QString& a_Unit = "");
+            const QString& a_Unit = "",
+            const std::string& a_ShowConfig = "");
         // vector eigen
         ModelParam(const QString& a_Name, Eigen::VectorXf* ap_Value);
         ModelParam(const QString& a_Name, int aSize, double aDefault);
@@ -279,16 +266,16 @@ public:
         bool copyValues(const QVector<float> &aSrc, size_t aOffset = 0);
         bool setValues(const double& aValue, size_t aSize);
 
-        bool readParameter(const QString& a_Name, const QSettings& aSettings);
-        bool readParameter(const QMap<QString, QString>& aSettings);//aName is only needed in case of QSettings to filter by componenet
+        bool readParameter(const QMap<QString, QString>& aSettings); 
         bool IsBlocking();
-        bool IsUsed() ;
+        bool IsUsed();
         TriState isModified();
 
         const QString& getName() const { return m_Name; };
         const QString& getDescription() const { return m_Comment; };
         //const QString& getUnit() const { return m_Quantities[0]; };
         const QList<QString>& getQuantities() const { return m_Quantities; };
+        const std::string& getShowConfig() const { return m_ShowConfig; };
         const EParamType& getType() const { return m_Type; };
         bool isPValue() const;
         const t_pvalue& getPtr() const { return p_Value; };
@@ -299,24 +286,13 @@ public:
         const t_value& getMin() const { return m_min; };
         const t_value& getMax() const { return m_max; };
 
-        class FlagParam
-        {
-        public:
-            FlagParam();
-            void set_Value(t_flag a_Flag);
-            bool get_Value();
-        private:
-            bool m_Value;
-            bool* p_Value;
-            SFunctionFlag m_Function;
-            SExtFunctionFlag m_ExtFunct;
-        };
     protected:
         QString m_Name;
         EParamType m_Type;
         QString m_Comment;
         QList<QString> m_Quantities;
-        
+        std::string m_ShowConfig; // In GUI, the parameter is displayed only if m_ShowConfig is selected from DataFilter
+
         t_pvalue p_Value;
         bool m_create{ false }; 
 
@@ -343,10 +319,11 @@ public:
         const QString& getShortName() const { return m_ShortName; };
         const QString& getUnit() const { return m_Unit; };
         bool IsExported();
-        void Export(QTextStream& out, const QString& aComponentName, const QString &range, bool aForceExport);
-        void Export(QTextStream& out, const QString& aComponentName, const QString& range, bool aForceExport, 
+        void Export(std::fstream& out, const QString& aComponentName, const std::string&range, bool aForceExport);
+        void Export(std::fstream& out, const QString& aComponentName, const std::string& range, bool aForceExport,
             bool aIsSizeOptimized, bool aIsPriceOptimized, bool isRollingHorizon, const std::vector<double> &aOptimalSizeAllCycles);
         double getValue(size_t aIndex=0);
+        void resetValue(); //reset indicator value to 0
     protected:
         QString m_Name;
         QString m_ShortName;
@@ -364,13 +341,14 @@ public:
     void getParameters(QList<ModelParam*>& a_List, const EParamType& a_Type);
     ModelParam* getParameter(const QString &aName);
 
+    const std::vector <std::string>& getShowConfigList() const { return mShowConfigList; };
+
     const t_Indicators& getIndicators() const { return mIndicators; };
 
 private:    
-    QList<QString> mConfigsList ;  /** List of possible parameter set configurations */
-    
-    t_mapParams mMapParams;  
-    t_Indicators mIndicators;
+    std::vector <std::string> mShowConfigList = {};  /** List of possible parameter set configurations */
+    t_mapParams mMapParams = {};
+    t_Indicators mIndicators = {};
 };
 
 #endif // InputParam_H

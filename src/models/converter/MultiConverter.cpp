@@ -23,6 +23,40 @@ MultiConverter::MultiConverter(QObject* aParent)
 
 MultiConverter::~MultiConverter() {}
 
+void MultiConverter::closeExpressions()
+{
+    SubModel::closeExpressions();
+
+    for (int i = 0; i < mNbOutputFlux; i++)
+    {
+        if (mExpOutput.size() > i) {
+            closeExpression1D(mExpOutput[i]);
+        }
+        if (mExpInputPart.size() > i) {
+            closeExpression1D(mExpInputPart[i]);
+        }
+        if (mExpOutputPart.size() > i) {
+            closeExpression1D(mExpOutputPart[i]);
+        }
+    }
+    for (int i = 0; i < mNbInputFlux; i++)
+    {
+        if (mExpInput.size() > i) {
+            closeExpression1D(mExpInput[i]);
+        }
+    }
+    for (int i = 0; i < mNbInputFlux + mNbOutputFlux; i++)
+    {
+        if (mExpMatrixProduct.size() > i) {
+            closeExpression1D(mExpMatrixProduct[i]);
+        }
+        if (mExpMatrixProduct_ineq.size() > i) {
+            closeExpression1D(mExpMatrixProduct_ineq[i]);
+        }
+    }
+    mInput.clear();
+    mOutput.clear();
+}
 
 void MultiConverter::buildModel() 
 {
@@ -31,9 +65,6 @@ void MultiConverter::buildModel()
         Cairn_Exception persee_error("Error: the number of NbInputFlux/NbOutputFlux of " + getCompoName() + " must be less than the number of Input/Output ports.", -1);
         throw persee_error;
     }
-
-    // constraint on maximum Input power of component.
-    setExpSizeMax(mMaxPower, "MaxPower");
 
     if (mAllocate)
     {
@@ -58,26 +89,11 @@ void MultiConverter::buildModel()
     }
     else
     {
-       // closeExpression1D(mExpOutputTotalPower);
-        for (int i = 0; i < mNbOutputFlux; i++)
-        {
-            closeExpression1D(mExpOutput[i]);
-            closeExpression1D(mExpInputPart[i]);
-            closeExpression1D(mExpOutputPart[i]);
-        }
-        for (int i = 0; i < mNbInputFlux; i++)
-        {
-            closeExpression1D(mExpInput[i]);
-        }
-        for (int i = 0; i < mNbInputFlux + mNbOutputFlux; i++)
-        {
-            closeExpression1D(mExpMatrixProduct[i]);
-            closeExpression1D(mExpMatrixProduct_ineq[i]);
-        }
-        mInput.clear();
-        mOutput.clear();
+        closeExpressions();
     }
 
+    // constraint on maximum Input power of component.
+    setExpSizeMax(mMinSize,mMaxPower,"MaxPower");
 
     // precomputation
     std::vector <double> maxInput;
@@ -88,7 +104,8 @@ void MultiConverter::buildModel()
 
     // TODO : check inside fonctions
     //TODO : assert good size of matrixes depending on NbInputFlux and NbOutputFlux
-    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(mMatrixA, ";");
+    QString matrixA_filename = QString(getAbsoluteFileName(mMatrixA.toStdString()).c_str());
+    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(matrixA_filename, ";");
     if (data_Inputs_A.empty()) {
         // Initialize coefficient_A with a null matrix of the good size
         coefficient_A.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(mNbOutputFlux + mNbInputFlux, 0.0));
@@ -98,7 +115,8 @@ void MultiConverter::buildModel()
     }
     Eigen::MatrixXd mMatrixEigenA = convertToEigen(coefficient_A);
 
-    QList<QStringList> data_Inputs_B = GS::readFromCsvFile(mMatrixB, ";");
+    QString matrixB_filename = QString(getAbsoluteFileName(mMatrixB.toStdString()).c_str());
+    QList<QStringList> data_Inputs_B = GS::readFromCsvFile(matrixB_filename, ";");
     if (data_Inputs_B.empty()) {
         // Initialize coefficient_B with a null matrix of the good size
         coefficient_B.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(1, 0.0));
@@ -108,9 +126,8 @@ void MultiConverter::buildModel()
     }
     Eigen::MatrixXd mMatrixEigenB = convertToEigen(coefficient_B);
 
-
-
-    QList<QStringList> data_Inputs_C = GS::readFromCsvFile(mMatrixC, ";");
+    QString matrixC_filename = QString(getAbsoluteFileName(mMatrixC.toStdString()).c_str());
+    QList<QStringList> data_Inputs_C = GS::readFromCsvFile(matrixC_filename, ";");
     if (data_Inputs_C.empty()) {
         // Initialize coefficient_C with a null matrix of the good size
         coefficient_C.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(mNbOutputFlux + mNbInputFlux, 0.0));
@@ -120,7 +137,8 @@ void MultiConverter::buildModel()
     }
     Eigen::MatrixXd mMatrixEigenC = convertToEigen(coefficient_C);
 
-    QList<QStringList> data_Inputs_D = GS::readFromCsvFile(mMatrixD, ";");    
+    QString matrixD_filename = QString(getAbsoluteFileName(mMatrixD.toStdString()).c_str());
+    QList<QStringList> data_Inputs_D = GS::readFromCsvFile(matrixD_filename, ";");
     if (data_Inputs_D.empty()) {
         // Initialize coefficient_D with a null matrix of the good size
         coefficient_D.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(1, 0.0));
@@ -150,16 +168,16 @@ void MultiConverter::buildModel()
 
     // effective output production on each port (thermal / electrical) : 1D variable
     //TODO faire clear avant pour gerer les multiples appels
+    mInput.resize(mNbInputFlux);
     for (int i = 0; i < mNbInputFlux; i++)
     {
-        mInput.push_back(MIPModeler::MIPVariable1D(mHorizon, 0., maxInput[i])); 
-        addVariable(mInput[i], "Fluxin"+std::to_string(i));
+        addVariable(mInput[i], "Fluxin"+std::to_string(i), 0., maxInput[i]);
     }
 
+    mOutput.resize(mNbOutputFlux);
     for (int j = 0; j < mNbOutputFlux; j++)
     {
-        mOutput.push_back(MIPModeler::MIPVariable1D(mHorizon, 0., maxOutput[j]));
-        addVariable(mOutput[j], "Fluxout_"+std::to_string(j));
+        addVariable(mOutput[j], "Fluxout_"+std::to_string(j), 0., maxOutput[j]);
     }
 
     for (int i = 0; i < mNbInputFlux; i++)
@@ -255,7 +273,8 @@ void MultiConverter::checkConsistencyMatrix(QString filePath)
 int MultiConverter::checkConsistency()
 {
     int ier = TechnicalSubModel::checkConsistency();
-    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(mMatrixA, ";");
+    QString matrixA_filename = QString(getAbsoluteFileName(mMatrixA.toStdString()).c_str());
+    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(matrixA_filename, ";");
     std::vector<std::vector<double>> coefficient_A = GS::getDataMatrix(data_Inputs_A, 0);
     mMatrixEigenA = convertToEigen(coefficient_A);
     

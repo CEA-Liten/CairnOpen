@@ -64,7 +64,7 @@ Standalone installation
    Choose the components you want to install
 
 
-.. figure:: images/cairnInstaller2.PNG
+.. figure:: images/CairnInstaller2.PNG
    :width: 500 
    :name: cairnInstaller|python|
    :align: center
@@ -78,12 +78,22 @@ Standalone installation
 
   .. include:: ../privateDoc/about_cairn/installation_cea_linux.rst
 
-|python| package installation
+|python| Package Installation
 =============================
 
-A wheel is available on GitHub.
+A wheel is available in the **Releases** section on GitHub. To install it, run the following command:
 
-Only windows plateform is supported so far.
+.. code-block:: shell
+
+   pip install {name_of_the_wheel}.whl
+
+.. note::
+   This package currently supports **Windows** only.
+
+To use the |cplex| solver with the |python| package, you must:
+
+- Ensure that `cplex.exe` and `cplex2010.dll` are present on your system.
+- Add their location to your system `PATH` environment variable.
 
 Dependencies
 ------------

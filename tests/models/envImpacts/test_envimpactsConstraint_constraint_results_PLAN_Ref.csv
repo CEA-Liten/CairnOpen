@@ -22,7 +22,7 @@ TecEcoAnalysis;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
 TecEcoAnalysis;Total Discounted Sell Part;0;EUR;DiscountedSellPart
 TecEcoAnalysis;Total Discounted Buy Part;1.2028e+09;EUR;DiscountedBuyPart
 TecEcoAnalysis;Total Discounted EnvImpact Part (Flow and Grey) Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedEnvImpactPart
-TecEcoAnalysis;Total Discounted EnvImpact Mass (Flow and Grey) Climate change#Global Warming Potential 100;5e+07;kg CO2 eq;GWPDiscountedEnvImpactMass
+TecEcoAnalysis;Total Discounted EnvImpact Mass (Flow + Grey + replacement) Climate change#Global Warming Potential 100;5e+07;kg CO2 eq;GWPDiscountedEnvImpactMass
 TecEcoAnalysis;Total GreyEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPGreyEnvImpactPart
 TecEcoAnalysis;Total GreyEnvImpact Mass Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPGreyEnvImpactMass
 TecEcoAnalysis;Total Discounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedFlowEnvImpactPart
@@ -44,7 +44,7 @@ Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env impact penalty p
 Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env impact mass;2.249e+06;kg CO2 eq;GWPDirectMass
 Elec_Grid_Cheap;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
 Elec_Grid_Cheap;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
-Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env grey impact replacement part;0;EUR;GWPReplacementCost
+Elec_Grid_Cheap;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Elec_Grid_Cheap;Grid extraction time;8760;h;extraction Time
 Elec_Grid_Cheap;Grid extraction ElectricalEnergy GridFlow;2.249e+06;MWh;TotGridFlow
 Elec_Grid_Cheap;Levelized Grid extraction ElectricalEnergy GridFlow;4.498e+07;MWh;LvlzdTotGridFlow
@@ -59,7 +59,7 @@ Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env impact penalty 
 Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env impact mass;251000;kg CO2 eq;GWPDirectMass
 Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
 Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
-Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env grey impact replacement part;0;EUR;GWPReplacementCost
+Elec_Grid_LowCO2;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Elec_Grid_LowCO2;Grid extraction time;8760;h;extraction Time
 Elec_Grid_LowCO2;Grid extraction ElectricalEnergy GridFlow;1.255e+06;MWh;TotGridFlow
 Elec_Grid_LowCO2;Levelized Grid extraction ElectricalEnergy GridFlow;2.51e+07;MWh;LvlzdTotGridFlow

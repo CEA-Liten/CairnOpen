@@ -38,33 +38,40 @@ public:
     ~Electrolyzer();
  
     //----------------------------------------------------------------------------------------------------
-    void buildModel();
+    virtual void computeInitialData();
+    void computeEconomicalContribution();
+    void computeModelContribution() override;
     int checkConsistency();
     //----------------------------------------------------------------------------------------------------
-    void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol) override;
 
     //----------------------------------------------------------------------------------------------------
-    void declareModelInterface() {
+    void declareModelInterface() 
+    {
         ConverterSubModel::declareDefaultModelInterface();
 
-        // register expression for model Interface with global MilpProblem, Bus, other MilpComponent
-        addIO("MaxUsablePower", &mExpUsablePower, mPortUsedPower->pFluxUnit());        	/** Computed allowed power available to electrolysis system */
-        addIO("UsedPower", &mExpTotalPower, mPortUsedPower->pFluxUnit());					/** Computed electrolysis system power */
-        addIO("H2MassFlowRate", &mExpFlow_H2, mPortH2MassFlowRate->pFluxUnit());  /** Computed electrolysis H2 flowrate production */
-        addIO("MaxPower", &mExpSizeMax, mPortUsedPower->pFluxUnit());				    /** Computed sizing electrolysis system power */
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit());				    /** Computed sizing electrolysis system power */
+        addIO("MaxUsablePower", &mExpUsablePower, true, mPortUsedPower->pFluxUnit());        	/** Computed allowed power available to electrolysis system */
+        addIO("UsedPower", &mExpTotalPower, true, mPortUsedPower->pFluxUnit());					/** Computed electrolysis system power */
+        addIO("H2MassFlowRate", &mExpFlow_H2, true, mPortH2MassFlowRate->pFluxUnit());  /** Computed electrolysis H2 flowrate production */
 
-        setOptimalSizeExpression("MaxPower");  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-        setOptimalSizeUnit(mPortUsedPower->pFluxUnit());  // defines default expression should be used for OptimalSize computation and use in Economic analysis
+        /* Register non-IO 0D-expressions in order to automatically allocate and close them */
+        // no 0D expression needs to be declared here
+
+        /* Register non-IO 1D-expressions in order to automatically allocate and close them */
+        addExp(&mExpPower_H2, &mHorizon);
+        addExp(&mExpCost, &mHorizon);
+        addExp(&mExpAuxConso, &mHorizon);
+        addExp(&mExpStdByConso, &mHorizon);
     }
     //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters() {
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel","AddOperationConstraints","OptimizationOptions","Ageing" });
         ConverterSubModel::declareDefaultModelConfigurationParameters();
         //bool 
-        addParameter("EfficiencyLHVbased", &mEfficiencyLHVbased, true, false, true, "efficiency type for electrolyzer", "bool", {   }); /** Add a control imposed (to test different controls with the same parameters) (todo)*/
-        addParameter("AddAuxConso", &mAddAuxConso, false, false, true, "Constant elec consumption in proportion of maxpower: ", "bool", { "AddOperationConstraints" });
-        addParameter("AddStdByConso", &mAddStdByConso, false, false, true, "Constant elec consumption in proportion of maxpower: equals to 0 if converterUse =0 but not when state = 0", "bool", { "AddOperationConstraints" });
+        addParameter("EfficiencyLHVbased", &mEfficiencyLHVbased, true, false, true, "efficiency type for electrolyzer", "bool"); /** Add a control imposed (to test different controls with the same parameters) (todo)*/
+        addParameter("AddAuxConso", &mAddAuxConso, false, false, true, "Constant elec consumption in proportion of maxpower: ", "bool", "AddOperationConstraints");
+        addParameter("AddStdByConso", &mAddStdByConso, false, false, true, "Constant elec consumption in proportion of maxpower: equals to 0 if converterUse =0 but not when state = 0", "bool", "AddOperationConstraints");
     }
     
     void declareModelParameters()
@@ -76,15 +83,15 @@ public:
         // 
         
         //Re-declare LifeTime and change default value
-        addParameter("LifeTime", &mLifeTime, 10., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", { "EcoInvestModel" });  /** LifeTime in years */
+        addParameter("LifeTime", &mLifeTime, 10., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");  /** LifeTime in years */
 
         //double
-        addParameter("Efficiency", &mEfficiency, 0.6, &mEfficiencyLHVbased, &mEfficiencyLHVbased, "Electrolyzer efficiency LHV based - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate ", "", {}); /** Total constant Converter efficiency*/
-        addParameter("Efficiency_Global", &mEfficiency_Global, 0.5, SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), "Electrolyzer global efficiency - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate ", "", {}); /** Total constant Converter efficiency*/
-        addParameter("MaxPower", &mMaxPower_H2, 0., true, true, "Electroysis system nominal power", "PowerUnit", {});
-        addParameter("MinPower", &mMinPower_H2, 0., true, true, "Electroysis system minimum power multiplying coefficient in the range 0 to 1", "", {});	  /** Electroysis system minimum power coefficient in the range 0 to 1 */
-        addParameter("AuxConso", &mAuxConso, 0., &mAddAuxConso, true, "Constant consumption in proportion of MaxPower", { "AddOperationConstraints" });
-        addParameter("StdByConso", &mStdByConso, 0., &mAddStdByConso, true, "Constant consumption in proportion of MaxPower only when the electrolyzer state is on standby", { "AddOperationConstraints" });
+        addParameter("Efficiency", &mEfficiency, 0.6, &mEfficiencyLHVbased, &mEfficiencyLHVbased, "Electrolyzer efficiency LHV based - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate ", ""); /** Total constant Converter efficiency*/
+        addParameter("Efficiency_Global", &mEfficiency_Global, 0.5, SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), "Electrolyzer global efficiency - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate ", ""); /** Total constant Converter efficiency*/
+        addParameter("MaxPower", &mMaxPower_H2, 0., true, true, "Electroysis system nominal power", "PowerUnit");
+        addParameter("MinPower", &mMinPower_H2, 0., true, true, "Electroysis system minimum power multiplying coefficient in the range 0 to 1", "");	  /** Electroysis system minimum power coefficient in the range 0 to 1 */
+        addParameter("AuxConso", &mAuxConso, 0., &mAddAuxConso, true, "Constant consumption in proportion of MaxPower", "AddOperationConstraints");
+        addParameter("StdByConso", &mStdByConso, 0., &mAddStdByConso, true, "Constant consumption in proportion of MaxPower only when the electrolyzer state is on standby", "AddOperationConstraints");
         addParameter("Cost", &mCost, 0., false, true, "Cost per energy produced per hour (EUR/EnergyUnit)", "EUR/EnergyUnit"); /** Cost per energy produced per hour (EUR/EnergyUnit) */        
     }
 

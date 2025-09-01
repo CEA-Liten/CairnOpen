@@ -118,6 +118,9 @@ Glossary
 	LHV
 		Lower Heating Value
 
+	phase of investment
+		A time windows during the project for which the size of the component is optimized. A project can be composed of one phase of investment (one-shot optimisation), or several, see :ref:`investment_planif`. 
+
 
 		
  	

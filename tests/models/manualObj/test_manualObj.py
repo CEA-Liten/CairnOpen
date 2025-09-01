@@ -12,3 +12,4 @@ def test_check_results_ts(test_case,subcase):
     tnr = CairnNRT(app_home)
     
     tnr.check("", "Report_s"+subcase+"/"+test_case+"_"+subcase+"_Results.csv", test_case+"_"+subcase+"_Results_Ref.csv")
+    tnr.check("", "Report_s"+subcase+"/"+test_case+"_"+subcase+"_results_PLAN.csv", test_case+"_"+subcase+"_results_PLAN_ref.csv")

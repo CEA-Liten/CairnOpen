@@ -19,12 +19,16 @@ Compressor::Compressor(QObject* aParent)
     mMinPower(0.),
     mMaxPower(0.),
     mSpecificHeatRatio(0.),
+    mCp_Gas(0.),
+    mK(0.),
+    mEta(0.),
     mPInlet(0.),
     mPOutlet(0.),
     mMaxMFR(2, 0.),
     mPowerUnit("MW"),
     mMassUnit("kg")
 {
+    mAddStateVariable = true;
 }
 
 Compressor::~Compressor() {}
@@ -187,7 +191,8 @@ double Compressor::getOutletPressure()
     return 0.;
 }
 
-void Compressor::buildModel() 
+
+void Compressor::computeInitialData()
 {
     mPInlet = getInletPressure();
     mPOutlet = getOutletPressure();
@@ -199,32 +204,30 @@ void Compressor::buildModel()
         mMassUnit = mPortInMassFlowRate->ptrEnergyVector()->MassUnit();
     }
 
-    EV::Fluid_Type Type = EnergyVector::getFluidTypeFromQString(mEnergyVector->Type()) ;
+    EV::Fluid_Type Type = EnergyVector::getFluidTypeFromQString(mEnergyVector->Type());
 
-    double Cp_Gas = EnergyVector::Compute_Cp(mTInlet, EnergyVector::Get_Pointer_To_Fluid_Properties(Type));   // Cp in J/DegC/kg
-    double k ;
-    double Eta ;
+    mCp_Gas = EnergyVector::Compute_Cp(mTInlet, EnergyVector::Get_Pointer_To_Fluid_Properties(Type));   // Cp in J/DegC/kg
 
     if (mUsePolytropicModel) {
-        k = mPolytropicCoefficient ;
-        Eta = mPolytropicEfficiency ;
+        mK = mPolytropicCoefficient;
+        mEta = mPolytropicEfficiency;
     }
     else {
-        k = mSpecificHeatRatio ;
-        Eta = mIsentropicEfficiency ;
+        mK = mSpecificHeatRatio;
+        mEta = mIsentropicEfficiency;
     }
 
     mPowerConsumption = mNbStages
         * 1.e-6 / EnergyVector::PowerToMW(mPowerUnit) //MW default unit !
         * 1. / 3600 // kg/s
-        * Cp_Gas
+        * mCp_Gas
         * EnergyVector::Deg2Kel(mTInlet)
-        / Eta
-        * (pow(mPOutlet / mPInlet, (k - 1) / (mNbStages * k)) - 1)
+        / mEta
+        * (pow(mPOutlet / mPInlet, (mK - 1) / (mNbStages * mK)) - 1)
         / mMotorEfficiency * EnergyVector::MassToKg(mMassUnit);
 
     if (isnan(mPowerConsumption)) {
-        QString error_message = "A division by 0 is detected while computing Power Consumption of " + getCompoName() +".";
+        QString error_message = "A division by 0 is detected while computing Power Consumption of " + getCompoName() + ".";
         if (fabs(mPInlet) < 1.e-6) {
             error_message += " The value of the parameter Potential of the carrier used by the first input port is 0.";
         }
@@ -232,8 +235,7 @@ void Compressor::buildModel()
         throw persee_error;
     }
 
-    //variable
-    if(mUseSteamMap) {
+    if (mUseSteamMap) {
         mMaxPower = *max_element(mUsedElecPowerSetPoint.begin(), mUsedElecPowerSetPoint.end());
         mMinPower = *min_element(mUsedElecPowerSetPoint.begin(), mUsedElecPowerSetPoint.end());
     }
@@ -242,33 +244,28 @@ void Compressor::buildModel()
         mMinPower = mPowerConsumption * abs(mMinFlow);     // puissance de dimensionnement max du composant. negative means optimization, absolute value gives max range value
     }
 
-    setExpSizeMax(mMaxPower, "MaxPower");
-    addStateConstraints(mHorizon, mCondensedNpdt);
+    setMinValue(mMinSize);
+    setMaxValue(mMaxPower);
+}
 
-    mUsedPower = MIPModeler::MIPVariable1D(mHorizon, 0.f, abs(mMaxPower));
-    mMassFlow = MIPModeler::MIPVariable1D(mHorizon, 0.f, abs(mMaxFlow));
-    mPOut = MIPModeler::MIPVariable1D(mHorizon, 0.f, abs(10000));
 
-    addVariable(mUsedPower,"UsedPower");
-    addVariable(mMassFlow,"MassFlow");
-    addVariable(mPOut,"POutComp");
+void Compressor::computeModelContribution()
+{
+    //variable
+    addStateConstraints(varMilpHorizon());
+
+    addVariable(mUsedPower,"UsedPower", 0.f, abs(mMaxPower));
+    addVariable(mMassFlow,"MassFlow", 0.f, abs(mMaxFlow));
+    addVariable(mPOut,"POutComp", 0.f, abs(10000));
 
     if(mUseSteamMap) {
-        mSteam = MIPModeler::MIPVariable1D(mHorizon, 0.f, abs(10000));
-        addVariable(mSteam, "SteamCompressor");
-        mExpSteam = MIPModeler::MIPExpression1D(mHorizon);
+        addVariable(mSteam, "SteamCompressor", 0.f, abs(10000));
         fillExpression(mExpSteam, mSteam);
     }
 
-    mVarTOutlet = MIPModeler::MIPVariable0D( 0.f, 3000.);
-    addVariable(mVarTOutlet, "Toutlet");
+    addVariable(mVarTOutlet, "Toutlet", 0.f, 3000.);
 
     //variables exprimed as expressions on horizon (optional)
-    mExpUsedPower = MIPModeler::MIPExpression1D(mHorizon);
-    mExpInMassFlow = MIPModeler::MIPExpression1D(mHorizon);
-    mExpOutMassFlow = MIPModeler::MIPExpression1D(mHorizon);
-    mExpPOut = MIPModeler::MIPExpression1D(mHorizon);
-
     fillExpression(mExpPOut, mPOut);
     fillExpression(mExpInMassFlow, mMassFlow);
 
@@ -281,7 +278,7 @@ void Compressor::buildModel()
             methode = MIPModeler::MIP_SOS;
         }
         if (mUseVariablePOut) {
-            ComputeElecPowerMapPOut(Cp_Gas, k, Eta, false, methode);
+            ComputeElecPowerMapPOut(mCp_Gas, mK, mEta, false, methode);
             for (uint64_t t = 0; t < mHorizon; ++t) {
                 addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mConverterUse[t] * mExpState[t] <= 0, "UseComp", t);
                 addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mConverterUse[t] * mExpState[t] >= 0, "PowMin", t);
@@ -289,11 +286,9 @@ void Compressor::buildModel()
             }
         }
         else if (mUseVariableTIn) {
-            mTIn = MIPModeler::MIPVariable1D(mHorizon, 0.f, abs(10000));
-            addVariable(mTIn, "STInCompressor");
-            mExpTIn = MIPModeler::MIPExpression1D(mHorizon);
+            addVariable(mTIn, "STInCompressor", 0.f, abs(10000));
             fillExpression(mExpTIn, mTIn);
-            ComputeElecPowerMapTIn(Cp_Gas, k, Eta, false, methode);
+            ComputeElecPowerMapTIn(mCp_Gas, mK, mEta, false, methode);
             for (uint64_t t = 0; t < mHorizon; ++t) {
                 addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mConverterUse[t] * mExpState[t] <= 0, "UseComp", t);
                 addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mConverterUse[t] * mExpState[t] >= 0, "PowMin", t);
@@ -326,8 +321,7 @@ void Compressor::buildModel()
         mExpOutMassFlow = mExpInMassFlow;
     }
     else {
-        mMassFlowOut = MIPModeler::MIPVariable1D(mHorizon, 0.f, abs(mMaxFlow));
-        addVariable(mMassFlowOut, "MassFlowOutCompressor");
+        addVariable(mMassFlowOut, "MassFlowOutCompressor", 0.f, abs(mMaxFlow));
         for (uint64_t t = 0; t < mHorizon; ++t) {
             mExpOutMassFlow[t]+=mMassFlowOut(t);
             addConstraint(mExpOutMassFlow[t] == mExpInMassFlow[t] * (1 - mLosses), "LossesCompressor");
@@ -335,18 +329,9 @@ void Compressor::buildModel()
     }
 
     // compute constant outlet temperature
-    addConstraint(mVarTOutlet == mTInlet * pow(mPOutlet / mPInlet, (k - 1)/(mNbStages*k)),"TOut",0);
+    addConstraint(mVarTOutlet == mTInlet * pow(mPOutlet / mPInlet, (mK - 1)/(mNbStages*mK)),"TOut",0);
     mExpTOutlet = MIPModeler::MIPExpression();
     mExpTOutlet = mVarTOutlet ;
-
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false ;
-}
-void Compressor::computeEconomicalContribution()
-{
-    TechnicalSubModel::computeEconomicalContribution()  ;
 }
 
 void Compressor::computeAllIndicators(const double* optSol)

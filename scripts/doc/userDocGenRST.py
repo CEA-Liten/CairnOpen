@@ -396,8 +396,14 @@ def generate_components_documentation(directory_name,csv_folder):
     return
 
 if __name__ == '__main__':
+    print(len(sys.argv))
+    if len(sys.argv) == 2:
+        if (sys.argv[1] == "FALSE"):
+            redact_files(cairn_path, "//src//models", "//doc//user//")
+            redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//")
+        else:
+            redact_files(cairn_path, "//src//models", "//doc//user//")
     if len(sys.argv) > 3:
         redact_files(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
         redact_files(cairn_path, "//src//models", "//doc//user//")
-        redact_files(cairn_path, "//src//core//submodels", "//doc//user//")

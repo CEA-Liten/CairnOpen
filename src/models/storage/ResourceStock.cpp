@@ -21,26 +21,24 @@ int ResourceStock::checkConsistency()
     return 0;
 }
 
-void ResourceStock::computeInitialData()
+void ResourceStock::closeExpressions()
 {
-    setMaxBound(mTotalMaxSize);
+    SubModel::closeExpressions();
 }
 
-void ResourceStock::buildModel() {
-    QString aname = parent()->objectName();
+void ResourceStock::buildModel() 
+{
+    if (!mAllocate)
+    {
+        closeExpressions();
+    }
 
-    setExpSizeMax(mTotalMaxSize, "MaxResourceUsed");
+    setExpSizeMax(mMinSize,mTotalMaxSize, "MaxResourceUsed");
 
-
-    // DO NOT FORGET TO ADD THEM !!!
-
-    
- 
     /** Compute all expressions */
     computeAllContribution();
 
     mAllocate = false;
-
 }
 
 

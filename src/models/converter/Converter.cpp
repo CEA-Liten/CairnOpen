@@ -34,7 +34,7 @@ void Converter::timeSeriesMapEfficiency(std::vector<std::vector<double>> aPowerI
 {
     //Verify vector sizes
     if (aPowerInSetPointVec.size() != aPowerOutSetPointVec.size()) {
-        setException(Cairn_Exception("ERROR: the number of InputSetPoints should be equal to the number of OutputSetPoints", -1));
+        setException(Cairn_Exception((std::string)"ERROR: the number of InputSetPoints should be equal to the number of OutputSetPoints", -1));
         return;
     }
 
@@ -91,9 +91,15 @@ int Converter::checkConsistency()
     }
     return ier;
 }
-void Converter::buildModel() 
+
+void Converter::computeInitialData()
 {
-    setExpSizeMax(mMaxPower, "MaxPower");
+    setMinValue(mMinSize);
+    setMaxValue(mMaxPower);
+}
+
+void Converter::computeModelContribution()
+{
     mMaxPowerOut = mMaxPower * mEfficiency;
 
     for (uint64_t t = 0; t < mHorizon; ++t) {
@@ -101,25 +107,9 @@ void Converter::buildModel()
         mMinPowerTS[t] = mMinPower * mConverterLowerBound[t];
     }
 
-    if (mAllocate)
-    {
-        mPower_Out = MIPModeler::MIPVariable1D(mHorizon,0.,fabs(mMaxPowerOut));
-        mPower_In = MIPModeler::MIPVariable1D(mHorizon, 0., fabs(mMaxPower));
-        mExpPower_In = MIPModeler::MIPExpression1D(mHorizon);
-        mExpPower_Out = MIPModeler::MIPExpression1D(mHorizon);
-
-
-    }
-    else
-    {
-        closeExpression1D(mExpPower_In);
-        closeExpression1D(mExpPower_Out);
-    }
-
-    addVariable(mPower_In,"PowIn");
-	addVariable(mPower_Out,"PowOut");
+    addVariable(mPower_In,"PowIn", 0., fabs(mMaxPower));
+	addVariable(mPower_Out,"PowOut", 0., fabs(mMaxPowerOut));
    
-
     fillExpression(mExpPower_In, mPower_In);
     fillExpression(mExpPower_Out, mPower_Out);
 
@@ -128,7 +118,7 @@ void Converter::buildModel()
         addConstraint(mExpPower_In[t] <= fabs(mMaxPower) * mMaxPowerTS[t], "PowerInMaxBound");
     }
 
-    addStateConstraints(mHorizon, mCondensedNpdt);
+    addStateConstraints(varMilpHorizon());
 
     setMinPower(mExpPower_In, mMinPowerTS, mMaxPower);
 
@@ -147,11 +137,6 @@ void Converter::buildModel()
     for (uint64_t t = 0; t < mHorizon; ++t) {
         addConstraint(mExpPower_In[t] - mExpSizeMax * mMaxPowerTS[t] * mConverterUse[t] <= 0, "PowVar", t);
     }
-    
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false ;
 }
 
 

@@ -5,8 +5,7 @@ TecEcoAnalysis::TecEcoAnalysis(QObject* aParent, const QMap<QString, QString>& a
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
     mCompoEnvImpactsParam(nullptr),
-    mEnvImpacts({}),
-    mOptimImpactName("")
+    mEnvImpacts({})
 {    
     mPossibleImpacts = {
     { "Climate change#Global Warming Potential 100", "GWP", "kg CO2 eq"},
@@ -64,17 +63,6 @@ void TecEcoAnalysis::doInit(const QMap<QString, QString>& aComponent)
 
     this->setObjectName(mName);
 
-    if (mModelName.contains("OptimEnvImpact"))
-    {
-        int iSize = mModelName.size() - mModelName.indexOf("-") - 1;
-        QString impactShortName = mModelName.right(iSize);
-        if (!getPossibleImpactShortNames().contains(impactShortName)) {
-            Cairn_Exception cairn_error("Error : unknown model name " + (mModelName)+" on component. Expected: OptimEnvImpact-$ImpactShortName" + (Name()), -1);
-            throw cairn_error;
-        }
-        mOptimImpactName = getImpactLongName(impactShortName);
-    }
-
     //Build list of units of the considered environmental impacts that will be used to export the indicators
     mEnvImpactUnits = getImpactUnitsFromSelectedImpacts(mEnvImpacts);
 
@@ -107,11 +95,11 @@ void TecEcoAnalysis::declareCompoInputParam()
     //------------------------ options ----------------------------------
     mCompoInputParam = new InputParam(this, "CompoInputParam" + mName);
     //QString
-    mCompoInputParam->addParameter("type", &mType, "TecEcoAnalysis", true, true, "Component type", "", {"DONOTSHOW"});
-    mCompoInputParam->addParameter("id", &mName, "TecEco", true, true, "Component name", "", {"DONOTSHOW"});
+    mCompoInputParam->addParameter("type", &mType, "TecEcoAnalysis", true, true, "Component type", "", "DONOTSHOW");
+    mCompoInputParam->addParameter("id", &mName, "TecEco", true, true, "Component name", "", "DONOTSHOW");
     mCompoInputParam->addParameter("Model", &mModelName, "OptimNPV", true, true, "Model used");
-    mCompoInputParam->addParameter("Xpos", &mXpos, 100, false, true, "X position on planteditor", "", {"DONOTSHOW"});
-    mCompoInputParam->addParameter("Ypos", &mYpos, 10, false, true, "Y position on planteditor", "", {"DONOTSHOW"});
+    mCompoInputParam->addParameter("Xpos", &mXpos, 100, false, true, "X position on planteditor", "", "DONOTSHOW");
+    mCompoInputParam->addParameter("Ypos", &mYpos, 10, false, true, "Y position on planteditor", "", "DONOTSHOW");
     mCompoInputParam->addParameter("Currency", &mCurrency, "EUR", true, true, "Currency unit - default to EUR");
     mCompoInputParam->addParameter("ObjectiveUnit", &mObjectiveUnit, "EUR", false, true, "Objective unit - default to currency unit");
     mCompoInputParam->addParameter("Range", &mRange, "HISTandPLAN", false, true, "Evaluation range used for TecEco analysis : HIST = past operation - PLAN = planned operation");
@@ -209,25 +197,27 @@ void TecEcoAnalysis::jsonSaveGuiComponent(QJsonArray &componentsArray)
     QJsonObject nodePorts;
     QJsonArray nodePortsArray;
 
-    int portCount = mParentCompo->listSidePorts(Left()).size();
-    if (portCount) {
-        nodePorts.insert(Left(), QJsonValue::fromVariant(portCount));
-        mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Left());
-    }
-    portCount = mParentCompo->listSidePorts(Right()).size();
-    if (portCount) {
-        nodePorts.insert(Right(), QJsonValue::fromVariant(portCount));
-        mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Right());
-    }
-    portCount = mParentCompo->listSidePorts(Bottom()).size();
-    if (portCount) {
-        nodePorts.insert(Bottom(), QJsonValue::fromVariant(portCount));
-        mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Bottom());
-    }
-    portCount = mParentCompo->listSidePorts(Top()).size();
-    if (portCount) {
-        nodePorts.insert(Top(), QJsonValue::fromVariant(portCount));
-        mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Top());
+    if (mParentCompo) {
+        int portCount = mParentCompo->listSidePorts(Left()).size();
+        if (portCount) {
+            nodePorts.insert(Left(), QJsonValue::fromVariant(portCount));
+            mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Left());
+        }
+        portCount = mParentCompo->listSidePorts(Right()).size();
+        if (portCount) {
+            nodePorts.insert(Right(), QJsonValue::fromVariant(portCount));
+            mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Right());
+        }
+        portCount = mParentCompo->listSidePorts(Bottom()).size();
+        if (portCount) {
+            nodePorts.insert(Bottom(), QJsonValue::fromVariant(portCount));
+            mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Bottom());
+        }
+        portCount = mParentCompo->listSidePorts(Top()).size();
+        if (portCount) {
+            nodePorts.insert(Top(), QJsonValue::fromVariant(portCount));
+            mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Top());
+        }
     }
 
     QJsonObject compoObject;
@@ -366,11 +356,19 @@ void TecEcoAnalysis::buildModel()
     TecEcoAnalysis::computePenaltyConstraintCosts();
 
     //Objective
-    if (mModelName.contains("OptimEnvImpact")) {
+    if (mModelName.contains("OptimEnvImpact")) 
+    {
+        int iSize = mModelName.size() - mModelName.indexOf("-") - 1;
+        QString impactShortName = mModelName.right(iSize);
+        if (!getPossibleImpactShortNames().contains(impactShortName)) {
+            Cairn_Exception cairn_error("Error : unknown model name " + (mModelName)+" on component. Expected: OptimEnvImpact-$ImpactShortName" + (Name()), -1);
+            throw cairn_error;
+        }
+        QString impactName = getImpactLongName(impactShortName);
+        //
         for (int i = 0; i < mEnvImpactsList.size(); i++) {
-            if (mEnvImpactsList[i] == mOptimImpactName) { 
-                mExpObjective += mExpEnvImpactMassVecDiscounted[i];
-                mExpObjective += mExpEnvGreyImpactMassVec[i];
+            if (mEnvImpactsList[i] == impactName) {
+                mExpObjective += mExpCumulativeEnvImpact[i];
                 break;
             }
         }
@@ -398,7 +396,7 @@ void TecEcoAnalysis::buildModel()
     //add constraints on EnvImpact Mass 
     for (int i = 0; i < mEnvImpacts.size(); i++) {
         int eIndex = getImpactIndex(mEnvImpacts.at(i));
-        if (mVBEnvImpactMaxConstraint[eIndex]) addConstraint(mExpEnvImpactMassVecDiscounted.at(eIndex) + mExpEnvGreyImpactMassVec.at(eIndex) <= mVDEnvImpactMaxConstraint[eIndex], "EnvImpactMaxConstraint");
+        if (mVBEnvImpactMaxConstraint[eIndex]) addConstraint(mExpCumulativeEnvImpact.at(eIndex)  <= mVDEnvImpactMaxConstraint[eIndex], "EnvImpactMaxConstraint");
     }
 
     mAllocate = false;
@@ -433,7 +431,7 @@ void TecEcoAnalysis::computeUndiscountedExpressions() {
 
     for (int i = 0; i < mEnvImpactsList.size(); i++)
     {
-        mExpEnvGreyImpactMassUndiscountedVec[i] = mExpEnvGreyImpactMassVec[i] * ExtrapolationFactor;
+        mExpEnvImpactEmbodiedUndiscountedVec[i] = mExpEnvImpactEmbodiedVec[i]; //* ExtrapolationFactor; Why was it multiplied by ExtrapolationFactor?
         for (unsigned int t = 0; t < mTimeSteps.size(); ++t)
         {
             mExpEnvImpactMassUndiscountedVec[i][t] = mExpEnvImpactMassVec[i][t] * ExtrapolationFactor;
@@ -443,14 +441,17 @@ void TecEcoAnalysis::computeUndiscountedExpressions() {
 
 void TecEcoAnalysis::resizeEnvImpactVectors() {
     // ----------- Expressions ------------------------
-    mExpEnvGreyImpactCostVec.resize(mEnvImpactsList.size());
-    mExpEnvGreyImpactMassVec.resize(mEnvImpactsList.size());
+    mExpEnvImpactEmbodiedCostVec.resize(mEnvImpactsList.size());
+    mExpEnvImpactEmbodiedVec.resize(mEnvImpactsList.size());
     mExpEnvImpactCostVec.resize(mEnvImpactsList.size());
     mExpEnvImpactMassVec.resize(mEnvImpactsList.size());
     mExpEnvImpactMassVecDiscounted.resize(mEnvImpactsList.size());//Used to add constraints in buildModel()
+    mExpEnvImpactReplacementVec.resize(mEnvImpactsList.size());
+    mExpEnvImpactReplacementVecDiscounted.resize(mEnvImpactsList.size());
+    mExpCumulativeEnvImpact.resize(mEnvImpactsList.size());
 
     //Used to publish on ports (IO interface)
-    mExpEnvGreyImpactMassUndiscountedVec.resize(mEnvImpactsList.size());
+    mExpEnvImpactEmbodiedUndiscountedVec.resize(mEnvImpactsList.size());
     mExpEnvImpactMassUndiscountedVec.resize(mEnvImpactsList.size());
 
     // ----------- Contribution Vectors ------------------------
@@ -461,10 +462,12 @@ void TecEcoAnalysis::resizeEnvImpactVectors() {
     //Undiscounted
     mVDEnvImpactsCostContribution.resize(mEnvImpactsList.size(), { 0., 0. });
     mVDEnvImpactsMassContribution.resize(mEnvImpactsList.size(), { 0., 0. });
+    mVDEnvImpactsReplacementContribution.resize(mEnvImpactsList.size(), { 0., 0. });
 
     //Discounted
     mVDEnvImpactsCostContributionDiscounted.resize(mEnvImpactsList.size(), { 0., 0. });
     mVDEnvImpactsMassContributionDiscounted.resize(mEnvImpactsList.size(), { 0., 0. });
+    mVDEnvImpactsReplacementContributionDiscounted.resize(mEnvImpactsList.size(), { 0., 0. });
 
     mVDEnvImpactsTotalCostDiscounted.resize(mEnvImpactsList.size(), { 0., 0. });
     mVDEnvImpactsTotalMassDiscounted.resize(mEnvImpactsList.size(), { 0., 0. });
@@ -495,6 +498,8 @@ void TecEcoAnalysis::allocateExpressions() {
         mExpEnvImpactCostVec[i] = MIPModeler::MIPExpression1D(mTimeSteps.size());
 
         mExpEnvImpactMassUndiscountedVec[i] = MIPModeler::MIPExpression1D(mTimeSteps.size());
+
+        mExpEnvImpactReplacementVec[i] = MIPModeler::MIPExpression1D(mTimeSteps.size());
     }
 }
 
@@ -517,14 +522,18 @@ void TecEcoAnalysis::closeExpressions() {
     //Env Impacts
     for (int i = 0; i < mEnvImpactsList.size(); i++) {
         //0D
-        closeExpression(mExpEnvGreyImpactCostVec[i]);
-        closeExpression(mExpEnvGreyImpactMassVec[i]);
+        closeExpression(mExpEnvImpactEmbodiedCostVec[i]);
+        closeExpression(mExpEnvImpactEmbodiedVec[i]);
 
         closeExpression(mExpEnvImpactMassVecDiscounted[i]);
+        closeExpression(mExpEnvImpactReplacementVecDiscounted[i]);
+
+        closeExpression(mExpCumulativeEnvImpact[i]);
 
         //1D
         closeExpression1D(mExpEnvImpactCostVec[i]);
         closeExpression1D(mExpEnvImpactMassVec[i]);
+        closeExpression1D(mExpEnvImpactReplacementVec[i]);
     }
 }
 
@@ -621,24 +630,32 @@ void TecEcoAnalysis::computeEnvContribution()
                 {
                     MIPModeler::MIPExpression expImpactMass_i_t;
                     MIPModeler::MIPExpression expImpactCost_i_t;
+                    MIPModeler::MIPExpression expImpactReplacement_i_t;
 
                     uint t_hour = qCeil(t * TimeStep(t)) + mParentCompo->HistNbHours();
                     while (t_hour > mParentCompo->TableYearsHours().at(year) && year < mParentCompo->TableYearsHours().size() - 1) {
                         year += 1;
                     }
-
+                    //operation
                     expImpactMass_i_t = lptr->getMIPExpression1D(t, lptr->compoModel()->getEnvImpactMassExpression(i));
                     mExpEnvImpactMassVec[i][t] += expImpactMass_i_t;
                     //0D Discounted Mass Exp used to add constraints in buildModel()
                     mExpEnvImpactMassVecDiscounted[i] += expImpactMass_i_t * mParentCompo->ImpactLevelizationTable().at(year);
+                    
+                    //replacement
+                    expImpactReplacement_i_t = (lptr->compoModel()->getEnvImpacts()[i]->getExpEnvReplacement())->at(t);
+                    mExpEnvImpactReplacementVec[i][t] += expImpactReplacement_i_t;
+                    mExpEnvImpactReplacementVecDiscounted[i] += expImpactReplacement_i_t * mParentCompo->ImpactLevelizationTable().at(year);
 
-                    expImpactCost_i_t = lptr->getMIPExpression1D(t, lptr->compoModel()->getEnvImpactCostExpression(i));
-                    mExpEnvImpactCostVec[i][t] += expImpactCost_i_t;
+                    //costs
+                    mExpEnvImpactCostVec[i][t] += (lptr->compoModel()->getEnvImpacts()[i]->getExpEnvOpCost())->at(t);
                 }
 
-                // ---------------------------- Grey Env Impacts ----------------------------
-                mExpEnvGreyImpactMassVec[i] += *(lptr->getMIPExpression(lptr->compoModel()->getEnvGreyImpactMassExpression(i)));
-                mExpEnvGreyImpactCostVec[i] += *(lptr->getMIPExpression(lptr->compoModel()->getEnvGreyImpactCostExpression(i)));
+                // ---------------------------- Embodied Env Impacts ----------------------------
+                mExpEnvImpactEmbodiedVec[i] += *(lptr->compoModel()->getEnvImpacts()[i]->getExpEnvEmbodied());
+                mExpEnvImpactEmbodiedCostVec[i] += *(lptr->compoModel()->getEnvImpacts()[i]->getExpEnvEmbodiedCost());
+                //Expression for total env impacts
+                mExpCumulativeEnvImpact[i] = mExpEnvImpactMassVecDiscounted[i] + mExpEnvImpactEmbodiedVec[i] + mExpEnvImpactReplacementVecDiscounted[i];
             }
         }
     }
@@ -768,20 +785,29 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
 
         // ---------------------------- Env Impacts ----------------------------
         for (int i = 0; i < mEnvImpactsList.size(); i++) {
-            mVDEnvGreyImpactsCostContribution[i].at(0) = mVDEnvGreyImpactsCostContribution[i].at(1) = mExpEnvGreyImpactCostVec.at(i).evaluate(optSol);
-            mVDEnvGreyImpactsMassContribution[i].at(0) = mVDEnvGreyImpactsMassContribution[i].at(1) = mExpEnvGreyImpactMassVec.at(i).evaluate(optSol);
+            mVDEnvGreyImpactsCostContribution[i].at(0) = mVDEnvGreyImpactsCostContribution[i].at(1) = mExpEnvImpactEmbodiedCostVec.at(i).evaluate(optSol);
+            mVDEnvGreyImpactsMassContribution[i].at(0) = mVDEnvGreyImpactsMassContribution[i].at(1) = mExpEnvImpactEmbodiedVec.at(i).evaluate(optSol);
 
             SubModel::computeIndicator(mExpEnvImpactCostVec[i], optSol, mVDEnvImpactsCostContribution[i].at(0), mVDEnvImpactsCostContributionDiscounted[i].at(0), mVDEnvImpactsCostContribution[i].at(1), mVDEnvImpactsCostContributionDiscounted[i].at(1), true);
             SubModel::computeIndicator(mExpEnvImpactMassVec[i], optSol, mVDEnvImpactsMassContribution[i].at(0), mVDEnvImpactsMassContributionDiscounted[i].at(0), mVDEnvImpactsMassContribution[i].at(1), mVDEnvImpactsMassContributionDiscounted[i].at(1), true);
 
+            //Replacement
+            SubModel::computeIndicator(mExpEnvImpactReplacementVec[i], optSol, mVDEnvImpactsReplacementContribution[i].at(0), mVDEnvImpactsReplacementContributionDiscounted[i].at(0), mVDEnvImpactsReplacementContribution[i].at(1), mVDEnvImpactsReplacementContributionDiscounted[i].at(1), true);
+
+            //Cumulative env impact
+            //mExpCumulativeEnvImpact[i].evaluate(optSol);
+
             double envImpactMassDiscounted_redundant_i = mExpEnvImpactMassVecDiscounted.at(i).evaluate(optSol);
             assert(abs(mVDEnvImpactsMassContributionDiscounted[i].at(0) - envImpactMassDiscounted_redundant_i) < 10e-3);
 
-            //Flow + Grey
-            mVDEnvImpactsTotalCostDiscounted[i].at(0) = mVDEnvGreyImpactsCostContribution.at(i).at(0) + mVDEnvImpactsCostContributionDiscounted.at(i).at(0);
-            mVDEnvImpactsTotalCostDiscounted[i].at(1) = mVDEnvGreyImpactsCostContribution.at(i).at(1) + mVDEnvImpactsCostContributionDiscounted.at(i).at(1);
-            mVDEnvImpactsTotalMassDiscounted[i].at(0) = mVDEnvGreyImpactsMassContribution.at(i).at(0) + mVDEnvImpactsMassContributionDiscounted.at(i).at(0);
-            mVDEnvImpactsTotalMassDiscounted[i].at(1) = mVDEnvGreyImpactsMassContribution.at(i).at(1) + mVDEnvImpactsMassContributionDiscounted.at(i).at(1);
+            double envImpactReplacementDiscounted_redundant_i = mExpEnvImpactReplacementVecDiscounted.at(i).evaluate(optSol);
+            assert(abs(mVDEnvImpactsReplacementContributionDiscounted[i].at(0) - envImpactReplacementDiscounted_redundant_i) < 10e-3);
+
+            //Flow + Grey + Replacement
+            mVDEnvImpactsTotalCostDiscounted[i].at(0) = mVDEnvGreyImpactsCostContribution.at(i).at(0) + mVDEnvImpactsCostContributionDiscounted.at(i).at(0) ;
+            mVDEnvImpactsTotalCostDiscounted[i].at(1) = mVDEnvGreyImpactsCostContribution.at(i).at(1) + mVDEnvImpactsCostContributionDiscounted.at(i).at(1) ;
+            mVDEnvImpactsTotalMassDiscounted[i].at(0) = mVDEnvGreyImpactsMassContribution.at(i).at(0) + mVDEnvImpactsMassContributionDiscounted.at(i).at(0) + mVDEnvImpactsReplacementContributionDiscounted[i].at(0);
+            mVDEnvImpactsTotalMassDiscounted[i].at(1) = mVDEnvGreyImpactsMassContribution.at(i).at(1) + mVDEnvImpactsMassContributionDiscounted.at(i).at(1) + mVDEnvImpactsReplacementContributionDiscounted[i].at(1);
 
         }
     }

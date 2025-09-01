@@ -8,7 +8,7 @@ using namespace std;
 int main()
 {
 	//Variables	
-	CairnAPI m_Persee;
+	CairnAPI m_Cairn;
 	t_list AllSolverList; 
 	string const lsSolverListFilePath = TEST_DATA + (std::string)"/SolverReferenceListUnitTest.txt";
 
@@ -16,7 +16,7 @@ int main()
 	vector<vector<string>> lsSolverList = TestUtils::ParserTxt(lsSolverListFilePath);
 	TestUtils::CreateRefrenceList(lsSolverList, AllSolverList);
 	
-	t_list vRet = m_Persee.get_Solvers();
+	t_list vRet = m_Cairn.get_Solvers();
 	return TestUtils::compare_lists(vRet, AllSolverList);	
 }
 

@@ -21,15 +21,15 @@ def set_param(problem, header_col, value):
             return 0
         except ValueError:
             try:
-                problem.tech_eco_analysis[header_col[1]] = value
+                problem.tech_eco_analysis = {header_col[1] : value}
                 return 0
             except ValueError:
                 try:
-                    problem.solver[header_col[1]] = value
+                    problem.solver = {header_col[1] : value}
                     return 0
                 except ValueError:
                     try:
-                        problem.simulation_control[header_col[1]] = value
+                        problem.simulation_control = {header_col[1] : value}
                         return 0
                     except ValueError:
                         return 1
@@ -37,7 +37,7 @@ def set_param(problem, header_col, value):
 def run_sensitivity(problem, df_sens, max_time=-1):
     """ runs sensitivity study of a given problem with a given input dataframe (2 header rows: 1st row: name of the component, 
     2nd row: name of the parameter and one sensitivity study per row) for an optional maximal duration of each run.
-    arg1: persee problem
+    arg1: cairn problem
     arg2: dataframe containing sensitivity studies to be conducted
     arg3: maximal duration of each sensitivity study (optional)
     :meta public:
@@ -54,4 +54,42 @@ def run_sensitivity(problem, df_sens, max_time=-1):
             if res != 0:
                 print("Input param "+col+" not found")
         problem.run("Report_s"+sens_case)
-  
+
+def copy_component(problem, component,new_name,connexions = True):
+    """
+    Make a copy of a component, with its parameters and connexions (optional).
+
+    Parameters
+    -------------
+    problem: cairn.OptimProblem
+        The problem that will be modified
+    component: str
+        The name of component to duplicate
+    new_name: str
+        The name of the duplicated component
+    connexions: bool
+        If true, the ports and links are also duplicated. 
+
+    Returns
+    ------------
+    compo2: cairn.Component
+        The new component.
+    """
+    compo = problem.get_component(component)
+    compo2 = problem.create_component(component+new_name,compo.model_class)
+    compo2.setting_values=compo.setting_values
+    if connexions == True:
+        for p in compo.ports:  # loop on all ports to copy
+            port = compo.get_port(p)
+            carrier = problem.get_energy_carrier(port.carrier_name)
+            if p not in compo2.ports:  # if the port is not a default port
+                port2 = compo2.add_port(p, carrier)
+            else:
+                port2 = compo2.get_port(p)
+                port2.set_carrier(carrier)
+            port2.setting_values = port.setting_values
+            for l in problem.links:  # loop on links to add the same to the component
+                compo_name_link = ".".join(l.split('.')[:-1])
+                if compo_name_link == component and l.split('.')[-1]==port.name:
+                    problem.add_link(port2,problem.get_bus(problem.links[l]))
+    return compo2

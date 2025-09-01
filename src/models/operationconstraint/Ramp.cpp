@@ -15,8 +15,10 @@ extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
 }
 
 Ramp::Ramp(QObject* aParent)
-    :OperationSubModel(aParent)
+    :OperationSubModel(aParent),
+    mInitialValue(0.)
 {
+
 }
 
 Ramp::~Ramp()
@@ -37,15 +39,12 @@ void Ramp::setTimeData()
 
 void Ramp::computeInitialData()
 {
-    mInitialValue = 0;
-
-    qDebug() << "Ramp initial value : " << mInitialValue;
+    setMaxValue(mMaxWeight);
+    setMinValue(mMinSize);
 }
 
-void Ramp::buildModel()
+void Ramp::computeModelContribution()
 {
-    // parameters:
-    // ===========
     if (mConstantRamp) {
         mRampUpLimit = std::vector<double>(mHorizon);
         mRampDownLimit = std::vector<double>(mHorizon);
@@ -55,25 +54,9 @@ void Ramp::buildModel()
         }
     }
 
-    // allocate variables and expressions
-    // =========
-    if (mAllocate) {
-        mVarInput = MIPModeler::MIPVariable1D(mHorizon);
-        mExpInput = MIPModeler::MIPExpression1D(mHorizon);
-        mExpWeight = MIPModeler::MIPExpression();
-        if (mMaxWeight < 0.) {
-            mVarWeight = MIPModeler::MIPVariable0D(0., fabs(mMaxWeight));
-        }
-    }
-    else {
-        closeExpression1D(mExpInput);
-        closeExpression(mExpWeight);
-    }
-
     // add variables to model
     // =========
     addVariable(mVarInput,"RampInput");
-
 
     // fill expressions
     // ===========
@@ -81,16 +64,12 @@ void Ramp::buildModel()
         mExpInput[t] += mVarInput(t);
     }
 
-    // set size max expression
-    // ============
-    setExpSizeMax(mMaxWeight, "MaxVariable");
-
-    // Integer variables: On/Off
-    // -----------------------
+  // Integer variables: On/Off    
+  // -----------------------
     if(mAllowShutDown) {
         uint64_t nPdtCond = varMilpHorizon();
-        addStateConstraints(mHorizon, mCondensedNpdt);
-        addStartUpShutDown(nPdtCond, mHorizon);
+        addStateConstraints(nPdtCond);
+        addStartUpShutDown(nPdtCond);
     }
 
     // constraints
@@ -106,21 +85,15 @@ void Ramp::buildModel()
         addRampCost();
     }
 
-    computeAllContribution() ;
-
-    mAllocate = false ;
+    if (mAddRampCost) {
+        for (uint64_t t = 0; t < mHorizon; t++)
+            mExpVariableCosts[t] += mExpRampCostVar[t];
+    }
 }
 
-void Ramp::addRampCost() {
-    if (mAllocate) {
-        mRampCostVar = MIPModeler::MIPVariable1D(varMilpHorizon(), 0, fabs(mMaxBound) * mRampCost);
-        mExpRampCostVar = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else {
-        closeExpression1D(mExpRampCostVar);
-    }
-
-    addVariable(mRampCostVar, "RampCost");
+void Ramp::addRampCost() 
+{
+    addVariable(mRampCostVar, "RampCost", 0, getMaxBound() * mRampCost, MIPModeler::MIP_FLOAT, varMilpHorizon());
 
     fillExpression(mExpRampCostVar, mRampCostVar);
     for (uint64_t t = 0; t < mHorizon; t++) {
@@ -132,15 +105,6 @@ void Ramp::addRampCost() {
             addConstraint((mExpRampCostVar[t] >= mRampCost * (mExpInput[t] - mHistInput)), "RampCostVar", t);
             addConstraint((mExpRampCostVar[t] >= mRampCost * (mHistInput - mExpInput[t])), "RampCostVar", t);
         }
-    }
-}
-
-void Ramp::computeAllContribution()
-{
-    OperationSubModel::computeAllContribution() ;
-    if (mAddRampCost) {
-        for (uint64_t t = 0; t < mHorizon; t++)
-            mExpVariableCosts[t] += mExpRampCostVar[t];
     }
 }
 
@@ -161,7 +125,7 @@ void Ramp::addRelativeRamp()
 void Ramp::addRelativeRampWithMinPower(){
     for (int i=0; i < (mHorizon-1); i++){
         addConstraint(mExpInput[i] <= mState(i) * fabs(mMaxWeight), "MaxInput");
-        addConstraint(mExpInput[i] >= mMinInput * (mExpSizeMax- fabs(getMaxBound()) * (1-mState(i))), "MinInput");
+        addConstraint(mExpInput[i] >= mMinInput * (mExpSizeMax- getMaxBound() * (1-mState(i))), "MinInput");
         addConstraint((mExpInput)[i + 1] - (mExpInput)[i] <= mRampUpLimit[i] * mExpSizeMax * TimeStep(i) + mMinInput * fabs(mMaxWeight) * mStartUp(i+1), "RampUpMinInp1");
         addConstraint((mExpInput)[i + 1] - (mExpInput)[i] <= mMinInput * mExpSizeMax + mRampUpLimit[i] * fabs(mMaxWeight) * TimeStep(i) * (1-mStartUp(i+1)), "RampUpMinInp2");
         addConstraint((mExpInput)[i] - (mExpInput)[i + 1] <= mRampDownLimit[i] * TimeStep(i) * mExpSizeMax + fabs(mMaxWeight) * mMinInput * mShutDown(i + 1), "RampDownMinInp1");

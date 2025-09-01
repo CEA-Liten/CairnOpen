@@ -7,7 +7,6 @@ class SubModel;
 #include <QFile>
 #include <QVector>
 #include <QMap>
-#include <QSettings>
 #include <QDebug>
 #include <QString>
 #include <Eigen/Dense>
@@ -52,8 +51,8 @@ public:
     virtual ~MilpComponent();
     virtual void initMilpComponent();
 
-    virtual QString Name() const {return mName ;}  
-    virtual QString Type() const { return mCompoModelName; } 
+    QString Name() const {return mName ;}  
+    QString Type() const { return mType; } 
 
     virtual double Sens() const {return mSens ;}                                             /** get component Sink/Source direction */
 
@@ -73,26 +72,29 @@ public:
     virtual void setDefaultsResults();                                                        /** define default values in case optimization fails */
 
     // Utility functions for PEGASE IO management
-    virtual bool findFirstCoeff(QString aVarName, QMap<QString, ZEVariables*> aList , float &coeff, float &offset) ;
+    virtual bool findFirstCoeff(QString aVarName, t_mapExchange aList , float &coeff, float &offset) ;
 
     // MILP functions
     virtual void initSubModelTopology() ; /**Send topology data to submodel : list of ports*/
-    virtual int initSubModelConfiguration() ;      /** Read model Input parameters from SettingsFile and Input timeseries from Pegase Exchange Zone */
+    virtual int initSubModelConfiguration(const bool& readParams = true) ;      /** Read model Input parameters from SettingsFile and Input timeseries from Pegase Exchange Zone */
     virtual int initSubModelInput() ;              /** Read model Input parameters from SettingsFile and Input timeseries from simulation environment */
-    virtual int initPorts() ;                                                                        /** port Milp flux expression init (allocation) */
+    virtual int initPorts();                                                                        /** port Milp flux expression init (allocation) */
     virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
 
     virtual int setParameters();
-    virtual int initProblem();                                   /** define Milp Variable of component */
+    virtual int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
     void createCompoModel();                              
     void deleteCompoModel();
 
     virtual void buildProblem();  /** build Milp Model of component : own constraint, connection constraint, objective contribution */
-    void resetFlags();
+
+    void resetCompoModel();
+    void cleanTimeSeries();
+    //void closeExpressions();      /** Clean expressions of the submodel */
+    //void resetFlags();
 
     void exportSubmodelIO(Solver* aSolver, int aNsol);  /** Output Data (for link with PEGASE or OUTSIDE) */
-
-    virtual void cleanExpressions();                                /** Clean expressions of the submodel */
+    void removeIOs();
     
     virtual void setBusFluxPortExpression();                                              /** Fill in expression at BusSameValue port connexion */
     virtual void setBusFluxPortExpression(const double &aSignedCoefficient);                                              /** Fill in expression at BusSameValue port connexion */
@@ -119,6 +121,10 @@ public:
     virtual void declareCompoInputParam();
     virtual void setCompoInputParam(const QMap<QString, QString> aComponent);
     virtual void initGuiData();
+
+    virtual void declareIOVariables();
+
+    virtual void setCompoSens(const QString& direction) { };
 
     virtual void jsonSaveGuiComponent(QJsonArray &componentsArray, const QString& componentCarrier) ;
     void jsonSaveGUINodePortsData(QJsonArray &nodePortsArray, const QString & aSide);
@@ -183,6 +189,8 @@ public:
 
     MilpPort* mapDefaultPort(const QString& portId, const QMap<QString, QString>& portParams);
 
+    std::string getAbsoluteFileName(const std::string& filename);
+
 protected:
     Cairn_Exception mException ;
     MIPModeler::MIPModel* mModel ;                      /** Pointer to global Optimization Problem Model */
@@ -194,7 +202,6 @@ protected:
     SubModel* mCompoModel{ nullptr };                             /** Pointer to global component SubModel of name mCompoModelName*/
     InputParam* mCompoInputParam{ nullptr };      /** COMPONENT Input parameter List from XML File -> Options */
     InputParam* mInputParam{ nullptr };                           /** Pointer to COMPONENT Input Data List (for link with PEGASE or OUTSIDE) */
-    InputParam* mCompoToModel{ nullptr };                         /** Pointer to COMPONENT Data List to be sent to SubModel (for link with PEGASE or OUTSIDE) */
     InputParam* mModelParam{ nullptr };                           /** Pointer to SubModel Input parameter List (constant of the Milp submodel)*/
     InputParam* mModelEnvImpactParam{ nullptr };                   /** Pointer to SubModel Environmental impacts parameter List */
     InputParam* mModelPortImpactParam{ nullptr };                   /** Pointer to SubModel Port Environmental impacts parameter List */
@@ -236,7 +243,7 @@ protected:
 
     // Time Series
     typedef std::map<QString, ModelTS> t_mapTS;
-    t_mapTS m_timeSeries;
+    t_mapTS m_timeSeries = {};
     void createImportListVars(t_mapExchange& a_Import);
     void createExportListVars(t_mapExchange& a_Export);
     virtual void createPortsExportListVars(t_mapExchange& a_Exchange);

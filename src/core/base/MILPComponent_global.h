@@ -4,7 +4,6 @@
 #define MILPComponent_global_H
 
 #include <QtCore/qglobal.h>
-#include <QSettings>
 #include <QDebug>
 #include <QFile>
 #include <QObject>

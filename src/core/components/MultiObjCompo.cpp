@@ -25,12 +25,6 @@ MultiObjCompo::~MultiObjCompo()
 void MultiObjCompo::declareCompoInputParam()
 {
     BusCompo::declareCompoInputParam();
-    mCompoInputParam->addParameter("ObjectiveType", &mObjectiveType, "", true, true, "available: Blended = part of the NPV or Add = simply added to objective or Lexicographic = ordered objectives managed by Cplex (see doc)");
 }
 
-int MultiObjCompo::initProblem()
-{    
-    mCompoToModel->publishData("ObjectiveType", &mObjectiveType);    
-    return MilpComponent::initProblem();
-}
 

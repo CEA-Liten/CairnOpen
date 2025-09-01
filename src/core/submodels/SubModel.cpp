@@ -11,19 +11,20 @@ SubModel::SubModel(QObject* aParent) :
     mParentCompo(nullptr),
     mEnergyVector(nullptr),
     mAllocate(true),
-    mUseAgeing(false),
+    mComputeSizeMax(false),
     mAddStateVariable(false),
     mWeight(1.), //needed for models that doesn't have parameter "Weight" such as Ramp
     mUseWeightOptimization(false),
     mLPWeightOptimization(false),
     mLPModelOnly(false),
-    mMaxBound(-1),
-    mMinBound(-1),
+    mMaxValue(MIP_INFINITY),
+    mMinValue(-MIP_INFINITY),
     mVariablePortNumber(false),
     mNbInputPorts(1),
     mNbOutputPorts(1),
     mNbInputFlux(1),
     mNbOutputFlux(1),
+    mSens(0.),
     mActivateConstraintsBetweenTP(false),
     mCondenseVariablesOnTP(false),
     mCondenseBinariesOnly(false),
@@ -36,25 +37,19 @@ SubModel::SubModel(QObject* aParent) :
     mSubObjectiveExpression("N/A"),
     mPenaltyConstraintExpression("N/A"),
     mOpexExpression("N/A"),
-    mOptimalSizeExpression("")
+    mOptimalSizeExpression(""),
+    mHorizon(0),
+    mInputParam(nullptr),
+    mInputPerfParam(nullptr),
+    mInputData(nullptr),
+    mInputDataTS(nullptr),
+    mInputIndicators(nullptr),
+    mInputEnvImpacts(nullptr),
+    mInputPortImpacts(nullptr),
+    mTSInputPortImpacts(nullptr)
 {
     QString aName = "";
     if(aParent)  aName = aParent->objectName();
-
-    // Param
-    mInputParam = new InputParam (this,"SubModelbaseInputParam" + aName) ;
-    // Carto
-    mInputPerfParam = new InputParam(this, "SubModelbaseInputPerfParam" + aName);
-    // Config
-    mInputData = new InputParam (this,"SubModelbaseInputData" + aName) ;
-    // TimeSeries
-    mInputDataTS = new InputParam(this, "SubModelbaseInputDataTS" + aName);
-       
-    // Indicateurs, Impact
-    mInputIndicators = new InputParam(this, "SubModelbaseInputIndicators" + aName);
-    mInputEnvImpacts = new InputParam(this, "SubModelbaseInputEnvImpactsParam" + aName);
-    mInputPortImpacts = new InputParam(this, "SubModelbaseInputPortImpactsParam" + aName);
-    mTSInputPortImpacts = new InputParam(this, "SubModelbaseTSInputPortImpactsParam" + aName); 
 }
 
 
@@ -70,24 +65,74 @@ SubModel::~SubModel()
     if (mInputPortImpacts) delete (mInputPortImpacts);
     if (mTSInputPortImpacts) delete (mTSInputPortImpacts);
     
-    for (auto &[vKey, value] : mIOExpressions) {
-        if (value) delete value;
-    }
-    for (auto &[vKey, value] : mListControlIO) {
-        if (value) delete value;
-    }
+    removeIOs();
 
     mListPort.clear();
 
-    for (EnvImpact* impact : mEnvImpacts) {
-        if (impact) delete(impact);
-    }
+    deleteEnvImpacts();
 }
 
 void SubModel::finalizeModelData()
 {
- // nothing here - Can be overridden in individual SubModels
+    // nothing here - Can be overridden in individual SubModels
 }
+
+void SubModel::deleteEnvImpacts()
+{
+    for (EnvImpact* impact : mEnvImpacts) {
+        if (impact) {
+            removeEnvImpactIOs(impact->Name()); /* remove related IOs from mIOExpressions */
+            /* remove related Exps from mExpressions0D and mExpressions1D? (currently there is no any!) */
+            delete(impact);
+        }
+    }
+    mEnvImpacts.clear();
+}
+
+void SubModel::declareInputParams(const QString& name)
+{
+    if (mInputParam) delete(mInputParam);
+    if (mInputPerfParam) delete(mInputPerfParam);
+    if (mInputData) delete(mInputData);
+    if (mInputDataTS) delete(mInputDataTS);
+    if (mInputEnvImpacts) delete (mInputEnvImpacts);
+    if (mInputPortImpacts) delete (mInputPortImpacts);
+    if (mTSInputPortImpacts) delete (mTSInputPortImpacts);
+
+    // Param
+    mInputParam = new InputParam(this, "SubModelbaseInputParam" + name);
+    // Carto
+    mInputPerfParam = new InputParam(this, "SubModelbaseInputPerfParam" + name);
+    // Config
+    mInputData = new InputParam(this, "SubModelbaseInputData" + name);
+    // TimeSeries
+    mInputDataTS = new InputParam(this, "SubModelbaseInputDataTS" + name);
+
+    // Impacts
+    deleteEnvImpacts(); 
+    mInputEnvImpacts = new InputParam(this, "SubModelbaseInputEnvImpactsParam" + name);
+    mInputPortImpacts = new InputParam(this, "SubModelbaseInputPortImpactsParam" + name);
+    mTSInputPortImpacts = new InputParam(this, "SubModelbaseTSInputPortImpactsParam" + name);
+
+    // Indicateurs
+    resetIndicators();
+    mInputIndicators = new InputParam(this, "SubModelbaseInputIndicators" + name);
+}
+
+void SubModel::resetIndicators()
+{
+    if (mInputIndicators) {
+        //reset contribution values
+        const InputParam::t_Indicators& vIndicators = mInputIndicators->getIndicators();
+        for (auto& vIndicator : vIndicators) {
+            vIndicator->resetValue();
+        }
+        delete(mInputIndicators);
+    }
+
+    resetHistStoredVaues();
+}
+
 
 MilpPort* SubModel::getPort(const QString& aPortId) 
 {
@@ -114,13 +159,12 @@ MilpPort* SubModel::getPortByType(const QString& aType, const QString& aDirectio
 
 void SubModel::removePort(MilpPort* lptrport)
 {
-    //TODO: if the port is connected the link should be deleted (delet the port form the Bus::mListPort)
     if (lptrport != nullptr) {
         if (mListPort.removeOne(lptrport)) {
             delete lptrport;
         }
         else {
-            Cairn_Exception erreur("Error deleting port", -1);
+            Cairn_Exception erreur((std::string)"Error deleting port", -1);
             this->setException(erreur);
         }
     }
@@ -132,56 +176,156 @@ void SubModel::removeBusPort(MilpPort* lptrport) {
     }
 }
 
-void SubModel::addConfig(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const QList<QString>& aconfigList)
+void SubModel::addParameter(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const std::string& aShowConfig)
 {
-    mInputData->addParameter(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aconfigList);
+    mInputParam->addParameter(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
 }
 
-void SubModel::addParameter(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const QList<QString>& aconfigList)
+void SubModel::addPerfParam(const QString& aParamName, std::vector<double>* aPtr, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit)
 {
-    mInputParam->addParameter(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aconfigList);
+    mInputPerfParam->addPerfParam(aParamName, aPtr, aIsBlocking, aIsUsed, aDescription, aUnit);
 }
 
-void SubModel::addParameter(const QString& aParamName, std::vector<double>* aPtr, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const QList<QString>& aconfigList)
+void SubModel::addTimeSeries(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const std::string& aShowConfig, double a_default, double a_min, double a_max)
 {
-    mInputParam->addParameter(aParamName, aPtr, std::vector<double>{}, aIsBlocking, aIsUsed, aDescription, aUnit, aconfigList);
+    mInputDataTS->addTimeSeries(aParamName, aDblePtr, a_default, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig, a_min, a_max);
 }
-
-void SubModel::addPerfParam(const QString& aParamName, const t_pvalue& aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const QList<QString>& aconfigList)
-{
-    mInputPerfParam->addParameter(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aconfigList);
-}
-
-void SubModel::addPerfParam(const QString& aParamName, std::vector<double>* aPtr, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const QList<QString>& aconfigList)
-{
-    mInputPerfParam->addParameter(aParamName, aPtr, std::vector<double>{}, aIsBlocking, aIsUsed, aDescription, aUnit, aconfigList);
-}
-
-void SubModel::addTimeSeries(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const QList<QString>& aconfigList, double a_default, double a_min, double a_max)
-{
-    mInputDataTS->addTimeSeries(aParamName, aDblePtr, a_default, IsBlocking, aIsUsed, aDescription, aUnit, aconfigList, a_min, a_max);
-}
-
 
 //Model IO Interface
-void SubModel::addIO(const QString& aParamName, MIPModeler::MIPExpression* aExprPtr, const QString aUnit, const QString& aCurrency)
+void SubModel::addIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString aUnit, const QString& aCurrency)
 {
-    mIOExpressions[aParamName] = new ModelIO(aParamName, aExprPtr, aUnit, aCurrency);
+    /* 0D Exp and scalar unit */
+    if (assertIONonExistence(aIOName, aExprPtr)) {
+        removeIO(aIOName);
+    }
+    assertIsNotSizeMaxExp(aExprPtr);
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aCurrency);
 }
 
-void SubModel::addIO(const QString& aParamName, MIPModeler::MIPExpression1D* aExprPtr1D, const QString aUnit, const QString& aCurrency)
+void SubModel::addSizeMaxIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString aUnit, const QString& aCurrency)
 {
-    mIOExpressions[aParamName] = new ModelIO(aParamName, aExprPtr1D, aUnit, aCurrency);
+    /* used only for mExpSizeMax (0D, scalar unit) */
+    if (assertIONonExistence(aIOName, aExprPtr)) {
+        removeIO(aIOName);
+    }
+    assertIsSizeMaxExp(aExprPtr);
+    mComputeSizeMax = true;
+    mOptimalSizeExpression = aIOName;
+    m_OptimalSizeUnit = aUnit;
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aCurrency);
 }
 
-void SubModel::addIO(const QString& aParamName, MIPModeler::MIPExpression* aExprPtr, const QString* aUnit, const QString& aCurrency)
+void SubModel::addIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString aUnit, const QString& aCurrency)
 {
-    mIOExpressions[aParamName] = new ModelIO(aParamName, aExprPtr, aUnit, aCurrency);
+    /* 1D Exp and scalar unit */
+    if (assertIONonExistence(aIOName, aExprPtr1D)) {
+        removeIO(aIOName);
+    }
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aCurrency);
 }
 
-void SubModel::addIO(const QString& aParamName, MIPModeler::MIPExpression1D* aExprPtr1D, const QString* aUnit, const QString& aCurrency)
+void SubModel::addIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString* aUnit, const QString& aCurrency)
 {
-    mIOExpressions[aParamName] = new ModelIO(aParamName, aExprPtr1D, aUnit, aCurrency);
+    /* 0D Exp and dynamic unit */
+    if (assertIONonExistence(aIOName, aExprPtr)) {
+        removeIO(aIOName);
+    }
+    assertIsNotSizeMaxExp(aExprPtr);
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aCurrency);
+}
+
+void SubModel::addSizeMaxIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString* aUnit, const QString& aCurrency)
+{
+    /* used only for mExpSizeMax(0D, scalar unit) */
+    if (assertIONonExistence(aIOName, aExprPtr)) {
+        removeIO(aIOName);
+    }
+    assertIsSizeMaxExp(aExprPtr);
+    mComputeSizeMax = true;
+    mOptimalSizeExpression = aIOName;
+    p_OptimalSizeUnit = aUnit;
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aCurrency);
+}
+
+void SubModel::addIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString* aUnit, const QString& aCurrency)
+{
+    /* 1D Exp and dynamic unit */
+    if (assertIONonExistence(aIOName, aExprPtr1D)) {
+        removeIO(aIOName);
+    }
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aCurrency);
+}
+
+bool SubModel::assertIONonExistence(const QString& name, const t_pExpr expression)
+{
+//#ifdef DEBUG 
+
+    /* Execlude "State" for now due to the issue related to ProductionUC::mHistState */
+    //if(name == "State")
+    //    return;  
+
+    for (auto& [vName, vIO] : mIOExpressions) {
+        /* throw an error if an IO with the same name but different expression already exist */
+        if (vName == name && vIO && vIO->getPtr() != expression) {
+            Cairn_Exception error("An IO Expression with the same name but different expression already exist: " + vName, -1);
+            throw error;
+        }
+        /* throw an error if an IO with the same expression but different name already exist */
+        else if (vName != name && vIO && vIO->getPtr() == expression) {
+            Cairn_Exception error("An IO associated to the same expression but different name already exists: " + vName + " and " + name, -1);
+            throw error;
+        }
+        else if (vName == name && vIO && vIO->getPtr() == expression) {
+            /* An IO with the same name and same expression already exist. return true to delete the IO and create a new one
+            with possibly difefrent comment, unit, or isUsed values */
+            return true;
+        }
+    }
+    return false;
+//#endif
+}
+
+void SubModel::assertIsSizeMaxExp(MIPModeler::MIPExpression* aExprPtr) {
+    /* throw an error if a given pointer doesn't point to the expression mExpSizeMax */
+    if (aExprPtr != &mExpSizeMax) {
+        Cairn_Exception error("Method addSizeMaxIO can only be used for mExpSizeMax. Please, use method addIO for other expressions!", -1);
+        throw error;
+    }
+}
+
+void SubModel::assertIsNotSizeMaxExp(MIPModeler::MIPExpression* aExprPtr) {
+    /* throw an error if a given pointer points to the expression mExpSizeMax */
+    if (aExprPtr == &mExpSizeMax) {
+        Cairn_Exception error("Method addIO cannot be used for mExpSizeMax. Please, use method addSizeMaxIO!", -1);
+        throw error;
+    }
+}
+
+
+// Model Rolling Horizon variables
+// 
+void SubModel::addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
+{
+    addIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aCurrency);
+    mListControlIO[aIOName] = new ControlVar(aIOName, aValuePtr, aDefaultValue, a_isMPC);
+}
+
+void SubModel::addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
+{
+    addIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aCurrency);
+    mListControlIO[aIOName] = new ControlVar(aIOName, aHistPtr, aDefaultValue, a_isMPC);
+}
+
+void SubModel::addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString* aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
+{
+    addIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aCurrency);
+    mListControlIO[aIOName] = new ControlVar(aIOName, aValuePtr, aDefaultValue, a_isMPC);
+}
+
+void SubModel::addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString* aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
+{
+    addIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aCurrency);
+    mListControlIO[aIOName] = new ControlVar(aIOName, aHistPtr, aDefaultValue, a_isMPC);
 }
 
 void SubModel::removeIO(const QString& aName)
@@ -190,6 +334,56 @@ void SubModel::removeIO(const QString& aName)
         delete mIOExpressions[aName];
         mIOExpressions.erase(aName);
     }
+
+    if (mListControlIO.find(aName) != mListControlIO.end()) {
+        delete mListControlIO[aName];
+        mListControlIO.erase(aName);
+    }
+}
+
+void SubModel::removeEnvImpactIOs(const QString& aImpactName)
+{
+    std:vector<QString> keysToRemove = {};
+    //Delete related ModelIO
+    for (auto& [vKey, vIO] : mIOExpressions) {
+        if (vIO && vKey.contains(aImpactName)) {
+            keysToRemove.push_back(vKey);
+            delete vIO;
+        }
+    }
+
+    //Remove from the map 
+    for (auto& vKey: keysToRemove) {
+        mIOExpressions.erase(vKey);
+    }
+
+    keysToRemove.clear();
+    //Delete related Control ModelIO
+    for (auto& [vKey, vIO] : mListControlIO) {
+        if (vIO && vKey.contains(aImpactName))
+        {
+            keysToRemove.push_back(vKey);
+            delete vIO;
+        }
+    }
+
+    //Remove from the map 
+    for (auto& vKey : keysToRemove) {
+        mIOExpressions.erase(vKey);
+    }
+}
+
+void SubModel::removeIOs()
+{
+    for (auto& [vKey, value] : mIOExpressions) {
+        if (value) delete value;
+    }
+    mIOExpressions.clear();
+
+    for (auto& [vKey, value] : mListControlIO) {
+        if (value) delete value;
+    }
+    mListControlIO.clear();
 }
 
 MIPModeler::MIPExpression* SubModel::getMIPExpression(QString aExpressionName)
@@ -201,32 +395,6 @@ MIPModeler::MIPExpression* SubModel::getMIPExpression(QString aExpressionName)
         }
     }
     return nullptr;
-}
-
-// Model Rolling Horizon variables
-// 
-void SubModel::addControlIO(const QString& aParamName, MIPModeler::MIPExpression1D* aExprPtr1D, const QString aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
-{
-    addIO(aParamName, aExprPtr1D, aUnit, aCurrency);
-    mListControlIO[aParamName] = new ControlVar(aParamName, aValuePtr, aDefaultValue, a_isMPC);
-}
-
-void SubModel::addControlIO(const QString& aParamName, MIPModeler::MIPExpression1D* aExprPtr1D, const QString aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
-{
-    addIO(aParamName, aExprPtr1D, aUnit, aCurrency);
-    mListControlIO[aParamName] = new ControlVar(aParamName, aHistPtr, aDefaultValue, a_isMPC);
-}
-
-void SubModel::addControlIO(const QString& aParamName, MIPModeler::MIPExpression1D* aExprPtr1D, const QString* aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
-{
-    addIO(aParamName, aExprPtr1D, aUnit, aCurrency);
-    mListControlIO[aParamName] = new ControlVar(aParamName, aValuePtr, aDefaultValue, a_isMPC);
-}
-
-void SubModel::addControlIO(const QString& aParamName, MIPModeler::MIPExpression1D* aExprPtr1D, const QString* aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC, const QString& aCurrency)
-{
-    addIO(aParamName, aExprPtr1D, aUnit, aCurrency);
-    mListControlIO[aParamName] = new ControlVar(aParamName, aHistPtr, aDefaultValue, a_isMPC);
 }
 
 void SubModel::buildControlVariables()
@@ -258,19 +426,18 @@ MIPModeler::MIPExpression& SubModel::getMIPExpression1D(uint i, QString aExpress
             }
         }
     }
-    Cairn_Exception error(" ERROR: MilpExpression " + aExpressionName + " does not exist in the component model or its size is less than " + QString::number(i), -1);
+    Cairn_Exception error("ERROR: MilpExpression " + aExpressionName + " does not exist in the component model or its size is less than " + QString::number(i), -1);
     throw error;
-
 }
 
 void SubModel::dumpIOExpression1DList()
 {
     // Loop on expected input parameters
     qInfo() << "\n\t Vector Expression ;" << " \t\t\t " << " Unit ;";
-    for (auto& [key, vExpr] : mIOExpressions) {
-        if (vExpr != nullptr) {
-            if (vExpr->getType() == EIOModelType::eMIPExpression1D) {
-                qInfo() << key << " \t\t\t " << vExpr->getUnit();
+    for (auto& [key, vIO] : mIOExpressions) {
+        if (vIO != nullptr) {
+            if (vIO->getType() == EIOModelType::eMIPExpression1D) {
+                qInfo() << key << " \t\t\t " << vIO->getUnit();
             }
         }
     }
@@ -280,10 +447,10 @@ void SubModel::dumpIOExpressionList()
 {
     // Loop on expected input parameters
     qInfo() << "\n\t Scalar Expression " << " \t\t\t " << " Unit ";
-    for (auto& [key, vExpr] : mIOExpressions) {
-        if (vExpr != nullptr) {
-            if (vExpr->getType() == EIOModelType::eMIPExpression) {
-                qInfo() << key << " \t\t\t " << vExpr->getUnit();
+    for (auto& [key, vIO] : mIOExpressions) {
+        if (vIO != nullptr) {
+            if (vIO->getType() == EIOModelType::eMIPExpression) {
+                qInfo() << key << " \t\t\t " << vIO->getUnit();
             }
         }
     }
@@ -302,17 +469,18 @@ ModelIO* SubModel::getIOExpression(const QString& aName)
 std::vector<ModelIO*> SubModel::getIOExpressions(const EIOModelType& aIOType)
 {
     std::vector<ModelIO*> vRet;
-    for (auto& [key, vExpr] : mIOExpressions) {
-        if (vExpr != nullptr) {
-            if (vExpr->getType() == aIOType) {
-                vRet.push_back(vExpr);
+    for (auto& [key, vIO] : mIOExpressions) {
+        if (vIO != nullptr) {
+            if (vIO->getType() == aIOType) {
+                vRet.push_back(vIO);
             }
         }
     }
     return vRet;
 }
 
-void SubModel::fillExpression(MIPModeler::MIPExpression1D& aExpress1D, MIPModeler::MIPVariable1D& aVariable) {
+void SubModel::fillExpression(MIPModeler::MIPExpression1D& aExpress1D, MIPModeler::MIPVariable1D& aVariable) 
+{
     int dimVar = aVariable.getDims();
     int dimExpr = aExpress1D.size();
     if (dimVar != dimExpr) {
@@ -328,19 +496,97 @@ void SubModel::closeExpression(MIPModeler::MIPExpression& aExpress)
 {
     aExpress.close() ;
 }
+
 void SubModel::closeExpression1D(MIPModeler::MIPExpression1D& aExpress1D)
 {
-    for (int i=0; i<(int)aExpress1D.size();i++)
-        aExpress1D.at(i).close() ;
+    for (int i = 0; i < (int)aExpress1D.size();i++) {
+        aExpress1D.at(i).close();
+    }
 }
-void SubModel::cleanExpression()
+
+void SubModel::allocateExpressions()
 {
-    // Loop on expected input parameters
-    for (auto& [key, vExpr] : mIOExpressions) {
-        if (vExpr != nullptr) {
-            vExpr->close();
+    /* Allocate IO expressions*/
+    for (auto& [key, vIO] : mIOExpressions) {
+        if (vIO && vIO->isPExpr()) {
+            //0D
+            if (vIO->getType() == EIOModelType::eMIPExpression) {
+                MIPModeler::MIPExpression* ptrIOExp0D = (MIPModeler::MIPExpression*)(std::get<EIOModelType::eMIPExpression>(vIO->getPtr()));
+                *ptrIOExp0D = MIPModeler::MIPExpression(); /* not really needed */
+            }
+            //1D
+            else if (vIO->getType() == EIOModelType::eMIPExpression1D) {
+                MIPModeler::MIPExpression1D* ptrIOExp1D = (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
+                *ptrIOExp1D = MIPModeler::MIPExpression1D(mHorizon); /* always size mHorizon for IO expressions */
+            }
         }
     }
+
+    /* Allocate 0D expressions*/
+    for (auto& ptrExp0D : mExpressions0D) {
+        if (ptrExp0D) {
+            *ptrExp0D = MIPModeler::MIPExpression(); /* not really needed */
+        }
+    }
+
+    /* Allocate 1D expressions*/
+    for (auto& sExp1D : mExpressions1D) {
+        if (sExp1D.pExp1D) {
+            *(sExp1D.pExp1D) = MIPModeler::MIPExpression1D(*(sExp1D.pSize)); /* given size */
+        }
+    }
+
+    /* Allocate particular expressions
+     *
+     * These are the expressions declared in SubModel. But, not used in all models.
+     * Usually, they are used in TechnicalSubModel. But, not in OperationSubModel and/or BusSubModel.
+     * When they are used in a certain non-Technical model, e.g. Ramp, they should be registered
+     * using "add IO" or addExp inside that model.
+     * This close here is for safety in case they are used in a model but, have not been registered.
+     * 
+     * Allocate size mHorizon for 1D expressions
+    */
+    mExpSizeMax = MIPModeler::MIPExpression();
+    mExpState = MIPModeler::MIPExpression1D(mHorizon);
+    mExpStartUp = MIPModeler::MIPExpression1D(mHorizon);
+    mExpShutDown = MIPModeler::MIPExpression1D(mHorizon);
+}
+
+void SubModel::closeExpressions()
+{
+    /* Close IO expressions*/
+    for (auto& [key, vIO] : mIOExpressions) {
+        if (vIO) {
+            vIO->close();
+        }
+    }
+
+    /* Close 0D expressions*/
+    for (auto& ptrExp0D : mExpressions0D) {
+        if (ptrExp0D) {
+            ptrExp0D->close();
+        }
+    }
+
+    /* Close 1D expressions*/
+    for (auto& sExp1D : mExpressions1D) {
+        if (sExp1D.pExp1D) {
+            closeExpression1D(*(sExp1D.pExp1D));
+        }
+    }
+
+    /* Close particular expressions 
+     *
+     * These are the expressions declared in SubModel. But, not used in all models.
+     * Usually, they are used in TechnicalSubModel. But, not in OperationSubModel and/or BusSubModel.
+     * When they are used in a certain non-Technical model, e.g. Ramp, they should be registered 
+     * using "add IO" or addExp inside that model. 
+     * This close here is for safety in case they are used in a model but, have not been registered. 
+    */
+    closeExpression(mExpSizeMax);
+    closeExpression1D(mExpState);
+    closeExpression1D(mExpStartUp);
+    closeExpression1D(mExpShutDown);
 }
 
 int SubModel::defineDefaultVarNames()
@@ -483,22 +729,20 @@ int SubModel::checkUnit(MilpPort* port)
 }
 
 
-void SubModel::addStateConstraints(const uint64_t& aNpdt, const uint64_t& aCondensedNpdt)
+void SubModel::addStateConstraints(const uint64_t& aCondensedNpdt)
 {
     if (mAllocate) {
-        mState = MIPModeler::MIPVariable1D(aCondensedNpdt, 0, 1, MIPModeler::MIP_INT);
-        mExpState = MIPModeler::MIPExpression1D(aNpdt);
+        mExpState = MIPModeler::MIPExpression1D(mHorizon);
     }
-    else {
-        closeExpression1D(mExpState);
-    }
-    addVariable(mState, "State");
 
-    for (uint64_t t = 0; t < aNpdt; t++) {
+    addVariable(mState, "State", 0, 1, MIPModeler::MIP_INT, aCondensedNpdt);
+
+    for (uint64_t t = 0; t < mHorizon; t++) {
         mExpState[t] += mState(mVectTypicalPeriods[t]);
     }
-    for (uint64_t t = 0; t < aNpdt; t++) {
-        addConstraint(mExpState[t]<=mVarInstalled,"NotRunningIfNotInstalled",t);
+
+    for (uint64_t t = 0; t < mHorizon; t++) {
+        addConstraint(mExpState[t] <= mVarInstalled,"NotRunningIfNotInstalled",t);
     }
 
     // constrain that force relaxed variables mState to float variable = 1. (ON)
@@ -738,7 +982,7 @@ bool SubModel::isPriceOptimized()
     return false;
 }
 //-----------------------------------------------------------------------------
-void SubModel::exportIndicators(QTextStream& out, QString name, QString range, bool forced, const bool isRollingHorizon) {
+void SubModel::exportIndicators(std::fstream& out, QString name, const std::string &range, bool forced, const bool isRollingHorizon) {
     const InputParam::t_Indicators& vIndicators = mInputIndicators->getIndicators();
     bool vIsSizeOptimized = isSizeOptimized();
     bool vIsPriceOptimized = isPriceOptimized();
@@ -790,6 +1034,9 @@ void SubModel::setTimeData()
     else {
         mMilpNpdt = mHorizon;
     }
+
+    mHistState.clear();
+    mHistState.resize(mHorizon + mNpdtPast);
 }
 
 void SubModel::setTypicalPeriods(const bool& useTypicalPeriods, const uint& aTypicalPeriods, const uint& aNDtTypicalPeriods, const std::vector<int>& aVectTypicalPeriods)
@@ -808,8 +1055,9 @@ void SubModel::setTypicalPeriods(const bool& useTypicalPeriods, const uint& aTyp
         mCondensedNpdt = mTimeSteps.size();
     }
 }
-void SubModel::setTimeSteps(std::vector<double> aTimeSteps, uint64_t aTimeStepBeginLP, uint64_t aTimeStepBeginForecast, uint64_t aDecreaseOptimizationHorizon)    /** TimeStep settings */
+void SubModel::setTimeSteps(const bool& useVariableTimeSteps, std::vector<double> aTimeSteps, uint64_t aTimeStepBeginLP, uint64_t aTimeStepBeginForecast, uint64_t aDecreaseOptimizationHorizon)    /** TimeStep settings */
 {
+    mUseVariableTimeSteps = useVariableTimeSteps;
     mHorizon = aTimeSteps.size();
     mTimeSteps = aTimeSteps;
     mTimeStepBeginLP = aTimeStepBeginLP;
@@ -843,7 +1091,7 @@ void SubModel::decreaseOptimizationHorizon()                  /** Update mTimeSt
             if (mTimeSteps[i] < 0)
             {
                 qCritical() << "Time steps list found is aTimeSteps = " << mTimeSteps;
-                Cairn_Exception erreur("Error : decreaseOptimizationHorizon Time step sizes must be multiple of timeshift ", -1);
+                Cairn_Exception erreur((std::string)"Error : decreaseOptimizationHorizon Time step sizes must be multiple of timeshift ", -1);
                 this->setException(erreur);
                 return;
             }
@@ -851,27 +1099,16 @@ void SubModel::decreaseOptimizationHorizon()                  /** Update mTimeSt
     }
 }
 
-void SubModel::setExpSizeMax(const double& aMaxVal, const std::string& aStrName)
+void SubModel::setExpSizeMax(const double& aMinVal, const double& aMaxVal, const std::string& aStrName)
 {
-    if (mAllocate)
-    {
-        setVarSizeMax(aMaxVal);
-        mExpSizeMax = MIPModeler::MIPExpression();
-        mExpInstalled = MIPModeler::MIPExpression();
-    }
-    else {
-        closeExpression(mExpSizeMax);
-        closeExpression(mExpInstalled);
-    }
+    //Add SizeMax variable
+    addVarSizeMax(aMaxVal, aStrName);
 
-    addVariable(mVarSizeMax, aStrName);
-    addVariable(mVarInstalled, "Installed");
-
+    //Compute SizeMax expression and add constraints
     if (mUseWeightOptimization)
     {
         mExpSizeMax = fabs(aMaxVal) * mVarSizeMax;
         mExpInstalled = mVarInstalled;
-        // constraints
         if (mWeight >= 0.) {
             addConstraint(mVarSizeMax == mWeight, "sWeight");
             addConstraint(mVarInstalled == 1, "sInstalled");
@@ -881,42 +1118,84 @@ void SubModel::setExpSizeMax(const double& aMaxVal, const std::string& aStrName)
     {
         mExpSizeMax = mVarSizeMax * fabs(mWeight);
         mExpInstalled = mVarInstalled;
-        // constraints
         if (aMaxVal >= 0.) {
             addConstraint(mVarSizeMax == aMaxVal, "sMaxVal");
             addConstraint(mVarInstalled == 1, "sInstalled");
         }
     }
+
     addConstraint(mExpSizeMax <= mExpInstalled * fabs(aMaxVal) * fabs(mWeight), "sBigMInstalled");
-    setMaxBound(aMaxVal);
+    addConstraint(mExpSizeMax >= mExpInstalled * aMinVal, "sMinSizeInstalled");
+
+}
+void SubModel::setExpSizeMax() {
+    if (!mComputeSizeMax) return;
+    if (mMaxValue == MIP_INFINITY) {
+        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " maxbound not defined", -1);
+        throw error;
+    }
+    if (mOptimalSizeExpression == "") {
+        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " OptimalSizeExpression not defined", -1);
+        throw error;
+    }
+    setExpSizeMax(mMinValue, mMaxValue, mOptimalSizeExpression.toStdString());
 }
 
-void SubModel::setVarSizeMax(const double& aMaxVal)
+void SubModel::addVarSizeMax(const double& aMaxVal, const std::string& aStrName)
 {
-
     //Max sizing value of the component (Weighting value, or Absolute value). Negative means optimization, absolute value gives max range value
-
-    // optimize size on the basis of weighting factor multiplying constant production or storage capacity
-    mVarInstalled = MIPModeler::MIPVariable0D(0.f, 1, MIPModeler::MIP_INT);  // variable to multiply by the capex offset to model the "construction" work
-    
     if (mUseWeightOptimization)
     {
-        if (mLPWeightOptimization)
-            mVarSizeMax = MIPModeler::MIPVariable0D(0.f, fabs(mWeight));
-        else
-            mVarSizeMax = MIPModeler::MIPVariable0D(0.f, fabs(mWeight), MIPModeler::MIP_INT);
+        if (mLPWeightOptimization) {
+            addVariable(mVarSizeMax, aStrName, 0.f, fabs(mWeight));
+        }
+        else {
+            addVariable(mVarSizeMax, aStrName, 0, fabs(mWeight), MIPModeler::MIP_INT);
+        }
     }
-    // optimize size on the basis of absolute capicity
-    else
-        mVarSizeMax = MIPModeler::MIPVariable0D(0.f, fabs(aMaxVal));
+    else {
+        // optimize size on the basis of absolute capicity
+        addVariable(mVarSizeMax, aStrName, 0.f, fabs(aMaxVal));
+    }
+
+    /*
+    * Optimize size on the basis of weighting factor multiplying constant production or storage capacity
+    * Variable to multiply by the capex offset to model the "construction" work
+    */ 
+    addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_INT);
 }
-void SubModel::setMaxBound(const double& aMaxVal)
-{
-    mMaxBound = fabs(aMaxVal) * fabs(mWeight);
+
+double SubModel::getMaxBound() {
+    /** Upper bound of size equal to weight * maxval */
+    if (mMaxValue == MIP_INFINITY) {
+        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " maxbound not defined", -1);
+        throw error;
+    }
+    return fabs(mMaxValue) * fabs(mWeight);
 }
-void SubModel::setMinBound(const double& aMinVal)
+
+double SubModel::getMinBound() {
+    /** Lower bound of size equal to weight * minval */
+    if (mMinValue == -MIP_INFINITY) {
+        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " minbound not defined", -1);
+        throw error;
+    }
+    return fabs(mMinValue) * fabs(mWeight);
+}
+
+void SubModel::setMaxValue(const double& aMaxVal)
 {
-    mMinBound = fabs(aMinVal) * fabs(mWeight);
+    /* The upper bound of size getMaxBound() = weight * maxval
+    *  MaxBound is an upper bound on mVarSizeMax when WeightOptimization is not used
+    *  maxval is also used to compute OptimalSize expression mExpSizeMax
+    */
+    mMaxValue = aMaxVal;
+}
+
+void SubModel::setMinValue(const double& aMinVal)
+{
+    /* The upper bound of size is getMaxBound() = weight * maxval */
+    mMinValue = aMinVal;
 }
 
 uint64_t SubModel::exprMilpHorizon()
@@ -937,7 +1216,7 @@ uint64_t SubModel::varMilpHorizon()
 //compute horizon to be considered for variables (may be condensed for typical periods)
 //Extending a part of the MILP formulation to all time steps if start up is considered on the long-term or for typical periods
 {
-    if (mUseTypicalPeriods)
+    if (mUseTypicalPeriods || mUseVariableTimeSteps)
     {
         return mCondensedNpdt;
     }
@@ -946,24 +1225,15 @@ uint64_t SubModel::varMilpHorizon()
         return mMilpNpdt;
     }
 }
-void SubModel::addStartUpShutDown(const uint64_t& nPdtCond, const uint64_t& aNpdt) {
+void SubModel::addStartUpShutDown(const uint64_t& nPdtCond) {
     if (mAllocate)
     {
-        mStartUp = MIPModeler::MIPVariable1D(nPdtCond, 0, 1, MIPModeler::MIP_INT);
-        mShutDown = MIPModeler::MIPVariable1D(nPdtCond, 0, 1, MIPModeler::MIP_INT);
-        mExpStartUp = MIPModeler::MIPExpression1D(aNpdt);
-        mExpShutDown = MIPModeler::MIPExpression1D(aNpdt);
+        mExpStartUp = MIPModeler::MIPExpression1D(mHorizon);
+        mExpShutDown = MIPModeler::MIPExpression1D(mHorizon);
     }
-    else
-    {
-        SubModel::closeExpression1D(mExpStartUp);
-        SubModel::closeExpression1D(mExpShutDown);
-    }
-    addVariable(mStartUp, "StartUp");
-    addVariable(mShutDown, "ShutDown");
 
-    mHistState.clear();
-    mHistState.resize(aNpdt + mNpdtPast);
+    addVariable(mStartUp, "StartUp", 0, 1, MIPModeler::MIP_INT, nPdtCond);
+    addVariable(mShutDown, "ShutDown", 0, 1, MIPModeler::MIP_INT, nPdtCond);
 
     uint64_t nPdtUsed = exprMilpHorizon();
 
@@ -1098,28 +1368,26 @@ QString SubModel::getOptimalSizeUnit() const {
     }
 }
 
-void  SubModel::setOptimalSizeUnit(const QString aSizeUnit)
+void SubModel::addVariable(MIPModeler::MIPVariable0D& variable0D, const std::string& name, const double& lowerBound,
+    const double& upperBound, const MIPModeler::MIPVarType& varType)
 {
-    m_OptimalSizeUnit = aSizeUnit;
-}
-
-void  SubModel::setOptimalSizeUnit(const QString* paSizeUnit)
-{
-    p_OptimalSizeUnit = paSizeUnit;
-}
-
-void SubModel::addVariable(MIPModeler::MIPVariable0D& variable0D, const std::string& name)
-{
+    if (mAllocate) {
+        variable0D = MIPModeler::MIPVariable0D(lowerBound, upperBound, varType);
+    }
     mModel->add(variable0D, CName(name));
 }
-void SubModel::addVariable(MIPModeler::MIPVariable1D& variable1D, const std::string& name)
+
+void SubModel::addVariable(MIPModeler::MIPVariable1D& variable1D, const std::string& name, const double& lowerBound, 
+    const double& upperBound, const MIPModeler::MIPVarType& varType, const int& cols)
 {
-    mModel->add(variable1D, CName(name));
+    if (mAllocate) {
+        int dimension = cols;
+        if (dimension < 0) dimension = mHorizon;
+        variable1D = MIPModeler::MIPVariable1D(dimension, lowerBound, upperBound, varType);
+    }
+    mModel->add(variable1D, CName(name)); 
 }
-void SubModel::addVariable(MIPModeler::MIPVariable2D& variable2D, const std::string& name)
-{
-    mModel->add(variable2D, CName(name));
-}
+
 void SubModel::addConstraint(MIPModeler::MIPConstraint constraint, const std::string& name, const uint& t)
 {
     mModel->add(constraint, CName(name,t));

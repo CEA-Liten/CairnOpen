@@ -9,11 +9,9 @@ StorageGen::StorageGen(QObject* aParent) : StorageSubModel(aParent),
     mInitialSoe_Def(0.),
     mInternalLosses(2,0.)
 {
-
 }
 
-StorageGen::~StorageGen()
-{}
+StorageGen::~StorageGen(){ }
 
 void StorageGen::setTimeData() {
     SubModel::setTimeData();
@@ -35,69 +33,20 @@ int StorageGen::checkConsistency()
 
 void StorageGen::computeInitialData()
 {
-    setMaxBound(mMaxEsto);
-    setMinBound(mMinEsto);
+    setMaxValue(mMaxEsto);
+    setMinValue(mMinSize);
 
-    mInitialSoe_Def = mInitSOC * fabs(getMaxBound()) ;
-
+    /* Intial state used in Estock IO */
+    mInitialSoe_Def = mInitSOC * getMaxBound();
     qDebug() << "StorageGen mInitialSoe_Def : " << mInitialSoe_Def;
 }
 
-void StorageGen::buildModel() {
-    QString aname = parent()->objectName();
-    
-    setExpSizeMax(mMaxEsto, "MaxESto");
-    
-    //variable
-    if (mAllocate) {
-        mVarStoIni        = MIPModeler::MIPVariable0D(0, fabs(getMaxBound()));
-                          
-        mVarEsto = MIPModeler::MIPVariable1D(mHorizon, getMinBound(), fabs(getMaxBound()));
-        mVarFlowCharge = MIPModeler::MIPVariable1D(mHorizon, mMinFlowCharge, mMaxFlowCharge);
-        mVarFlowDischarge = MIPModeler::MIPVariable1D(mHorizon, mMinFlowDischarge, mMaxFlowDischarge);
-
-        mExpEsto = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlowCharge = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlowDischarge = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlow = MIPModeler::MIPExpression1D(mHorizon);
-        mExpEnergy = MIPModeler::MIPExpression1D(mHorizon);
-        mExpLosses = MIPModeler::MIPExpression1D(mHorizon);
-
-        if (mFlowDirection) {
-            mVarFlowDirection = MIPModeler::MIPVariable1D(mHorizon, 0, 1, MIPModeler::MIP_INT);
-            mExpFlowDirection = MIPModeler::MIPExpression1D(mHorizon);
-        }
-        mExpEstoBank = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlowChargeBank = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlowDischargeBank = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFlowBank = MIPModeler::MIPExpression1D(mHorizon);
-        mExpEnergyBank = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else {
-        closeExpression(mExpStoIni);
-        closeExpression1D(mExpEsto);
-        closeExpression1D(mExpFlowCharge);
-        closeExpression1D(mExpFlowDischarge);
-        closeExpression1D(mExpFlow);
-        closeExpression1D(mExpEnergy);
-        closeExpression1D(mExpLosses);
-
-        if (mFlowDirection) {
-            closeExpression1D(mExpFlowDirection);
-        }
-
-        closeExpression1D(mExpEstoBank);
-        closeExpression1D(mExpFlowChargeBank);
-        closeExpression1D(mExpFlowDischargeBank);
-        closeExpression1D(mExpFlowBank);
-        closeExpression1D(mExpEnergyBank);
-    }
-
-    // DO NOT FORGET TO ADD THEM !!!
-    addVariable(mVarEsto,"E");
-    addVariable(mVarFlowCharge,"QC");
-    addVariable(mVarFlowDischarge,"QD");
-    addVariable(mVarStoIni,"StoIni");
+void StorageGen::computeModelContribution()
+{    
+    addVariable(mVarEsto,"E", 0., fabs(getMaxBound()));
+    addVariable(mVarFlowCharge,"QC", mMinFlowCharge, mMaxFlowCharge);
+    addVariable(mVarFlowDischarge,"QD", mMinFlowDischarge, mMaxFlowDischarge);
+    addVariable(mVarStoIni,"StoIni", 0., fabs(getMaxBound()));
 
     //variables exprimed as expressions on horizon (optional)
     mExpStoIni += mVarStoIni;
@@ -179,13 +128,13 @@ void StorageGen::buildModel() {
 
     //Adding flow direction constraints
     if (mFlowDirection) {
-            addVariable(mVarFlowDirection,"sens");
+        addVariable(mVarFlowDirection,"sens", 0, 1, MIPModeler::MIP_INT);
         for (uint64_t t = 0; t < mHorizon ; ++t) {
-            	mExpFlowDirection[t] += mVarFlowDirection(t);
-                addConstraint(mExpFlowCharge[t] - mMaxFlowCharge* mExpFlowDirection[t] * mAllowCharge[t] <= 0,"MFC",t) ;
-                addConstraint(mExpFlowDischarge[t] - mMaxFlowDischarge*(1- mExpFlowDirection[t]) * mAllowDischarge[t] <= 0,"MFD",t) ;
-            }
+            mExpFlowDirection[t] += mVarFlowDirection(t);
+            addConstraint(mExpFlowCharge[t] - mMaxFlowCharge* mExpFlowDirection[t] * mAllowCharge[t] <= 0,"MFC",t) ;
+            addConstraint(mExpFlowDischarge[t] - mMaxFlowDischarge*(1- mExpFlowDirection[t]) * mAllowDischarge[t] <= 0,"MFD",t) ;
         }
+    }
 
 
     //Muting on last time steps if pre-computed seasonalCosts model
@@ -206,16 +155,6 @@ void StorageGen::buildModel() {
         mExpEnergyBank[t] += ((1./mEta) * mExpFlowDischargeBank[t] - mEta * mExpFlowChargeBank[t]) * TimeStep(t) ;// Charged power into storage has Eta efficiency
     }
 
-    // possible minimum capacity for size optimization
-    if (mAddMinimumCapacity) {
-        double aMaxStoPrim = abs(getMaxBound());
-        addMinimumCapacity(aMaxStoPrim);
-    }
-
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false ;
 
     //GAMS
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
@@ -255,15 +194,7 @@ void StorageGen::buildModel() {
 
 void StorageGen::addPressureModel()
 {
-    if (mAllocate) {
-        mVarPressureIn = MIPModeler::MIPVariable1D(mHorizon, 0, mPressureMax);
-        mExpPressure = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else {
-        closeExpression1D(mExpPressure);
-    }
-
-    addVariable(mVarPressureIn, "Pin");
+    addVariable(mVarPressureIn, "Pin", 0, mPressureMax);
 
     if (getMaxBound() > 0.) {
         fillExpression(mExpPressure, mVarPressureIn);

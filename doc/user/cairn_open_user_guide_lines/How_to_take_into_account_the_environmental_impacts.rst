@@ -89,7 +89,7 @@ For each component:
 .. hint:: 
 
 	1. It is possible to take into account in the economic objective function by tax penalty if the impact cost of the "TecEcoAnalysis" component
-	   (green tab Env. Impacts) is given a non zero (see :numref:`lca_parameters_cost` where :math:`50\; €/kg\; CO2` is set).
+	   (green tab Env. Impacts) is given a non zero (see :numref:`lca_parameters_cost` where :math:`50\; \euro/kg\; CO2` is set).
 	   In this case, the component "EcoInvestModel" has to be enabled (see :numref:`lca_parameters_compo`).
 	
 		.. container:: cadre

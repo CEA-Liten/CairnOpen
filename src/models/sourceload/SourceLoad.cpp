@@ -15,9 +15,10 @@ extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
 SourceLoad::SourceLoad(QObject* aParent) : 
     SourceLoadSubModel(aParent),
     mTemperature_in1(0.),
-    mTemperature_out1(0.)
+    mTemperature_out1(0.),
+    mHorizonTimeSpanRatio(1)
 {
-
+    mSens = -1.;
 }
 
 SourceLoad::~SourceLoad()
@@ -87,10 +88,6 @@ int SourceLoad::checkConsistency()
         qCritical() << "Load shedding min deactivation time (" << mMinSheddingStandBy << ") must be less or equal to past size (" << mNpdtPast << ")";
         return -1;
     }
-    if (mAddPeakShavingDetailed && mEcoInvestModel == false) {
-        qCritical() << "Peak shaving adds costs to sourceload, please activate ecoinvestmodel";
-        return -1;
-    }
     return 0;
 }
 
@@ -106,55 +103,37 @@ double SourceLoad::getTemperature(const QString& direction)
     return 0.;
 }
 
-void SourceLoad::buildModel() {
+void SourceLoad::buildModel() 
+{
+    mHorizonTimeSpanRatio = mHorizon / mTimeSpan + 1;
 
-    if (mAllocate)
-    {
-        mExpFlux = MIPModeler::MIPExpression1D(mHorizon);
-        mExpPowerOut = MIPModeler::MIPExpression1D(mHorizon);
-        mExpPowerIn = MIPModeler::MIPExpression1D(mHorizon);
-        mExpFluxWeight = MIPModeler::MIPExpression1D(mHorizon);
-
-        if (mUseControlledFlux)
-        {
-            mVarControlledFlux = MIPModeler::MIPVariable1D(mHorizon, 0., fabs(mMaxFlux));
-        }
-        else if (mUseWeightedFlux)
-        {
-            mVarFluxWeight = MIPModeler::MIPVariable1D(mHorizon, 0., 1.e6); // ponderation;
-        }
-
-        mExpCost = MIPModeler::MIPExpression1D(mHorizon);
+    if (mAllocate) {
+        allocateExpressions();
     }
-    else
-    {
-        closeExpression1D(mExpFlux);
-
-        closeExpression1D(mExpPowerOut);
-        closeExpression1D(mExpPowerIn);
-        closeExpression1D(mExpFluxWeight);
-        closeExpression1D(mExpCost);
+    else {
+        closeExpressions();
     }
 
-    if (mComputeOptimalPrice)
-    {
-        setExpSizeMax(mMaxOptimalPrice, "MaxPrice");
+    if (mComputeOptimalPrice) {
+        setExpSizeMax(mMinSize, mMaxOptimalPrice, "MaxPrice");
     }
-    else
-        setExpSizeMax(1, "MWeight");
+    else {
+        setExpSizeMax(mMinSize, 1, "MWeight");
+        
+    }
 
     if (mUseControlledFlux)
     {
         // Imposed flux is set by external expression via node equality constraint
 
-        addVariable(mVarControlledFlux, "SoCtrlFlux");
+        addVariable(mVarControlledFlux, "SoCtrlFlux", 0., fabs(mMaxFlux));
 
         for (uint64_t t = 0; t < mHorizon; ++t)
         {
-            mExpFlux[t] += mVarControlledFlux(t);
+            mExpImposedFlux[t] += mVarControlledFlux(t);
             // Muting last time steps if pre-computed seasonalCosts model
             if (mSeasonalCosts && t >= (uint64_t)mMilpNpdt) {
-                addConstraint(mExpFlux[t] == 0, "seasonalMute", t);
+                addConstraint(mExpImposedFlux[t] == 0, "seasonalMute", t);
             }
         }
     }
@@ -162,16 +141,16 @@ void SourceLoad::buildModel() {
     {
         // Imposed flux is weighted by external expression via node equality constraint
 
-        addVariable(mVarFluxWeight, "SoWghtFlux");
+        addVariable(mVarFluxWeight, "SoWghtFlux", 0., 1.e6);
 
         for (uint64_t t = 0; t < mHorizon; ++t)
         {
             mExpFluxWeight[t] += mVarFluxWeight(t);
 
-            mExpFlux[t] += (mExpFluxWeight[t] + mStartStopProfile[t]) * mImposedFlux[t];
+            mExpImposedFlux[t] += (mExpFluxWeight[t] + mStartStopProfile[t]) * mImposedFlux[t];
             // Muting last time steps if pre-computed seasonalCosts model
             if (mSeasonalCosts && t >= (uint64_t)mMilpNpdt) {
-                addConstraint(mExpFlux[t] == 0, "seasonalMute", t);
+                addConstraint(mExpImposedFlux[t] == 0, "seasonalMute", t);
             }
         }
     }
@@ -185,7 +164,7 @@ void SourceLoad::buildModel() {
             if (mSeasonalCosts && t >= (uint64_t)mMilpNpdt)
             {
                 // Imposed flux is set to zero for seasonnal cost model.
-                mExpFlux[t] += 0. * mImposedFlux[t];
+                mExpImposedFlux[t] += 0. * mImposedFlux[t];
             }
             else
             {
@@ -193,11 +172,11 @@ void SourceLoad::buildModel() {
                 {
                     qInfo() << "SourceLoad, mTimeStepBeginForecast =" << mTimeStepBeginForecast;
                     // Imposed flux is imposed by Seasonnal flux time series, possibly weighted by optimal Size
-                    mExpFlux[t] += mExpSizeMax * mImposedFluxSeasonal[t];
+                    mExpImposedFlux[t] += mExpSizeMax * mImposedFluxSeasonal[t];
                 }
                 else
                 {
-                    mExpFlux[t] += mExpSizeMax * mImposedFlux[t];
+                    mExpImposedFlux[t] += mExpSizeMax * mImposedFlux[t];
                 }
             }
         }
@@ -217,19 +196,20 @@ void SourceLoad::buildModel() {
 
         coeffout = coeffin - 1.;   // Pout = Pin - ImposedFlux
     }
+    
     for (uint64_t t = 0; t < mHorizon; ++t)
     {
-        mExpPowerOut[t] += coeffout * mExpFlux[t];
-        mExpPowerIn[t] += coeffin * mExpFlux[t];
+        mExpPowerOut[t] += coeffout * mExpImposedFlux[t];
+        mExpPowerIn[t] += coeffin * mExpImposedFlux[t];
     }
 
     for (uint64_t t = 0; t < mHorizon; ++t)
     {
         if (mComputeOptimalPrice) {
-            mExpCost[t] += mSens * mExpSizeMax * mImposedFlux[t];
+            mExpCost[t] += mSens * mExpImposedFlux[t];
         }
         else {
-            mExpCost[t] += mEnergyPrice[t] * mExpFlux[t];
+            mExpCost[t] += mEnergyPrice[t] * mExpImposedFlux[t];
         }
     }
     // 1 constraints: 1 for maximum value, the other one if power Imposed (constant or profile)
@@ -246,34 +226,28 @@ void SourceLoad::buildModel() {
     if (mAddSheddingDetailed) {
         addLoadShedding();
     }
+
     if (mAddPeakShavingDetailed) {
         addPeakShaving();
     }
+
+    for (uint64_t t = 0; t < mHorizon; ++t)
+    {
+        mExpFlux[t] = mExpImposedFlux[t];
+        if (mAddSheddingDetailed) {
+            mExpFlux[t] -= mExpPowerShedding[t];
+        }
+        if (mAddPeakShavingDetailed) {
+            mExpFlux[t] += mExpPowerPeakShaving[t];
+        }
+    }
+
     /** Compute all expressions*/
     computeAllContribution();
 
     mAllocate = false;
-
-    ModelerInterface* pExternalModeler = mModel->getExternalModeler();
-    if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
-        pExternalModeler->addText("");
-        pExternalModeler->addComment("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        pExternalModeler->addComment(" add new SourceLoad component");
-        pExternalModeler->addComment("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-
-        ModelerParams vParams;
-        vParams.addParam(compoName + "_p_LoadProfile", "k", mImposedFlux);
-        pExternalModeler->setModelData(vParams);
-
-
-        pExternalModeler->addText("$\t setLocal CompoName " + compoName);
-        pExternalModeler->addText("");
-        ModelerParams vOptions;
-        pExternalModeler->addModelFromFile("%gamslib%/SourceLoad/SourceLoad.gms", "%CompoName%", vOptions);
-    }
-
 }
+
 void SourceLoad::computeEconomicalContribution()
 {
     TechnicalSubModel::computeEconomicalContribution();
@@ -287,35 +261,31 @@ void SourceLoad::computeEconomicalContribution()
         }
     }
 
-    if (mAddSheddingDetailed) {
+    if (mAddSheddingDetailed && mAddVariableCostModel) {
+        // Shedding penalty
+        double shedCost = 0;
         for (uint64_t t = 0; t < mHorizon; t++) {
+            if (mAddSheddingTS) {
+                shedCost = mCostSheddingTS[t];
+            }
+            else {
+                shedCost = mCostShedding;
+            }
+            mExpCostShedding[t] += shedCost * mExpPowerShedding[t];
             mExpVariableCosts[t] += mExpCostShedding[t];
         }
     }
     if (mAddPeakShavingDetailed) {
         mExpCapex += mMaxEffectCapex * mVarMaxEffect;
         for (uint64_t t = 0; t < mTimeSteps.size(); ++t) {
-            mExpPureOpex[t] += mMaxEffectCapex * mMaxEffectOpex * mVarMaxEffect;
+            mExpVariableCosts[t] += mMaxEffectCapex * mMaxEffectOpex * mVarMaxEffect / 8760;
         }
     }
 }
 
 void SourceLoad::computeReactivePower()
 {
-    if (mAllocate)
-    {
-        mStaticCompensation = MIPModeler::MIPVariable0D(-1., 1.);
-        mExpStaticCompensation = MIPModeler::MIPExpression();
-        mReactivePower = MIPModeler::MIPVariable1D(mHorizon);
-        mExpReactivePower = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else
-    {
-        closeExpression(mExpStaticCompensation);
-        closeExpression1D(mExpReactivePower);
-    }
-
-    addVariable(mStaticCompensation, "StaticCompensation");
+    addVariable(mStaticCompensation, "StaticCompensation", -1., 1.);
     addVariable(mReactivePower, "reactivePower");
     mExpStaticCompensation += mStaticCompensation;
     if (mFixedStaticCompensation) {
@@ -337,35 +307,13 @@ bool SourceLoad::isPriceOptimized()
     return mComputeOptimalPrice;
 }
 
-void SourceLoad::addLoadShedding() {
-    if (mAllocate) {
-        mVarPowerShedding = MIPModeler::MIPVariable1D(mHorizon, 0., fabs(mMaxShedding));
+void SourceLoad::addLoadShedding() 
+{
+    addVariable(mVarPowerShedding, "PowerShedding", 0., fabs(mMaxShedding));
 
-        mExpPowerShedding = MIPModeler::MIPExpression1D(mHorizon); // shedded power
-        mExpCostShedding = MIPModeler::MIPExpression1D(mHorizon); // shedding penalty cost      
-
-        mShedState = MIPModeler::MIPVariable1D(mHorizon, 0, 1, MIPModeler::MIP_INT); // 1 iif shedding is activated
-        mShedOn = MIPModeler::MIPVariable1D(mHorizon, 0, 1, MIPModeler::MIP_INT); // 1 iif shedding state changes from 0 to 1
-        mShedOff = MIPModeler::MIPVariable1D(mHorizon, 0, 1, MIPModeler::MIP_INT); // 1 iif shedding state changes from 1 to 0
-
-        mExpShedState = MIPModeler::MIPExpression1D(mHorizon);
-        mExpShedOn = MIPModeler::MIPExpression1D(mHorizon);
-        mExpShedOff = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else {
-        closeExpression1D(mExpPowerShedding);
-        closeExpression1D(mExpCostShedding);
-
-        closeExpression1D(mExpShedState);
-        closeExpression1D(mExpShedOn);
-        closeExpression1D(mExpShedOff);
-    }
-
-    addVariable(mVarPowerShedding, "PowerShedding");
-
-    addVariable(mShedState, "ShedState");
-    addVariable(mShedOn, "ShedOn");
-    addVariable(mShedOff, "ShedOff");
+    addVariable(mShedState, "ShedState", 0, 1, MIPModeler::MIP_INT);
+    addVariable(mShedOn, "ShedOn", 0, 1, MIPModeler::MIP_INT);
+    addVariable(mShedOff, "ShedOff", 0, 1, MIPModeler::MIP_INT);
 
     // Expressions from variables
     for (uint64_t t = 0; t < mHorizon; t++) {
@@ -394,7 +342,7 @@ void SourceLoad::addLoadShedding() {
     // Load shedding
     for (uint64_t t = 0; t < mHorizon; ++t)
     {
-        addConstraint(mExpPowerShedding[t] <= mExpFlux[t], "PositiveShed", t);
+        addConstraint(mExpPowerShedding[t] <= mExpImposedFlux[t], "PositiveShed", t);
 
         double maxShedPower;
         if (mAddSheddingTS) {
@@ -404,8 +352,6 @@ void SourceLoad::addLoadShedding() {
             maxShedPower = mMaxShedding;
         }
         addConstraint(mExpPowerShedding[t] <= maxShedPower * mExpShedState[t], "MaxShedPower", t);
-
-        mExpFlux[t] -= mExpPowerShedding[t];
     }
 
     // Max duration of activated shedding
@@ -468,10 +414,8 @@ void SourceLoad::addLoadShedding() {
          for (uint64_t i = t - mMinSheddingStandBy + 1; i <= t; i++)
          {
 
-            if (i < 0)
-              sumExp += mExpShedOff[i + mNpdtPast];
-            else
-            {
+            if (i < 0) sumExp += mExpShedOff[i + mNpdtPast];
+            else {
               sumExp += mExpShedOff[i];
             }
          }
@@ -481,83 +425,38 @@ void SourceLoad::addLoadShedding() {
          sumExp.close();
       }
     }
-
-    // Shedding penalty
-    if (mAddVariableCostModel) {
-        double shedCost = 0;
-        for (uint64_t t = 0; t < mHorizon; t++) {
-            if (mAddSheddingTS) {
-                shedCost = mCostSheddingTS[t];
-            }
-            else {
-                shedCost = mCostShedding;
-            }
-            mExpCostShedding[t] += shedCost * mExpPowerShedding[t];
-
-            //mExpVariableCosts[t] += mExpCostShedding[t]; //moved to computeEconomicalContribution
-        }
-    }
 }
 
-void SourceLoad::addPeakShaving() {
-    //PRE PROCESSING
-    setExpSizeMax(mMaxFlux + fabs(mMaxEffect), "MaxFlux");
-
+void SourceLoad::addPeakShaving()
+{
     std::vector<double>::iterator itmax = std::max_element(mImposedFlux.begin(), mImposedFlux.end());      //find the maximum value of given flux
     int index = std::distance(mImposedFlux.begin(), itmax);
-
     double mMaxImposedFlux = mImposedFlux[index];
-    for (uint64_t t = 0; t < mHorizon; ++t) { 										  // the given flux is scaled so that its maximum is mMaxFlux
-        mImposedFlux[t] = (mImposedFlux[t] / mMaxImposedFlux) * mMaxFlux;
-    }
 
     //VARIABLES
-    mVarFluxGrid = MIPModeler::MIPVariable1D(mHorizon, 0., mMaxFlux + fabs(mMaxEffect));
-    addVariable(mVarFluxGrid, "VarFluxGrid");
+    addVariable(mVarPowerPeakShaving, "VarPowerPeakShaving", -fabs(mMaxEffect), fabs(mMaxEffect));
+    addVariable(mVarMaxEffect, "VarMaxEffect", 0, fabs(mMaxEffect));
 
-    mVarMaxEffect = MIPModeler::MIPVariable0D(0., fabs(mMaxEffect));
-    addVariable(mVarMaxEffect, "VarMaxEffect");
-
-    //TEMPORARY MIP EXPRESSIONS
-    mExpSums = MIPModeler::MIPExpression1D(mHorizon / mTimeSpan + 1); 				//intermediate step to store sums of variables
+    // Expressions from variables
+    for (uint64_t t = 0; t < mHorizon; t++) {
+        mExpPowerPeakShaving[t] += mVarPowerPeakShaving(t);
+    }
 
     //CONSTRAINTS
     if (mMaxEffect > 0.)
         addConstraint(mVarMaxEffect == mMaxEffect, "DefMaxEffect");
     for (uint64_t t = 0; t < mHorizon; ++t) {
-        //        addConstraint(mVarFluxGrid(t) - mImposedFlux[t] <= mVarMaxEffect) ;
-        addConstraint(mVarFluxGrid(t) - mVarMaxEffect <= mImposedFlux[t], "FluxGridBound");
-        //        addConstraint(mVarFluxGrid(t) - mImposedFlux[t] >= - mVarMaxEffect) ;
-        addConstraint(mVarFluxGrid(t) + mVarMaxEffect >= mImposedFlux[t], "FluxGridBound2");
-        addConstraint(mVarFluxGrid(t) - mExpSizeMax <= 0, "FluxGridMaxBound");
+        addConstraint(mExpPowerPeakShaving[t] - mVarMaxEffect <= 0, "FluxGridBound");
+        addConstraint(mExpPowerPeakShaving[t] + mVarMaxEffect >= 0, "FluxGridBound2");
+        addConstraint(mExpImposedFlux[t] + mExpPowerPeakShaving[t] - ( mMaxImposedFlux + fabs(mMaxEffect)) <= 0, "FluxGridMaxBound");
     }
 
-    double mSum;
     for (uint64_t p = 0; p < mHorizon / mTimeSpan + 1; ++p) {
-        mSum = 0.;
         for (unsigned int t = 0; t < std::min<unsigned int>(mTimeSpan, mHorizon - p * mTimeSpan); ++t) {
-            mExpSums[p] += mVarFluxGrid(mTimeSpan * p + t);
-            mSum += mImposedFlux[mTimeSpan * p + t];
+            mExpSums[p] += mExpPowerPeakShaving[mTimeSpan * p + t];
         }
-        addConstraint(mExpSums[p] == mSum, "Sums");
+        addConstraint(mExpSums[p] == 0., "Sums", p);
     }
-
-    //SHARE AS MIP EXPRESSIONS
-
-    mExpFlux = MIPModeler::MIPExpression1D(mHorizon);
-    mExpPowerOut = MIPModeler::MIPExpression1D(mHorizon);
-    for (uint64_t t = 0; t < mHorizon; ++t) {
-        mExpFlux[t] += mVarFluxGrid(t);
-    }
-    for (uint64_t t = 0; t < mHorizon; ++t) {
-        mExpPowerOut[t] += mExpFlux[t];
-    }
-
-
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false;
 }
 
 void SourceLoad::computeAllIndicators(const double* optSol)

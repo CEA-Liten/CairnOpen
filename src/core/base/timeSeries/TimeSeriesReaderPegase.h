@@ -1,8 +1,6 @@
 #ifndef  TIMESERIESREADERPEGASE_H
 #define TIMESERIESREADERPEGASE_H
 #include "TimeSeriesReader.h"
-#include <QList>
-#include <QStringList>
 #include <QVector>
 
 class TimeSeriesReaderPegase
@@ -11,8 +9,8 @@ class TimeSeriesReaderPegase
 public:
 	TimeSeriesReaderPegase();
 
-	bool open(const QString& aTSfile);
-	void readHeader(const QMap<QString, class ZEVariables*>& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader);
+	bool open(const std::string& aTSfile);
+	void readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader);
 	bool readTimes(std::vector<double>& aTimes);
 	void readValues(int a_index, std::vector<double>& aTimes);
 	void close();	

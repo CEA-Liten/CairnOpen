@@ -145,7 +145,8 @@ class CAIRNCORESHARED_EXPORT OptimProblem : public MilpComponent
 {
     Q_OBJECT
 public:
-    OptimProblem(QObject* aParent, QString aName, MilpData *aMilpData, TecEcoEnv &aTecEcoEnv, const QMap<QString, QString> &aComponent={});
+    OptimProblem(QObject* aParent, QString aName, MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, 
+        const bool& aStdAloneMode = true, const QMap<QString, QString>& aComponent = {});
     virtual ~OptimProblem();
 
     void doInit(const StudyPathManager& aStudy, bool aLoad);
@@ -166,15 +167,15 @@ public:
     void buildProblem();
     
     void readSolution(int n=0);
-    void cleanExpressions();
+    void closeExpressions();
 
     void writeSolution(int n, std::map<std::string, std::vector<double>>& resultats);    
 
-    void exportEnvImpactMassIndicators(QString& aFileName = QString(""), QString& encoding = QString("UTF-8"));
-    void exportEnvImpactParameters(QString& aFileName = QString(""), QString& encoding = QString("UTF-8"));
-    void exportPortEnvImpactParameters(QString& aFileName = QString(""), QString& encoding = QString("UTF-8"));
-    void exportParameters(QString& aFileName = QString(""), QString& encoding = QString("UTF-8")); 
-    void exportParameters(QTextStream& out, QString& name, std::map<QString, InputParam::ModelParam*>& paramMap, EnergyVector* aEnergyVector=nullptr, QMap<QString, QString> aTimeSeriesNames={});
+    void exportEnvImpactMassIndicators(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
+    void exportEnvImpactParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
+    void exportPortEnvImpactParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
+    void exportParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
+    void exportParameters(std::fstream& out, QString& name, std::map<QString, InputParam::ModelParam*>& paramMap, EnergyVector* aEnergyVector=nullptr, QMap<QString, QString> aTimeSeriesNames={});
 
     void initSubModelTopology();
     void setStopSignal(int* stopSignal);
@@ -184,10 +185,10 @@ public:
     void exportResults();
     void setDefaultsResults();
     void computeTecEcoEnvAnalysis(const int& aNsol, const int& istat);
-    void exportMultiObjFile(QTextStream& out, int aNsol);
-    void exportAllTecEcoEnvAnalysis(QString aResultFile, QString range, QString encoding = "UTF-8", const bool isRollingHorizon=false, const int aNsol=0);
+    void exportMultiObjFile(std::fstream& out, int aNsol);
+    void exportAllTecEcoEnvAnalysis(const std::string &aResultFile, const std::string& range, const std::string& encoding = "UTF-8", const bool isRollingHorizon=false, const int aNsol=0);
     void computeHistState();
-    void exportOptimaSizeAllCycles(const QString& aFileName, const int cycle, QString encoding = "UTF-8");
+    void exportOptimaSizeAllCycles(const std::string& aFileName, const int cycle, const std::string &encoding = "UTF-8");
 
     double getSolverRunningTime() { return mSolver->getSolverRunningTime();  }
 
@@ -200,19 +201,19 @@ public:
 
     void createTecEcoAnalysis();
     void createMilpComponentsFromParamMap();
-    void createPortsAndLinksToBus();
+    void createLinksToBus();
     void createDynamicIndicators();
     void computeDynamicIndicators(const int& aNsol); //should be called after the end of the simulation
 
     bool createComponent(const QMap<QString, QString> &component, const QMap < QString, QMap<QString, QString> >& ports={});
-    void createPortsAndLinksToBus(MilpComponent *aComponent);
+    void createLinksToBus(MilpComponent *aComponent);
     void deleteComponent(MilpComponent* lptrComponent);
 
     void createZEVariablesList() ;
     const t_mapExchange &ListSubscribedVariables() { return mListSubscribedVars; }
-    const t_mapExchange &ListPublishedVariables() { return mListPublishedVars; }        /** define OUTPUT Variable of component */
+    t_mapExchange &ListPublishedVariables() { return mListPublishedVars; }        /** define OUTPUT Variable of component */
 
-    int SaveFullArchitecture(QString& filename=QString(""), QString& posAlgorithm = QString(""));
+    int SaveFullArchitecture(const std::string& filename = "", const std::string & posAlgorithm = "");
     void jsonSaveDocument (QFile* jsonOutputFile, QString encoding="UTF-8");
     void jsonSaveGuiComponents(QJsonArray &componentsArray);
     void jsonSaveGuiLinks(QJsonArray &linksArray);
@@ -220,7 +221,7 @@ public:
         const int& compoX, const int& compoY, const int& busX, const int& busY); 
     TecEcoEnv* getTecEcoEnv(){return mTecEcoEnv;}
 
-    bool createEnergyVector(const QString& aName, const QString &aType, const QMap<QString, QString> paramMap={}, const QSettings& aSettings=QSettings());
+    bool createEnergyVector(const QString& aName, const QString &aType, const QMap<QString, QString> paramMap={});
     EnergyVector* getEnergyVector(const QString& aName);
     QList<EnergyVector*> getEnergyVectorList();
     void deleteEnergyVector(const QString& aName);
@@ -228,10 +229,12 @@ public:
     bool createSolver(const QString& aSolverName = "Cbc", const QMap<QString, QString>& paramMap = {});
     Solver* getSolver() { return mSolver; }
 
+    void createSimulationControlFromParamMap();
     bool createSimulationControl(const QString& mSimulationControlName = "SimulationControl", const QMap<QString, QString>& paramMap={});
     SimulationControl* getSimulationControl() { return mSimulationControl; };
     
     TecEcoAnalysis* getTecEcoAnalysis() { return mTecEcoAnalysis; };
+    QMap<QString, MilpComponent*> getMapMilpComponents() { return mMapMilpComponents; }
 
     f_MilpComponent LoadDllMilpComponent(QString Filename, QString ModuleName) ;
 
@@ -254,8 +257,8 @@ public:
     void computeObjectiveFunction(MIPModeler::MIPExpression& objective);
     void resetFlags();
 
-    const StudyPathManager* getStudyPathManager() { return mStudyFile  ; }
-    
+    std::string projectDir() const { return mStudyFile->projectDir().c_str(); }
+
 private:    
     TecEcoEnv* mTecEcoEnv ;
     ModelFactory* mModelFactory;

@@ -56,6 +56,7 @@ public:
     MultiConverter(QObject* aParent);
     ~MultiConverter();
     //----------------------------------------------------------------------------------------------------
+    void closeExpressions() override;
     void buildModel();
 
     int checkConsistency();
@@ -105,11 +106,10 @@ public:
     void declareModelConfigurationParameters()
     {
         ConverterSubModel::declareDefaultModelConfigurationParameters();
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel" });
         //int
         addParameter("NbInputFlux", &mNbInputFlux, 1);  /** Number of first Inputs dedicated to Fluxes - <= NbInputPorts declared in component definition */
         addParameter("NbOutputFlux", &mNbOutputFlux, 1); /** Number of first outputs dedicated to Fluxes - <= NbOutputPorts declared in component definition */
-        addParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false ", "", { "" });
+        addParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false ", "");
     }
     
     // Units: use the following, instead of the IS Units leading to "scaling" troubles during solving step
@@ -131,12 +131,9 @@ public:
 
         ConverterSubModel::declareDefaultModelInterface();
 
-        setOptimalSizeExpression("MaxPower");  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-        addIO("MaxPower", &mExpSizeMax, mPortINPUTFlux1->pFluxUnit());          /** Sizing W */
-        setOptimalSizeUnit(mPortINPUTFlux1->pFluxUnit());  // defines default expression should be used for OptimalSize computation and use in Economic analysis
-
-        addIO("INPUTFlux1", &mExpInput[0], mPortINPUTFlux1->pFluxUnit()); /** Computed input flow at default port PortINPUTFlux1 */
-        addIO("OUTPUTFlux1", &mExpOutput[0], mPortOUTPUTFlux1->pFluxUnit()); /** Computed output flow at default port PortOUTPUTFlux1 */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortINPUTFlux1->pFluxUnit());          /** Sizing W */
+        addIO("INPUTFlux1", &mExpInput[0], true, mPortINPUTFlux1->pFluxUnit()); /** Computed input flow at default port PortINPUTFlux1 */
+        addIO("OUTPUTFlux1", &mExpOutput[0], true, mPortOUTPUTFlux1->pFluxUnit()); /** Computed output flow at default port PortOUTPUTFlux1 */
 
         ConverterSubModel::declareInputFluxIOs(mPortINPUTFlux1);
         ConverterSubModel::declareOutputFluxIOs(mPortOUTPUTFlux1);
@@ -151,11 +148,11 @@ public:
         //double
         addParameter("MaxPower", &mMaxPower, INFINITY_VAL);	/** Maximum output of OUTPUTFlux1 */
         //QString
-        addParameter("MatrixA", &mMatrixA, "", true, true, "CSV file of the matrix A in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string", {"Base"});
-        addParameter("MatrixB", &mMatrixB, "", true, true, "CSV file of the matrix B in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string", {});
+        addParameter("MatrixA", &mMatrixA, "", true, true, "CSV file of the matrix A in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string");
+        addParameter("MatrixB", &mMatrixB, "", true, true, "CSV file of the matrix B in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string");
 
-        addParameter("MatrixC", &mMatrixC, "", mIsIneqCstr, mIsIneqCstr, "CSV file of the matrix C in the formula : C * [Input Output] <= D", "string", { "Base" });
-        addParameter("MatrixD", &mMatrixD, "", mIsIneqCstr, mIsIneqCstr, "CSV file of the matrix D in the formula : C * [Input Output] <= D", "string", { "Base" });
+        addParameter("MatrixC", &mMatrixC, "", mIsIneqCstr, mIsIneqCstr, "CSV file of the matrix C in the formula : C * [Input Output] <= D", "string");
+        addParameter("MatrixD", &mMatrixD, "", mIsIneqCstr, mIsIneqCstr, "CSV file of the matrix D in the formula : C * [Input Output] <= D", "string");
     }
 
     void declareModelIndicators() {
@@ -206,9 +203,6 @@ protected:
 
     std::vector <MIPModeler::MIPExpression1D> mExpMatrixProduct;
     std::vector <MIPModeler::MIPExpression1D> mExpMatrixProduct_ineq;
-
-    MIPModeler::MIPExpression1D mExpInputTotalPower;
-    MIPModeler::MIPExpression1D mExpOutputTotalPower;
 
     // model parameters
 

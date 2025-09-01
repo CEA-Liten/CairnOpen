@@ -269,7 +269,7 @@ The **Base Components** are present from the beginning of the creation of a |cai
 
 * **TecEco** component allows to take into account possible environmental impacts of your case study as well as its lifetime and economic impacts over years. 
    For more information, please refer to the section :ref:`cairn_environmental`
-* **Persee** component defines the timestep of the problem and the optimization time horizon. 
+* **|cairn|** component defines the timestep of the problem and the optimization time horizon. 
    For more information, please refer to the section "Rolling Horizon"
 * **Cplex** component is intended to use to have access to the optimization solver and change the parameterization of it. 
    For more information, please refer to the section "Optimization???"
@@ -298,6 +298,6 @@ process by clicking the green button **Run Simulation** on the right low corner 
 If the user wants to launch only one scenario and name it, it can thick the box on the left of the launch button. A window asking for the 
 name of the particular case under analysis will appear and a folder contaning the results of it will be automatically created by |cairn|.
 The red button on the right of the launch button is a "Stop Simulation" button, which will immediately end the optimization. 
-However, the results of the optimization will be preserved and saved up until the moment the red button has been pushed. 
-=======================
+However, the results of the optimization will be preserved and saved up until the moment the red button has been pushed.
+
 

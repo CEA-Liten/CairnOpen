@@ -25,13 +25,17 @@ SourceLoadCompo::~SourceLoadCompo()
 void SourceLoadCompo::declareCompoInputParam()
 {
     MilpComponent::declareCompoInputParam();
-    mCompoInputParam->addParameter("Direction", &mDirection, "Sink", true, true, "Direction of the SourceLoad component - Sink means extraction of power or mass from the system - Source means injection in the system");    
+    mCompoInputParam->addParameter("Direction", &mDirection, "Sink", false, true, "Direction of the SourceLoad component - Sink means extraction of power or mass from the system - Source means injection in the system");    
 }
 
 void SourceLoadCompo::setCompoInputParam(const QMap<QString, QString> aComponent) 
 {
     MilpComponent::setCompoInputParam(aComponent);
+    setCompoSens(mDirection);
+}
 
+void SourceLoadCompo::setCompoSens(const QString& direction)
+{
     if (mDirection == "Sink") {
         mSens = -1;
 
@@ -46,10 +50,4 @@ void SourceLoadCompo::setCompoInputParam(const QMap<QString, QString> aComponent
         Cairn_Exception erreur("Invald <Direction> attribute : Sink or Source expected " + mName + " instead of " + mDirection + ".", -1);
         throw& erreur;
     }
-}
-
-int SourceLoadCompo::initProblem()
-{
-    mCompoToModel->publishData("Direction", &mSens);    
-    return MilpComponent::initProblem();
 }

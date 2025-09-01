@@ -131,12 +131,3 @@ These models will be used to model bus operation constraints that can be added t
 
 Physical equations
 ------------------
-
-.. include:: physicalequation_toc.rst
-
-
-.. ifconfig:: cea_content
-
-   Solus submodels
-   ---------------
-      .. include:: ../UserGuideSollus/models/modelsSolus_toc.rst 

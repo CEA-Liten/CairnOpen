@@ -32,18 +32,17 @@ public:
 //-----------------------------------------------------------------------------------------------------
     void setTimeData() ;
 //----------------------------------------------------------------------------------------------------
-    void buildModel();
+    void computeModelContribution() override;
 //----------------------------------------------------------------------------------------------------
     void computeEconomicalContribution();
 //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters() 
     {
         GridSubModel::declareDefaultModelConfigurationParameters() ;
-        mInputParam->addToConfigList({ "EcoInvestModel","EnvironmentModel","TimeSeriesForecast","ReactivePowerModel" });
         //bool
         addParameter("UseConstantPrice", &mUseConstantPrice, false, false, true, "If true: override default price in energy carrier and temporal price in timeseries by ConstantBuyPrice and ConstantSellPrice parameters");
-        addParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "", "", { "TimeSeriesForecast" }); //To be documented
-        addParameter("SeasonalCostsFree", &mSeasonalCostsFree, false, false, true, "", "", { "TimeSeriesForecast" }); //To be documented       
+        addParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "", "", "TimeSeriesForecast"); //To be documented
+        addParameter("SeasonalCostsFree", &mSeasonalCostsFree, false, false, true, "", "", "TimeSeriesForecast"); //To be documented       
     }
     //----------------------------------------------------------------------------------------------------
     void declareModelInterface() {
@@ -54,7 +53,6 @@ public:
     void declareModelParameters() {
         GridSubModel::declareDefaultModelParameters();
 
-    
         addParameter("ConstantBuyPrice", &mConstantBuyPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), "Constant buy price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", "Currency/StorageUnit");
         addParameter("ConstantSellPrice", &mConstantSellPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), "Constant sell price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", "Currency/StorageUnit");
         addParameter("PriceMultiplier", &mPriceMultiplier, 1., false, true, "Multiplier coefficient on price acting on constant prices or timeseries.", "-");            
@@ -77,12 +75,17 @@ public:
         mDefaultPorts.insert("PortGridFlow", portGridFlow);  //ID, paramMap
     }
 
+    void setPortPointers() {
+        mPortGridFlow = getPort("PortGridFlow");
+    }
+
 protected:     
+    MilpPort* mPortGridFlow;
+
     //technical input
     bool mSeasonalCosts ;
     bool mSeasonalCostsFree;
     bool mUseConstantPrice;
-
     
     double mConstantBuyPrice;  // constant buy price to override carrier default price or grid price timeseries
     double mConstantSellPrice; // constant sell price to override carrier default price or grid price timeseries

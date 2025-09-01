@@ -664,11 +664,11 @@ int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFil
 				std::vector<std::string> values1 = str_to_vector(lines1[i]);
 				std::vector<std::string> values2 = str_to_vector(lines2[i]);
 
-				if (lines1.size() != lines2.size()) {
+				if (values1.size() != values2.size()) {
 					areEqual = false;
 				}
 				else {
-					for (size_t j = 0; j < lines1.size(); ++j) {//innerLoop
+					for (size_t j = 0; j < values1.size(); ++j) {//innerLoop
 						double val1 = atof(values1[j].c_str());
 						double val2 = atof(values2[j].c_str());
 						if (fabs(val1 - val2) > 10e-6) {

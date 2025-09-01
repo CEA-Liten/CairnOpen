@@ -1,7 +1,7 @@
 # =================================================================
-# persee configuration file.
+# cairn configuration file.
 # Check https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-packages
-# This file has been generated during persee install and
+# This file has been generated during cairn install and
 # may be used by another cmake project to retrieve all the configuration variables.
 #
 #
