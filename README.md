@@ -30,7 +30,7 @@ Before installing Cairn, ensure your system meets the following prerequisites:
 
 ## 📦 Installation
 They are have several options to use Cairn:
-- **Cairn Viewer**, a graphical interface, can be installed on Windows PC : see releases.
+- **Cairn Viewer**, a graphical interface, can be installed on Windows PC : see [releases](https://github.com/CEA-Liten/CairnOpen/releases).
 - **Cairn Python API** wheels are available on releases. 
 
 ## 🚀 Usage
