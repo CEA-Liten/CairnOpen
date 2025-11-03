@@ -1,6 +1,6 @@
 #include "BusSubModel.h"
 
-BusSubModel::BusSubModel(QObject* aParent) :
+BusSubModel::BusSubModel(CairnObject* aParent) :
 SubModel(aParent)
 {
 }

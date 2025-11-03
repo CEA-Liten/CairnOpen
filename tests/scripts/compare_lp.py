@@ -35,12 +35,13 @@ def parse_lp_file(file_path):
                 is_constraint = True
                 is_objective_function = False
                 continue
-            elif line.lower().startswith("bounds") or line.lower().startswith("end"):
+            elif line.lower().startswith("bounds") or line.lower().startswith("end") or line.lower().startswith("<"):
                 is_constraint = False
             
             if is_constraint:
                 
                 # Extraire la contrainte
+                constraint_name = ""
                 constraint_match = re.match(r"(\w+\d+):\s*(.+)", line)
                 if constraint_match:
                     constraint_name = constraint_match.group(1)
@@ -48,7 +49,8 @@ def parse_lp_file(file_path):
                     constraints[constraint_name] =  constraint_expression
                 elif continue_line:
                     constraint_expression = line
-                    constraints[constraint_name] +=  constraint_expression
+                    if constraint_name != "":
+                        constraints[constraint_name] +=  constraint_expression
                 if constraint_match or continue_line:
                     separateurs = r"[+,-,<=,=]" 
                     var_liste = re.split(separateurs,constraint_expression)
@@ -81,8 +83,16 @@ def compare_sets(s1, s2):
 def test_comparaison(file1, file2):
     str_diff = ""
     identiques=True
-    vars1, cons1, obj1 = parse_lp_file(file1)
-    vars2, cons2, obj2 = parse_lp_file(file2)
+    try:
+        vars1, cons1, obj1 = parse_lp_file(file1)
+    except:
+        print("No lp file" + file1)
+        return(False,"No file")
+    try:
+        vars2, cons2, obj2 = parse_lp_file(file2)
+    except:
+        print("No lp file")
+        return(False,"No file")
 
     v1_only, v2_only, v_diff = compare_sets(vars1,vars2)
     c1_only, c2_only, c_diff = compare_dictionaries(cons1, cons2)

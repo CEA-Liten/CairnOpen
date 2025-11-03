@@ -53,17 +53,18 @@ class MODELS_DECLSPEC MultiConverter : public ConverterSubModel {
 
 public:
     //-----------------------------------------------------------------------------------------------------
-    MultiConverter(QObject* aParent);
+    MultiConverter(CairnObject* aParent);
     ~MultiConverter();
     //----------------------------------------------------------------------------------------------------
-    void closeExpressions() override;
-    void buildModel();
-
-    int checkConsistency();
-    void checkConsistencyMatrix(QString filePath);
-    //----------------------------------------------------------------------------------------------------
-    void computeEconomicalContribution();
+    void computeInitialData() override;
+    void computeModelContribution() override;
     void computeAllIndicators(const double* optSol) override;
+
+    void setTimeData();
+    int checkConsistency();
+
+    void readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC);
+    void readAndVerifyVectorB(const std::string& filename, std::vector<double>& vector, const bool& isVectorD);
 
     Eigen::MatrixXd convertToEigen(const std::vector<std::vector<double>>& matrix) {
         if (matrix.empty()) {
@@ -109,7 +110,7 @@ public:
         //int
         addParameter("NbInputFlux", &mNbInputFlux, 1);  /** Number of first Inputs dedicated to Fluxes - <= NbInputPorts declared in component definition */
         addParameter("NbOutputFlux", &mNbOutputFlux, 1); /** Number of first outputs dedicated to Fluxes - <= NbOutputPorts declared in component definition */
-        addParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false ", "");
+        addParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false");
     }
     
     // Units: use the following, instead of the IS Units leading to "scaling" troubles during solving step
@@ -124,8 +125,6 @@ public:
         if (mNbOutputFlux < 1) mNbOutputFlux = 1;
         mExpInput.resize(mNbInputFlux);
         mExpOutput.resize(mNbOutputFlux);
-        mExpInputPart.resize(mNbOutputFlux);
-        mExpOutputPart.resize(mNbOutputFlux);
         mExpMatrixProduct.resize(mNbInputFlux + mNbOutputFlux);
         mExpMatrixProduct_ineq.resize(mNbInputFlux + mNbOutputFlux);
 
@@ -137,6 +136,16 @@ public:
 
         ConverterSubModel::declareInputFluxIOs(mPortINPUTFlux1);
         ConverterSubModel::declareOutputFluxIOs(mPortOUTPUTFlux1);
+
+        for (int i = 0; i < mNbInputFlux + mNbOutputFlux; i++)
+        {
+            if (mExpMatrixProduct.size() > i) {
+                addExp(&mExpMatrixProduct[i], &mHorizon);
+            }
+            if (mExpMatrixProduct_ineq.size() > i) {
+                addExp(&mExpMatrixProduct_ineq[i], &mHorizon);
+            }
+        }
     }
 
     //----------------------------------------------------------------------------------------------------
@@ -147,7 +156,7 @@ public:
 
         //double
         addParameter("MaxPower", &mMaxPower, INFINITY_VAL);	/** Maximum output of OUTPUTFlux1 */
-        //QString
+        //std::string
         addParameter("MatrixA", &mMatrixA, "", true, true, "CSV file of the matrix A in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string");
         addParameter("MatrixB", &mMatrixB, "", true, true, "CSV file of the matrix B in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string");
 
@@ -163,22 +172,22 @@ public:
     {
         mDefaultPorts.clear();
         //PortINPUTFlux1 - left
-        QMap<QString, QString> portINPUTFlux1;
+        std::map<std::string, std::string> portINPUTFlux1;
         portINPUTFlux1["Name"] = "PortL0"; //Needed only old versions
         portINPUTFlux1["Position"] = "left";
         portINPUTFlux1["CarrierType"] = ANY_TYPE();
         portINPUTFlux1["Direction"] = KCONS(); //INPUT
         portINPUTFlux1["Variable"] = "INPUTFlux1";
-        mDefaultPorts.insert("PortINPUTFlux1", portINPUTFlux1); //ID, paramMap
+        mDefaultPorts["PortINPUTFlux1"] = portINPUTFlux1; //ID, paramMap
 
         //PortOUTPUTFlux1 - right
-        QMap<QString, QString> portOUTPUTFlux1;
+        std::map<std::string, std::string> portOUTPUTFlux1;
         portOUTPUTFlux1["Name"] = "PortR0";
         portOUTPUTFlux1["Position"] = "right";
         portOUTPUTFlux1["CarrierType"] = ANY_TYPE();
         portOUTPUTFlux1["Direction"] = KPROD();
         portOUTPUTFlux1["Variable"] = "OUTPUTFlux1";
-        mDefaultPorts.insert("PortOUTPUTFlux1", portOUTPUTFlux1);
+        mDefaultPorts["PortOUTPUTFlux1"] = portOUTPUTFlux1;
     }
 
     void setPortPointers() {
@@ -198,9 +207,6 @@ protected:
     std::vector <MIPModeler::MIPVariable1D> mInput;
     std::vector <MIPModeler::MIPVariable1D> mOutput;
 
-    std::vector <MIPModeler::MIPExpression1D> mExpInputPart;
-    std::vector <MIPModeler::MIPExpression1D> mExpOutputPart;
-
     std::vector <MIPModeler::MIPExpression1D> mExpMatrixProduct;
     std::vector <MIPModeler::MIPExpression1D> mExpMatrixProduct_ineq;
 
@@ -212,26 +218,17 @@ protected:
 
     bool mIsIneqCstr;
 
-    QString mMatrixA;
-    QString mMatrixB;
-    Eigen::MatrixXd mMatrixEigenA;
-    Eigen::MatrixXd mMatrixEigenB;
+    std::string mMatrixA;
+    std::string mMatrixB;
 
-    QList<QStringList> data_Inputs_A;
-    QList<QStringList> data_Inputs_B;
-    std::vector<std::vector<double>> coefficient_A;
-    std::vector<std::vector<double>> coefficient_B;
+    std::vector<std::vector<double>> mCoefficient_A;
+    std::vector<double> mCoefficient_B;
 
+    std::string mMatrixC;
+    std::string mMatrixD;
 
-    QString mMatrixC;
-    QString mMatrixD;
-    Eigen::MatrixXd mMatrixEigenC;
-    Eigen::MatrixXd mMatrixEigenD;
-
-    QList<QStringList> data_Inputs_C;
-    QList<QStringList> data_Inputs_D;
-    std::vector<std::vector<double>> coefficient_C;
-    std::vector<std::vector<double>> coefficient_D;
+    std::vector<std::vector<double>> mCoefficient_C;
+    std::vector<double> mCoefficient_D;
 };
 
 

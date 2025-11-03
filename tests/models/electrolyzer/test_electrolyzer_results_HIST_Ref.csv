@@ -1,0 +1,63 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;365;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;3.26808e+07;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);-9.99904e+06;EUR;NPV
+TecEcoAnalysis;Computed Average Rate Of Return Factor;-37238.6;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
+TecEcoAnalysis;Current Rate Of Return perCent;-900.027;%;CurrentRateOfReturnperCent
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;9.996e+06;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total Discounted Net OPEX;3042.83;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total Discounted Pure OPEX;323.375;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total Discounted Buy Part;2719.45;EUR;DiscountedBuyPart
+TecEcoAnalysis;Total Undiscounted Net OPEX;268.431;EUR;NetOPEX
+TecEcoAnalysis;Total Undiscounted Pure OPEX;28.5274;EUR;PureOPEX
+TecEcoAnalysis;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis;Total Undiscounted Buy Part;239.904;EUR;BuyPart
+Elec_Grid;Total Cost Function;2266.21;EUR;TotCosts
+Elec_Grid;is installed;1;-;IsInstalled
+Elec_Grid;Opex part (including energy cost);199.92;EUR;OPEX
+Elec_Grid;Grid extraction time;1;h;extraction Time
+Elec_Grid;Grid extraction ElectricalEnergy GridFlow;39.984;MWh;TotGridFlow
+Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;453.242;MWh;LvlzdTotGridFlow
+Elec_Grid;Mean extraction ElectricalPower GridFlow;39.984;MW;MeanGridFlow
+Electrolyzer;Total Cost Function;9.99678e+06;EUR;TotCosts
+Electrolyzer;Capex part;9.996e+06;EUR;CAPEX
+Electrolyzer;is installed;1;-;IsInstalled
+Electrolyzer;Opex part (including energy cost);68.5114;EUR;OPEX
+Electrolyzer;Pure Opex part;28.5274;EUR;PureOPEX
+Electrolyzer;Replacement part;0;EUR;Replacement
+Electrolyzer;Sum up at;1;-;SumUp
+Electrolyzer;Installed Optimal Size;39.984;MW;Size
+Electrolyzer;Running time at power >0.;1;h;RunningTime
+Electrolyzer;Running time availability;1;-;RunningTimeAvailable
+Electrolyzer;PROD Total FluidH2Mass H2MassFlowRate;720;kg;TotProdH2MassFlowRate
+Electrolyzer;PROD Levelized Total FluidH2Mass H2MassFlowRate;8161.63;kg;LvlzdTotProdH2MassFlowRate
+Electrolyzer;PROD Mean Total FluidH2Flowrate H2MassFlowRate;720;kg/h;MeanProdH2MassFlowRate
+Electrolyzer;CONS Total ElectricalEnergy UsedPower;-39.984;MWh;TotConsUsedPower
+Electrolyzer;CONS Levelized Total ElectricalEnergy UsedPower;-453.242;MWh;LvlzdTotConsUsedPower
+Electrolyzer;CONS Mean Total ElectricalPower UsedPower;-39.984;MW;MeanConsUsedPower
+Electrolyzer;CONS Total Power Factor UsedPower;1;-;PowerFactorUsedPower
+Electrolyzer;Rate of use UsedPower;1;-;UseRateUsedPower
+H2_Load;Total Cost Function;0;EUR;TotCosts
+H2_Load;is installed;1;-;IsInstalled
+H2_Load;Opex part (including energy cost);0;EUR;OPEX
+H2_Load;Component Weight;1;Unit;Weight
+H2_Load;ImposedProfile load time;1;h;ImposedProfileTime
+H2_Load;ImposedProfile FluidH2Mass SourceLoadFlow;-720;kg;TotImposedProfileSourceLoadFlow
+H2_Load;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-8161.63;kg;LvlzdTotImposedProfileSourceLoadFlow
+H2_Load;Mean FluidH2Flowrate SourceLoadFlow;-720;kg/h;MeanImposedProfileSourceLoadFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;kg;BusBalance

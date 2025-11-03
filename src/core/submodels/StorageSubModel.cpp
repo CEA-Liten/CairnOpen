@@ -1,6 +1,6 @@
 #include "StorageSubModel.h"
 
-StorageSubModel::StorageSubModel(QObject* aParent) :
+StorageSubModel::StorageSubModel(CairnObject* aParent) :
     TechnicalSubModel(aParent)//,
     //mPortFlow(nullptr)
 {
@@ -8,6 +8,11 @@ StorageSubModel::StorageSubModel(QObject* aParent) :
 
 StorageSubModel::~StorageSubModel()
 {
+}
+
+void StorageSubModel::setTimeData()
+{
+    TechnicalSubModel::setTimeData();
 }
 
 void StorageSubModel::computeDefaultIndicators(const double* optSol)
@@ -25,20 +30,14 @@ void StorageSubModel::computeDefaultIndicators(const double* optSol)
     //Save optimal size from the current cycle
     if (mOptimalSize.size() > 0)
         mOptimalSizeAllCycles.push_back(mOptimalSize.at(0));
-
-    MilpPort* port;
-    QListIterator<MilpPort*> iport(mListPort);
+    
     bool firstPort = true;
     double memChargingTime, memDischargingTime;
     memChargingTime = memDischargingTime = 0.;
     // Calcul running time
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString varName = port->Variable();
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "source";
-        else sens = "load";
+    for (auto& port : mListPort) {    
+        std::string varName = port->Variable();
+        
 
         if (port->VarType() == "vector")
         {
@@ -78,22 +77,19 @@ void StorageSubModel::computeDefaultIndicators(const double* optSol)
             }
         }
     }
-    iport = mListPort;
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString portName = port->Name();
-        QString varName = port->Variable();
-        QString storageName = port->ptrEnergyVector()->StorageName();
-        QString storageUnit = port->ptrEnergyVector()->StorageUnit();
-        QString fluxUnit = port->ptrEnergyVector()->FluxUnit();
-        QString fluxName = port->ptrEnergyVector()->FluxName();
-        bool isHeatCarrier = port->ptrEnergyVector()->isHeatCarrier();
+    for (auto& port : mListPort) {
+        std::string portName = port->Name();
+        std::string varName = port->Variable();
+        std::string storageName = port->getCarrier()->StorageName();
+        std::string storageUnit = port->getCarrier()->StorageUnit();
+        std::string fluxUnit = port->getCarrier()->FluxUnit();
+        std::string fluxName = port->getCarrier()->FluxName();
+        bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
 
         if (isHeatCarrier)
         {
-            fluxName = fluxName + " at " + QString::number(port->ptrEnergyVector()->Potential()) + " degC";
-            storageName = storageName + " at " + QString::number(port->ptrEnergyVector()->Potential()) + " degC";
+            fluxName = fluxName + " at " + std::to_string(port->getCarrier()->Potential()) + " degC";
+            storageName = storageName + " at " + std::to_string(port->getCarrier()->Potential()) + " degC";
         }
 
         double aPort = port->VarCoeff();
@@ -130,10 +126,4 @@ void StorageSubModel::computeDefaultIndicators(const double* optSol)
             }
         }
     }
-}
-
-int StorageSubModel::checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange, QString& varUseCheck)
-{
-    // do nothing
-    return 0;
 }

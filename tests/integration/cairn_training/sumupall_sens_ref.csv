@@ -1,0 +1,204 @@
+Component.Variable;Report_s0;Report_s1;Report_s2
+Model.Indicator;Value;Value;Value
+TecEco.NbYear;20;20;20
+TecEco.Discount Rate;0.07;0.07;0.07
+TecEco.Impact Discount Rate;0.07;0.07;0.07
+TecEco.NbYears in TS;1;1;1
+TecEco.Leap Year Position;0;0;0
+TecEco.Payback period offset;0;0;0
+TecEco.Discount Factor;11.3356;11.3356;11.3356
+TecEco.Impact Discount Factor;11.3356;11.3356;11.3356
+TecEco.Extrapolation Factor;182.5;182.5;182.5
+TecEco.OBJECTIVE;5.36101e+06;4.3099e+06;1.00783e+06
+TecEco.Net Present Value (Levelized Profit);-5.36101e+06;-4.3099e+06;-1.00783e+06
+TecEco.Computed Average Rate Of Return Factor;-384.111;-508.734;-7210.81
+TecEco.Computed Average Rate Of Return perCent;0;0;0
+TecEco.Current Rate Of Return perCent;-18.5673;-24.5914;-348.559
+TecEco.Total SubObjective (Type Add);0;0;0
+TecEco.Total CAPEX;839521;850672;783146
+TecEco.Total PenaltyConstraintContribution;0;0;0
+TecEco.Total Discounted Net OPEX;4.52149e+06;3.45922e+06;224681
+TecEco.Total Discounted Pure OPEX;330098;330098;224681
+TecEco.Total Discounted Replacement Part;0;0;0
+TecEco.Total Discounted Sell Part;0;0;0
+TecEco.Total Discounted Buy Part;4.19139e+06;3.12913e+06;0
+TecEco.Total Discounted EnvImpact Part (Flow and Grey) Climate change#Global Warming Potential 100;0;0;0
+TecEco.Total Discounted EnvImpact Mass (Flow and Grey and replacement) Climate change#Global Warming Potential 100;3.73922e+06;5.43276e+06;3.64462e+06
+TecEco.Total Discounted EnvImpact Part (Flow and Grey) Acidification#Accumulated Exceedance;0;0;0
+TecEco.Total Discounted EnvImpact Mass (Flow and Grey and replacement) Acidification#Accumulated Exceedance;32807.4;25461.1;50
+TecEco.Total GreyEnvImpact Part Climate change#Global Warming Potential 100;0;0;0
+TecEco.Total GreyEnvImpact Mass Climate change#Global Warming Potential 100;553.338;553.338;415.174
+TecEco.Total GreyEnvImpact Part Acidification#Accumulated Exceedance;0;0;0
+TecEco.Total GreyEnvImpact Mass Acidification#Accumulated Exceedance;50;50;50
+TecEco.Total Discounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;0;0
+TecEco.Total Discounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;3.73863e+06;5.43217e+06;3.64419e+06
+TecEco.Total Discounted FlowEnvImpact Part Acidification#Accumulated Exceedance;0;0;0
+TecEco.Total Discounted FlowEnvImpact Mass Acidification#Accumulated Exceedance;32757.4;25411.1;0
+TecEco.Total Undiscounted Net OPEX;398876;305165;19820.8
+TecEco.Total Undiscounted Pure OPEX;29120.5;29120.5;19820.8
+TecEco.Total Undiscounted Replacement Part;0;0;0
+TecEco.Total Undiscounted Sell Part;0;0;0
+TecEco.Total Undiscounted Buy Part;369755;276044;0
+TecEco.Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;0;0
+TecEco.Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;329814;479214;321482
+TecEco.Total Undiscounted FlowEnvImpact Part Acidification#Accumulated Exceedance;0;0;0
+TecEco.Total Undiscounted FlowEnvImpact Mass Acidification#Accumulated Exceedance;2889.78;2241.71;0
+ELY_PEM.Total Cost Function;1.05811e+06;1.05811e+06;720202
+ELY_PEM.Capex part;728011;728011;495521
+ELY_PEM.is installed;1;1;1
+ELY_PEM.Opex part (including energy cost);29120.5;29120.5;19820.8
+ELY_PEM.Pure Opex part;29120.5;29120.5;19820.8
+ELY_PEM.Replacement part;0;0;0
+ELY_PEM.Mass;0;0;0
+ELY_PEM.Area;0;0;0
+ELY_PEM.Volume;0;0;0
+ELY_PEM.Climate change#Global Warming Potential 100 Env impact penalty part;0;0;0
+ELY_PEM.Climate change#Global Warming Potential 100 Env impact mass;214223;389545;321482
+ELY_PEM.Climate change#Global Warming Potential 100 EnvGrey impact cost;0;0;0
+ELY_PEM.Climate change#Global Warming Potential 100 EnvGrey impact mass;303.338;303.338;165.174
+ELY_PEM.Climate change#Global Warming Potential 100 Env impact replacement;3.03338;3.03338;1.65174
+ELY_PEM.Acidification#Accumulated Exceedance Env impact penalty part;0;0;0
+ELY_PEM.Acidification#Accumulated Exceedance Env impact mass;0;0;0
+ELY_PEM.Acidification#Accumulated Exceedance EnvGrey impact cost;0;0;0
+ELY_PEM.Acidification#Accumulated Exceedance EnvGrey impact mass;0;0;0
+ELY_PEM.Acidification#Accumulated Exceedance Env impact replacement;0;0;0
+ELY_PEM.Sum up at;1;1;1
+ELY_PEM.Installed Optimal Size;3.03338;3.03338;1.65174
+ELY_PEM.Running time at power >0.;5657.5;5657.5;5657.5
+ELY_PEM.Running time availability;0.645833;0.645833;0.645833
+ELY_PEM.PROD Total FluidH2Mass H2MassFlowRate;214223;214250;214321
+ELY_PEM.PROD Levelized Total FluidH2Mass H2MassFlowRate;2.42834e+06;2.42865e+06;2.42946e+06
+ELY_PEM.PROD Mean Total FluidH2Flowrate H2MassFlowRate;37.8652;37.8701;37.8827
+ELY_PEM.CONS Total ElectricalEnergy UsedPower;-14275.8;-12979.6;-6491.98
+ELY_PEM.CONS Levelized Total ElectricalEnergy UsedPower;-161825;-147132;-73590.5
+ELY_PEM.CONS Mean Total ElectricalPower UsedPower;-2.52334;-2.29424;-1.1475
+ELY_PEM.CONS Total Power Factor UsedPower;0.831857;0.75633;0.694724
+ELY_PEM.Rate of use UsedPower;0.537241;0.488463;0.448676
+Elec_Bus.Integrated bus balance;0;0;0
+Elec_Grid.Total Cost Function;4.19139e+06;3.12913e+06;0
+Elec_Grid.Capex part;0;0;0
+Elec_Grid.is installed;1;1;1
+Elec_Grid.Opex part (including energy cost);369755;276044;0
+Elec_Grid.Pure Opex part;0;0;0
+Elec_Grid.Replacement part;0;0;0
+Elec_Grid.Mass;0;0;0
+Elec_Grid.Area;0;0;0
+Elec_Grid.Volume;0;0;0
+Elec_Grid.Climate change#Global Warming Potential 100 Env impact penalty part;0;0;0
+Elec_Grid.Climate change#Global Warming Potential 100 Env impact mass;115591;89668.4;0
+Elec_Grid.Climate change#Global Warming Potential 100 EnvGrey impact cost;0;0;0
+Elec_Grid.Climate change#Global Warming Potential 100 EnvGrey impact mass;0;0;0
+Elec_Grid.Climate change#Global Warming Potential 100 Env impact replacement;0;0;0
+Elec_Grid.Acidification#Accumulated Exceedance Env impact penalty part;0;0;0
+Elec_Grid.Acidification#Accumulated Exceedance Env impact mass;2889.78;2241.71;0
+Elec_Grid.Acidification#Accumulated Exceedance EnvGrey impact cost;0;0;0
+Elec_Grid.Acidification#Accumulated Exceedance EnvGrey impact mass;0;0;0
+Elec_Grid.Acidification#Accumulated Exceedance Env impact replacement;0;0;0
+Elec_Grid.Grid extraction time;3285;2920;0
+Elec_Grid.Grid extraction ElectricalEnergy GridFlow;5779.56;4483.42;0
+Elec_Grid.Levelized Grid extraction ElectricalEnergy GridFlow;65514.7;50822.2;0
+Elec_Grid.Mean extraction ElectricalPower GridFlow;1.75938;1.53542;0
+Elec_Grid_Inject.Total Cost Function;0;0;0
+Elec_Grid_Inject.Capex part;0;0;0
+Elec_Grid_Inject.is installed;1;1;1
+Elec_Grid_Inject.Opex part (including energy cost);0;0;0
+Elec_Grid_Inject.Pure Opex part;0;0;0
+Elec_Grid_Inject.Replacement part;0;0;0
+Elec_Grid_Inject.Mass;0;0;0
+Elec_Grid_Inject.Area;0;0;0
+Elec_Grid_Inject.Volume;0;0;0
+Elec_Grid_Inject.Climate change#Global Warming Potential 100 Env impact penalty part;0;0;0
+Elec_Grid_Inject.Climate change#Global Warming Potential 100 Env impact mass;0;0;0
+Elec_Grid_Inject.Climate change#Global Warming Potential 100 EnvGrey impact cost;0;0;0
+Elec_Grid_Inject.Climate change#Global Warming Potential 100 EnvGrey impact mass;0;0;0
+Elec_Grid_Inject.Climate change#Global Warming Potential 100 Env impact replacement;0;0;0
+Elec_Grid_Inject.Acidification#Accumulated Exceedance Env impact penalty part;0;0;0
+Elec_Grid_Inject.Acidification#Accumulated Exceedance Env impact mass;0;0;0
+Elec_Grid_Inject.Acidification#Accumulated Exceedance EnvGrey impact cost;0;0;0
+Elec_Grid_Inject.Acidification#Accumulated Exceedance EnvGrey impact mass;0;0;0
+Elec_Grid_Inject.Acidification#Accumulated Exceedance Env impact replacement;0;0;0
+Elec_Grid_Inject.Grid injection time;3102.5;3102.5;6022.5
+Elec_Grid_Inject.Grid injection ElectricalEnergy GridFlow;-21315.2;-21315.2;-23319.4
+Elec_Grid_Inject.Levelized Grid injection ElectricalEnergy GridFlow;-241620;-241620;-264339
+Elec_Grid_Inject.Mean injection ElectricalPower GridFlow;-6.87032;-6.87032;-3.87205
+H2_Bus.Integrated bus balance;0;0;0
+H2_Load.Total Cost Function;0;0;0
+H2_Load.Capex part;0;0;0
+H2_Load.is installed;1;1;1
+H2_Load.Opex part (including energy cost);0;0;0
+H2_Load.Pure Opex part;0;0;0
+H2_Load.Replacement part;0;0;0
+H2_Load.Mass;0;0;0
+H2_Load.Area;0;0;0
+H2_Load.Volume;0;0;0
+H2_Load.Climate change#Global Warming Potential 100 Env impact penalty part;0;0;0
+H2_Load.Climate change#Global Warming Potential 100 Env impact mass;0;0;0
+H2_Load.Climate change#Global Warming Potential 100 EnvGrey impact cost;0;0;0
+H2_Load.Climate change#Global Warming Potential 100 EnvGrey impact mass;0;0;0
+H2_Load.Climate change#Global Warming Potential 100 Env impact replacement;0;0;0
+H2_Load.Acidification#Accumulated Exceedance Env impact penalty part;0;0;0
+H2_Load.Acidification#Accumulated Exceedance Env impact mass;0;0;0
+H2_Load.Acidification#Accumulated Exceedance EnvGrey impact cost;0;0;0
+H2_Load.Acidification#Accumulated Exceedance EnvGrey impact mass;0;0;0
+H2_Load.Acidification#Accumulated Exceedance Env impact replacement;0;0;0
+H2_Load.Component Weight;1;1;1
+H2_Load.ImposedProfile load time;2372.5;2372.5;2372.5
+H2_Load.ImposedProfile FluidH2Mass SourceLoadFlow;-213952;-213952;-213952
+H2_Load.Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-2.42528e+06;-2.42528e+06;-2.42528e+06
+H2_Load.Mean FluidH2Flowrate SourceLoadFlow;-90.1801;-90.1801;-90.1801
+H2_Tank.Total Cost Function;111509;122660;287626
+H2_Tank.Capex part;111509;122660;287626
+H2_Tank.is installed;1;1;1
+H2_Tank.Opex part (including energy cost);0;0;0
+H2_Tank.Pure Opex part;0;0;0
+H2_Tank.Replacement part;0;0;0
+H2_Tank.Mass;0;0;0
+H2_Tank.Area;0;0;0
+H2_Tank.Volume;0;0;0
+H2_Tank.Climate change#Global Warming Potential 100 Env impact penalty part;0;0;0
+H2_Tank.Climate change#Global Warming Potential 100 Env impact mass;0;0;0
+H2_Tank.Climate change#Global Warming Potential 100 EnvGrey impact cost;0;0;0
+H2_Tank.Climate change#Global Warming Potential 100 EnvGrey impact mass;0;0;0
+H2_Tank.Climate change#Global Warming Potential 100 Env impact replacement;0;0;0
+H2_Tank.Acidification#Accumulated Exceedance Env impact penalty part;0;0;0
+H2_Tank.Acidification#Accumulated Exceedance Env impact mass;0;0;0
+H2_Tank.Acidification#Accumulated Exceedance EnvGrey impact cost;0;0;0
+H2_Tank.Acidification#Accumulated Exceedance EnvGrey impact mass;0;0;0
+H2_Tank.Acidification#Accumulated Exceedance Env impact replacement;0;0;0
+H2_Tank.Storage Optimal Capacity;464.623;511.085;599.22
+H2_Tank.Charging time;3467.5;3467.5;3467.5
+H2_Tank.Discharging time;2190;2007.5;2190
+H2_Tank.Charged FluidH2Mass Flow;-135180;-148892;-184550
+H2_Tank.Discharged FluidH2Mass Flow;134910;148594;184181
+H2_Tank.Levelized Charged FluidH2Mass Flow;-1.53235e+06;-1.68778e+06;-2.09199e+06
+H2_Tank.Levelized Discharged FluidH2Mass Flow;1.52929e+06;1.6844e+06;2.0878e+06
+H2_Tank.Mean Charged FluidH2Flowrate Flow;-38.985;-42.9392;-53.2228
+H2_Tank.Mean Discharged FluidH2Flowrate Flow;61.6028;74.0194;84.101
+H2_Tank.Equivalent number of cycles FluidH2Flowrate Flow;291;292;308
+H2_Tank.Cumulated losses;0;0;0
+Wind_farm.Total Cost Function;0;0;0
+Wind_farm.Capex part;0;0;0
+Wind_farm.is installed;1;1;1
+Wind_farm.Opex part (including energy cost);0;0;0
+Wind_farm.Pure Opex part;0;0;0
+Wind_farm.Replacement part;0;0;0
+Wind_farm.Mass;0;0;0
+Wind_farm.Area;0;0;0
+Wind_farm.Volume;0;0;0
+Wind_farm.Climate change#Global Warming Potential 100 Env impact penalty part;0;0;0
+Wind_farm.Climate change#Global Warming Potential 100 Env impact mass;0;0;0
+Wind_farm.Climate change#Global Warming Potential 100 EnvGrey impact cost;0;0;0
+Wind_farm.Climate change#Global Warming Potential 100 EnvGrey impact mass;250;250;250
+Wind_farm.Climate change#Global Warming Potential 100 Env impact replacement;0;0;0
+Wind_farm.Acidification#Accumulated Exceedance Env impact penalty part;0;0;0
+Wind_farm.Acidification#Accumulated Exceedance Env impact mass;0;0;0
+Wind_farm.Acidification#Accumulated Exceedance EnvGrey impact cost;0;0;0
+Wind_farm.Acidification#Accumulated Exceedance EnvGrey impact mass;50;50;50
+Wind_farm.Acidification#Accumulated Exceedance Env impact replacement;0;0;0
+Wind_farm.Component Optimal Weight;1;1;1
+Wind_farm.ImposedProfile source time;8760;8760;8760
+Wind_farm.ImposedProfile ElectricalEnergy SourceLoadFlow;29811.4;29811.4;29811.4
+Wind_farm.Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;337930;337930;337930
+Wind_farm.Mean ElectricalPower SourceLoadFlow;3.40313;3.40313;3.40313
+User-Defined.Elec_cost;25.9009;21.2675;0
+User-Defined.LCOH;2.20769;1.77461;0.414836

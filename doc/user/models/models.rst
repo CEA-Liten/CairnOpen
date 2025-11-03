@@ -60,74 +60,21 @@ Be aware that parameters set in settings file must be consistent with the units 
 Also notice that using cairn self defined physical propeties like Low Heat Values of fluids, imposes to use the same units in the EnergyVectorcomponent. To do it another way, please define the fluid physical properties again consistently with the unit system chosen in your particular EnergyVector.
 
 
-Technical models 
-----------------
-
-The SubModel subsection describes the parts that are common to all of the technical models.
-
-.. toctree::    
-   :maxdepth: 1
-   
-   TechnicalSubModel.rst
 
 
-Converter models
-----------------
-
-These models will be used to model energy or mass conversion from one carrier to another.
-
+Additional guidelines and examples
+--------------------------------------
 .. toctree::
-	:maxdepth: 1
+   :maxdepth: 2
+   :caption: Component guidelines
+    
+   ../cairn_open_user_guide_lines/how_to_model_multiconverter
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_a_grid
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_a_source_load
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_an_energy_storage
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_an_electrolyzer
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_a_heat_pump
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_a_thermal_group
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_auxiliaries
+   ../privateDoc/cairn_user_guide_lines/howToModel/how_to_model_transportation
 
-	converter/Compressor
-	converter/Converter
-	converter/Electrolyzer
-	converter/MultiConverter
-
-Storage models
---------------
-
-These models will be used to model energy or mass storage.
-
-.. toctree::
-	:maxdepth: 1
-
-	storage/StorageGen
-	storage/ResourceStock
-
-Grid models
------------
-
-These models will be used to model grids.
-
-.. toctree::
-	:maxdepth: 1
-
-	grid/GridFree
-
-SourceLoad models
------------------
-
-These models will be used to model either sources either loads.
-
-.. toctree::
-	:maxdepth: 1
-
-	sourceload/SourceLoad
-
-Bus submodels
--------------
-
-These models will be used to model bus constraints.
-
-.. include:: bus_toc.rst
-
-Operation constraint models
----------------------------
-
-These models will be used to model bus operation constraints that can be added to a component.
-
-.. include:: operationconstraint_toc.rst
-
-Physical equations
-------------------

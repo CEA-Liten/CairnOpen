@@ -1,0 +1,5 @@
+;ELY_PEM;ELY_PEM;ElectricityDistrib;H2_Tank;ELY_PEM;ELY_PEM
+;Capex;Efficiency;UseProfileBuyPrice;Capex;PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A;PortR0--Coeff
+init;240000;0.5;Elec_Grid.ElectricityPrice;240;1;1
+v1;240000;0.5;Elec_Grid.ElectricityPrice2;240;2;1.1
+v2;300000;0.55;Elec_Grid.ElectricityPrice;480;3;2

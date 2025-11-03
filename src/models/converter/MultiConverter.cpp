@@ -8,12 +8,12 @@
 
 #include "MultiConverter.h"
 using namespace GS;
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new MultiConverter(aParent);
 }
 
-MultiConverter::MultiConverter(QObject* aParent)
+MultiConverter::MultiConverter(CairnObject* aParent)
     : ConverterSubModel(aParent), 
     mPortINPUTFlux1(nullptr),
     mPortOUTPUTFlux1(nullptr)
@@ -23,272 +23,235 @@ MultiConverter::MultiConverter(QObject* aParent)
 
 MultiConverter::~MultiConverter() {}
 
-void MultiConverter::closeExpressions()
-{
-    SubModel::closeExpressions();
-
-    for (int i = 0; i < mNbOutputFlux; i++)
-    {
-        if (mExpOutput.size() > i) {
-            closeExpression1D(mExpOutput[i]);
-        }
-        if (mExpInputPart.size() > i) {
-            closeExpression1D(mExpInputPart[i]);
-        }
-        if (mExpOutputPart.size() > i) {
-            closeExpression1D(mExpOutputPart[i]);
-        }
-    }
-    for (int i = 0; i < mNbInputFlux; i++)
-    {
-        if (mExpInput.size() > i) {
-            closeExpression1D(mExpInput[i]);
-        }
-    }
-    for (int i = 0; i < mNbInputFlux + mNbOutputFlux; i++)
-    {
-        if (mExpMatrixProduct.size() > i) {
-            closeExpression1D(mExpMatrixProduct[i]);
-        }
-        if (mExpMatrixProduct_ineq.size() > i) {
-            closeExpression1D(mExpMatrixProduct_ineq[i]);
-        }
-    }
+void MultiConverter::setTimeData() {
+    ConverterSubModel::setTimeData();
     mInput.clear();
     mOutput.clear();
 }
 
-void MultiConverter::buildModel() 
+void MultiConverter::computeInitialData()
 {
-    if (mNbInputFlux > mNbInputPorts || mNbOutputFlux > mNbOutputPorts)
-    {
-        Cairn_Exception persee_error("Error: the number of NbInputFlux/NbOutputFlux of " + getCompoName() + " must be less than the number of Input/Output ports.", -1);
-        throw persee_error;
-    }
+    setMinValue(mMinSize);
+    setMaxValue(mMaxPower);
+}
 
-    if (mAllocate)
-    {
-        Q_ASSERT(mNbInputFlux <= mNbInputPorts);
-        Q_ASSERT(mNbOutputFlux <= mNbOutputPorts);
-        
-        for (int i = 0; i < mNbOutputFlux; i++)
-        {
-            mExpOutput[i] = MIPModeler::MIPExpression1D(mHorizon);
-            mExpInputPart[i] = MIPModeler::MIPExpression1D(mHorizon);
-            mExpOutputPart[i] = MIPModeler::MIPExpression1D(mHorizon);
-        }
-        for (int i = 0; i < mNbInputFlux; i++)
-        {
-            mExpInput[i] = MIPModeler::MIPExpression1D(mHorizon);
-        }
-        for (int i = 0; i < mNbInputFlux + mNbOutputFlux; i++) 
-        {
-            mExpMatrixProduct[i] = MIPModeler::MIPExpression1D(mHorizon);
-            mExpMatrixProduct_ineq[i] = MIPModeler::MIPExpression1D(mHorizon);
-        }
-    }
-    else
-    {
-        closeExpressions();
-    }
-
-    // constraint on maximum Input power of component.
-    setExpSizeMax(mMinSize,mMaxPower,"MaxPower");
-
-    // precomputation
-    std::vector <double> maxInput;
-    std::vector<std::vector<double>> coefficient_A;
-    std::vector<std::vector<double>> coefficient_B;
-    std::vector<std::vector<double>> coefficient_C;
-    std::vector<std::vector<double>> coefficient_D;
-
-    // TODO : check inside fonctions
-    //TODO : assert good size of matrixes depending on NbInputFlux and NbOutputFlux
-    QString matrixA_filename = QString(getAbsoluteFileName(mMatrixA.toStdString()).c_str());
-    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(matrixA_filename, ";");
-    if (data_Inputs_A.empty()) {
-        // Initialize coefficient_A with a null matrix of the good size
-        coefficient_A.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(mNbOutputFlux + mNbInputFlux, 0.0));
-    }
-    else {
-        coefficient_A = GS::getDataMatrix(data_Inputs_A, 0);
-    }
-    Eigen::MatrixXd mMatrixEigenA = convertToEigen(coefficient_A);
-
-    QString matrixB_filename = QString(getAbsoluteFileName(mMatrixB.toStdString()).c_str());
-    QList<QStringList> data_Inputs_B = GS::readFromCsvFile(matrixB_filename, ";");
-    if (data_Inputs_B.empty()) {
-        // Initialize coefficient_B with a null matrix of the good size
-        coefficient_B.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(1, 0.0));
-    }
-    else {
-        coefficient_B = GS::getDataMatrix(data_Inputs_B, 0);
-    }
-    Eigen::MatrixXd mMatrixEigenB = convertToEigen(coefficient_B);
-
-    QString matrixC_filename = QString(getAbsoluteFileName(mMatrixC.toStdString()).c_str());
-    QList<QStringList> data_Inputs_C = GS::readFromCsvFile(matrixC_filename, ";");
-    if (data_Inputs_C.empty()) {
-        // Initialize coefficient_C with a null matrix of the good size
-        coefficient_C.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(mNbOutputFlux + mNbInputFlux, 0.0));
-    }
-    else {
-        coefficient_C = GS::getDataMatrix(data_Inputs_C, 0);
-    }
-    Eigen::MatrixXd mMatrixEigenC = convertToEigen(coefficient_C);
-
-    QString matrixD_filename = QString(getAbsoluteFileName(mMatrixD.toStdString()).c_str());
-    QList<QStringList> data_Inputs_D = GS::readFromCsvFile(matrixD_filename, ";");
-    if (data_Inputs_D.empty()) {
-        // Initialize coefficient_D with a null matrix of the good size
-        coefficient_D.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(1, 0.0));
-    }
-    else {
-        coefficient_D = GS::getDataMatrix(data_Inputs_D, 0);
-    }
-    Eigen::MatrixXd mMatrixEigenD = convertToEigen(coefficient_D);
-
-    checkConsistency();
+void MultiConverter::computeModelContribution()
+{
+    Eigen::MatrixXd matrixEigenA = convertToEigen(mCoefficient_A);
  
-    //A,B,C,D is the mMatrixEigenA decomposed by blocks [A B ; C D]
-    Eigen::MatrixXd A = mMatrixEigenA.topLeftCorner(mNbInputFlux, mNbInputFlux);
-    Eigen::MatrixXd B = mMatrixEigenA.topRightCorner(mNbInputFlux, mMatrixEigenA.cols() - mNbInputFlux);
-    Eigen::MatrixXd C = mMatrixEigenA.bottomLeftCorner(mNbOutputFlux, mNbInputFlux);
-    Eigen::MatrixXd D = mMatrixEigenA.bottomRightCorner(mNbOutputFlux, mNbOutputFlux);
-    double norm_A = norm1(mMatrixEigenA);
+    //A,B,C,D is the matrixEigenA decomposed by blocks [A B ; C D]
+    Eigen::MatrixXd A = matrixEigenA.topLeftCorner(mNbInputFlux, mNbInputFlux);
+    Eigen::MatrixXd B = matrixEigenA.topRightCorner(mNbInputFlux, matrixEigenA.cols() - mNbInputFlux);
+    Eigen::MatrixXd C = matrixEigenA.bottomLeftCorner(mNbOutputFlux, mNbInputFlux);
+    Eigen::MatrixXd D = matrixEigenA.bottomRightCorner(mNbOutputFlux, mNbOutputFlux);
+
+    double norm_A = norm1(matrixEigenA);
     double norm_B = norm1(B);
 
-    for (int i = 0; i < mNbInputFlux; i++)
-        maxInput.push_back(norm_B/ smallestNonZeroCoefficient(A)*fabs(mMaxPower));
+    std::vector <double> maxInput;
+    for (int i = 0; i < mNbInputFlux; i++) {
+        maxInput.push_back(norm_B / smallestNonZeroCoefficient(A) * fabs(mMaxPower));
+    }
 
     std::vector <double> maxOutput;
-    for (int i = 0; i < mNbOutputFlux; i++)
-        maxOutput.push_back(norm_A / smallestNonZeroCoefficient(mMatrixEigenA) * fabs(mMaxPower));
-
+    for (int i = 0; i < mNbOutputFlux; i++) {
+        maxOutput.push_back(norm_A / smallestNonZeroCoefficient(matrixEigenA) * fabs(mMaxPower));
+    }
 
     // effective output production on each port (thermal / electrical) : 1D variable
-    //TODO faire clear avant pour gerer les multiples appels
     mInput.resize(mNbInputFlux);
-    for (int i = 0; i < mNbInputFlux; i++)
-    {
+    for (int i = 0; i < mNbInputFlux; i++) {
         addVariable(mInput[i], "Fluxin"+std::to_string(i), 0., maxInput[i]);
     }
 
     mOutput.resize(mNbOutputFlux);
-    for (int j = 0; j < mNbOutputFlux; j++)
-    {
+    for (int j = 0; j < mNbOutputFlux; j++) {
         addVariable(mOutput[j], "Fluxout_"+std::to_string(j), 0., maxOutput[j]);
     }
 
-    for (int i = 0; i < mNbInputFlux; i++)
-    {
-        for (uint64_t t = 0; t < mHorizon; ++t)
-        {
+    for (int i = 0; i < mNbInputFlux; i++)  {
+        for (uint64_t t = 0; t < mHorizon; ++t) {
             mExpInput[i][t] += mInput[i](t);
         }
     }
-    for (int i = 0; i < mNbOutputFlux; i++)
-    {
-        for (uint64_t t = 0; t < mHorizon; ++t)
-        {
+
+    for (int i = 0; i < mNbOutputFlux; i++) {
+        for (uint64_t t = 0; t < mHorizon; ++t) {
             mExpOutput[i][t] += mOutput[i](t);
         }
     }   
 
     // \sum_j a_ij x_j + \sum_j a_ij y_j = 0
-    for (int i = 0; i < mNbOutputFlux + mNbInputFlux; i++) {
-        for (int x = 0; x < mNbInputFlux; x++)
-        {
-            if (coefficient_A[i][x] != 0)
-            {
-                for (uint64_t t = 0; t < mHorizon; ++t)
-                {
-                    mExpMatrixProduct[i][t] += coefficient_A[i][x] * mExpInput[x][t];// \sum_{k} b_jk* flow_out[k]
-                    mExpMatrixProduct_ineq[i][t] += coefficient_C[i][x] * mExpInput[x][t];// \sum_{k} b_jk* flow_out[k]
-
+    for (int i = 0; i < mNbOutputFlux + mNbInputFlux; i++) 
+    {
+        for (int x = 0; x < mNbInputFlux; x++) {
+            if (mCoefficient_A[i][x] != 0) {
+                for (uint64_t t = 0; t < mHorizon; ++t) {
+                    mExpMatrixProduct[i][t] += mCoefficient_A[i][x] * mExpInput[x][t];// \sum_{k} b_jk* flow_out[k]
+                    if (mIsIneqCstr) {
+                        mExpMatrixProduct_ineq[i][t] += mCoefficient_C[i][x] * mExpInput[x][t];// \sum_{k} b_jk* flow_out[k]
+                    }
                 }
             }
         }        
-        for (int y = mNbInputFlux; y < mNbOutputFlux + mNbInputFlux; y++)
-        {
-            if (coefficient_A[i][y] != 0)
-            {
-                for (uint64_t t = 0; t < mHorizon; ++t)
-                {
-                    mExpMatrixProduct[i][t] += coefficient_A[i][y] * mExpOutput[y - mNbInputFlux][t];
-                    mExpMatrixProduct_ineq[i][t] += coefficient_C[i][y] * mExpOutput[y - mNbInputFlux][t];
+
+        for (int y = mNbInputFlux; y < mNbOutputFlux + mNbInputFlux; y++) {
+            if (mCoefficient_A[i][y] != 0) {
+                for (uint64_t t = 0; t < mHorizon; ++t) {
+                    mExpMatrixProduct[i][t] += mCoefficient_A[i][y] * mExpOutput[y - mNbInputFlux][t];
+                    if (mIsIneqCstr) {
+                        mExpMatrixProduct_ineq[i][t] += mCoefficient_C[i][y] * mExpOutput[y - mNbInputFlux][t];
+                    }
                 }
             }
         }    
-    }
+    } 
 
     for (int i = 0; i < mNbOutputFlux + mNbInputFlux; i++) {
-        for (uint64_t t = 0; t < mHorizon; ++t)
-        {
-            addConstraint(mExpMatrixProduct[i][t] - coefficient_B[i][0] == 0, "cEfficiency_" + std::to_string(i), t);
+        for (uint64_t t = 0; t < mHorizon; ++t) {
+            addConstraint(mExpMatrixProduct[i][t] - mCoefficient_B[i] == 0, "cEfficiency_" + std::to_string(i), t);
             if (mIsIneqCstr) {
-                addConstraint(mExpMatrixProduct_ineq[i][t] <= coefficient_D[i][0], "cInequality_" + std::to_string(i), t);
+                addConstraint(mExpMatrixProduct_ineq[i][t] <= mCoefficient_D[i], "cInequality_" + std::to_string(i), t);
             }
         }
     }
 
     /** Add Sizing */
     if (mMaxPower < 0) {
-        for (uint64_t t = 0; t < mHorizon; t++)
-        {
-            addConstraint(mExpOutput[0][t] <= mVarSizeMax * mConverterUse[t], "cPowMax_" + std::to_string(0), t);
+        for (uint64_t t = 0; t < mHorizon; t++) {
+            addConstraint(mExpOutput[0][t] <= mVarSizeMax * mComponentAvailabilityTS[t], "cPowMax_" + std::to_string(0), t);
         }
-
     }    
-    
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false;
 }
 
-void MultiConverter::computeEconomicalContribution()
+void MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC)
 {
-    TechnicalSubModel::computeEconomicalContribution();
-}
-//----------------------------------------------------------------------------
-void MultiConverter::computeAllIndicators(const double* optSol)
-{
-    ConverterSubModel::computeDefaultIndicators(optSol);
-}
+    std:string matrixName = "MatrixA";
+    if(isMatrixC) matrixName = "MatrixC";
 
-void MultiConverter::checkConsistencyMatrix(QString filePath)
-{
-    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(filePath, ";");
-    std::vector<std::vector<double>> coefficient_A = GS::getDataMatrix(data_Inputs_A, 0);
-    mMatrixEigenA = convertToEigen(coefficient_A);
-    if (mMatrixEigenA.rows() != mNbInputFlux + mNbOutputFlux)
-    {
-        Cairn_Exception cairn_error(getCompoName() + " : Please check size of conversion matrix \"MatrixA\", it should be equal to NbInputFlux + NbOutputFlux ", -1);
+    //verify that the file exists
+    std::string absoluteFileName = getAbsoluteFileName(filename);
+    if (!fs::exists(absoluteFileName)) {
+        Cairn_Exception cairn_error(Name() + " - the file of matrix \"" + matrixName + "\" doesn't exist:" 
+            + absoluteFileName, -1);
         throw cairn_error;
     }
 
+    //read the matrix from the file
+    std::vector<std::vector<std::string>> data_Inputs_A = CairnUtils::readFromCsvFile(absoluteFileName, ";");
+    if (!data_Inputs_A.empty()) {
+        matrix = GS::getDataMatrix(data_Inputs_A, 0);
+    }
+
+    //verify that the dimensions of the matrix are (mNbInputFlux + mNbOutputFlux) x (mNbInputFlux + mNbOutputFlux)
+    Eigen::MatrixXd matrixEigenA = convertToEigen(mCoefficient_A);
+    
+    if (matrixEigenA.rows() != mNbInputFlux + mNbOutputFlux) {
+        Cairn_Exception cairn_error(Name() + ": please verify the number of rows of the conversion matrix \"" + matrixName 
+            + "\". The number of rows should be NbInputFlux + NbOutputFlux = " + std::to_string(mNbInputFlux + mNbOutputFlux)
+            + ". File: " + absoluteFileName, -1);
+        throw cairn_error;
+    }
+
+    if (matrixEigenA.cols() != mNbInputFlux + mNbOutputFlux) {
+        Cairn_Exception cairn_error(Name() + ": please verify the number of columns of the conversion matrix \"" + matrixName
+            + "\". The number of columns should be NbInputFlux + NbOutputFlux = " + std::to_string(mNbInputFlux + mNbOutputFlux)
+            + ". File: " + absoluteFileName, -1);
+        throw cairn_error;
+    }
+
+    //verify that the column mNbInputFlux + 1 (first output column i.e OUTPUTFlux1) is not a vector of Zeros
+    bool isNotZeroColumn = matrixEigenA.col(mNbInputFlux).any();
+
+    if (!isNotZeroColumn) {
+        Cairn_Exception cairn_error(Name() + ": please verify the conversion matrix \"" + matrixName
+            + "\" as the entier column corresponding to OUTPUTFlux1 is zero. File: " + absoluteFileName, -1);
+        throw cairn_error;
+    }
 }
+
+void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vector<double>& vector, const bool& isVectorD)
+{
+    /*
+    * It is not mandatory to provide files for matrices B and C.
+    * If no file is provided, then use a vector of Zeros (vector is already initialized to 0s before calling readAndVerifyVectorB).
+    * If a file is provided and it contains only one cell say [k], 
+    * then use a vector N*[k] where N = mNbOutputFlux + mNbInputFlux
+    */
+
+    std:string vectorName = "MatrixB"; // parameter name is MatrixB 
+    if (isVectorD) vectorName = "MatrixD";
+
+    std::string absoluteFileName = getAbsoluteFileName(filename);
+
+    //if (!fs::exists(absoluteFileName)) {
+    //    Cairn_Exception cairn_error(Name() + " - The file of matrix \"" + vectorName + "\" doesn't exist:"
+    //        + absoluteFileName, -1);
+    //    throw cairn_error;
+    //}
+
+    //if file exist read values
+    if (fs::exists(absoluteFileName)) {
+        std::vector<std::vector<std::string>> data_Inputs_B = CairnUtils::readFromCsvFile(absoluteFileName, ";");
+        if (!data_Inputs_B.empty()) {
+            vector = GS::getDataArray(data_Inputs_B, 0, 0); //take only the first column
+        }
+    }
+    else {
+        cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + vectorName + "\" has not been found. " 
+            + "A matrix of Zeros will be used.";
+    }
+
+    //verify that the size of the vector is mNbInputFlux + mNbOutputFlux
+    if (vector.size() != mNbInputFlux + mNbOutputFlux) {
+        if (vector.size() == 1) {
+            //resize the vector using equal values
+            double k = vector[0];
+            vector.resize(mNbOutputFlux + mNbInputFlux, k);
+            cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + vectorName + "\" contains only one value: " + std::to_string(k)
+                + ". All the values of the matrix will be set to " + std::to_string(k);
+        }
+        else {
+            Cairn_Exception cairn_error(Name() + ": please check the dimensions of matrix \"" + vectorName
+                + "\". The dimensions should be NbInputFlux + NbOutputFlux (" + std::to_string(mNbInputFlux + mNbOutputFlux)
+                + ") rows and 1 column. File: " + absoluteFileName, -1);
+            throw cairn_error;
+        }
+    }
+}
+
 
 int MultiConverter::checkConsistency()
 {
-    int ier = TechnicalSubModel::checkConsistency();
-    QString matrixA_filename = QString(getAbsoluteFileName(mMatrixA.toStdString()).c_str());
-    QList<QStringList> data_Inputs_A = GS::readFromCsvFile(matrixA_filename, ";");
-    std::vector<std::vector<double>> coefficient_A = GS::getDataMatrix(data_Inputs_A, 0);
-    mMatrixEigenA = convertToEigen(coefficient_A);
-    
-    if (mMatrixEigenA.rows() != mNbInputFlux + mNbOutputFlux)
-    {
-        Cairn_Exception cairn_error(getCompoName() + " : Please check size of conversion matrix \"MatrixA\", it should be equal to NbInputFlux + NbOutputFlux ", -1);
-        throw cairn_error;
+    if (mNbInputFlux > mNbInputPorts || mNbOutputFlux > mNbOutputPorts) {
+        Cairn_Exception persee_error("Error: the number of NbInputFlux/NbOutputFlux of " + Name() 
+            + " must be less than the number of Input/Output ports.", -1);
+        throw persee_error;
     }
-    bool isNotZeroColumn = mMatrixEigenA.col(mNbInputFlux).any();
 
-    if (!isNotZeroColumn)
-    {
-        Cairn_Exception cairn_error(getCompoName() + " : Please check conversion matrix \"MatrixA\", as the column corresponding to OUTPUTFlux1 is zero ", -1);
-        throw cairn_error;
+    //initialize matrices
+    mCoefficient_A.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(mNbOutputFlux + mNbInputFlux, 0.0));
+    mCoefficient_B.resize(mNbOutputFlux + mNbInputFlux, 0.0);
+
+    mCoefficient_C.resize(mNbOutputFlux + mNbInputFlux, std::vector<double>(mNbOutputFlux + mNbInputFlux, 0.0));
+    mCoefficient_D.resize(mNbOutputFlux + mNbInputFlux, 0.0);
+
+    //Read matrices and check their consistency 
+    readAndVerifyMatrixA(mMatrixA, mCoefficient_A, false);
+    readAndVerifyVectorB(mMatrixB, mCoefficient_B, false);
+    
+    if (mIsIneqCstr) {
+        /* If add inequality constraint is true */
+        readAndVerifyMatrixA(mMatrixC, mCoefficient_C, true);
+        readAndVerifyVectorB(mMatrixD, mCoefficient_D, false);
     }
+
+    int ier = TechnicalSubModel::checkConsistency();
     return ier;
+}
+
+
+void MultiConverter::computeAllIndicators(const double* optSol)
+{
+    ConverterSubModel::computeDefaultIndicators(optSol);
 }

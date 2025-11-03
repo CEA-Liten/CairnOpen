@@ -5,18 +5,17 @@
 * \date		17/01/2020
 */
 #include "Converter.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new Converter(aParent);
 }
 
-Converter::Converter(QObject* aParent) 
+Converter::Converter(CairnObject* aParent) 
     : ConverterSubModel(aParent),
     mPortPowerIn(nullptr),
     mPortPowerOut(nullptr),
     mMaxPowerOut(0.)
 {
-    mAddStateVariable = true;
 }
 
 Converter::~Converter() {}
@@ -41,11 +40,11 @@ void Converter::timeSeriesMapEfficiency(std::vector<std::vector<double>> aPowerI
     int aSize = aPowerInSetPointVec.size();
     for (int i = 0; i < aSize; i++) {
         if (aPowerInSetPointVec[i].size() != mHorizon) {
-            setException(Cairn_Exception("ERROR: the size of InputSetPoint#" + QString::number(i + 1) + " Should be " + QString::number(mHorizon) + ". It is " + QString::number(aPowerInSetPointVec[i].size()), -1));
+            setException(Cairn_Exception("ERROR: the size of InputSetPoint#" + std::to_string(i + 1) + " Should be " + std::to_string(mHorizon) + ". It is " + std::to_string(aPowerInSetPointVec[i].size()), -1));
             return;
         }
         if (aPowerOutSetPointVec[i].size() != mHorizon) {
-            setException(Cairn_Exception("ERROR: the size of OutputSetPoint#" + QString::number(i + 1) + " Should be " + QString::number(mHorizon) + ". It is " + QString::number(aPowerOutSetPointVec[i].size()), -1));
+            setException(Cairn_Exception("ERROR: the size of OutputSetPoint#" + std::to_string(i + 1) + " Should be " + std::to_string(mHorizon) + ". It is " + std::to_string(aPowerOutSetPointVec[i].size()), -1));
             return;
         }
     }
@@ -86,7 +85,7 @@ int Converter::checkConsistency()
     int ier = TechnicalSubModel::checkConsistency();
 
     if (mMinPower>1. || mMinPower<0.) {
-        qCritical() << "ERROR (converter): "<<parent()->objectName()<<"Min power should be comprised between 0 and 1 but equal to " << mMinPower;
+        cCritical() << "ERROR (converter): "<<parent()->objectName() <<"Min power should be comprised between 0 and 1 but equal to " << mMinPower;
         return -1;
     }
     return ier;
@@ -96,6 +95,8 @@ void Converter::computeInitialData()
 {
     setMinValue(mMinSize);
     setMaxValue(mMaxPower);
+
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 void Converter::computeModelContribution()
@@ -118,13 +119,11 @@ void Converter::computeModelContribution()
         addConstraint(mExpPower_In[t] <= fabs(mMaxPower) * mMaxPowerTS[t], "PowerInMaxBound");
     }
 
-    addStateConstraints(varMilpHorizon());
-
     setMinPower(mExpPower_In, mMinPowerTS, mMaxPower);
 
     if (!mPiecewiseEfficiency && !mTimeSeriesPiecewiseEfficiency) {
         for (uint64_t t = 0; t < mHorizon; ++t) {
-            addConstraint(mExpPower_In[t] * mEfficiency * mConverterCoeff[t] - mExpPower_Out[t] + mOffset * mEfficiency * mConverterUse[t] * mExpState[t] == 0,"PowEff", t);
+            addConstraint(mExpPower_In[t] * mEfficiency * mConverterCoeff[t] - mExpPower_Out[t] + mOffset * mEfficiency * mComponentAvailabilityTS[t] * mExpState[t] == 0,"PowEff", t);
         }
     }
     else if (mPiecewiseEfficiency) {
@@ -135,7 +134,7 @@ void Converter::computeModelContribution()
     }
 
     for (uint64_t t = 0; t < mHorizon; ++t) {
-        addConstraint(mExpPower_In[t] - mExpSizeMax * mMaxPowerTS[t] * mConverterUse[t] <= 0, "PowVar", t);
+        addConstraint(mExpPower_In[t] - mExpSizeMax * mMaxPowerTS[t] * mComponentAvailabilityTS[t] <= 0, "PowVar", t);
     }
 }
 

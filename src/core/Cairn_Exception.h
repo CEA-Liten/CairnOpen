@@ -1,32 +1,30 @@
 #ifndef CAIRN_EXCEPTION_H
 #define CAIRN_EXCEPTION_H
 
-#include <qglobal.h>
 
-#include <QtCore>
-#include <QException>
-
-//#include "base/MILPComponent_global.h"
 #include "CairnCore_global.h"
 
-class CAIRNCORESHARED_EXPORT Cairn_Exception : public QException
+class CAIRNCORESHARED_EXPORT Cairn_Exception : public std::exception
 {
 public:
     void raise() const { throw *this; }
     Cairn_Exception *clone() const { return new Cairn_Exception(*this); }
-    Cairn_Exception (const QString &message="", const int &level=0) ;
-    Cairn_Exception(const std::string& message, const int& level = 0);
+    Cairn_Exception(const std::string& message = "", const int& level = 0) ;
     Cairn_Exception(const char* message, const int& level = 0);
 
     // because throw is not functionnal in FBSF up to now
-    void setMessage (const QString &message) {mMessage=message;}
-    void setError (const int &error) {mError=error;}
+    void setMessage(const std::string &message) { mMessage=message; }
+    void setError(const int &error) { mError=error; }
 
-    QString message () const {return mMessage;}
-    int error () const {return mError;}
+    std::string message() const { return mMessage; }
+    int error() const { return mError; }
+
+    const char* what() const noexcept override {
+        return mMessage.c_str();
+    }
 
 private:
-    QString mMessage ;
+    std::string mMessage ;
     int mError ;
 };
 

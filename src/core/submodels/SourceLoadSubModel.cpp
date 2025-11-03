@@ -1,6 +1,6 @@
 #include "SourceLoadSubModel.h"
 
-SourceLoadSubModel::SourceLoadSubModel(QObject* aParent) :
+SourceLoadSubModel::SourceLoadSubModel(CairnObject* aParent) :
     TechnicalSubModel(aParent)//,
     //mPortFlow(nullptr)
 {
@@ -8,6 +8,11 @@ SourceLoadSubModel::SourceLoadSubModel(QObject* aParent) :
 
 SourceLoadSubModel::~SourceLoadSubModel()
 {
+}
+
+void SourceLoadSubModel::setTimeData()
+{
+    TechnicalSubModel::setTimeData();
 }
 
 void SourceLoadSubModel::computeDefaultIndicators(const double* optSol)
@@ -18,24 +23,16 @@ void SourceLoadSubModel::computeDefaultIndicators(const double* optSol)
     for (uint64_t t = 0; t < mHorizon; ++t) mMaxRunningTime.at(0) += TimeStep(t) * mParentCompo->ExtrapolationFactor(); // fichier plan: extrapolé
     mMaxRunningTime.at(1) += mNpdtPast * TimeStep(0); // fichier hist, cumulé 
 
-    mOptimalSize.at(0) = mExpSizeMax.evaluate(optSol);
-    double sauv = mOptimalSize.at(1);
-    mOptimalSize.at(1) = max(sauv, mOptimalSize.at(0));
-
     //Save optimal size from the current cycle
     mOptimalSizeAllCycles.push_back(mOptimalSize.at(0));
-
-    MilpPort* port;
-    QListIterator<MilpPort*> iport(mListPort);
+    
     bool firstPort = true;
     double memRunningTime = 0.;
     // Calcul running time
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString varName = port->Variable();
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "source";
+    for (auto& port : mListPort) {    
+        std::string varName = port->Variable();
+        std::string sens;
+        if (Sens() > 0) sens = "source";
         else sens = "load";
 
         if (port->VarType() == "vector")
@@ -64,23 +61,20 @@ void SourceLoadSubModel::computeDefaultIndicators(const double* optSol)
         }
     }
 
-    iport = mListPort;
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString portName = port->Name();
-        QString varName = port->Variable();
-        QString storageName = port->ptrEnergyVector()->StorageName();
-        QString storageUnit = port->ptrEnergyVector()->StorageUnit();
-        QString fluxUnit = port->ptrEnergyVector()->FluxUnit();
-        QString fluxName = port->ptrEnergyVector()->FluxName();
-        bool isHeatCarrier = port->ptrEnergyVector()->isHeatCarrier();
+    for (auto& port : mListPort) {    
+        std::string portName = port->Name();
+        std::string varName = port->Variable();
+        std::string storageName = port->getCarrier()->StorageName();
+        std::string storageUnit = port->getCarrier()->StorageUnit();
+        std::string fluxUnit = port->getCarrier()->FluxUnit();
+        std::string fluxName = port->getCarrier()->FluxName();
+        bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
 
         double aPort = port->VarCoeff();
         double bPort = port->VarOffset();
 
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "source";
+        std::string sens;
+        if (Sens() > 0) sens = "source";
         else sens = "load";
 
         if (port->VarType() == "vector")
@@ -125,18 +119,14 @@ void SourceLoadSubModel::computeSourceENRModelIndicators(const double* optSol)
     //Save optimal size from the current cycle
     if (mOptimalSize.size() > 0)
         mOptimalSizeAllCycles.push_back(mOptimalSize.at(0));
-
-    MilpPort* port;
-    QListIterator<MilpPort*> iport(mListPort);
+    
     bool firstPort = true;
     double memRunningTime = 0.;
     // Calcul running time
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString varName = port->Variable();
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "source";
+    for (auto& port : mListPort) {    
+        std::string varName = port->Variable();
+        std::string sens;
+        if (Sens() > 0) sens = "source";
         else sens = "load";
 
         if (port->VarType() == "vector")
@@ -165,16 +155,13 @@ void SourceLoadSubModel::computeSourceENRModelIndicators(const double* optSol)
         }
     }
 
-    iport = mListPort;
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString varName = port->Variable();
-        QString storageName = port->ptrEnergyVector()->StorageName();
-        QString storageUnit = port->ptrEnergyVector()->StorageUnit();
-        QString fluxUnit = port->ptrEnergyVector()->FluxUnit();
-        QString fluxName = port->ptrEnergyVector()->FluxName();
-        bool isHeatCarrier = port->ptrEnergyVector()->isHeatCarrier();
+    for (auto& port : mListPort) {    
+        std::string varName = port->Variable();
+        std::string storageName = port->getCarrier()->StorageName();
+        std::string storageUnit = port->getCarrier()->StorageUnit();
+        std::string fluxUnit = port->getCarrier()->FluxUnit();
+        std::string fluxName = port->getCarrier()->FluxName();
+        bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
 
         double aPort = port->VarCoeff();
         double bPort = port->VarOffset();
@@ -204,13 +191,20 @@ void SourceLoadSubModel::computeSourceENRModelIndicators(const double* optSol)
     }
 }
 
-int SourceLoadSubModel::checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange, QString& varUseCheck)
-{    
-    QString varName = port->Variable(); 
-    // Uncomplete description -> use default definitions functions of models
-    if (varName == "") {
-        port->setVariable("SourceLoadFlow");
-        qInfo() << "Use default Variable name to send from Component to BusFlowBalance bus " << (port->Variable());
-    }    
-    return 0;
+double SourceLoadSubModel::Sens()
+{
+    std::string defaultPortDirection = (mSourceLoadDefaultPort->Direction());
+    if (CairnUtils::upperCase(defaultPortDirection) == KCONS())
+    {
+        return -1.0; //"Load/Sink" 
+    }
+    else //if (CairnUtils::upperCase(defaultPortDirection) == KPROD())
+    {
+        return +1.0; //"Source" (includes port "DATAEXCHANGE")
+    }
+    //else {
+    //    //return 0.0;
+    //    Cairn_Exception error("Invalid direction " + defaultPortDirection +  " of the default port of component " + Name().toStdString() + ". INPUT (Sink) or OUTPUT (Source) is expected.", -1);
+    //    throw& error;
+    //}
 }

@@ -39,7 +39,7 @@ class MODELS_DECLSPEC Compressor : public ConverterSubModel {
 
 public:
 //----------------------------------------------------------------------------------------------------
-    Compressor(QObject* aParent);
+    Compressor(CairnObject* aParent);
     ~Compressor();
 //----------------------------------------------------------------------------------------------------
     int checkConsistency();
@@ -89,8 +89,10 @@ public:
 
         //double
         addParameter("POutletFixe", &mPOutletFixe, 0., false, true, "Allow the user to give a constant pressure out", "");
-        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow",{"FlowrateUnit"}) ;
-        addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor",{"FlowrateUnit"}) ;
+
+
+        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow", mMainCarrier->pFlowrateUnit()) ;
+        addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor", mMainCarrier->pFlowrateUnit()) ;
         addParameter("MotorEfficiency", &mMotorEfficiency, 0., true, true, "Electrical Motor Efficiency", "-");
         addParameter("NbStages", &mNbStages, 0., true, true, "Number of compression stages", "");
         addParameter("TInlet", &mTInlet, 20., true, true, "Inlet Temperature", "degC");
@@ -131,8 +133,7 @@ public:
 
     void declareModelIndicators() {
         ConverterSubModel::declareDefaultModelIndicators(&mExportIndicators);
-        QString massUnit = mPortUsedPower->ptrEnergyVector()->MassUnit();
-        mInputIndicators->addIndicator("Max MassFlowRate", &mMaxMFR, &mExportIndicators, "Maximal mass flow rate", massUnit + "/h","MaxMFR");
+        mInputIndicators->addIndicator("Max MassFlowRate", &mMaxMFR, &mExportIndicators, "Maximal mass flow rate", SFunctionUnit({ eFTypeDivision, { mPortUsedPower->pMassUnit() }, "h"}), "MaxMFR");
     }
 
     double getInletPressure();
@@ -142,30 +143,30 @@ public:
     {
         mDefaultPorts.clear();
         //PortInMassFlowRate - left
-        QMap<QString, QString> portInMassFlowRate;
+        std::map<std::string, std::string> portInMassFlowRate;
         portInMassFlowRate["Name"] = "PortL0";
         portInMassFlowRate["Position"] = "left";
         portInMassFlowRate["CarrierType"] = ANY_Fluid();
         portInMassFlowRate["Direction"] = KCONS();
         portInMassFlowRate["Variable"] = "InMassFlowRate";
-        mDefaultPorts.insert("PortInMassFlowRate", portInMassFlowRate);
+        mDefaultPorts["PortInMassFlowRate"] = portInMassFlowRate;
         //PortOutMassFlowRate - left
-        QMap<QString, QString> portOutMassFlowRate;
+        std::map<std::string, std::string> portOutMassFlowRate;
         portOutMassFlowRate["Name"] = "PortL1";
         portOutMassFlowRate["Position"] = "left";
         portOutMassFlowRate["CarrierType"] = ANY_Fluid();
         portOutMassFlowRate["Direction"] = KPROD();
         portOutMassFlowRate["Variable"] = "OutMassFlowRate";
-        mDefaultPorts.insert("PortOutMassFlowRate", portOutMassFlowRate);
+        mDefaultPorts["PortOutMassFlowRate"] = portOutMassFlowRate;
 
         //PortUsedPower - right
-        QMap<QString, QString> portUsedPower;
+        std::map<std::string, std::string> portUsedPower;
         portUsedPower["Name"] = "PortR0";
         portUsedPower["Position"] = "right";
         portUsedPower["CarrierType"] = Electrical();
         portUsedPower["Direction"] = KCONS();
         portUsedPower["Variable"] = "UsedPower";
-        mDefaultPorts.insert("PortUsedPower", portUsedPower);
+        mDefaultPorts["PortUsedPower"] = portUsedPower;
     }
 
     void setPortPointers() {
@@ -180,8 +181,8 @@ protected:
     MilpPort* mPortOutMassFlowRate;
     MilpPort* mPortUsedPower;
 
-    QString mPowerUnit;
-    QString mMassUnit;
+    std::string mPowerUnit;
+    std::string mMassUnit;
 
     // MILP variables
     MIPModeler::MIPVariable0D mVarTOutlet;

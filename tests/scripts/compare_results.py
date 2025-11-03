@@ -22,18 +22,23 @@ pip install -i https://pypi.anaconda.org/bokeh/label/dev/simple bokeh
 @author : MN.Descamps
 """
 import matplotlib
+
+from pyparsing import alphanums
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from io import TextIOWrapper
 
 #import logging as log
 import pandas as pd
 import numpy as np
+import matplotlib.ticker as ticker
 
 import filecmp
 import time
 import os
 
 from datetime import datetime
+
 
 #from pandas.util.testing import assert_frame_equal
 #from bokeh.plotting import figure, output_file, show,save
@@ -51,34 +56,67 @@ def sort_files(file_plan_ref, file_plan):
     df_res.to_csv(file_plan, index=None, header=None, sep=";")
     df_ref.to_csv(file_plan_ref, index=None, header=None, sep=";")    
 
-def compare_plan(file_plan_ref, file_plan):
-#compare Persee PLAN file with reference
-#        perf_data = [pd.read_csv(os.getcwd()+"\\"+f+"\\Report_"+loc+"\\SUMUP.csv", sep=";",header=None) 
-#                     for f in liste_etudes
-#                    ]
-    file_res = open(file_plan, 'r')
-    file_ref = open(file_plan_ref, 'r')
-    res = file_res.readlines()
-    ref = file_ref.readlines()
-    file_res.close()
-    file_ref.close()    
+def compare_plan_rempl(type_PLAN_FILE, file_plan_ref, file_plan, logs : TextIOWrapper, threshold):
+    try:
+        plan_df_ref = pd.read_csv(file_plan_ref,sep=";",index_col=["Model","Alias"])
+    except:
+        return "NA"
+    plan_df = pd.read_csv(file_plan,sep=";",index_col=["Model","Alias"])
 
-    nbline = min(len(res),len(ref))
-    maxErr = 0;
-    for i in range(nbline):
-        if res[i]!=ref[i]:
-            s_res = res[i].split(';')
-            s_ref = ref[i].split(';')
-            try:
-                v_res = float(s_res[-1])
-                v_ref = float(s_ref[-1])
-                if abs(v_ref) < 1e-6:
-                    v_ref = 1.0                
-                err = abs(v_res-v_ref)/v_ref*100.0
-                maxErr = max(maxErr, err)
-            except ValueError:
-                pass
-    return maxErr
+    jointure = plan_df_ref.assign(value_current = plan_df["Value"])
+    jointure["diff"] = jointure["Value"]-jointure["value_current"]
+    filter_diff = jointure[jointure["diff"].abs()>threshold]
+    err=0
+    if len(filter_diff)>0:
+        logs.write(type_PLAN_FILE +" file changes :\n")
+        logs.write("ref:" + file_plan_ref + "\n")
+        logs.write("current:"+ file_plan+ "\n")
+        logs.write(str(filter_diff[["diff","Unit"]])+"\n")
+        err = filter_diff["diff"].max()
+    return err
+
+
+def new_compare_results(app_home, results, results_ref, logfileName, log_dir, threshold,pegase=False):
+    if pegase:
+        skiprows = [1,2]
+        index_col=[1]
+    else:
+        skiprows = []
+        index_col = [0]
+    
+    results_df = pd.read_csv(results, sep=";", index_col = index_col,skiprows=skiprows).dropna(axis=1,how="all")
+    results_df_ref = pd.read_csv(results_ref, sep=";", index_col = index_col,skiprows=skiprows).dropna(axis=1,how="all")
+    
+    if not pegase:
+        results_df.index = pd.to_datetime(results_df.index.astype(int),unit="s",dayfirst=1,yearfirst=2025)
+        results_df_ref.index = pd.to_datetime(results_df_ref.index,unit="s",dayfirst=1,yearfirst=2025)
+    status = True
+    if len(results_df) != len(results_df_ref):
+        logfileName.write("TS file length doesn't match !")
+        status = False
+    for c in results_df_ref.columns:
+        if c not in results_df.columns:
+            logfileName.write("[TS] Column "+c+" in ref but not in results\n")
+            status=False
+        elif pd.api.types.is_numeric_dtype(results_df_ref[c]):
+            diff = (results_df[c] - results_df_ref[c])
+            diff = diff.abs()
+            idmax = diff.idxmax()
+            if max(diff)/(max(results_df_ref[c])+0.00001)>threshold:
+                status=False
+                logfileName.write("[TS] Column "+c+" differs compare to ref, max = "+str(max(diff))+"\n")
+                status+=False
+                plt.plot(results_df_ref[c], label=c+" Reference")
+                plt.plot(results_df[c], label=c, alpha=0.7)
+                plt.axvline(x=idmax, color='b', linestyle='--', linewidth=2, alpha=0.7)
+                plt.legend()
+                plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                plt.savefig(os.path.join(log_dir,c+".png"))
+                plt.clf()
+    return status
+
 
 def compare_results(app_home, filename_reference="Sortie-reference.csv", filename_resultats="Sortie.csv", skip_rows=[1,2], d=',', logfileName="logfile.txt", log_dir=''):
     infos = {}

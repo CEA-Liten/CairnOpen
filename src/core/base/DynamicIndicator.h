@@ -28,22 +28,22 @@ class DynamicIndicator;
  * DynamicIndicator is the base class for user defined indicators
  */
 
-class CAIRNCORESHARED_EXPORT DynamicIndicator : public QObject
+class CAIRNCORESHARED_EXPORT DynamicIndicator : public CairnObject
 {
-    Q_OBJECT
+    
 public:
 
-    DynamicIndicator(QObject* aParent = nullptr, QString aName = QString(""), QString aFormula = QString(""), QStringList aUDINames={});
+    DynamicIndicator(CairnObject* aParent = nullptr, std::string aName = std::string(""), std::string aFormula = std::string(""), std::vector<std::string> aUDINames={});
     ~DynamicIndicator();
 
-    QString getName() const;
-    QString getFormula() const;
+    std::string getName() const;
+    std::string getFormula() const;
 
-    QMap<std::string, QString> variableRenamingMap() const;
-    QMap<std::string, double*> variableValueMap() const;
+    std::map<std::string, std::string> variableRenamingMap() const;
+    std::map<std::string, double*> variableValueMap() const;
 
-    void setName(const QString& aName);
-    void setFormula(const QString& aFormula);
+    void setName(const std::string& aName);
+    void setFormula(const std::string& aFormula);
 
     void renameVariables();
     void updateExpression();
@@ -51,13 +51,13 @@ public:
     double compute() const;
 
 protected:
-    QString mName;    // Dynamic Indicator name
-    QString mFormula; // Dynamic Indicator formula in function of TecEco and component expressions
+    std::string mName;    // Dynamic Indicator name
+    std::string mFormula; // Dynamic Indicator formula in function of TecEco and component expressions
     std::string mRenamedFormula; // The Indicator formula renamed to use x1, ..., xn as variable names; This is to not confuse the parser with long names that may contain special characters.
-    QMap<std::string, QString> mVariableRenamingMap{}; // <x1, TecEco.NetOpexDiscounted>
-    QMap<std::string, double*> mVariableValueMap{};    // <x1, 10.1> 
+    std::map<std::string, std::string> mVariableRenamingMap{}; // <x1, TecEco.NetOpexDiscounted>
+    std::map<std::string, double*> mVariableValueMap{};    // <x1, 10.1> 
 
-    QStringList mUDINames; //list of user-defined indicator names that are allowed to be used as variables
+    std::vector<std::string> mUDINames; //list of user-defined indicator names that are allowed to be used as variables
 
     //Parser (double can be replace by a general type T; if needed)
     typedef exprtk::symbol_table<double> t_symbol_table;

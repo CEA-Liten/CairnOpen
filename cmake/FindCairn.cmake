@@ -14,7 +14,7 @@ if (NOT CAIRN_INSTALL)
 
     set (CAIRN_INCLUDE_DIR 
         ${CAIRN_HOME}/core        
-        ${CAIRN_HOME}/ModelInterface        
+        ${CAIRN_HOME}/modelInterface        
     )
 
     find_package_handle_standard_args(Cairn REQUIRED_VARS CAIRN_INCLUDE_DIR)

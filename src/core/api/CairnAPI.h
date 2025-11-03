@@ -93,6 +93,8 @@ public:
 		std::string get_Name() const;
 		std::string get_Type() const;
 
+		void rename(const std::string& name);
+
 		//returns a list of parameter names
 		t_list get_SettingsList();
 		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
@@ -102,6 +104,14 @@ public:
 
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue);
 		void set_SettingValues(const t_dict& a_SettingValues);
+
+		t_list get_ShowConfigList();
+		std::string get_SettingShowConfig(const std::string& a_SettingName);
+
+		bool get_SettingMandatoryValue(const std::string& a_SettingName);
+		bool is_DependentSetting(const std::string& a_SettingName);
+
+		std::string get_SettingUnit(const std::string& a_SettingName);
 
 	private:
 		class EnergyVector* m_EnergyVector{ nullptr };
@@ -121,6 +131,9 @@ public:
 		std::string get_Name() const;
 		std::string get_CarrierName() const;
 
+		void rename(const std::string& name);
+
+		EnergyVectorAPI get_EnergyCarrier();
 		void set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector);
 
 		// -- Parameters ---
@@ -153,6 +166,14 @@ public:
 		std::string get_ModelClass() const;
 		std::string get_CarrierName() const;
 
+		void rename(const std::string& name);
+
+		std::string get_LabelValue(const std::string& a_Label) const;
+		void set_LabelValue(const std::string& a_Label, const std::string& a_Value);
+		//use t_dict ?!
+		std::map<std::string, std::string> get_LabelValues() const;
+		void set_LabelValues(const std::map<std::string, std::string>& a_Labels);
+
 		//returns a list of parameter names
 		t_list get_SettingsList();
 		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
@@ -162,6 +183,14 @@ public:
 
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue);
 		void set_SettingValues(const t_dict& a_SettingValues);
+
+		t_list get_ShowConfigList();
+		std::string get_SettingShowConfig(const std::string& a_SettingName);
+
+		bool get_SettingMandatoryValue(const std::string& a_SettingName);
+		bool is_DependentSetting(const std::string& a_SettingName);
+
+		std::string get_SettingUnit(const std::string& a_SettingName);
 
 		// -- IOs ---
 		// Returns the list of variables contains the component
@@ -193,6 +222,17 @@ public:
 		std::string get_Type() const;
 		const std::string get_ModelClass();
 
+		void rename(const std::string& name);
+
+		std::string get_Direction();
+
+		void checkDefaultPortCarriers();
+
+		std::string get_LabelValue(const std::string& a_Label) const;
+		void set_LabelValue(const std::string& a_Label, const std::string& a_Value);
+		//use t_dict ?!
+		std::map<std::string, std::string> get_LabelValues() const;
+		void set_LabelValues(const std::map<std::string, std::string>& a_Labels);
 
 		// -- Parameters ---
 		// Returns the list of parameter names 
@@ -210,19 +250,22 @@ public:
 		bool isTimeSeriesParam(const std::string& a_TimeSeriesName);
 
 		t_list get_ShowConfigList();
-		t_value get_ShowConfig(const std::string& a_SettingName);
+		std::string get_SettingShowConfig(const std::string& a_SettingName);
 
-		t_value get_OptimalSizeExpression();
+		bool get_SettingMandatoryValue(const std::string& a_SettingName);
+		bool is_DependentSetting(const std::string& a_Name);
+
+		std::string get_SettingUnit(const std::string& a_SettingName);
+
+		void modify_ModelClass(const std::string& a_prevModelClass, const std::string& a_newModelClass);
 
 		// -- Ports ---
 		t_list get_Ports();
 		t_list get_DefaultPorts();
 		MilpPortAPI get_Port(const std::string& a_Name);
 		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
-			const std::string& a_Direction="DATAEXCHANGE", const std::string& a_Variable = "");
+			const std::string& a_Direction="DATAEXCHANGE", const std::string& a_Variable = "", const bool& reinitializeCompo = true);
 		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo=false);
-
-		void reinitialize();
 
 		bool useEnergyVector(const std::string& a_EnergyVectorName);
 		void get_Links(t_dict &a_Links);
@@ -244,6 +287,10 @@ public:
 		//isOptimized
 		t_value isOptimized();
 		t_value get_dimParam();
+
+		/* Other methods */
+		void reinitialize();
+		t_value get_OptimalSizeExpression();
 
 	private:
 		class MilpComponent* m_Component{ nullptr };		
@@ -292,23 +339,34 @@ public:
 	{
 	public:
 		OptimProblemAPI();	
-		//class OptimProblem* get_Problem() const { return m_Problem; };
+		class OptimProblem* get_Problem() const { return m_Problem; };
 		void set_Problem(class OptimProblem* ap_Problem);
-
 		void set_StudyName(const std::string& a_Name);
-		
 		void save_Study(const std::string& a_filename = "", const std::string& a_posAlgorithm = "");
+
+		// Export parameters to a file
+		void export_Parameters(const std::string& fileName = "");
+
+		// Export results to a file
+		void export_PLAN(const std::string& fileName = "", const int& aNsol = 0);
+
+		void add_Label(const std::string& a_Label);
+		void remove_Label(const std::string& a_Label);
+		const t_list& get_Labels() const;
+		void set_Labels(const t_list& a_Labels);
 
 		// --------- EnergyCarriers ---------
 		t_list get_EnergyCarriers();
 		EnergyVectorAPI get_EnergyCarrier(const std::string& a_Name);
 		EnergyVectorAPI create_EnergyCarrier(const std::string& a_Name, const std::string& a_Type) const;
+		void remove_EnergyCarrier(const std::string& a_Name);
 		void remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector);
 
 		// --------- Components ---------
 		t_list get_Components(const std::string &a_Category = "");
 		MilpComponentAPI get_Component(const std::string &a_Name);
 		MilpComponentAPI create_Component(const std::string& a_Name, const std::string& a_ModelName) const;
+		void remove_Component(const std::string& a_Name);
 		void remove_Component(MilpComponentAPI& a_Component);
 
 		// --------- Bus ----------
@@ -316,6 +374,7 @@ public:
 		BusAPI get_Bus(const std::string &a_Name);
 		BusAPI create_Bus(const std::string& a_Name, const std::string& a_ModelName, 
 			const EnergyVectorAPI& a_EnergyVector) const;
+		void remove_Bus(const std::string& a_Name);
 		void remove_Bus(BusAPI& a_Bus);
 
 		// --------- Links ---------
@@ -329,18 +388,50 @@ public:
 		void remove(MilpPortAPI& a_port, BusAPI& a_bus);
 		void remove(BusAPI& a_bus, MilpPortAPI& a_port);
 
+		// --------- TecEcoAnalysis ---------
+		void rename_TecEcoAnalysis(const std::string& name);
 
 		//  Get/Set parameters of the analysis component of the problem
 		t_dict get_TecEcoAnalysisSettings();
 		void set_TecEcoAnalysisSettings(const t_dict& a_Settings);
 
+		t_list get_TecEcoShowConfigList();
+		std::string get_TecEcoSettingShowConfig(const std::string& a_SettingName);
+
+		bool get_TecEcoSettingMandatoryValue(const std::string& a_SettingName);
+		bool is_DependentTecEcoSetting(const std::string& a_SettingName);
+
+		std::string get_TecEcoSettingUnit(const std::string& a_SettingName);
+
+		// --------- Solver ---------
+		void rename_Solver(const std::string& name);
+
 		//  Get/Set parameters of the solver component of the problem
 		t_dict get_MIPSolverSettings();
 		void set_MIPSolverSettings(const t_dict& a_Settings);
 
+		t_list get_SolverShowConfigList();
+		std::string get_SolverSettingShowConfig(const std::string& a_SettingName);
+
+		bool get_SolverSettingMandatoryValue(const std::string& a_SettingName);
+		bool is_DependentSolverSetting(const std::string& a_SettingName);
+		
+		std::string get_SolverSettingUnit(const std::string& a_SettingName);
+
+		// --------- SimulationControl ---------
+		void rename_SimulationControl(const std::string& name);
+
 		//  Get/Set parameters of the simulation component of the problem
 		t_dict get_SimulationControlSettings();
 		void set_SimulationControlSettings(const t_dict& a_Settings);
+
+		t_list get_ControlShowConfigList();
+		std::string get_ControlSettingShowConfig(const std::string& a_SettingName);
+
+		bool get_ControlSettingMandatoryValue(const std::string& a_SettingName);
+		bool is_DependentControlSetting(const std::string& a_SettingName);
+
+		std::string get_ControlSettingUnit(const std::string& a_SettingName);
 
 		// -- Run ---
 		 // Adds a time series file.
@@ -384,6 +475,7 @@ public:
 
 private:
     class CairnCore* m_Cairn{ nullptr };
+	bool m_LogConsole{ true };
 };
 
 #endif

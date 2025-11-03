@@ -23,7 +23,7 @@ BusCompo* CairnAPI::BusAPI::get_BusCompo() const
 void CairnAPI::BusAPI::set_BusCompo(BusCompo* ap_Bus)
 {
 	m_Bus = ap_Bus;
-	if (m_Bus && !m_Bus->getEnergyVector()) {
+	if (m_Bus && !m_Bus->getMainCarrier()) {
 		CairnAPIUtils::setError(errDefault, "The EnergyCarrier of the Bus " + get_Name() + " must be defined!");
 	}
 }
@@ -31,7 +31,7 @@ void CairnAPI::BusAPI::set_BusCompo(BusCompo* ap_Bus)
 std::string CairnAPI::BusAPI::get_Name() const
 {
 	if (m_Bus) {
-		return m_Bus->Name().toStdString();
+		return m_Bus->Name();
 	}
 	return "";
 }
@@ -39,7 +39,7 @@ std::string CairnAPI::BusAPI::get_Name() const
 std::string CairnAPI::BusAPI::get_Type() const
 {
 	if (m_Bus) {
-		return m_Bus->Type().toStdString();
+		return m_Bus->Type();
 	}
 	return "";
 }
@@ -47,19 +47,89 @@ std::string CairnAPI::BusAPI::get_Type() const
 std::string CairnAPI::BusAPI::get_ModelClass() const
 {
 	if (m_Bus) {
-		return m_Bus->ModelClassName().toStdString();
+		return m_Bus->ModelClassName();
 	}
 	return "";
 }
 
 std::string CairnAPI::BusAPI::get_CarrierName() const
 {
-	if (m_Bus && m_Bus->getEnergyVector()) {
-		return m_Bus->getEnergyVector()->Name().toStdString();
+	if (m_Bus && m_Bus->getMainCarrier()) {
+		return m_Bus->getMainCarrier()->Name();
 	}
 	return "";
 }
 
+void CairnAPI::BusAPI::rename(const std::string& name)
+{
+	if (m_Bus) {
+		m_Bus->setName((name));
+	}
+}
+
+std::string CairnAPI::BusAPI::get_LabelValue(const std::string& a_Label) const
+{
+	std::string vRet = "";
+	if (m_Bus)
+	{
+		OptimProblem* vOptimProblem = (OptimProblem*)m_Bus->parent();
+		TecEcoAnalysis* vTecEcoAnalysis = vOptimProblem->getTecEcoAnalysis();
+		if (vTecEcoAnalysis->isValidLabel(a_Label)) {
+			vRet = m_Bus->compoModel()->getLabelValue(a_Label);
+		}
+		else {
+			CairnAPIUtils::setError(errDefault, "Label " + a_Label + " is not defined. Please, add the label to the problem first!");
+		}
+	}
+	return vRet;
+}
+
+std::map<std::string, std::string> CairnAPI::BusAPI::get_LabelValues() const
+{
+	std::map<std::string, std::string> vRet = {};
+	if (m_Bus)
+	{
+		//return m_Bus->compoModel()->getLabelMap();
+
+		OptimProblem* vOptimProblem = (OptimProblem*)m_Bus->parent();
+		TecEcoAnalysis* vTecEcoAnalysis = vOptimProblem->getTecEcoAnalysis();
+		if (vTecEcoAnalysis) {
+			for (auto const& label : vTecEcoAnalysis->getLabelList())//referance list
+			{
+				vRet[label] = m_Bus->compoModel()->getLabelValue(label);
+			}
+		}
+	}
+	return vRet;
+}
+
+void CairnAPI::BusAPI::set_LabelValue(const std::string& a_Label, const std::string& a_Value)
+{
+	if (m_Bus)
+	{
+		OptimProblem* vOptimProblem = (OptimProblem*)m_Bus->parent();
+		TecEcoAnalysis* vTecEcoAnalysis = vOptimProblem->getTecEcoAnalysis();
+		if (vTecEcoAnalysis->isValidLabel(a_Label)) {
+			m_Bus->compoModel()->setLabel(a_Label, a_Value);
+		}
+		else {
+			CairnAPIUtils::setError(errDefault, "Label " + a_Label + " is not defined. Please, add the label to the problem first!");
+		}
+	}
+}
+
+void CairnAPI::BusAPI::set_LabelValues(const std::map<std::string, std::string>& a_Labels)
+{
+
+	if (m_Bus)
+	{
+		/*
+		* No need to verify that all the labels are valid. It is ok!
+		* Labels are filtered when using get_method and when writing to json file
+		*/
+		m_Bus->compoModel()->setLabelMap(a_Labels);
+	}
+}
 // Returns the list of parameter names 
 
 t_list CairnAPI::BusAPI::get_SettingsList()
@@ -77,7 +147,8 @@ t_list CairnAPI::BusAPI::get_SettingsListByType(ESettingsLimited a_setLimited)
 		vRet = CairnAPIUtils::getParametersName({
 			m_Bus->compoModel()->getInputParam(), // params	
 			m_Bus->getCompoInputParam(), // options
-			m_Bus->compoModel()->getInputDataTS() // timeseries	
+			m_Bus->compoModel()->getInputDataTS(), // timeseries
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData
 			}
 		, a_setLimited);
 	}
@@ -92,7 +163,8 @@ t_value CairnAPI::BusAPI::get_SettingValue(const std::string& a_SettingName)
 		vRet = CairnAPIUtils::getParameter({
 			m_Bus->compoModel()->getInputParam(), // params	
 			m_Bus->getCompoInputParam(), // options
-			m_Bus->compoModel()->getInputDataTS() // timeseries	
+			m_Bus->compoModel()->getInputDataTS(), // timeseries	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData
 			}
 		, a_SettingName);
 	}
@@ -107,7 +179,8 @@ t_dict CairnAPI::BusAPI::get_SettingValues()
 		CairnAPIUtils::getParameters({
 			m_Bus->compoModel()->getInputParam(), // params	
 			m_Bus->getCompoInputParam(), // options
-			m_Bus->compoModel()->getInputDataTS() // timeseries	
+			m_Bus->compoModel()->getInputDataTS(), // timeseries	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData
 			}
 		, vRet);
 	}
@@ -118,8 +191,13 @@ t_dict CairnAPI::BusAPI::get_SettingValues()
 void CairnAPI::BusAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue)
 {
 	if (a_SettingName == "ModelClass") {
-		CairnAPIUtils::setError(errDefault, "The ModelClass of a component cannot be changed!");
-		return;
+		t_value modelClass = get_SettingValue("ModelClass");
+		if (modelClass != a_SettingValue) {
+			CairnAPIUtils::setError(errDefault, "The ModelClass of a Bus cannot be changed!");
+		}
+		else {
+			return;
+		}
 	}
 
 	ECodeError vRet = noError;
@@ -127,7 +205,8 @@ void CairnAPI::BusAPI::set_SettingValue(const std::string& a_SettingName, const 
 		bool vOk = CairnAPIUtils::setParameter({
 			m_Bus->compoModel()->getInputParam(), // params	
 			m_Bus->getCompoInputParam(), // options
-			m_Bus->compoModel()->getInputDataTS() // Bus doesn't have timeseries 		
+			m_Bus->compoModel()->getInputDataTS(), // Bus doesn't have timeseries 	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData  		
 			}
 		, a_SettingName, a_SettingValue);
 
@@ -143,13 +222,83 @@ void CairnAPI::BusAPI::set_SettingValue(const std::string& a_SettingName, const 
 void CairnAPI::BusAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
 	for (auto& vParam : a_SettingValues) {
-		if (find(CairnAPIUtils::mNonModifiableParams.begin(), CairnAPIUtils::mNonModifiableParams.end(), vParam.first) != CairnAPIUtils::mNonModifiableParams.end())
-		{
-			qWarning() << (vParam.first + " cannot be modified!").c_str();
-			continue;
-		}
 		set_SettingValue(vParam.first, vParam.second);
 	}
+}
+
+bool CairnAPI::BusAPI::get_SettingMandatoryValue(const std::string& a_SettingName)
+{
+	bool vRet = true;
+	if (m_Bus) {
+		vRet = CairnAPIUtils::getParamMandatoryValue({
+			m_Bus->compoModel()->getInputParam(), // params	 
+			m_Bus->getCompoInputParam(),
+			m_Bus->compoModel()->getInputDataTS(), // timeseries 	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData  				
+			},
+			a_SettingName);
+	}
+	return vRet;
+}
+
+bool CairnAPI::BusAPI::is_DependentSetting(const std::string& a_SettingName)
+{
+	bool vRet = false;
+	if (m_Bus) {
+		vRet = CairnAPIUtils::isDependentParam({
+			m_Bus->compoModel()->getInputParam(), // params	 
+			m_Bus->getCompoInputParam(),
+			m_Bus->compoModel()->getInputDataTS(), // timeseries 	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData  				
+			},
+			a_SettingName);
+	}
+	return vRet;
+}
+
+std::string CairnAPI::BusAPI::get_SettingUnit(const std::string& a_SettingName)
+{
+	std::string vRet = "-";
+	if (m_Bus) {
+		vRet = CairnAPIUtils::getParamUnit({
+			m_Bus->compoModel()->getInputParam(), // params	 
+			m_Bus->getCompoInputParam(),
+			m_Bus->compoModel()->getInputDataTS(), // timeseries 	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData  				
+			},
+			a_SettingName);
+	}
+	return vRet;
+}
+
+std::string CairnAPI::BusAPI::get_SettingShowConfig(const std::string& a_SettingName)
+{
+	std::string vRet = "";
+	if (m_Bus) {
+		vRet = CairnAPIUtils::getParamShowConfig({
+			m_Bus->compoModel()->getInputParam(), // params	 
+			m_Bus->getCompoInputParam(),
+			m_Bus->compoModel()->getInputDataTS(), // timeseries 	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData  		
+		    },
+			a_SettingName);
+	}
+	return vRet;
+}
+
+t_list CairnAPI::BusAPI::get_ShowConfigList()
+{
+	t_list vRet = {};
+	if (m_Bus) {
+		vRet = CairnAPIUtils::getShowConfigList({
+			m_Bus->compoModel()->getInputParam(), // params	 
+			m_Bus->getCompoInputParam(),
+			m_Bus->compoModel()->getInputDataTS(), // timeseries 	
+			m_Bus->getGUIData()->getGuiInputParam() //GuiData  			
+			}
+		);
+	}
+	return vRet;
 }
 
 // -- IOs ---
@@ -161,7 +310,7 @@ t_list CairnAPI::BusAPI::get_VarList()
 		const SubModel::t_mapIOs& vIOMap = m_Bus->compoModel()->getMapIOExpression();
 		for (auto& [vName, vIO] : vIOMap) {
 			if (vIO->IsUsed()) {
-				vRet.push_back(vName.toStdString());
+				vRet.push_back(vName);
 			}
 		}
 	}
@@ -175,7 +324,7 @@ t_value CairnAPI::BusAPI::get_varValue(const std::string& a_VarName)
 {
 	t_value vRet = NAN;
 	if (m_Bus) {
-		QString vVarName(a_VarName.c_str());
+		std::string vVarName(a_VarName.c_str());
 		ModelIO* vIO = m_Bus->compoModel()->getIOExpression(vVarName);
 		if (vIO) {
 			if (vIO->IsUsed()) {
@@ -213,7 +362,7 @@ t_list CairnAPI::BusAPI::get_IndicatorNames()
 		InputParam::t_Indicators vectIndicators = m_Bus->compoModel()->getInputIndicators()->getIndicators();
 		for (int i = 0; i < vectIndicators.size(); i++)
 		{
-			vRet.push_back(vectIndicators[i]->getName().toStdString());
+			vRet.push_back(vectIndicators[i]->getName());
 		}
 	}
 	else
@@ -228,7 +377,7 @@ t_list CairnAPI::BusAPI::get_IndicatorUnits()
 		InputParam::t_Indicators vectIndicators = m_Bus->compoModel()->getInputIndicators()->getIndicators();
 		for (int i = 0; i < vectIndicators.size(); i++)
 		{
-			vRet.push_back(vectIndicators[i]->getUnit().toStdString());
+			vRet.push_back(vectIndicators[i]->getUnit());
 		}
 	}
 	else
@@ -243,7 +392,7 @@ t_list CairnAPI::BusAPI::get_IndicatorShortNames()
 		InputParam::t_Indicators vectIndicators = m_Bus->compoModel()->getInputIndicators()->getIndicators();
 		for (int i = 0; i < vectIndicators.size(); i++)
 		{
-			vRet.push_back(vectIndicators[i]->getShortName().toStdString());
+			vRet.push_back(vectIndicators[i]->getShortName());
 		}
 	}
 	else
@@ -259,10 +408,10 @@ t_dict CairnAPI::BusAPI::get_IndicatorValues(const std::string range)
 		for (int i = 0; i < vectIndicators.size(); i++)
 		{
 			if (range == "PLAN") {
-				vRet.insert({ vectIndicators[i]->getName().toStdString(), vectIndicators[i]->getValue(0) });
+				vRet.insert({ vectIndicators[i]->getName(), vectIndicators[i]->getValue(0) });
 			}
 			else if (range == "HIST") {
-				vRet.insert({ vectIndicators[i]->getName().toStdString(), vectIndicators[i]->getValue(1) });
+				vRet.insert({ vectIndicators[i]->getName(), vectIndicators[i]->getValue(1) });
 			}
 		}
 	}
@@ -277,7 +426,7 @@ double CairnAPI::BusAPI::get_IndicatorValue(const std::string& name, const std::
 	if (m_Bus) {
 		InputParam::t_Indicators vectIndicators = m_Bus->compoModel()->getInputIndicators()->getIndicators();
 		for (int i = 0; i < vectIndicators.size(); i++) {
-			if (vectIndicators[i]->getName().toStdString() == name) {
+			if (vectIndicators[i]->getName() == name) {
 				if (range == "PLAN") vRet = vectIndicators[i]->getValue(0);
 				else if (range == "HIST") vRet = vectIndicators[i]->getValue(1);
 			}

@@ -39,9 +39,9 @@ void TimeSeriesReaderCSV::readValues(int a_index, std::vector<double>& aValues)
 
     // TODO ?
     //if (zeVarName_Inputs.size() != time_Inputs.size()) {
-    //    qInfo() << "The number of lines read for " + zeVarName + " is " + QString::number(zeVarName_Inputs.size()) + ". For each column, the reading stops when an empty cell is found.";
+    //    cInfo() << "The number of lines read for " + zeVarName + " is " + std::to_string(zeVarName_Inputs.size()) + ". For each column, the reading stops when an empty cell is found.";
     //    //Resize to discard all values beyond Time column
-    //    qInfo() << "Resize the data of " + zeVarName + " to the length of the column Time (discard all the lines beyond the last considered value on column Time).";
+    //    cInfo() << "Resize the data of " + zeVarName + " to the length of the column Time (discard all the lines beyond the last considered value on column Time).";
     //    zeVarName_Inputs.resize(time_Inputs.size());
     //}
 
@@ -68,7 +68,7 @@ void TimeSeriesReaderCSV::readColumn(int aCol, int aRowSkipped, std::vector<doub
             break;
         }
         else if (std::isnan(std::stod(value))) {
-            qDebug() << "A NAN value is found at row" << i + 1 << ", column" << aCol << "while reading the input time series.";
+            cDebug() << "A NAN value is found at row" << i + 1 << ", column" << aCol << "while reading the input time series.";
             break;
         }
         else

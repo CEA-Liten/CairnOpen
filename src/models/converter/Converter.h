@@ -47,7 +47,7 @@ class MODELS_DECLSPEC Converter : public ConverterSubModel {
 
 public:
 //----------------------------------------------------------------------------------------------------
-    Converter(QObject* aParent);
+    Converter(CairnObject* aParent);
     ~Converter();
 
     void computeInitialData() override;
@@ -94,14 +94,13 @@ public:
 
         //double
         addParameter("Efficiency", &mEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency} }), true, "", ""); /** Total constant Converter efficiency*/
-        addParameter("Offset", &mOffset, 0., false, true, " Offset of consumption to add to PowerIn (PowerIn is then an affine function of PowerOut)","FluxUnit");
-        addParameter("MaxPower",&mMaxPower, INFINITY_VAL, true, true, "maximum input flux through converter", "FluxUnit",{""});
+        addParameter("Offset", &mOffset, 0., false, true, " Offset of consumption to add to PowerIn (PowerIn is then an affine function of PowerOut)", mMainCarrier->pFluxUnit());
+        addParameter("MaxPower",&mMaxPower, INFINITY_VAL, true, true, "maximum input flux through converter", mMainCarrier->pFluxUnit());
         addParameter("MinPower", &mMinPower, 0., false, true, "optional minimum flux through converter - 0 by default.Relative value to MaxPower", "%MaxPower");
         //vectors
         addTimeSeries("UseProfileConverterCoeff", &mConverterCoeff, false, true, "time series coeff for the efficiency", "");
         addTimeSeries("UseProfileConverterLowerBound", &mConverterLowerBound, false, true, "time series coeff for the powerMin", "");
         addTimeSeries("UseProfileConverterUpperBound", &mConverterUpperBound,false, true, "time series coeff for the powerMax", "");
-        addTimeSeries("UseProfileConverterUse", &mConverterUse, false, true, "Time Series of converter allowance used to simulate unavailability for failures or maintenance", "");
         //
         mPowerInSetPointVec.resize(mNbSetpoints);
         mPowerOutSetPointVec.resize(mNbSetpoints);
@@ -109,14 +108,14 @@ public:
             mPowerInSetPointVec[i].resize(mHorizon);
             mPowerOutSetPointVec[i].resize(mHorizon);
         }
-        QString aName = getCompoName();
+        std::string aName = Name(); //for python script!
         for (int i = 0; i < mNbSetpoints; i++) {
-            addTimeSeries(aName + ".InputSetPoint#" + QString::number(i + 1), &mPowerInSetPointVec[i], &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency);
-            addTimeSeries(aName + ".OutputSetPoint#" + QString::number(i + 1), &mPowerOutSetPointVec[i], &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency);
+            addTimeSeries(aName + ".InputSetPoint#" + std::to_string(i + 1), &mPowerInSetPointVec[i], &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency);
+            addTimeSeries(aName + ".OutputSetPoint#" + std::to_string(i + 1), &mPowerOutSetPointVec[i], &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency);
         }
         //
-        addPerfParam("PowerInSetPoint", &mPowerInSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, " z-axis in the 1D-map of efficiency", "PowerUnit");
-        addPerfParam("PowerOutSetPoint", &mPowerOutSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, "x-axis in the 1D-map of efficiency", "PowerUnit");
+        addPerfParam("PowerInSetPoint", &mPowerInSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, " z-axis in the 1D-map of efficiency", mMainCarrier->pPowerUnit());
+        addPerfParam("PowerOutSetPoint", &mPowerOutSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, "x-axis in the 1D-map of efficiency", mMainCarrier->pPowerUnit());
     }
 
     void declareModelIndicators() {
@@ -132,22 +131,22 @@ public:
     {
         mDefaultPorts.clear();
         //PortPowerIn - left
-        QMap<QString, QString> portPowerIn;
+        std::map<std::string, std::string> portPowerIn;
         portPowerIn["Name"] = "PortL0";  
         portPowerIn["Position"] = "left";
         portPowerIn["CarrierType"] = ANY_TYPE();
         portPowerIn["Direction"] = KCONS();  
         portPowerIn["Variable"] = "PowerIn";
-        mDefaultPorts.insert("PortPowerIn", portPowerIn);  
+        mDefaultPorts["PortPowerIn"] = portPowerIn;  
 
         //PortPowerOut - right
-        QMap<QString, QString> portPowerOut;
+        std::map<std::string, std::string> portPowerOut;
         portPowerOut["Name"] = "PortR0";
         portPowerOut["Position"] = "right";
         portPowerOut["CarrierType"] = ANY_TYPE();
         portPowerOut["Direction"] = KPROD();
         portPowerOut["Variable"] = "PowerOut";
-        mDefaultPorts.insert("PortPowerOut", portPowerOut);
+        mDefaultPorts["PortPowerOut"] = portPowerOut;
     }
 
     void setPortPointers() {

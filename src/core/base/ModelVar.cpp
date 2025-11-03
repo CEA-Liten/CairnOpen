@@ -3,27 +3,29 @@
 #include "MilpData.h"
 
 
-ModelVar::ModelVar(const QString& a_Name, const QString& a_Unit, const QString& a_Currency)
-    : m_Name(a_Name), m_Unit(a_Unit), p_Unit(nullptr), m_Currency(a_Currency)
+ModelVar::ModelVar(const std::string& a_Name, t_unit a_Unit)
+    : m_Name(a_Name)
+{
+    m_Unit.set_Value(a_Unit);
+}
+
+ModelVar::~ModelVar()
 {
 }
 
-ModelVar::ModelVar(const QString& a_Name, const QString* pa_Unit, const QString& a_Currency)
-    : m_Name(a_Name), m_Unit(""), p_Unit(pa_Unit), m_Currency(a_Currency)
+std::string ModelVar::getUnit() const
 {
+    return m_Unit.get_Value();
 }
 
-QString ModelVar::getUnit() const {
-    QString unit = m_Unit;
-    if (p_Unit) unit = *p_Unit;
-    if (m_Currency != "") {
-        return (m_Currency + "/" + unit);
-    }
-    return unit;
-};
+void ModelVar::setUnit(t_unit a_Unit)
+{
+    m_Unit.set_Value(a_Unit);
+}
+
 
 /*****************************************************************************************************/
-ControlVar::ControlVar(const QString& aName,
+ControlVar::ControlVar(const std::string& aName,
     double* ap_Value,
     double* ap_DefaultValue, bool a_isMPC)
     : ModelVar(aName, "")
@@ -34,7 +36,7 @@ ControlVar::ControlVar(const QString& aName,
     p_Hist = nullptr;
 }
 
-ControlVar::ControlVar(const QString& aName,
+ControlVar::ControlVar(const std::string& aName,
     std::vector<double>* ap_Hist,
     double* ap_DefaultValue, bool a_isMPC)
     : ModelVar(aName, "")
@@ -50,12 +52,12 @@ ControlVar::~ControlVar()
     if (p_ZEVariable) delete p_ZEVariable;
 }
 
-void ControlVar::subscribeMPC(const QString& a_CompName, t_mapExchange& a_Import)
+void ControlVar::subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Import)
 {
     if (m_IsMPC) {
-        QString exName = a_CompName + "." + m_Prefix + m_Name;
+        std::string exName = a_CompName + "." + m_Prefix + m_Name;
         // TODO: vérif init coeff A et B
-        p_ZEVariable = new ZEVariables(exName, getUnit(), m_Name, "1", "0", true);
+        p_ZEVariable = new ZEVariables(exName, &m_Unit, m_Name, "1", "0", true);
         a_Import[exName] = p_ZEVariable;
     }
 }
@@ -71,7 +73,7 @@ void ControlVar::resize(size_t a_Size)
 }
 
 
-void ControlVar::set_Values(const QString& a_ControlMode,
+void ControlVar::set_Values(const std::string& a_ControlMode,
     const InputParam::t_mapParams& a_Params,
     const class MilpData& a_MilpData,
     bool a_FirstInit
@@ -86,8 +88,8 @@ void ControlVar::set_Values(const QString& a_ControlMode,
     if (vIsMPC) {
         // recopier les valeurs de la ZE: 
         if (p_ZEVariable) {
-            QVector<float>& vZEHist = *p_ZEVariable->ptrOutVariable();
-            size_t vSize = std::min((int)npdtPast + 1, vZEHist.size());
+            std::vector<double>& vZEHist = *p_ZEVariable->ptrOutVariable();
+            size_t vSize = std::min((size_t)npdtPast + 1, vZEHist.size());
             for (uint i = 0;i < vSize;i++) {
                 set_Value(i, vZEHist[i]);
             }
@@ -165,72 +167,27 @@ void ControlVar::set_Value(size_t i, double a_Value)
     }
 }
 
-
 /*****************************************************************************************************/
-ModelIO::ModelIO(const QString& aName,
-    t_flag a_IsUsed,
-    const QString& a_Unit,
-    const QString& aCurrency)
-    : ModelVar(aName, a_Unit, aCurrency)
+ModelIO::ModelIO(const std::string& aName, t_flag a_IsUsed, t_unit a_Unit)
+    : ModelVar(aName, a_Unit)
 {
     m_Type = EIOModelType::eMIPUndefined;
     m_IsUsed.set_Value(a_IsUsed);
 }
 
-ModelIO::ModelIO(const QString& aName,
+ModelIO::ModelIO(const std::string& aName,
     MIPModeler::MIPExpression* aPtr,
-    t_flag a_IsUsed,
-    const QString& a_Unit,
-    const QString& aCurrency
-)
-    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
+    t_flag a_IsUsed, t_unit a_Unit)
+    : ModelIO(aName, a_IsUsed, a_Unit)
 {
     m_Type = EIOModelType::eMIPExpression;
     p_Expr = aPtr;
 }
 
-ModelIO::ModelIO(const QString& aName,
+ModelIO::ModelIO(const std::string& aName,
     MIPModeler::MIPExpression1D* aPtr,
-    t_flag a_IsUsed,
-    const QString& a_Unit,
-    const QString& aCurrency
-)
-    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
-{
-    m_Type = EIOModelType::eMIPExpression1D;
-    p_Expr = aPtr;
-}
-//pointer
-ModelIO::ModelIO(const QString& aName,
-    t_flag a_IsUsed,
-    const QString* a_Unit,
-    const QString& aCurrency
-)
-    : ModelVar(aName, a_Unit, aCurrency)
-{
-    m_Type = EIOModelType::eMIPUndefined;
-    m_IsUsed.set_Value(a_IsUsed);
-}
-
-ModelIO::ModelIO(const QString& aName,
-    MIPModeler::MIPExpression* aPtr,
-    t_flag a_IsUsed,
-    const QString* a_Unit,
-    const QString& aCurrency
-)
-    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
-{
-    m_Type = EIOModelType::eMIPExpression;
-    p_Expr = aPtr;
-}
-
-ModelIO::ModelIO(const QString& aName,
-    MIPModeler::MIPExpression1D* aPtr,
-    t_flag a_IsUsed,
-    const QString* a_Unit,
-    const QString& aCurrency
-)
-    : ModelIO(aName, a_IsUsed, a_Unit, aCurrency)
+    t_flag a_IsUsed, t_unit a_Unit)
+    : ModelIO(aName, a_IsUsed, a_Unit)
 {
     m_Type = EIOModelType::eMIPExpression1D;
     p_Expr = aPtr;

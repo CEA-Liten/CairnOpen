@@ -44,7 +44,7 @@ or through a Graphical User Interface (|gui|).
 Modelling principles of |cairn| 
 ================================
 
-A multi-energy system (:ref:`energysystem`) is modelled by an set of technological components exchanging flows 
+A multi-energy system is modelled by an set of technological components exchanging flows 
 of different **energy carriers**, and/or state data (internal temperature, operating status...). 
 Each technological components is associated to a model that writes |milp| contribution to a global **optimization problem**. 
 An **optimization problem** consists of maximization or minimization of an **objective function** under constraints. 
@@ -231,7 +231,9 @@ Historic
 Citing
 ======
 
-If you use |cairn|, please cite the following paper [RPCG24]_.
+If you use |cairn|, please cite the following paper :cite:`ruby_persee_2024`.
 
-The folling paper [CBRL21]_ refers |cairn| .
+The folling paper :cite:`montignac_multi-criteria_2023` refers |cairn| .
 
+.. bibliography::
+    :all:

@@ -51,6 +51,17 @@ int main()
 	bool found = (vIter != ListAfterRemove.end());
 	if (!found) {
 		CairnAPI::MilpComponentAPI vH2_Load(m_Problem, "H2_Load", "SourceLoad");
+
+		CairnAPI::EnergyVectorAPI vH2 = m_Problem.get_EnergyCarrier("H2");
+
+		t_list vH2_Load_Ports = vH2_Load.get_DefaultPorts();
+		CairnAPI::MilpPortAPI vH2_Load_L0 = vH2_Load.get_Port("PortL0");
+		vH2_Load_L0.set_EnergyCarrier(vH2);
+		vH2_Load_L0.set_SettingValues({
+					{"Direction", "INPUT"},
+					{"Variable", "SourceLoadFlow"}
+		});
+
 		vH2_Load.set_SettingValues({
 			{"Direction", "Sink"},
 			{"LPModelONLY", false},
@@ -62,16 +73,6 @@ int main()
 			{"UseProfileLoadFlux","H2_Load.LoadMassFlowrate"}
 			}
 		);
-		CairnAPI::EnergyVectorAPI vH2 = m_Problem.get_EnergyCarrier("H2");
-
-		t_list vH2_Load_Ports = vH2_Load.get_DefaultPorts();
-		CairnAPI::MilpPortAPI vH2_Load_L0 = vH2_Load.get_Port("PortL0");
-		vH2_Load_L0.set_EnergyCarrier(vH2);
-		vH2_Load_L0.set_SettingValues({
-					{"Direction", "INPUT"},
-					{"Variable", "SourceLoadFlow"}
-		});
-
 
 		CairnAPI::BusAPI vBusH2 = m_Problem.get_Bus("H2_Bus");
 		TESTAPI("Re - create link",

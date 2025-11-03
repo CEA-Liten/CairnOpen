@@ -1,6 +1,6 @@
 #include "OperationSubModel.h"
 
-OperationSubModel::OperationSubModel(QObject* aParent) :
+OperationSubModel::OperationSubModel(CairnObject* aParent) :
 SubModel(aParent),
 mVariableCosts(2, 0.)
 {
@@ -25,8 +25,17 @@ void OperationSubModel::buildModel()
         closeExpressions();
     }
 
-    /* set SizeMax expression and add constraints on SizeMax and Installed variables */
+    /* set SizeMax expression and add constraints on SizeMax */
     setExpSizeMax();
+
+    /* add State and StartUpShutDown constraints : add On/Off variable */
+    if (mAddStateVariable) {
+        addStateConstraints(varMilpHorizon());
+    }
+
+    if (mAddStartUpShutDownVariable) {
+        addStartUpShutDown(varMilpHorizon());
+    }
 
     /** compute expressions, add variables and add constraints */
     computeModelContribution();
@@ -44,13 +53,13 @@ void OperationSubModel::computeDefaultIndicators(const double* optSol)
 bool OperationSubModel::defineDefaultVarNames(MilpPort* port)
 {
     // seulement PhysicalEquationCompo
-    if (port->ptrEnergyVector()->Type() == "FluidH2")
+    if (port->getCarrier()->Type() == "FluidH2")
     {
         port->setVariable("Power");
         port->setDirection(KPROD());
         return true;
     }
-    else if (port->ptrEnergyVector()->Type() == "Electrical")
+    else if (port->getCarrier()->Type() == "Electrical")
     {
         port->setVariable("Power");
         port->setDirection(KCONS());

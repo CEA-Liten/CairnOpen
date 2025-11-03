@@ -118,8 +118,11 @@ Glossary
 	LHV
 		Lower Heating Value
 
-	phase of investment
-		A time windows during the project for which the size of the component is optimized. A project can be composed of one phase of investment (one-shot optimisation), or several, see :ref:`investment_planif`. 
+	Phase of investment
+		A time windows during the project for which the size of the component is optimized. A project can be composed of one phase of investment (one-shot optimisation), or several, see :ref:`investment_planif`.
+
+	Uranie
+	    CEA open source software framework dedicated to uncertainty quantification, to sensitivity analysis, calibration and or generation of surrogate-models, optimisations, etc. It can be found `here <https://uranie.cea.fr/index>`__.  
 
 
 		

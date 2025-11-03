@@ -3,8 +3,6 @@
 
 class MultiObjCompo ;
 
-#include <QVector>
-#include <QDataStream>
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
 #include "MilpComponent.h"
@@ -21,7 +19,7 @@ class MultiObjCompo ;
 class CAIRNCORESHARED_EXPORT MultiObjCompo : public BusCompo
 {
 public:
-    MultiObjCompo(QObject* aParent, const QMap<QString, QString>& aComponent, const QMap < QString, QMap<QString, QString> >& aPorts,
+    MultiObjCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map < std::string, std::map<std::string, std::string> >& aPorts,
         MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
 
     virtual ~MultiObjCompo();

@@ -36,38 +36,6 @@ namespace CairnAPIUtils {
 		else return "";
 	}
 
-	//void lookupModelTypes(const std::string& modelsDir)
-	//{
-	//	t_list modelsList = get_Possible_Model_Names();
-	//	std::vector<std::string> dirList = lookupSubDirectories(modelsDir);
-
-	//	for (size_t i = 0; i < modelsList.size(); ++i)
-	//	{
-	//		bool exists = false;
-	//		std:string model = modelsList[i];
-	//		//look in which directory the model exist
-	//		for (size_t j = 0; j < dirList.size(); ++j)
-	//		{
-	//			exists = std::filesystem::exists(dirList[j] + "/" + model + ".h");
-	//			if (exists) {
-	//				std::string type = std::filesystem::path(dirList[j]).filename().string();
-	//				//if(type.size()) type[0] = toupper(type[0]);
-	//				convertTypeToUpperCase(type);
-	//				if (mModelTypes.find(type) != mModelTypes.end()) {
-	//					mModelTypes[type].push_back(model);
-	//				}
-	//				else {
-	//					mModelTypes[type] = { model };
-	//				}
-	//				break;
-	//			}
-	//		}
-	//		if (!exists) {
-	//			qWarning() << "The type of " + QString::fromStdString(model) + " is unknown!";
-	//		}
-	//	}
-	//}
-
 	std::map<std::string, std::string> ParserTxt(const std::string& filename)
 	{
 		std::string line;
@@ -110,23 +78,18 @@ namespace CairnAPIUtils {
 		return dataMap;
 	}
 
-	void initModelTypesMap(const std::string& sourceDir)
+	void initModelTypesMap()
 	{
 		//read model types from .txt file
-		QString exeDir = qEnvironmentVariable("CAIRN_BIN", QDir::currentPath());
-		std::string modelTypesFileName = exeDir.toStdString() + (std::string)"/../resources/modelTypes.txt";
+		std::string exeDir = std::getenv("CAIRN_BIN");		
+		std::string modelTypesFileName = exeDir + (std::string)"/../resources/modelTypes.txt";
 		mModelTypes = ParserTxt(modelTypesFileName);
-
-//		lookupModelTypes(sourceDir + "/models");
-//#ifdef PRIVATE_MODELS
-//	lookupModelTypes(sourceDir + "/privateModels");
-//#endif
 	}
 
 	t_list get_Possible_Model_Names()
 	{
 		//Dynamics list from *CairnModel.dll		
-		ModelFactory vModelFactory;
+		ModelFactory vModelFactory(spdlog::default_logger());
 		vModelFactory.findModels();
 		return vModelFactory.getModelList();		
 	}
@@ -166,10 +129,10 @@ namespace CairnAPIUtils {
 		t_list vRet;
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				QList<QString> vQList;
+				std::vector<std::string> vQList;
 				vInput->getParameters(vQList, a_setLimited);
 				for (auto& vParam : vQList) {
-					vRet.push_back(vParam.toStdString());
+					vRet.push_back(vParam);
 				}
 			}
 		}
@@ -211,7 +174,7 @@ namespace CairnAPIUtils {
 
 	t_value getParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name) {
 		t_value vRet = "parameter doesn't exist";
-		QString vQName = QString(a_Name.c_str());
+		std::string vQName = std::string(a_Name.c_str());
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {				
 				if (vInput->getParameterValue(vQName, vRet))
@@ -224,13 +187,13 @@ namespace CairnAPIUtils {
 	void getParameters(std::vector<InputParam*> a_Inputs, t_dict& a_Params) {
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				QList<QString> vQList;
+				std::vector<std::string> vQList;
 				vInput->getParameters(vQList);
 				for (auto& vParamName : vQList) {
 					// mettre les valeurs vide ?					
 					t_value vRet;
 					if (vInput->getParameterValue(vParamName, vRet))
-						a_Params[vParamName.toStdString()] = vRet;
+						a_Params[vParamName] = vRet;
 				}
 			}
 		}
@@ -238,52 +201,41 @@ namespace CairnAPIUtils {
 
 	bool setParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const t_value& a_Value) {
 		bool vOk = true;
-		if (find(mNonModifiableParams.begin(), mNonModifiableParams.end(), a_Name) == mNonModifiableParams.end())
-		{
-			QString vQName = QString(a_Name.c_str());
-			QString vQValue = QString(getParamValue(a_Value).c_str());
-			std::vector<double> vVectValue;
-			if (vQValue == "NON_COMPATIBLE") {
-				//try vector of double
-				vVectValue = getParamVectorValue(a_Value);
-			}
-			bool vFind = false;
-			for (auto& vInput : a_Inputs) {
-				if (vInput) {
-					if (vQValue != "NON_COMPATIBLE") {
-						vFind = vInput->setParameterValue(vQName, vQValue);
-					}
-					else {
-						vFind = vInput->setParameterValue(vQName, vVectValue);
-					}
-					if (vFind) break;
+		std::string vQName = a_Name;
+		std::string vQValue = getParamValue(a_Value);
+		std::vector<double> vVectValue;
+		if (vQValue == "NON_COMPATIBLE") {
+			//try vector of double
+			vVectValue = getParamVectorValue(a_Value);
+		}
+		bool vFind = false;
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vQValue != "NON_COMPATIBLE") {
+					vFind = vInput->setParameterValue(vQName, vQValue);
 				}
+				else {
+					vFind = vInput->setParameterValue(vQName, vVectValue);
+				}
+				if (vFind) break;
 			}
-			vOk &= vFind;
 		}
-		else {
-			setError(errDefault, a_Name + " cannot be modified!");
-		}
+		vOk &= vFind;
 		return vOk;
 	}
 
 	bool setParameters(std::vector<InputParam*> a_Inputs, const t_dict& a_Params) {
 		bool vOk = true;
 		for (auto& vParam : a_Params) {
-			if (find(mNonModifiableParams.begin(), mNonModifiableParams.end(), vParam.first) != mNonModifiableParams.end()) 
-			{
-				//qWarning() << (vParam.first+" cannot be modified!").c_str();
-				continue;
-			}
 			vOk &= setParameter(a_Inputs, vParam.first, vParam.second);
 		}
 		return vOk;
 	}
 
-	t_value getShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	std::string getParamShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
 	{
-		t_value vRet = "parameter doesn't exist";
-		QString vQName = QString(a_Name.c_str());
+		std::string vRet = "parameter doesn't exist";
+		std::string vQName = std::string(a_Name.c_str());
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
 				if (vInput->getParameter(vQName))
@@ -313,9 +265,56 @@ namespace CairnAPIUtils {
 		return vRet;
 	}
 
+	bool getParamMandatoryValue(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	{
+		bool vRet = true;
+		std::string vQName = std::string(a_Name.c_str());
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vInput->getParameter(vQName))
+				{
+					vRet = vInput->getParameter(vQName)->IsBlocking();
+					break;
+				}
+			}
+		}
+		return vRet;
+	}
+
+	bool isDependentParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	{
+		bool vRet = false;
+		std::string vQName = std::string(a_Name.c_str());
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vInput->getParameter(vQName))
+				{
+					vRet = vInput->getParameter(vQName)->isDependent();
+					break;
+				}
+			}
+		}
+		return vRet;
+	}
+
+	std::string getParamUnit(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	{
+		std::string vRet = "-";
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vInput->getParameter(a_Name))
+				{
+					vRet = vInput->getParameter(a_Name)->getUnit();
+					break;
+				}
+			}
+		}
+		return vRet;
+	}
+
 	void setError(ECodeError a_Err, const std::string& a_msg) {
 		if (a_Err != noError) {
-			QString vErrMsg(a_msg.c_str());
+			std::string vErrMsg(a_msg.c_str());
 			Cairn_Exception cairn_error;
 			switch (a_Err) {
 			case noCairn:
@@ -358,7 +357,7 @@ namespace CairnAPIUtils {
 				cairn_error.setMessage(vErrMsg);
 				break;
 			}
-			throw std::range_error(cairn_error.message().toStdString());
+			throw std::runtime_error(cairn_error.message());
 		}
 	}
 }

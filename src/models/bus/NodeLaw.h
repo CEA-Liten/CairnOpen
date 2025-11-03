@@ -24,7 +24,7 @@ class MODELS_DECLSPEC NodeLaw : public BusSubModel
 {
 public:
 //----------------------------------------------------------------------------------------------------
-    NodeLaw(QObject* aParent);
+    NodeLaw(CairnObject* aParent);
     ~NodeLaw();
 //----------------------------------------------------------------------------------------------------
     void computeModelContribution() override;
@@ -56,7 +56,7 @@ public:
         //bool
         addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, false, SFunctionFlag({ eFTypeOrNot, {  &mMinConstraint, &mMaxConstraint, &mStrictIntegrateConstraint, &mMinIntegrateConstraint, &mMaxIntegrateConstraint, &mMaxFlexIntegrateConstraint} }), true, "When true the values of *BusValue are assumed over one year instead of optimization horizon"); // || mStrictConstraint
         //double
-        addParameter("PenaltyCost", &mPenaltyCost, 1.e12, false, &mMaxFlexIntegrateConstraint, "", "Currency/kg");        /** Huge penalty Cost, in Currency/kg, added by MaxFlexIntegrateContraint in case of constraint overhead */
+        addParameter("PenaltyCost", &mPenaltyCost, 1.e12, false, &mMaxFlexIntegrateConstraint, "Huge penalty Cost in Currency/kg - added by MaxFlexIntegrateContraint in case of constraint overhead", SFunctionUnit({ eFTypeDivision, { pCurrency() }, "kg" }) );
         addParameter("InitBusValue", &mInitBusValue, 0., false, true, "Initial Bus value to be used for first step of rolling horizon - default to 0");
         addParameter("StrictConstraintBusValue", &mStrictConstraintBusValue, 0., false, &mStrictConstraint);/** if Strictconstraint=true, at each time, sum of connected flows should be equal to this value - default is 0, for flow balance for example */
         addParameter("MinConstraintBusValue", &mMinConstraintBusValue, 0., &mMinConstraint, &mMinConstraint);/** if MinConstraint=true, at each time, sum of connected flows should be >= this value */
@@ -78,17 +78,16 @@ public:
         addIO("PenaltyConstraintCosts", &mExpPenaltyConstraintCosts, true, mCurrency);    /** Computed penalty costs */
         setPenaltyConstraintExpression("PenaltyConstraintCosts");
        
-        addControlIO("BusBalance", &mBusBalance, true, mEnergyVector->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
-        addIO("BusConstraintGap", &mExpConstraintGap, true, mEnergyVector->pFluxUnit());
+        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
+        addIO("BusConstraintGap", &mExpConstraintGap, true, mMainCarrier->pFluxUnit());
 
-        addIO("Integration", &mExprIntegrate, SFunctionFlag({ eFTypeOrNot, { &mMaxIntegrateConstraint, &mMinIntegrateConstraint, &mMinIntegrateSeparateConstraint, &mMaxIntegrateSeparateConstraint} }), mEnergyVector->pStorageUnit());
+        addIO("Integration", &mExprIntegrate, SFunctionFlag({ eFTypeOrNot, { &mMaxIntegrateConstraint, &mMinIntegrateConstraint, &mMinIntegrateSeparateConstraint, &mMaxIntegrateSeparateConstraint} }), mMainCarrier->pStorageUnit());
     }
 
     void declareModelIndicators() {
         // Supported types are: double
         BusSubModel::declareDefaultModelIndicators();
-        QString storageUnit = *(mEnergyVector->pStorageUnit());
-        mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", storageUnit,"BusBalance");
+        mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", mMainCarrier->pStorageUnit(),"BusBalance");
     }
 //----------------------------------------------------------------------------------------------------
     void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue, double aMinIntegrateConstraintBusValue, 

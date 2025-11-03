@@ -3,13 +3,6 @@
 
 class OptimProblem;
 
-#include <QtCore>
-#include <QMap>
-#include <QVector>
-#include <QDataStream>
-#include <QDebug>
-#include <QDir>
-
 #include <math.h>   
 #include <iostream>
 #include <fstream>
@@ -22,7 +15,6 @@ class OptimProblem;
 
 #include "TecEcoEnv.h"
 #include "MilpData.h"
-#include "MIPModeler.h"
 #include "MilpComponent.h"
 #include "ZEVariables.h"
 #include "JsonDescription.h"
@@ -84,7 +76,7 @@ static inline MatrixXf gradient(double (*Y_func)(MatrixXf*,MatrixXf*),MatrixXf *
         for (int j = 0; j<2; j++){
             Xdx = pos->replicate(1,1);
             Xdx(i,j)=Xdx(i,j)+(*dx);
-            QString strM = QString::fromStdString(printMat(&Xdx));
+            std::string strM = (printMat(&Xdx));
             gradY(i,j) = ((Y_func)(&Xdx,param) - (Y_func)(pos,param))/(*dx);
         }
     }
@@ -92,8 +84,8 @@ static inline MatrixXf gradient(double (*Y_func)(MatrixXf*,MatrixXf*),MatrixXf *
 }
 
 struct GradDescResult {   // Declare PERSON struct type
-    QList<MatrixXf> X;   // Declare member types
-    QList<double> Y;
+    std::vector<MatrixXf> X;   // Declare member types
+    std::vector<double> Y;
     double gap;
     int iter;
     bool cond;
@@ -105,10 +97,10 @@ static inline GradDescResult GradientDescent(double (*Y_func)(MatrixXf*,MatrixXf
                                      int nbMaxIterations, double gapStop, double dx,
                                      double alpha){
     //Preparation de X et recopie de Xinit
-    QList<MatrixXf> X;
-    QList<double> Y;
-    X.append(*init);
-    Y.append(Y_func(&X[0],param));
+    std::vector<MatrixXf> X;
+    std::vector<double> Y;
+    X.push_back(*init);
+    Y.push_back(Y_func(&X[0],param));
     int iter = 1;
     MatrixXf grad = gradient(Y_func,init,param,&dx);
     double gap = 10;
@@ -119,16 +111,16 @@ static inline GradDescResult GradientDescent(double (*Y_func)(MatrixXf*,MatrixXf
     while(abs(gap)>gapStop && iter<nbMaxIterations && cond && time<120){
         b= std::chrono::high_resolution_clock::now();
         time= std::chrono::duration_cast<std::chrono::seconds>(b - a).count();
-        X.append(X[iter-1] - (alpha)*grad);
-        Y.append(Y_func(&X[iter],param));
+        X.push_back(X[iter-1] - (alpha)*grad);
+        Y.push_back(Y_func(&X[iter],param));
         gap = Y[iter]-Y[iter-1];
         if (Y[iter]>Y[iter-1])
             cond=false;
         grad = gradient(Y_func,&X[iter],param,&dx);
         iter++;
     }
-    qDebug()<<"Gradient stops:"<<gap<<"iter"<<iter<<"cond"<<cond;
-    qDebug()<<"time:"<<time;
+    cDebug()<<"Gradient stops:"<<gap<<"iter"<<iter<<"cond"<<cond;
+    cDebug()<<"time:"<<time;
     GradDescResult res;
     res.X = X;
     res.Y = Y;
@@ -138,24 +130,42 @@ static inline GradDescResult GradientDescent(double (*Y_func)(MatrixXf*,MatrixXf
     return(res);
 }
 
-typedef MilpComponent* (*f_MilpComponent)(QObject* aParent, QString aName, MilpData* aMilpData, TecEcoEnv &aTecEcoEnv,
-                                          const QMap<QString, QString> &aComponent, const QMap < QString, QMap<QString, QString> >& aPorts);
+typedef MilpComponent* (*f_MilpComponent)(CairnObject* aParent, std::string aName, MilpData* aMilpData, TecEcoEnv &aTecEcoEnv,
+                                          const std::map<std::string, std::string> &aComponent, const std::map < std::string, std::map<std::string, std::string> >& aPorts);
 
 class CAIRNCORESHARED_EXPORT OptimProblem : public MilpComponent
 {
-    Q_OBJECT
+    
 public:
-    OptimProblem(QObject* aParent, QString aName, MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, 
-        const bool& aStdAloneMode = true, const QMap<QString, QString>& aComponent = {});
-    virtual ~OptimProblem();
+    OptimProblem(CairnObject* aParent, std::string aName, MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, 
+        const bool& aStdAloneMode = true, const std::map<std::string, std::string>& aComponent = {});
+    ~OptimProblem();
+
+    TecEcoEnv* getTecEcoEnv() { return mTecEcoEnv; }
+    TecEcoAnalysis* getTecEcoAnalysis() { return mTecEcoAnalysis; };// mTecEcoAnalysis == mCompoModel
+
+    SimulationControl* getSimulationControl() { return mSimulationControl; };
+    void createSimulationControlFromParamMap();
+    bool createSimulationControl(const std::string& mSimulationControlName = "SimulationControl", const std::map<std::string, std::string>& paramMap = {});
+
+    Solver* getSolver() { return mSolver; }
+    bool createSolver(const std::string& aName = "Solver", const std::map<std::string, std::string>& paramMap = {});
+
+    //getEnergyVector()
+    bool createEnergyVector(const std::string& aName, const std::string& aType, const std::map<std::string, std::string> paramMap = {});
+
+    std::vector<BusCompo*> BusComponents();
+    std::vector<MilpComponent*> NonBusMilpComponents();
+    std::map<std::string, MilpComponent*> MilpComponents(); //all MilpComponents including Buses
+
+    std::vector<EnergyVector*> EnergyVectors();
 
     void doInit(const StudyPathManager& aStudy, bool aLoad);
-    void doInit(const QString& aDescFile, const QString& aScenarioName);
 
     void setMIPModel(MIPModeler::MIPModel* aModel) ;
     void setObjective(MIPModeler::MIPExpression* aExpObjective) ;
 
-    QString getOptimDirection() ;
+    std::string getOptimDirection() ;
 
     int initProblem();
     int initSubModelInput();
@@ -175,18 +185,22 @@ public:
     void exportEnvImpactParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
     void exportPortEnvImpactParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
     void exportParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
-    void exportParameters(std::fstream& out, QString& name, std::map<QString, InputParam::ModelParam*>& paramMap, EnergyVector* aEnergyVector=nullptr, QMap<QString, QString> aTimeSeriesNames={});
+    void exportParameters_all_files(std::string aFileName, const std::string& encoding = "UTF-8");
+    void exportParameters(std::fstream& out, const std::string& name, const std::map<std::string, InputParam::ModelParam*>& paramMap,
+        const std::map<std::string, std::string>& aTimeSeriesNames = {}, const std::map<std::string, std::string>& labelMap = {});
 
     void initSubModelTopology();
     void setStopSignal(int* stopSignal);
-    void solveProblem(QString& optimLogFileName, const int cycle, const QMap<QString, bool> paramMap = QMap<QString, bool>(), const bool aExportResultsEveryCycle = false);
+    void solveProblem(std::string& optimLogFileName, const int cycle, const std::map<std::string, bool> paramMap = std::map<std::string, bool>(), const bool aExportResultsEveryCycle = false);
 
     void prepareOptim();
     void exportResults();
     void setDefaultsResults();
     void computeTecEcoEnvAnalysis(const int& aNsol, const int& istat);
-    void exportMultiObjFile(std::fstream& out, int aNsol);
-    void exportAllTecEcoEnvAnalysis(const std::string &aResultFile, const std::string& range, const std::string& encoding = "UTF-8", const bool isRollingHorizon=false, const int aNsol=0);
+    void exportMultiObjFile(std::fstream& out, int aNsol, const bool showDescription);
+    void exportAllTecEcoEnvAnalysis(const std::string &aResultFile, const std::string& range, const bool showDescription = false, const std::string& encoding = "UTF-8", const bool isRollingHorizon=false, const int aNsol=0);
+    void exportResultsPLAN(std::string aResultFile, const int& aNsol = 0);
+    
     void computeHistState();
     void exportOptimaSizeAllCycles(const std::string& aFileName, const int cycle, const std::string &encoding = "UTF-8");
 
@@ -196,49 +210,27 @@ public:
     void buildManualObjectiveConstraints();
     void buildBusConstraints();
 
-    void registerMilpComponent(QMap<QString,QString> component, MilpComponent* lptr);
-    void registerEnergyVector(const QString &componentId, EnergyVector *lptr);
-
     void createTecEcoAnalysis();
     void createMilpComponentsFromParamMap();
     void createLinksToBus();
     void createDynamicIndicators();
     void computeDynamicIndicators(const int& aNsol); //should be called after the end of the simulation
 
-    bool createComponent(const QMap<QString, QString> &component, const QMap < QString, QMap<QString, QString> >& ports={});
-    void createLinksToBus(MilpComponent *aComponent);
+    bool createComponent(const std::map<std::string, std::string> &component, const std::map < std::string, std::map<std::string, std::string> >& ports={});
+    void createLinksToBus(MilpComponent* lptrComponent);
     void deleteComponent(MilpComponent* lptrComponent);
 
-    void createZEVariablesList() ;
-    const t_mapExchange &ListSubscribedVariables() { return mListSubscribedVars; }
-    t_mapExchange &ListPublishedVariables() { return mListPublishedVars; }        /** define OUTPUT Variable of component */
+    const t_mapExchange& ListSubscribedVariables() { return mListSubscribedVars; } /** define INPUT Variable of component */
+    t_mapExchange& ListPublishedVariables() { return mListPublishedVars; }        /** define OUTPUT Variable of component */
+
+    void createImportZEVariablesList();
+    void createExportZEVariablesList();
 
     int SaveFullArchitecture(const std::string& filename = "", const std::string & posAlgorithm = "");
-    void jsonSaveDocument (QFile* jsonOutputFile, QString encoding="UTF-8");
-    void jsonSaveGuiComponents(QJsonArray &componentsArray);
-    void jsonSaveGuiLinks(QJsonArray &linksArray);
-    void jsonSaveGuiLinkNodes(QJsonArray& linksArray, const QString& compoName, const QString& compoPortName, const QString& busName, const QString& busPortName,
-        const int& compoX, const int& compoY, const int& busX, const int& busY); 
-    TecEcoEnv* getTecEcoEnv(){return mTecEcoEnv;}
+               
+    f_MilpComponent LoadDllMilpComponent(std::string Filename, std::string ModuleName) ;
 
-    bool createEnergyVector(const QString& aName, const QString &aType, const QMap<QString, QString> paramMap={});
-    EnergyVector* getEnergyVector(const QString& aName);
-    QList<EnergyVector*> getEnergyVectorList();
-    void deleteEnergyVector(const QString& aName);
-
-    bool createSolver(const QString& aSolverName = "Cbc", const QMap<QString, QString>& paramMap = {});
-    Solver* getSolver() { return mSolver; }
-
-    void createSimulationControlFromParamMap();
-    bool createSimulationControl(const QString& mSimulationControlName = "SimulationControl", const QMap<QString, QString>& paramMap={});
-    SimulationControl* getSimulationControl() { return mSimulationControl; };
-    
-    TecEcoAnalysis* getTecEcoAnalysis() { return mTecEcoAnalysis; };
-    QMap<QString, MilpComponent*> getMapMilpComponents() { return mMapMilpComponents; }
-
-    f_MilpComponent LoadDllMilpComponent(QString Filename, QString ModuleName) ;
-
-    QString getOptimisationStatus() ;
+    std::string getOptimisationStatus() ;
     int getInterpretedOptimStatus();
     bool getIsCheckConflicts();
 
@@ -247,7 +239,7 @@ public:
     void computeGUIBusLocations();
     void computeGUIComponentLocations();
 
-    static QString getRelease() {return GS::Cairn_Release;}
+    static std::string getRelease() {return GS::Cairn_Release;}
 
     void setStdAloneMode (const bool & abool) {mStdAloneMode = abool ;}
 
@@ -275,20 +267,24 @@ private:
     MIPModeler::MIPExpression* mExpObjective;
     int mOptimStatus;
 
-    QVector< QMap<QString,QString> > mMilpComponents ;      // Listes cle / valeur de description des composants MILPs a partir du fichier de description
-    QMap<QString,MilpComponent*>   mMapMilpComponents ;   // map nom / pointeurs des composants MILPs du probleme
-    QMap<QString,EnergyVector*>   mMapEnergyVectors ;
+    std::vector< t_mapParams > mMilpComponents ;      // Listes cle / valeur de description des composants MILPs a partir du fichier de description
 
     t_mapExchange mListPublishedVars;  // export
     t_mapExchange mListSubscribedVars; // import
 
     //------------------------------ Dynamic Indicators ----------------------------------------------------------------- 
-    QVector< QMap<QString, QString> > mDynamicIndicatorsData{}; // List of dynamic indicators data in the form "key: value"  
-    QVector<DynamicIndicator*> mDynamicIndicators{}; // List of pointers to DynamicIndicator objects  
+    std::vector< t_mapParams > mDynamicIndicatorsData{}; // List of dynamic indicators data in the form "key: value"  
+    std::vector<DynamicIndicator*> mDynamicIndicators{}; // List of pointers to DynamicIndicator objects  
 
     bool mExportIndicators;
 
     bool newCompoModel();    
+
+    void jsonSaveDocument(ojson& jsonOutputFile);
+    void jsonSaveGuiComponents(ojson& componentsArray);
+    void jsonSaveGuiLinks(ojson& linksArray);
+    void jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& compoName, const std::string& compoPortName, const std::string& busName, const std::string& busPortName,
+        const int& compoX, const int& compoY, const int& busX, const int& busY);
 };
 
 #endif // OptimProblem_H

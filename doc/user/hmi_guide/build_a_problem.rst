@@ -1,13 +1,13 @@
 .. _build_a_problem:
 
-#####################
+###############
 Build a problem
-#####################
+###############
 
 In the following section the user can find practical informations concerning the basics for building up a problem in the |cairn| platform.
 
 Getting started: Launch |cairn|
-================================
+===============================
 
 To start |cairn|, run the provided **RunGui.bat** file. This will initialize the software and the graphical user interface (|gui|) will open. 
 In order to create a new problem once the |gui| is open :
@@ -180,7 +180,7 @@ Once the group is created, its name can be changed at the top left of it. At the
 
 .. _load_input_timeseries:
 Upload the Input time series
-===========================
+============================
 
 Now that the architecture is defined on the |gui|, the user can proceed to upload the Input Time Series by using the 
 dedicated drop down menu as showed in :numref:`LoadTimeSeries`.

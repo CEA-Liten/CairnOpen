@@ -3,7 +3,6 @@
 #include "GlobalSettings.h"
 using namespace GS ;
 using namespace EV ;
-#include "qdebug.h"
 
 EV::Struct_Universal_Parameters Universal_Parameters(1.38e-23,
 6.02214179e23,
@@ -26,29 +25,28 @@ EV::Fluid_Properties    const EnergyVector::Fuel = Fill_Fluid_Properties(EV::Flu
 double EnergyVector::Default_Pressure = 1.01325;
 double EnergyVector::Default_Temperature = 20;
 
-const QMap<QString, double> EnergyVector::mPowerToMW   = { {"GW" ,1.e3}, {"MW"  ,1.}, {"kW" ,1.e-3}, {"W" ,1.e-6} };
-const QMap<QString, double> EnergyVector::mEnergyToMWh = { {"GWh",1.e3}, {"MWh" ,1.}, {"kWh",1.e-3}, {"Wh",1.e-6}, {"kJ", 1.e3/3600.}, {"MJ", 1.e6/3600.} };
-const QMap<QString, double> EnergyVector::mMassToKg    = { {"t"  ,1.e3}, {"kg"  ,1.}, {"g"  ,1.e-3} };
-const QMap<QString, double> EnergyVector::mFlowToKgPh  = { {"t/h",1.e3}, {"kg/h",1.} };
+const std::map<std::string, double> EnergyVector::mPowerToMW   = { {"GW" ,1.e3}, {"MW"  ,1.}, {"kW" ,1.e-3}, {"W" ,1.e-6} };
+const std::map<std::string, double> EnergyVector::mEnergyToMWh = { {"GWh",1.e3}, {"MWh" ,1.}, {"kWh",1.e-3}, {"Wh",1.e-6}, {"kJ", 1.e3/3600.}, {"MJ", 1.e6/3600.} };
+const std::map<std::string, double> EnergyVector::mMassToKg    = { {"t"  ,1.e3}, {"kg"  ,1.}, {"g"  ,1.e-3} };
+const std::map<std::string, double> EnergyVector::mFlowToKgPh  = { {"t/h",1.e3}, {"kg/h",1.} };
 
-EnergyVector::EnergyVector(QObject* aParent, const QString& aName, const QString& aType, const QMap<QString, QString> aComponent)
-    : QObject(aParent),
-    mName(aName),
-    mType(aType),
+EnergyVector::EnergyVector(CairnObject* aParent, const std::string& aName, const std::string& aType, const std::map<std::string, std::string> aComponent)
+    : CairnObject(aParent, aName),
+    mCarrierType(aType),
     mEnergyColour("")
 {
-    this->setObjectName(aName);    
+    setObjectType("EnergyVector");
     declareCompoInputParam();
     setCompoInputParam(aComponent);
-    if (!aComponent.contains("Type")) {
-        mType = aType;
+    if (aComponent.find("Type") == aComponent.end()) {
+        mCarrierType = aType;
     }
     InitEnergyVectorParam(aComponent);
 
-    qInfo() << " Energy Vector " << mName << " of type " << mType ;
-    qInfo() << " Energy Vector " << mName << " use MassCarrier property " << isMassCarrier() << " RHO " << mRHO ;
-    qInfo() << " Energy Vector " << mName << " use HeatCarrier property " << isHeatCarrier() << " CP  " << mCP  ;
-    qInfo() << " Energy Vector " << mName << " use FuelCarrier property " << isFuelCarrier() << " LHV " << mLHV ;
+    cInfo() << " Energy Vector " <<objectName() << " of type " << mCarrierType;
+    cInfo() << " Energy Vector " << objectName() << " use MassCarrier property " << isMassCarrier() << " RHO " << mRHO ;
+    cInfo() << " Energy Vector " << objectName() << " use HeatCarrier property " << isHeatCarrier() << " CP  " << mCP  ;
+    cInfo() << " Energy Vector " << objectName() << " use FuelCarrier property " << isFuelCarrier() << " LHV " << mLHV ;
 }
 
 EnergyVector::~EnergyVector()
@@ -62,11 +60,9 @@ EnergyVector::~EnergyVector()
 void EnergyVector::declareCompoInputParam()
 {
     //------------------------------ options ------------------------------
-    mCompoInputParam = new InputParam (this,"CompoInputParam"+ mName) ;
-    //QString
-    mCompoInputParam->addParameter("Type", &mType, "", false, true,"Energy vector type specifying the energy form among: Electrical - Thermal - Fluid - Material");
-    mCompoInputParam->addParameter("Xpos", &mXpos, 0, false, true, "User interface positioning of the object", "", "DONOTSHOW");
-    mCompoInputParam->addParameter("Ypos", &mYpos, 0, false, true, "User interface positioning of the object", "", "DONOTSHOW");
+    mCompoInputParam = new InputParam (this,"CompoInputParam"+ Name()) ;
+    //std::string
+    mCompoInputParam->addParameter("Type", &mCarrierType, "Electrical", false, true,"Energy vector type specifying the energy form among: Electrical - Thermal - Fluid - Material");
     mCompoInputParam->addParameter("MassUnit", &mMassUnit, "kg", false, true,"Unit to be used for mass - default is kg","-");
     mCompoInputParam->addParameter("EnergyUnit", &mEnergyUnit, "MWh", false, true,"Unit to be used for energy - default is MWh","-");
     mCompoInputParam->addParameter("PowerUnit", &mPowerUnit, "MW", false, true,"Unit to be used for power - default is MW","-");
@@ -77,8 +73,6 @@ void EnergyVector::declareCompoInputParam()
     mCompoInputParam->addParameter("StorageUnit", &mStorageUnit, "", false, true, "Unit to be used for storage capacity", "", "DONOTSHOW");
     mCompoInputParam->addParameter("PotentialName", &mPotentialName, "", false, true,"Name to be used for potential eg Pressure - Temperature...");
     mCompoInputParam->addParameter("PotentialUnit", &mPotentialUnit, "", false, true,"Unit to be used for constant potential","Bar");
-    mCompoInputParam->addParameter("SurfaceUnit", &mSurfaceUnit, "m2", false, true, "Unit to be used for surface - default is m2", "-");
-    mCompoInputParam->addParameter("PeakUnit", &mPeakUnit, "MWc", false, true, "Unit to be used for peak - default is Megawatt-crete ", "-");
     mCompoInputParam->addParameter("EnergyName", &mEnergyName, "Energy", false, true,"Name to be used for Energy","", "UnitNames");
     mCompoInputParam->addParameter("PowerName", &mPowerName, "Power", false, true,"Name to be used for Power","", "UnitNames");
     //bool
@@ -86,356 +80,328 @@ void EnergyVector::declareCompoInputParam()
     mCompoInputParam->addParameter("IsHeatCarrier",&mIsHeatCarrier, false, false, true,"Option giving heat capacity ability to energy vector - Default to true for Electrical and Thermal types - false for Fluids and Material");
     mCompoInputParam->addParameter("IsFuelCarrier",&mIsFuelCarrier, false, false, true,"Option giving heating vaue ability to energy vector - Default to false for Electrical and Thermal types or non fuel Fluids - true for Fluid and Material fuels");
     //------------------------------ ! timeseries Names ! ------------------------------
-    mTimeSeriesParam = new InputParam(this, "TimeSeriesSettings" + mName);
-    //QString
-    mTimeSeriesParam->addParameter("UseProfileBuyPrice", &mUseProfileBuyPrice, "", false, true,"Optional buy price time profile","EUR/StorageUnit");
-    mTimeSeriesParam->addParameter("UseProfileSellPrice", &mUseProfileSellPrice, "", false, true,"Optional sell price time profile","EUR/StorageUnit");
-    mTimeSeriesParam->addParameter("UseProfileBuyPriceSeasonal", &mUseProfileBuyPriceSeasonal, "", false, true, "Optional buy price seasonal time profile", "EUR/StorageUnit");
+    mTimeSeriesParam = new InputParam(this, "TimeSeriesSettings" + Name());
+    //std::string
+    mTimeSeriesParam->addParameter("UseProfileBuyPrice", &mUseProfileBuyPrice, "", false, true,"Optional buy price time profile", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    mTimeSeriesParam->addParameter("UseProfileSellPrice", &mUseProfileSellPrice, "", false, true,"Optional sell price time profile", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    mTimeSeriesParam->addParameter("UseProfileBuyPriceSeasonal", &mUseProfileBuyPriceSeasonal, "", false, true, "Optional buy price seasonal time profile", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
     //------------------------------ parameters ------------------------------
-    mCompoInputSettings = new InputParam (this,"CompoInputSettings"+ mName) ;
+    mCompoInputSettings = new InputParam (this,"CompoInputSettings"+ Name()) ;
     //double
-    mCompoInputSettings->addParameter("Potential", &mPotential, 0., false, true, "Voltage- Pressure- Temperature","V-Bar-degC");
-    mCompoInputSettings->addParameter("LHV", &mLHV, 1., &mIsFuelCarrier, true, "Heat Value of fuel type carriers - Use 1. for pure energy model ","EnergyUnit/MassUnit");
-    mCompoInputSettings->addParameter("CP", &mCP, 0., &mIsHeatCarrier, true, "Heat Capacity of heat carriers ","J/K/kg");
-    mCompoInputSettings->addParameter("GHV", &mGHV, 0., &mIsFuelCarrier, true, "Gross Heat Value - Use 1. for pure energy model ","EnergyUnit/MassUnit");
-    mCompoInputSettings->addParameter("RHO", &mRHO, 0., &mIsMassCarrier, true, "Density of fluid type carriers","kg/m3");
-    mCompoInputSettings->addParameter("BuyPrice", &mBuyPrice, 0., false, true, "Constant BuyPrice per mass or energy units","EUR/StorageUnit");
-    mCompoInputSettings->addParameter("BuyPriceSeasonal", &mBuyPriceSeasonal, 0., false, true, "Constant BuyPriceSeasonal per mass or energy units", "EUR/StorageUnit");
-    mCompoInputSettings->addParameter("SellPrice", &mSellPrice, 0., false, true, "Constant SellPrice per mass or energy units","EUR/StorageUnit");
+    mCompoInputSettings->addParameter("Potential", &mPotential, 0., false, true, "Voltage- Pressure- Temperature", "V-Bar-degC");
+    mCompoInputSettings->addParameter("LHV", &mLHV, 1., &mIsFuelCarrier, true, "Heat Value of fuel type carriers - Use 1. for pure energy model", SFunctionUnit({ eFTypeDivision, { &mEnergyUnit, &mMassUnit } }));
+    mCompoInputSettings->addParameter("CP", &mCP, 0., &mIsHeatCarrier, true, "Heat Capacity of heat carriers ", "J/K/kg");
+    mCompoInputSettings->addParameter("GHV", &mGHV, 0., &mIsFuelCarrier, true, "Gross Heat Value - Use 1. for pure energy model ", SFunctionUnit({ eFTypeDivision, { &mEnergyUnit, &mMassUnit } }));
+    mCompoInputSettings->addParameter("RHO", &mRHO, 0., &mIsMassCarrier, true, "Density of fluid type carriers", "kg/m3");
+    mCompoInputSettings->addParameter("BuyPrice", &mBuyPrice, 0., false, true, "Constant BuyPrice per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    mCompoInputSettings->addParameter("BuyPriceSeasonal", &mBuyPriceSeasonal, 0., false, true, "Constant BuyPriceSeasonal per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    mCompoInputSettings->addParameter("SellPrice", &mSellPrice, 0., false, true, "Constant SellPrice per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
 }
 
-void EnergyVector::setCompoInputParam(const QMap<QString, QString> aComponent)
+void EnergyVector::setCompoInputParam(const std::map<std::string, std::string> &aComponent)
 {
     int ierr1 = mCompoInputParam->readParameters(aComponent); //Should stay at the beginning. It contains configuration parameters
     int ierr2 = mCompoInputSettings->readParameters(aComponent);
     int ierr3 = mTimeSeriesParam->readParameters(aComponent);
     if (ierr1 < 0 || ierr2 < 0 || ierr3 < 0) { 
-        Cairn_Exception error("Error while initializing EnergyVector " + mName + ". A mandatory parameter is missing!", -1);
-        throw& error;
+        Cairn_Exception error("Error while initializing EnergyVector " + Name() + ". A mandatory parameter is missing!", -1);
+        throw error;
     }  
 
-    mEnergyColour = aComponent["EnergyColor"];
-    mModel = aComponent["Model"];
+    mEnergyColour = CairnUtils::getParam(aComponent,"EnergyColor");
+    mModel = CairnUtils::getParam(aComponent,"Model");
 }
 
-bool EnergyVector::InitEnergyVectorParam(const QMap<QString, QString> &aComponent)
+bool EnergyVector::InitEnergyVectorParam(const std::map<std::string, std::string> &aComponent)
 {
     if (mGUIData) delete mGUIData;
-    mGUIData = new GUIData(parent(), mName);
+    mGUIData = new GUIData(this);
     if (mModel == "") {
         mModel = getDefaultEnergyVectorType();
     }
-    if (mXpos == 0) {
-        mXpos = (0.5 * (mGUIData->GetId()));
-    }
-    if (mYpos == 0) {
-        mYpos = 10;
-    }
-    mGUIData->doInit(mModel, mModel, "EnergyVector", mXpos, mYpos);
+    mGUIData->doInit(mModel, mModel, "EnergyVector", { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
 
-    if (mType == "")
+    if (mCarrierType == "")
     {
-        qCritical() << "<Type> attribute is void !! A Type among Fluid, Material, Thermal or Electrical should be given for EnergyVector " << (mName);
-        Cairn_Exception erreur("void <Type> attribute is not allowed, Type among Fluid, Material, Thermal or Electrical should be given for EnergyVector " + mName, -1);
-        throw& erreur;
+        cCritical() << "<Type> attribute is void !! A Type among Fluid, Material, Thermal or Electrical should be given for EnergyVector " << (objectName());
+        Cairn_Exception erreur("void <Type> attribute is not allowed, Type among Fluid, Material, Thermal or Electrical should be given for EnergyVector " + objectName(), -1);
+        throw erreur;
     }
-    if (!(mType.contains("Fluid")
-        || mType.contains("Material")
-        || mType.contains("Wood")
-        || mType.contains("BioMass")
-        || mType.contains("Electrical")
-        || mType.contains("Thermal")))
+    if (!CairnUtils::contains(mCarrierType, { "Fluid",
+        "Material",
+        "Wood",
+        "BioMass",
+        "Electrical",
+        "Thermal" }))
     {
-        qCritical() << "<Type> attribute error " << (mName);
-        Cairn_Exception erreur("<Type> attribute must be one among Fluid*, BioMass, Wood, Material, Thermal or Electrical for EnergyVector " + mName, -1);
-        throw& erreur;
+        cCritical() << "<Type> attribute error " << (objectName());
+        Cairn_Exception erreur("<Type> attribute must be one among Fluid*, BioMass, Wood, Material, Thermal or Electrical for EnergyVector " + objectName(), -1);
+        throw erreur;
     }
 
-    Q_ASSERT(mType != "");
+    assert(mCarrierType != "");
 
     if (mFluxUnit == "")
     {
-        if (mType.contains("Fluid")
-            || mType.contains("Material")
-            || mType.contains("Wood")
-            || mType.contains("BioMass"))    mFluxUnit = mFlowrateUnit;
-        if (mType.contains("Electrical"))    mFluxUnit = mPowerUnit;
-        if (mType.contains("Thermal"))    mFluxUnit = mPowerUnit;
+        if (CairnUtils::contains(mCarrierType, { "Fluid",
+            "Material",
+            "Wood",
+            "BioMass" }))    mFluxUnit = mFlowrateUnit;
+        if (CairnUtils::contains(mCarrierType, "Electrical"))    mFluxUnit = mPowerUnit;
+        if (CairnUtils::contains(mCarrierType, "Thermal"))    mFluxUnit = mPowerUnit;
     }
     else
     {
-        if (mType.contains("Fluid")
-            || mType.contains("Material")
-            || mType.contains("Wood")
-            || mType.contains("BioMass"))    mFlowrateUnit = mFluxUnit;
-        if (mType.contains("Electrical"))    mPowerUnit = mFluxUnit;
-        if (mType.contains("Thermal"))    mPowerUnit = mFluxUnit;
+        if (CairnUtils::contains(mCarrierType, { "Fluid",
+            "Material",
+            "Wood",
+            "BioMass" }))    mFlowrateUnit = mFluxUnit;
+        if (CairnUtils::contains(mCarrierType, "Electrical"))    mPowerUnit = mFluxUnit;
+        if (CairnUtils::contains(mCarrierType, "Thermal"))    mPowerUnit = mFluxUnit;
     }
 
     if (mStorageUnit == "")
     {
-        if (mType.contains("Fluid")
-            || mType.contains("Material")
-            || mType.contains("Wood")
-            || mType.contains("BioMass"))    mStorageUnit = mMassUnit;
-        if (mType.contains("Electrical"))    mStorageUnit = mEnergyUnit;
-        if (mType.contains("Thermal"))       mStorageUnit = mEnergyUnit;
+        if (CairnUtils::contains(mCarrierType, { "Fluid",
+            "Material",
+            "Wood",
+            "BioMass" }))    mStorageUnit = mMassUnit;
+        if (CairnUtils::contains(mCarrierType, "Electrical"))    mStorageUnit = mEnergyUnit;
+        if (CairnUtils::contains(mCarrierType, "Thermal"))       mStorageUnit = mEnergyUnit;
     }
     else
     {
-        if (mType.contains("Fluid")
-            || mType.contains("Material")
-            || mType.contains("Wood")
-            || mType.contains("BioMass"))      mMassUnit = mStorageUnit;
-        if (mType.contains("Electrical"))   mEnergyUnit = mStorageUnit;
-        if (mType.contains("Thermal"))      mEnergyUnit = mStorageUnit;
+        if (CairnUtils::contains(mCarrierType, { "Fluid",
+            "Material",
+            "Wood",
+            "BioMass" }))      mMassUnit = mStorageUnit;
+        if (CairnUtils::contains(mCarrierType, "Electrical"))   mEnergyUnit = mStorageUnit;
+        if (CairnUtils::contains(mCarrierType, "Thermal"))      mEnergyUnit = mStorageUnit;
     }
     if (mFluxName == "")
     {
-        if (mType.contains("Fluid")
-            || mType.contains("Material")
-            || mType.contains("Wood")
-            || mType.contains("BioMass"))      mFluxName = mType + "Flowrate";
-        if (mType.contains("Electrical"))   mFluxName = mType + "Power";
-        if (mType.contains("Thermal"))      mFluxName = mType + "Power";
+        if (CairnUtils::contains(mCarrierType, { "Fluid",
+            "Material",
+            "Wood",
+            "BioMass" }))      mFluxName = mCarrierType + "Flowrate";
+        if (CairnUtils::contains(mCarrierType, "Electrical"))   mFluxName = mCarrierType + "Power";
+        if (CairnUtils::contains(mCarrierType, "Thermal"))      mFluxName = mCarrierType + "Power";
     }
     if (mStorageName == "")
     {
-        if (mType.contains("Fluid")
-            || mType.contains("Material")
-            || mType.contains("Wood")
-            || mType.contains("BioMass"))      mStorageName = mType + "Mass";
-        if (mType.contains("Electrical"))   mStorageName = mType + "Energy";
-        if (mType.contains("Thermal"))      mStorageName = mType + "Energy";
+        if (CairnUtils::contains(mCarrierType, { "Fluid",
+            "Material",
+            "Wood",
+            "BioMass" }))      mStorageName = mCarrierType + "Mass";
+        if (CairnUtils::contains(mCarrierType, "Electrical"))   mStorageName = mCarrierType + "Energy";
+        if (CairnUtils::contains(mCarrierType, "Thermal"))      mStorageName = mCarrierType + "Energy";
     }
     if (mPotentialName == "")
     {
-        if (mType.contains("Fluid"))      mPotentialName = "Pressure";
-        if (mType.contains("Wood")
-            || mType.contains("BioMass")
-            || mType.contains("Material"))   mPotentialName = "Xmassfract";
-        if (mType.contains("Electrical")) mPotentialName = "Voltage";
-        if (mType.contains("Thermal"))    mPotentialName = "Temperature"; // and Pressure ?? classes derivees a prevoir entre Thermal et Fluid
+        if (CairnUtils::contains(mCarrierType, "Fluid"))      mPotentialName = "Pressure";
+        if (CairnUtils::contains(mCarrierType, { "Wood",
+            "BioMass",
+            "Material" }))   mPotentialName = "Xmassfract";
+        if (CairnUtils::contains(mCarrierType, "Electrical")) mPotentialName = "Voltage";
+        if (CairnUtils::contains(mCarrierType, "Thermal"))    mPotentialName = "Temperature"; // and Pressure ?? classes derivees a prevoir entre Thermal et Fluid
     }
     if (mPotentialUnit == "")
     {
-        if (mType.contains("Fluid"))       mPotentialUnit = "bar";
-        if (mType.contains("Wood")
-            || mType.contains("BioMass")
-            || mType.contains("Material"))    mPotentialUnit = "percent";
-        if (mType.contains("Electrical"))  mPotentialUnit = "V";
-        if (mType.contains("Thermal"))     mPotentialUnit = "degC";  // and Pressure ?? classes derivees a prevoir entre Thermal et Fluid
+        if (CairnUtils::contains(mCarrierType, "Fluid"))       mPotentialUnit = "bar";
+        if (CairnUtils::contains(mCarrierType, { "Wood",
+            "BioMass",
+            "Material" }))    mPotentialUnit = "percent";
+        if (CairnUtils::contains(mCarrierType, "Electrical"))  mPotentialUnit = "V";
+        if (CairnUtils::contains(mCarrierType, "Thermal"))     mPotentialUnit = "degC";  // and Pressure ?? classes derivees a prevoir entre Thermal et Fluid
     }
-
-    Q_ASSERT(mPotentialUnit != "");
-    Q_ASSERT(mFluxUnit != "");
-    Q_ASSERT(mStorageUnit != "");
-    Q_ASSERT(mPotentialUnit != "");
-    Q_ASSERT(mFluxName != "");
-    Q_ASSERT(mStorageName != "");
+    
     if (mPotentialUnit == "" || mFluxUnit == "" || mStorageUnit == "" || mPotentialUnit == "" || mFluxName == "" || mStorageName == "")
     {
-        qCritical() << "Void unit/name detected for EnergyVector " << (mName);
-        Cairn_Exception erreur("Void unit/name is not allowed - Please check/correct EnergyVector " + mName, -1);
-        throw& erreur;
+        cCritical() << "Void unit/name detected for EnergyVector " << objectName();
+        Cairn_Exception erreur("Void unit/name is not allowed - Please check/correct EnergyVector " + objectName(), -1);
+        throw erreur;
     }
 
-    if (mType.contains("Fluid") || mType.contains("Material") || mType.contains("BioMass") || mType.contains("Wood"))
+    if (CairnUtils::contains(mCarrierType, { "Fluid", "Material", "BioMass", "Wood" }))
     {
         mIsMassCarrier = true;
     }
-    QString massCarrier = aComponent["IsMassCarrier"];
-    if (massCarrier != "") {
-        mIsMassCarrier = convertStrToBool(massCarrier); 
-        if (isMassCarrier() && (mType.contains("Electrical") || mType.contains("Thermal")))
-        {
-            qCritical() << "IsMassCarrier attribute error detected for EnergyVector " << (mName);
-            Cairn_Exception erreur("IsMassCarrier is not allowed for Electrical / Thermal energy types - Please check/correct EnergyVector " + mName, -1);
-            throw& erreur;
-        }
+
+    if (mIsMassCarrier && (CairnUtils::contains(mCarrierType, "Electrical") || CairnUtils::contains(mCarrierType, "Thermal")) )
+    {
+        cCritical() << "IsMassCarrier attribute error detected for EnergyVector " << (objectName());
+        Cairn_Exception erreur("IsMassCarrier is not allowed for Electrical / Thermal energy types - Please check/correct EnergyVector " + objectName(), -1);
+        throw erreur;
     }
 
-    if (mType.contains("FluidH2O"))
+    if (CairnUtils::contains(mCarrierType, "FluidH2O"))
     {
         mIsHeatCarrier = true;
     }
-    QString heatCarrier = aComponent["IsHeatCarrier"];
-    if (heatCarrier != "") {
-        mIsHeatCarrier = convertStrToBool(heatCarrier);
-        if (isHeatCarrier() && mType.contains("Electrical"))
-        {
-            qCritical() << "mIsHeatCarrier attribute error detected for EnergyVector " << (mName);
-            Cairn_Exception erreur("mIsHeatCarrier is not allowed for Electrical energy types - Please check/correct EnergyVector " + mName, -1);
-            throw& erreur;
-        }
+
+    if (mIsHeatCarrier && CairnUtils::contains(mCarrierType, "Electrical"))
+    {
+        cCritical() << "mIsHeatCarrier attribute error detected for EnergyVector " << (objectName());
+        Cairn_Exception erreur("mIsHeatCarrier is not allowed for Electrical energy types - Please check/correct EnergyVector " + objectName(), -1);
+        throw erreur;
     }
     
-    if ((mType.contains("Fluid") && !mType.contains("FluidH2O") && !mType.contains("FluidCO2")) || mType.contains("Wood") || mType.contains("BioMass"))
+    if ((CairnUtils::contains(mCarrierType, "Fluid") && !CairnUtils::contains(mCarrierType, "FluidH2O") && !CairnUtils::contains(mCarrierType, "FluidCO2")) 
+        || CairnUtils::contains(mCarrierType, "Wood") || CairnUtils::contains(mCarrierType, "BioMass"))
     {
         mIsFuelCarrier = true;
     }
-    QString fuelCarrier = aComponent["IsFuelCarrier"];
-    if (fuelCarrier != "") {
-        mIsFuelCarrier = convertStrToBool(fuelCarrier);
-        if (isFuelCarrier() && mType.contains("Electrical"))
-        {
-            qCritical() << "IsFuelCarrier attribute error detected for EnergyVector " << (mName);
-            Cairn_Exception erreur("IsFuelCarrier is not allowed for Electrical energy types - Please check/correct EnergyVector " + mName, -1);
-            throw& erreur;
-        }
+
+    if (mIsFuelCarrier && CairnUtils::contains(mCarrierType, "Electrical"))
+    {
+        cCritical() << "IsFuelCarrier attribute error detected for EnergyVector " << (objectName());
+        Cairn_Exception erreur("IsFuelCarrier is not allowed for Electrical energy types - Please check/correct EnergyVector " + objectName(), -1);
+        throw erreur;
     }
     
-    if (isFuelCarrier()) {
+    if (mIsFuelCarrier) {
         if (mLHV <=0.)  
         {
-            QString energyUnit = mCompoInputParam->getParamQSValue("EnergyUnit");
-            if (energyUnit != "") setEnergyUnit(energyUnit);
-
             // Ok si pas de changement d'unite par defaut, ou EnergyUnit reprecisee
             if (EnergyToMWh(mEnergyUnit) > 0. && MassToKg(mMassUnit) > 0.)
             {
                 // cf https://www.picbleu.fr/page/tableau-comparatif-pouvoir-calorique-inferieur-pci-des-energies
-                if (getFluidTypeFromQString(mType) != UnknownFluid)
-                    mLHV = 1.e-3 * Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(mType))->LHV * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit); // MWh/kg
-                else if (mType == "FluidFuel") mLHV = 11.86e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);
-                else if (mType == "FluidH2O")  mLHV = 0.0;
-                else if (mType == "DryWood")   mLHV = 4.e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);            //buches Hetres 20% humidite
-                else if (mType == "WetWood")   mLHV = 2.e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);            //buches Hetres 40% humidite
-                else if (mType == "BioMass")   mLHV = 6.e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);            // plutot bonne qualite
+                if (getFluidTypeFromQString(mCarrierType) != UnknownFluid)
+                    mLHV = 1.e-3 * Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(mCarrierType))->LHV * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit); // MWh/kg
+                else if (mCarrierType == "FluidFuel") mLHV = 11.86e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);
+                else if (mCarrierType == "FluidH2O")  mLHV = 0.0;
+                else if (mCarrierType == "DryWood")   mLHV = 4.e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);            //buches Hetres 20% humidite
+                else if (mCarrierType == "WetWood")   mLHV = 2.e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);            //buches Hetres 40% humidite
+                else if (mCarrierType == "BioMass")   mLHV = 6.e-3 * MassToKg(mMassUnit) / EnergyToMWh(mEnergyUnit);            // plutot bonne qualite
                 else {
-                    qWarning() << "Caution : Energy carrier type seems to be neither Fluid nor Electrical nor Thermal : " << (mName) << " of Type " << (mType);
-                    qWarning() << "Your energy vector must be one among these Fluid*, Electrical or Thermal";
+                    cWarning() << "Caution : Energy carrier type seems to be neither Fluid nor Electrical nor Thermal : " << (objectName()) << " of Type " << (mCarrierType);
+                    cWarning() << "Your energy vector must be one among these Fluid*, Electrical or Thermal";
                 }
             }
             else
             {
-                qCritical() << "To use LHV predefined values, you must use consistent EnergyUnit or MassUnit for fluid vector " + mName + " !";
-                qCritical() << "Instead, we found Energy Unit " << mEnergyUnit << " and Mass unit " << mMassUnit;
+                cCritical() << "To use LHV predefined values, you must use consistent EnergyUnit or MassUnit for fluid vector " + objectName() + " !";
+                cCritical() << "Instead, we found Energy Unit " << mEnergyUnit << " and Mass unit " << mMassUnit;
                 Cairn_Exception erreur((std::string)"Mass Unit must be multiple of kg or t, Energy Unit mut be multiple of MWh or J ", -1);
-                throw& erreur;
+                throw erreur;
             }
         }
-        qInfo() << " Low Heat Value = " << mLHV;
+        cInfo() << " Low Heat Value = " << mLHV;
     }
-    else if (mType.contains("Thermal")) mLHV = 1.;
-    else if (mType.contains("Electrical"))  mLHV = 1.;
+    else if (CairnUtils::contains(mCarrierType, "Thermal")) mLHV = 1.;
+    else if (CairnUtils::contains(mCarrierType, "Electrical"))  mLHV = 1.;
 
     if (mLHV <= 0.)
     {
-        qCritical() << "Negative or Zero LHV value detected for energy vector " << (mName) << mLHV;
-        Cairn_Exception erreur("Negative LHV value is not allowed for energy carrier - Use 1. for pure energy carriers - Please check/correct EnergyVector " + mName, -1);
-        throw& erreur;
+        cCritical() << "Negative or Zero LHV value detected for energy vector " << (objectName()) << mLHV;
+        Cairn_Exception erreur("Negative LHV value is not allowed for energy carrier - Use 1. for pure energy carriers - Please check/correct EnergyVector " + objectName(), -1);
+        throw erreur;
     }
 
     if (isHeatCarrier())
     {        
         if (mCP <= 0.)
         {
-            if (mType == "FluidH2O")  mCP = 4.186e3;// J/kg/K at 300K https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
-            else if (mType == "FluidCH4")  mCP = 2.226e3;// J/kg/K at 300 K https://www.engineeringtoolbox.com/methane-d_980.html
-            else if (mType == "FluidFuel") mCP = 3.e3; // paraffin
-            else if (mType == "FluidH2")   mCP = 14.3e3;      // J/kg/K at 300 K https://www.engineeringtoolbox.com/hydrogen-d_976.html
-            else if (mType == "FluidAir")  mCP = 1.293;  // J/kg/K at 300K
-            else if (mType == "DryWood")   mCP = 1.3e3;  // https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
-            else if (mType == "WetWood")   mCP = 2.4e3;  // https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
-            else if (mType == "BioMass")   mCP = 2.4e3;  //   https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
-            else if (mType.contains("Thermal")) mCP = 4.186e3; // J/kg/K at 300K https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
+            if (mCarrierType == "FluidH2O")  mCP = 4.186e3;// J/kg/K at 300K https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
+            else if (mCarrierType == "FluidCH4")  mCP = 2.226e3;// J/kg/K at 300 K https://www.engineeringtoolbox.com/methane-d_980.html
+            else if (mCarrierType == "FluidFuel") mCP = 3.e3; // paraffin
+            else if (mCarrierType == "FluidH2")   mCP = 14.3e3;      // J/kg/K at 300 K https://www.engineeringtoolbox.com/hydrogen-d_976.html
+            else if (mCarrierType == "FluidAir")  mCP = 1.293;  // J/kg/K at 300K
+            else if (mCarrierType == "DryWood")   mCP = 1.3e3;  // https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
+            else if (mCarrierType == "WetWood")   mCP = 2.4e3;  // https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
+            else if (mCarrierType == "BioMass")   mCP = 2.4e3;  //   https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
+            else if (CairnUtils::contains(mCarrierType, "Thermal")) mCP = 4.186e3; // J/kg/K at 300K https://www.engineeringtoolbox.com/specific-heat-capacity-d_391.html
         }
-        qInfo() << mName << ".CP=" << mCP;
+        cInfo() << objectName() << ".CP=" << mCP;
     }
 
     if (isMassCarrier())
     {
         if (mRHO <= 0.)
         {
-            if (getFluidTypeFromQString(mType) != UnknownFluid) mRHO = Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(mType))->RHO_NormalConditions; // MWh/kg
-            if (mType == "FluidH2O") mRHO = 1.0e3;
+            if (getFluidTypeFromQString(mCarrierType) != UnknownFluid) mRHO = Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(mCarrierType))->RHO_NormalConditions; // MWh/kg
+            if (mCarrierType == "FluidH2O") mRHO = 1.0e3;
         }
     }
 
     return true;
 }
 
-double EnergyVector::PowerToMW (QString& aUnit)
+double EnergyVector::PowerToMW (std::string& aUnit)
 {
     if (EnergyVector::mPowerToMW.find(aUnit)   == EnergyVector::mPowerToMW.end()  )
     {
-        qCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit ;
+        cCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit;
         return -1 ;
     }
-    return EnergyVector::mPowerToMW[aUnit] ;
+    return EnergyVector::mPowerToMW.at(aUnit) ;
 }
-double EnergyVector::EnergyToMWh (QString& aUnit)
+double EnergyVector::EnergyToMWh (std::string& aUnit)
 {
     if (EnergyVector::mEnergyToMWh.find(aUnit) == EnergyVector::mEnergyToMWh.end())
     {
-        qCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit ;
+        cCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit;
         return -1 ;
     }
-    return EnergyVector::mEnergyToMWh[aUnit] ;
+    return EnergyVector::mEnergyToMWh.at(aUnit) ;
 }
-double EnergyVector::MassToKg (QString& aUnit)
+double EnergyVector::MassToKg (std::string& aUnit)
 {
     if (EnergyVector::mMassToKg.find(aUnit)    == EnergyVector::mMassToKg.end()   )
     {
-        qCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit ;
+        cCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit;
         return -1 ;
     }
-    return EnergyVector::mMassToKg[aUnit] ;
+    return EnergyVector::mMassToKg.at(aUnit) ;
 }
-double EnergyVector::FlowToKgPh (QString& aUnit)
+double EnergyVector::FlowToKgPh (std::string& aUnit)
 {
     if (EnergyVector::mFlowToKgPh.find(aUnit)  == EnergyVector::mFlowToKgPh.end() )
     {
-        qCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit ;
+        cCritical() <<" Unable to perform conversion with unknown unit ! " << aUnit;
         return -1 ;
     }
-    return EnergyVector::mFlowToKgPh[aUnit] ;
+    return EnergyVector::mFlowToKgPh.at(aUnit) ;
 }
 
-void EnergyVector::jsonSaveGuiComponent(QJsonArray &componentsArray)
+void EnergyVector::jsonSaveGuiComponent(ojson &componentsArray)
 {
-    QJsonArray paramArray;
-    QJsonArray optionArray;
-    QJsonArray timeSeriesArray;
-
-    mCompoInputSettings->jsonSaveGUIInputParam(paramArray);
-    mCompoInputParam->jsonSaveGUIInputParam(optionArray);
-    mTimeSeriesParam->jsonSaveGUIInputParam(timeSeriesArray);
-    
+    ojson compoObject;
     if (mEnergyColour == "") {
         mEnergyColour = getDefaultEnergyVectorColor();
-    }
-
-    QJsonObject compoObject;
+    }    
     mGUIData->jsonSaveGUILine(compoObject);
-    compoObject.insert("energyTypeColor", QJsonValue::fromVariant(mEnergyColour));
-    compoObject.insert("paramListJson", paramArray);
-    compoObject.insert("optionListJson", optionArray);
-    compoObject.insert("timeSeriesListJson", timeSeriesArray);
-
+    compoObject["energyTypeColor"] = mEnergyColour;
+    compoObject["paramListJson"] = ojson::array();
+    compoObject["optionListJson"] = ojson::array();
+    compoObject["timeSeriesListJson"] = ojson::array();
+   
+    mCompoInputSettings->jsonSaveGUIInputParam(compoObject["paramListJson"]);
+    mCompoInputParam->jsonSaveGUIInputParam(compoObject["optionListJson"]);
+    mTimeSeriesParam->jsonSaveGUIInputParam(compoObject["timeSeriesListJson"]);
+    
     componentsArray.push_back(compoObject);
 }
 
-QString EnergyVector::getDefaultEnergyVectorType() {
-    QString defaultType = "EnergyVector";
-    if (mType.toUpper().contains("THERM") || mType.toUpper().contains("HEAT"))
+std::string EnergyVector::getDefaultEnergyVectorType() {
+    std::string defaultType = "EnergyVector";
+    if (CairnUtils::contains(mCarrierType, "THERM", true) || CairnUtils::contains(mCarrierType, "HEAT", true))
     {
         defaultType = "Heat";
     }
-    else if (mType.toUpper().contains("H2"))
+    else if (CairnUtils::contains(mCarrierType, "H2", true))
     {
         defaultType = "H2Vector";
     }
-    else if (mType.toUpper().contains("CH4"))
+    else if (CairnUtils::contains(mCarrierType, "CH4", true))
     {
         defaultType = "CH4Vector";
     }
-    else if (mType.toUpper().contains("ELEC"))
+    else if (CairnUtils::contains(mCarrierType, "ELEC", true))
     {
         defaultType = "Electricity";
     }
-    else if (mType.toUpper().contains("BIOMASS") || mType.toUpper().contains("MATERIAL") || mType.toUpper().contains("WOOD"))
+    else if (CairnUtils::contains(mCarrierType, { "BIOMASS", "MATERIAL", "WOOD" }, true))
     {
         defaultType = "Biomass";
     }
@@ -445,50 +411,50 @@ QString EnergyVector::getDefaultEnergyVectorType() {
     return defaultType;
 }
 
-QString EnergyVector::getDefaultEnergyVectorColor()
+std::string EnergyVector::getDefaultEnergyVectorColor()
 {
-    QString defaultColor = "";
-    if (mType.toUpper().contains("THERM") || mType.toUpper().contains("HEAT"))
+    std::string defaultColor = "";
+    if (CairnUtils::contains(mCarrierType, "THERM", true) || CairnUtils::contains(mCarrierType, "HEAT", true))
     {
-        if (mName.toUpper().contains("HOT")) defaultColor = "red";
-        if (mName.toUpper().contains("CHAUD")) defaultColor = "red";
-        if (mName.toUpper().contains("HEAT")) defaultColor = "red";
-        if (mName.toUpper().contains("COLD")) defaultColor = "blue";
-        if (mName.toUpper().contains("FROID")) defaultColor = "blue";
+        if (CairnUtils::contains(objectName(), "HOT", true)) defaultColor = "red";
+        if (CairnUtils::contains(objectName(), "CHAUD", true)) defaultColor = "red";
+        if (CairnUtils::contains(objectName(), "HEAT", true)) defaultColor = "red";
+        if (CairnUtils::contains(objectName(), "COLD", true)) defaultColor = "blue";
+        if (CairnUtils::contains(objectName(), "FROID", true)) defaultColor = "blue";
     }
-    else if (mType.toUpper().contains("H2"))
+    else if (CairnUtils::contains(mCarrierType, "H2", true))
     {
         defaultColor = "green";
     }
-    else if (mType.toUpper().contains("CH4"))
+    else if (CairnUtils::contains(mCarrierType, "CH4", true))
     {
         defaultColor = "brown";
     }
-    else if (mType.toUpper().contains("CO2"))
+    else if (CairnUtils::contains(mCarrierType, "CO2", true))
     {
         defaultColor = "grey";
     }
-    else if (mType.toUpper().contains("H2O"))
+    else if (CairnUtils::contains(mCarrierType, "H2O", true))
     {
         defaultColor = "blue";
     }
-    else if (mType.toUpper().contains("ELEC"))
+    else if (CairnUtils::contains(mCarrierType, "ELEC", true))
     {
         defaultColor = "yellow";
     }
-    else if (mType.toUpper().contains("BIOMASS"))
+    else if (CairnUtils::contains(mCarrierType, "BIOMASS", true))
     {
         defaultColor = "darkgreen";
     }
-    else if (mType.toUpper().contains("WOOD"))
+    else if (CairnUtils::contains(mCarrierType, "WOOD", true))
     {
         defaultColor = "darkgreen";
     }
-    else if (mType.toUpper().contains("MATERIAL"))
+    else if (CairnUtils::contains(mCarrierType, "MATERIAL", true))
     {
         defaultColor = "maroon";
     }
-    else if (mType.toUpper().contains("FLUID"))
+    else if (CairnUtils::contains(mCarrierType, "FLUID", true))
     {
         defaultColor = "darkblue";
     }
@@ -884,7 +850,7 @@ EV::Fluid_Properties                                EnergyVector::Fill_Fluid_Pro
       case EV::Fluid_Type::UnknownFluid:
       default:
 
-//        qWarning() << "Fill_Fluid_Properties : user defined Fluid - no default properties will be set " << Type ;
+//        cWarning() << "Fill_Fluid_Properties : user defined Fluid - no default properties will be set " << Type ;
         break ;
 
     }
@@ -894,7 +860,7 @@ EV::Fluid_Properties                                EnergyVector::Fill_Fluid_Pro
 
     return Properties;
 }
-EV::Fluid_Type EnergyVector::getFluidTypeFromQString(const QString FluidName)
+EV::Fluid_Type EnergyVector::getFluidTypeFromQString(const std::string FluidName)
 {
    if (FluidName == "FluidH2")
        return EV::Fluid_Type::H2 ;
@@ -919,7 +885,7 @@ EV::Fluid_Type EnergyVector::getFluidTypeFromQString(const QString FluidName)
    else if  (FluidName == "FluidLIN")
        return EV::Fluid_Type::LIN ;
    else
-       qWarning() << " User defined Fluid - no default properties will be set for " << FluidName ;
+       cWarning() << " User defined Fluid - no default properties will be set for " << FluidName;
        return EV::Fluid_Type::UnknownFluid ;
 }
 const EV::Fluid_Properties *EnergyVector::Get_Pointer_To_Fluid_Properties(EV::Fluid_Type Type)
@@ -973,7 +939,7 @@ const EV::Fluid_Properties *EnergyVector::Get_Pointer_To_Fluid_Properties(EV::Fl
     case EV::Fluid_Type::UnknownFluid:
     default:
 
-        qWarning () << "ERROR: Get_Pointer_To_Fluid_Properties - Fluid_Type unknown" ;
+        cWarning () << "ERROR: Get_Pointer_To_Fluid_Properties - Fluid_Type unknown" ;
         return nullptr;
     }
 }

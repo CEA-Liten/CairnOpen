@@ -2,22 +2,31 @@
 #define JsonDescription_H
 class JsonDescription ;
 
-#include <QXmlStreamReader>
-#include "MILPComponent_global.h"
+#include "CairnCore_global.h"
 #include "Cairn_Exception.h"
+#include "CairnUtils.h"
+
+#include <sstream>
+#include <cstdint>
 
 #define DECIMAL_PRECISION 9
 #define SIGNIFICANT_DIGITS 12
 
-static QString doubleToString(const double& value_d) {
-    int precision = int(DECIMAL_PRECISION);
-    int sig_digits = int(SIGNIFICANT_DIGITS);
-    double value_f = QString::number(value_d, 'f', precision).toDouble();
-    QString value_s = QString::number(value_f, 'g', sig_digits);
-    return value_s;
+static std::string doubleToString(const double& value_d) {
+    std::ostringstream out;
+    out.precision(DECIMAL_PRECISION);
+    out << std::fixed << value_d;
+    return std::move(out).str();
+
+    //
+    //int precision = int(DECIMAL_PRECISION);
+    //int sig_digits = int(SIGNIFICANT_DIGITS);
+    //double value_f = std::to_string(value_d, 'f', precision).toDouble();
+    //std::string value_s = std::to_string(value_f, 'g', sig_digits);
+    //return value_s;
 }
 
-static void upwardCompatibility(QMap<QString, QString>& component)
+static void upwardCompatibility(t_mapParams& component)
 {
     //Attention the Option "Model" overwrites the component["Model"] == nodeType !!
 
@@ -41,134 +50,54 @@ static void upwardCompatibility(QMap<QString, QString>& component)
     {
         component["ModelClass"] = component["Model"];
     }
-    qInfo() << "\t - Model \t\t" << component["Model"] << "\t - ModelClass \t\t" << component["ModelClass"];
+    cInfo() << "\t - Model \t\t" << component["Model"] << "\t - ModelClass \t\t" << component["ModelClass"];
 }
 
 
-static void parseJsonObject(QJsonObject& json, QString prefix, QMap<QString, QVariant>& map)
+
+class CAIRNCORESHARED_EXPORT JsonDescription : public CairnObject
 {
-    QJsonValue value;
-    QJsonObject obj;
 
-    QStringList keys = json.keys();
-    for (int i = 0; i < keys.size(); i++)
-    {
-        value = json.value(keys[i]);
-        if (value.isObject())
-        {
-            obj = value.toObject();
-            qDebug() << " parsing node " << prefix << keys[i];
-            //parseJsonObject(obj, prefix + keys[i] + ".", map);
-            if (keys[i].contains("Components"))
-                parseJsonObject(obj, QString(), map);
-            else if (keys[i].contains("paramListJson"))
-                parseJsonObject(obj, prefix + keys[i] + ".", map);
-        }
-        else
-        {
-            if (keys[i].contains("nodeName"))
-                map.insert(prefix + "." + keys[i], value.toVariant());
-            qDebug() << " ending node " << prefix + keys[i];
-        }
-    }
-}
-
-static QJsonObject restoreJsonObject(QMap<QString, QVariant>& map)
-{
-    QJsonObject obj;
-    QStringList keys = map.keys();
-
-    for (int i = 0; i < keys.size(); i++)
-    {
-        QString key = keys.at(i);
-        QVariant value = map.value(key);
-        QStringList sections = key.split('/');
-        if (sections.size() > 1)
-        {
-            continue;
-        }
-        else
-        {
-            map.remove(key);
-            obj.insert(key, QJsonValue::fromVariant(value));
-        }
-    }
-
-    QList<QMap<QString, QVariant>> subMaps;
-    keys = map.keys();
-    for (int i = 0; i < keys.size(); i++)
-    {
-        bool found = false;
-        QString key = keys[i];
-
-        for (int j = 0; j < subMaps.size(); j++)
-        {
-            QString subKey = subMaps[j].key(QString("__key__"));
-            if (subKey.contains(key.section('/', 0, 0)))
-            {
-                subMaps[j].insert(key.section('/', 1), map.value(key));
-                found = true;
-                break;
-            }
-        }
-
-        if (!found)
-        {
-            QMap<QString, QVariant> tmp;
-            tmp.insert(key.section('/', 0, 0), QString("__key__"));
-            tmp.insert(key.section('/', 1), map.value(key));
-            subMaps.append(tmp);
-        }
-    }
-
-    for (int i = 0; i < subMaps.size(); i++)
-    {
-        QString key = subMaps[i].key(QString("__key__"));
-        subMaps[i].remove(key);
-
-        QJsonObject tmp = restoreJsonObject(subMaps[i]);
-        obj.insert(key, tmp);
-    }
-    return obj;
-}
-
-class CAIRNCORESHARED_EXPORT JsonDescription : public QObject
-{
-    Q_OBJECT
 public:
-    JsonDescription(QObject *aParent, QString aName);
+    JsonDescription(CairnObject* aParent, std::string aName);
     virtual ~JsonDescription();
 
-    QVector< QMap<QString,QString> > parseJsonDescription(const QString &aDescFile) ;
-    void extractComponentData(const QJsonValue& comp);
-    void extractIndicatorData(const QJsonValue& indicatorJson);
-    void extractDocumentData(QJsonDocument& jsonData) ;
-    //void extractPortData(const QJsonArray &posList, const QJsonValue &comp, QMap<QString, QString> &aMap) ;
-    void extractOptionData(const QJsonArray &optionList, QMap<QString, QString> &aMap) ;
-    void extractParamData(const QJsonArray &paramList, QMap<QString, QString> &aMap) ;
-    void extractTimeSeriesData(const QJsonArray &timeSeriesList, QMap<QString, QString> &aMap) ;
+    std::vector< t_mapParams > parseJsonDescription(const std::string& aDescFile);
+    const std::vector< t_mapParams >& dynamicIndicators() { return mDynamicIndicators; }
 
-    QString getNodeFromId(const QString nodeId) const;
-    QString getcomponentCategoryFromId(const QString nodeId) const;
-    QJsonValue getCompDataFromName(const QString& aCompName) const;
-    QMap < QString, QMap<QString, QString> > getCompoPortData(const QString compoName) const;
-    const QVector< QMap<QString, QString> > dynamicIndicators() { return mDynamicIndicators; }
+    std::map < std::string, std::map<std::string, std::string> > getCompoPortData(const std::string& compoName) const;
 
-    QJsonDocument readJSONFile(QString aFileName) ;
-    QVector< QMap<QString,QString> > parseXmlJsonDescription(QString aDescFile) ;
+    Cairn_Exception  getException() const { return mException; }
+    void  setException(const Cairn_Exception& aException) { mException = aException; }
 
-    Cairn_Exception  getException () const {return mException;}
-    void  setException (const Cairn_Exception &aException) {mException = aException;}
-
+    const std::vector< std::string >& LabelList() const { return mLabelList; };
+    const std::map<std::string, t_mapParams >& LabelMap() const { return mLabelMap; };
 
 protected:
     Cairn_Exception mException ;
 
-    QJsonArray mComponentsList;
-    QJsonArray mLinksList;
+    json mComponentsList;
+    json mLinksList;
 
-    QVector< QMap<QString,QString> > mComponents;
-    QVector< QMap<QString, QString> > mDynamicIndicators;
+    std::vector< t_mapParams > mComponents = {};
+    std::vector< t_mapParams > mDynamicIndicators = {};
+
+    std::vector< std::string > mLabelList = {}; /* existing labels as specified by TecEcoAnalysis (acts as a reference) */
+    std::map<std::string, t_mapParams > mLabelMap = {}; /* key is the componenet name, and t_mapParams is labelName: labelValue (only labels from mLabelNames are accepted at the end) */
+
+    void extractDocumentData(const json& jsonData);
+
+    void extractComponentData(const json& comp);
+    void extractUDIndicatorData(const json& indicatorJson);
+        
+    void extractParamData(const json& comp, const std::string& a_key, t_mapParams& aMap, const std::vector<std::string>& a_excludedKeys = {});    
+
+    std::string getNodeFromId(const std::string&nodeId) const;
+    std::string getcomponentCategoryFromId(const std::string &nodeId) const;
+    
+    json readJSONFile(const std::string& aFileName);
+
+    std::string read(const json& in, const std::string& id, const std::string& defaultValue = "") const;
 };
 
 #endif // JsonDescription_H

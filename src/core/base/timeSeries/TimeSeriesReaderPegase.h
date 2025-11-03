@@ -1,7 +1,6 @@
 #ifndef  TIMESERIESREADERPEGASE_H
 #define TIMESERIESREADERPEGASE_H
 #include "TimeSeriesReader.h"
-#include <QVector>
 
 class TimeSeriesReaderPegase
 	: public TimeSeriesReader
@@ -15,7 +14,6 @@ public:
 	void readValues(int a_index, std::vector<double>& aTimes);
 	void close();	
 protected:
-	std::vector< QVector<float>* > m_Data;
 };
 
 #endif

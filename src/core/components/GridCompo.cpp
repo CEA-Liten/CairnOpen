@@ -1,5 +1,4 @@
 #include "GridCompo.h"
-#include <QDebug>
 #include <math.h>       /* fabs, log, pow */
 #include <iostream>
 #include "GlobalSettings.h"
@@ -8,13 +7,13 @@ using namespace GS ;
 
 using Eigen::Map;
 
-GridCompo::GridCompo (QObject *aParent,
-    const QMap<QString, QString>& aComponent,
-    const QMap < QString, QMap<QString, QString> >& aPorts,
+GridCompo::GridCompo (CairnObject *aParent,
+    const std::map<std::string, std::string>& aComponent,
+    const std::map < std::string, std::map<std::string, std::string> >& aPorts,
     MilpData* aMilpData,
     TecEcoEnv& aTecEcoEnv,
     ModelFactory* aModelFactory) :
-    MilpComponent(aParent, aComponent["id"], aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
+    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
 {      
 }
 
@@ -26,79 +25,42 @@ GridCompo::~GridCompo()
 void GridCompo::declareCompoInputParam()
 {
     MilpComponent::declareCompoInputParam();
-    mCompoInputParam->addParameter("Direction", &mDirection, "InjectToGrid", false, true, "Direction for gird injection or extraction - Equals to InjectToGrid or ExtractFromGrid");
 }
 
-void GridCompo::setCompoInputParam(const QMap<QString, QString> aComponent) {
+void GridCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent) {
     MilpComponent::setCompoInputParam(aComponent);
-    setCompoSens(mDirection);
-}
-
-void GridCompo::setCompoSens(const QString& direction) {
-    if (mDirection == "InjectToGrid") {
-        mSens = -1;
-    }
-    else if (mDirection == "ExtractFromGrid") {
-        mSens = +1;
-    }
-    else
-    {
-        mSens = 0;
-        qCritical() << "ERROR : Grid Direction /** ";
-        Cairn_Exception erreur("Invald <Direction> attribute : InjectToGrid or ExtractFromGrid expected " + mName + " instead of " + mDirection + ".", -1);
-        throw& erreur;
-    }
-    if (mCompoModel) {
-        mCompoModel->setSens(mSens);
-    }
 }
 
 int GridCompo::setParameters()
 {
-    if (fabs(mSens) < 1.e-20)
-    {
-        qCritical() << "ERROR :  GridCompo InjectToGrid or ExtractFromGrid is missing for component : " << (Name()) ;
-        return -1 ;
-    }
+    EnergyVector* lvect = mCompoModel->getMainCarrier();
 
-    // Prix elec
-    MilpPort* lptrport = PortList().at(0) ;
-    EnergyVector* lvect=lptrport->ptrEnergyVector();
-
-    if (lvect == nullptr)
-    {
-        qCritical() << "ERROR : Grid first port must be of type BusFlowBalance and carry an energy vector " ;
-        return -1 ;
-    }
-
-    
-
-    if (mSens >0)  {
+    if (mCompoModel->Sens() > 0) {
         //sens = " extracted " ;
         if (mEnergyPriceProfileName != "" )
         {
             if (lvect->BuyPrice() != 0.)
             {
-                qWarning()  << "Grid flat buy price ignored as UseProfileBuyPrice was specified " << (lvect->Name()) ;
+                cWarning()  << "Grid flat buy price ignored as UseProfileBuyPrice was specified " << lvect->Name() ;
             }
         }
         else
         {
             m_timeSeries["UseProfileBuyPrice"].setDefault(lvect->BuyPrice());
-            qInfo() << "INFO : Grid Injection / extraction : use of constant BuyPrice " << (lvect->Name()) << lvect->BuyPrice() ;
+            cInfo() << "INFO : Grid Injection / extraction : use of constant BuyPrice " << lvect->Name() << lvect->BuyPrice() ;
         }
         if (mEnergyPriceProfileNameSeasonal != "" )
         {
             if (lvect->BuyPriceSeasonal() != 0.)
             {
-                qCritical() << "ERROR : Grid flat buy price should be 0 as UseProfileBuyPriceSeasonal was specified " << (lvect->Name()) ;
+                cCritical() << "ERROR : Grid flat buy price should be 0 as UseProfileBuyPriceSeasonal was specified " << lvect->Name();
                 return -1 ;
             }
         }
         else
         {
             m_timeSeries["UseProfileBuyPriceSeasonal"].setDefault(lvect->BuyPriceSeasonal());
-            qInfo() << "INFO : Grid Injection / extraction : use of constant BuyPriceSeasonal " << (lvect->Name()) << lvect->BuyPriceSeasonal() ;
+            cInfo() << "INFO : Grid Injection / extraction : use of constant BuyPriceSeasonal " << lvect->Name() << lvect->BuyPriceSeasonal() ;
         }
     }
     else
@@ -108,13 +70,13 @@ int GridCompo::setParameters()
         {
             if (lvect->SellPrice() != 0.)
             {
-                qWarning() << "Grid flat sell price ignored as UseProfileSellPrice was specified " << (lvect->Name()) ;
+                cWarning() << "Grid flat sell price ignored as UseProfileSellPrice was specified " << lvect->Name();
             }
         }
         else
         {
             m_timeSeries["UseProfileSellPrice"].setDefault(lvect->SellPrice());
-            qInfo() << "INFO : Grid Injection / extraction : use of constant SellPrice " << (lvect->Name()) << lvect->SellPrice() ;
+            cInfo() << "INFO : Grid Injection / extraction : use of constant SellPrice " << lvect->Name() << lvect->SellPrice() ;
         }
     }
 
@@ -130,9 +92,9 @@ void GridCompo::readTSVariablesFromModel()
 
 
     MilpPort* lptrport = PortList().at(0) ;
-    EnergyVector* lvect=lptrport->ptrEnergyVector();
+    EnergyVector* lvect=lptrport->getCarrier();
    
-    if (mSens >0) {
+    if (mCompoModel->Sens() > 0) {
         //sens = " extracted " ;
         mEnergyPriceProfileName = m_timeSeries["UseProfileBuyPrice"].getName();
         mEnergyPriceProfileNameSeasonal = m_timeSeries["UseProfileBuyPriceSeasonal"].getName();
@@ -140,9 +102,9 @@ void GridCompo::readTSVariablesFromModel()
             mEnergyPriceProfileName = lvect->UseProfileBuyPrice() ;
             m_timeSeries["UseProfileBuyPrice"].setName(lvect->UseProfileBuyPrice());
         }
-	if (mEnergyPriceProfileNameSeasonal == "") {
-            mEnergyPriceProfileNameSeasonal = lvect->UseProfileBuyPriceSeasonal() ;
-            m_timeSeries["UseProfileBuyPriceSeasonal"].setName(lvect->UseProfileBuyPriceSeasonal());
+	    if (mEnergyPriceProfileNameSeasonal == "") {
+                mEnergyPriceProfileNameSeasonal = lvect->UseProfileBuyPriceSeasonal() ;
+                m_timeSeries["UseProfileBuyPriceSeasonal"].setName(lvect->UseProfileBuyPriceSeasonal());
         }		 
     }
     else  {
@@ -157,7 +119,7 @@ void GridCompo::readTSVariablesFromModel()
 
 void GridCompo::setDefaultsResults()
 {
-    if (mSens > 0) {
+    if (mCompoModel->Sens() > 0) {
         m_timeSeries["UseProfileBuyPrice"].set_Values(npdt(), 0.);
         m_timeSeries["UseProfileBuyPriceSeasonal"].set_Values(npdt(), 0.);
     }
@@ -167,9 +129,3 @@ void GridCompo::setDefaultsResults()
 }
 //------------------------------------------------------------------------------
 
-
-
-int GridCompo::initProblem(const bool& readParams)
-{
-     return MilpComponent::initProblem(readParams);
-}

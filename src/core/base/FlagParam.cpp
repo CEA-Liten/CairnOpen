@@ -77,3 +77,12 @@ bool FlagParam::get_Value()
         return vRet;
     }
 }
+
+bool FlagParam::is_Scalar() {
+    if (p_Value || m_ExtFunct.pModel
+            || m_Function.ExtFunct.pModel || m_Function.Flags.size() || m_Function.Flags2.size()
+        ) {
+        return false;
+    }
+    return true;
+}

@@ -38,7 +38,7 @@ void AgeingRunningHours::computeModelContribution()
     }
     double runningTime = mHistRunningTime - mHistRunningTime_save ;
 
-    qInfo() <<" Changing EfficiencyAgeing after HistRunningTime " << mHistRunningTime
+    cInfo() <<" Changing EfficiencyAgeing after HistRunningTime " << mHistRunningTime
             <<" \n Eff runningTime " << runningTime
             << " since last replacement at " << mLastReplacementTime
             << " \n old EfficiencyAgeing coeff " << mEfficiencyAgeing
@@ -51,7 +51,7 @@ void AgeingRunningHours::computeModelContribution()
         mEfficiencyAgeing = mEfficiencyAgeing - runningTime * mEfficiencyAgeingCoeff;
         mCapacityAgeing = mCapacityAgeing - runningTime * mCapacityAgeingCoeff;
     }
-    qInfo() << " \n new EfficiencyAgeing coeff " << mEfficiencyAgeing
+    cInfo() << " \n new EfficiencyAgeing coeff " << mEfficiencyAgeing
             << " \n new CapacityAgeing coeff " << mCapacityAgeing;
     mHistRunningTime_save = mHistRunningTime ;
 }

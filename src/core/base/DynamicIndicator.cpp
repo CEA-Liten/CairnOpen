@@ -1,8 +1,9 @@
 
-#include <QDebug>
-#include "DynamicIndicator.h"
 
-DynamicIndicator::DynamicIndicator(QObject* aParent, QString aName, QString aFormula, QStringList aUDINames) : QObject(aParent),
+#include "DynamicIndicator.h"
+#include "CairnUtils.h"
+
+DynamicIndicator::DynamicIndicator(CairnObject* aParent, std::string aName, std::string aFormula, std::vector<std::string> aUDINames) : CairnObject(aParent),
 mName(aName),
 mFormula(aFormula),
 mUDINames(aUDINames),
@@ -14,28 +15,24 @@ mRenamedFormula("")
 
 DynamicIndicator::~DynamicIndicator()
 {
-    QMapIterator<std::string, double*> vIter(mVariableValueMap);
-    while (vIter.hasNext())
-    {
-        vIter.next();
-        double* var = vIter.value();
-        if (var) delete var;
+    for (auto& [key, value] : mVariableValueMap) {    
+        if (value) delete value;
     }
     mVariableValueMap.clear();
 }
 
-QString DynamicIndicator::getName() const { return mName; }
-QString DynamicIndicator::getFormula() const { return mFormula; }
+std::string DynamicIndicator::getName() const { return mName; }
+std::string DynamicIndicator::getFormula() const { return mFormula; }
 
-QMap<std::string, QString> DynamicIndicator::variableRenamingMap() const { return mVariableRenamingMap; }
-QMap<std::string, double*> DynamicIndicator::variableValueMap() const { return mVariableValueMap; }
+std::map<std::string, std::string> DynamicIndicator::variableRenamingMap() const { return mVariableRenamingMap; }
+std::map<std::string, double*> DynamicIndicator::variableValueMap() const { return mVariableValueMap; }
 
-void DynamicIndicator::setName(const QString& aName) 
+void DynamicIndicator::setName(const std::string& aName) 
 {
     mName = aName;
 }
 
-void DynamicIndicator::setFormula(const QString& aFormula)
+void DynamicIndicator::setFormula(const std::string& aFormula)
 {
     mFormula = aFormula;
     updateExpression();
@@ -44,20 +41,20 @@ void DynamicIndicator::setFormula(const QString& aFormula)
 void DynamicIndicator::renameVariables()
 {
     //Initialize to formula
-    mRenamedFormula = mFormula.toStdString();
+    mRenamedFormula = mFormula;
 
     //Rename variables
     int k = 1; //variables counter
     std::string word;
-    std::stringstream ss(mFormula.toStdString());
+    std::stringstream ss(mFormula);
     while (std::getline(ss, word, '\"')) {
         bool isFound = mRenamedFormula.find('\"'+ word + '\"') != std::string::npos;
         if (isFound && word.size() >= 3 && word.find('.') < word.length()  // a better filter to lookup for variables?  
-            || mUDINames.contains(QString::fromStdString(word)) ) //User-defined Indicator
+            || CairnUtils::contains(mUDINames, word) ) //User-defined Indicator
         {
             std::string var_k = 'x' + std::to_string(k); 
             mRenamedFormula.replace(mRenamedFormula.find('\"' + word + '\"'), word.length() + 2, var_k);
-            mVariableRenamingMap[var_k] = QString::fromStdString(word);
+            mVariableRenamingMap[var_k] = (word);
             k++;
         }
     }     
@@ -65,21 +62,15 @@ void DynamicIndicator::renameVariables()
 
 void DynamicIndicator::compile() 
 {
-    //Initialize values to nan
-    QMapIterator<std::string, QString> var_Itr_1(mVariableRenamingMap);
-    while (var_Itr_1.hasNext())
-    {
-        var_Itr_1.next();
-        mVariableValueMap[var_Itr_1.key()] = new double;
-        *mVariableValueMap[var_Itr_1.key()] = double_NaN;
+    //Initialize values to nan    
+    for (auto& [key, value] : mVariableRenamingMap) {    
+        mVariableValueMap[key] = new double;
+        *mVariableValueMap[key] = double_NaN;
     }
  
-    //Add variables
-    QMapIterator<std::string, double*> var_Itr_2(mVariableValueMap);
-    while (var_Itr_2.hasNext())
-    {
-        var_Itr_2.next();
-        mSymbolTable.add_variable(var_Itr_2.key(), *var_Itr_2.value());
+    //Add variables    
+    for (auto& [key, value] : mVariableValueMap) {    
+        mSymbolTable.add_variable(key, *value);
     }
     
     //Add known constants: 
@@ -91,8 +82,8 @@ void DynamicIndicator::compile()
     //Parser expression 
     if(!mParser.compile(mRenamedFormula, mExpression)){
         //mExpression.release();
-        //mSymbolTable.clear();
-        qWarning("Error while compiling the formula (%s) of dynamic indicator %s: \n%s", mFormula.toStdString().c_str(), mName.toStdString().c_str(), mParser.error().c_str());
+        //mSymbolTable.clear();        
+        cWarning() << "Error while compiling the formula (" << mFormula << ") of dynamic indicator " << mName << ": \n" << mParser.error();
     }
 }
 

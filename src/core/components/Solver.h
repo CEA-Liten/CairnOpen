@@ -1,7 +1,6 @@
 #ifndef SOLVERCOMPO_H
 #define SOLVERCOMPO_H
 
-#include <QtCore>
 #include "InputParam.h"
 #include "GUIData.h"
 
@@ -17,42 +16,47 @@
 * It is not mandatory. By default, Cbc solver will be used.
 */
 
-class CAIRNCORESHARED_EXPORT Solver: public QObject
+class CAIRNCORESHARED_EXPORT Solver: public CairnObject
 {
-    Q_OBJECT
+    
 public:
-    Solver(const QString& aSolverName, const QMap<QString, QString>& aComponent={});
+    Solver(CairnObject* ap_Parent, const std::string& aName, const std::map<std::string, std::string>& aComponent={});
     virtual ~Solver();
        
-    void SolveProblem(MIPModeler::MIPModel* aModel, const QString &location, const int cycle=0, const QMap<QString, bool> paramMap = QMap<QString, bool>());
-    QString getOptimisationStatus();
+    void SolveProblem(MIPModeler::MIPModel* aModel, const std::string &location, const int cycle=0, const std::map<std::string, bool> paramMap = std::map<std::string, bool>());
+    std::string getOptimisationStatus();
     int getNumberOfSolutions();
     double getSolverRunningTime();
 
     const double* getOptimalSolution(int aNsol, const std::string& varname="");
     bool getIsCheckConflicts();
     
-    void jsonSaveGuiComponent(QJsonArray &componentsArray) ;
+    void jsonSaveGuiComponent(ojson &componentsArray) ;
 
     double getTimeLimit() const {return mTimeLimit;}
     double getGap() const {return mGap;}
     int getThreads() const {return mThreads;}
-    QString getModelType() const {return mModelType;};
-    QString Name() const {return mSolverName;};
+    std::string getModelType() const {return mModelType;};
     void setStopSignal(int* stopSignal);
     ModelerInterface *getExternalModeler();
    
     InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
     InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
 
-    std::map<QString, InputParam::ModelParam*> getParameters();
+    std::map<std::string, InputParam::ModelParam*> getParameters();
 
     Cairn_Exception getException() const { return mException; };
+    GUIData* getGUIData() { return mGUIData; }
+
+    std::string Name() const { return std::string(this->objectName().c_str()); }
+    void setName(const std::string& name) { this->setObjectName(name); }
+
+    std::string SolverName() const { return mSolverName; }
 
 private:
-    void doInit(const QMap<QString, QString>& aComponent);
+    void doInit(const std::map<std::string, std::string>& aComponent);
     void declareCompoInputParam();
-    bool setCompoInputParam(const QMap<QString, QString>& aComponent);
+    bool setCompoInputParam(const std::map<std::string, std::string>& aComponent);
     void InitSolverParam();
 
     Cairn_Exception mException;
@@ -70,19 +74,16 @@ private:
     InputParam* mCompoInputParam;      /** COMPONENT Input parameter List from XML File -> Options */
     InputParam* mCompoInputSettings;   /** COMPONENT Input parameter List from Settings File -> Params */
 
-    QString mName;                                /** Component Name */
-    QString mModelId;
-    QString mComponentCairnType;
-    QString mModelType;
-    QString mSolverName;
-    QString mProblemType;
-    int mXpos;
-    int mYpos;
-    QString mWriteLp;
-    QString mFileMipStart;
-    QString mWriteMipStart;
-    QString mReadParamFile;
-    QString mWriteGMS;
+    std::string mModelId;
+    std::string mModelType; 
+    std::string mSolverName;    /* Solver name : Cplex, Cbc, Highs */
+    std::string mProblemType;
+
+    std::string mWriteLp;
+    std::string mFileMipStart;
+    std::string mWriteMipStart;
+    std::string mReadParamFile;
+    std::string mWriteGMS;
     int mNbSolToKeep;
     double mGap;
     double mTimeLimit;

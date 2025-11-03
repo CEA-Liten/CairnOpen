@@ -114,7 +114,7 @@ def h_filter_lines(f, start_delete, stop_delete, modelname,folder_csv):
             line=line#.replace("_","\_")
             line=line.replace("&&", "and")
             line=line.replace("||", "or")
-            if ("DO NOT SHOW" not in line):
+            if ("DONOTSHOW" not in line):
                 if ("* \details" in line):
                     iHead=1
                 if (iHead==1 and "*/" in line) :
@@ -143,27 +143,45 @@ def h_filter_lines(f, start_delete, stop_delete, modelname,folder_csv):
                         line=line.replace(",","& & ",1)
                     else:    
                         line=line.replace(",","&",2)
-                    line=line.replace(","," , ")
+                    line = line.replace("SExtFunctionFlag({ &isBlended, this })", "Blended") #ManualObjective
+                    line=line.replace(","," & ")
                     line=line.replace('"',"")
                     line=line.replace(")","")
                     line=line.replace("(","")
                     line=line+" & "+linedesc
                     line=line+"\\\\\n"
-                    list_IO.append(line.split("&"))
-                if ( "InputData->addParameter" in line and not "DO NOT SHOW" in line):
+                    argsList =  line.split("&")
+                    #obtain unit
+                    unit = argsList[3] 
+                    if "->p" in unit:
+                        unit = unit.split("->p")[1]
+                    if "->" in unit:
+                        unit = unit.split("->")[1]
+                    #switch unit and mandatory value to be like the order in the table
+                    argsList[3] = argsList[2] 
+                    argsList[2] = unit
+                    #comment 
+                    argsList[4] = argsList[4].replace("\\", "")
+                    #put var mExpFlowDischarge 
+                    del argsList[1] 
+                    if len(argsList) != 4:
+                        name = argsList[0]
+                        argsList = [name, "true", "-", ""]
+                    list_IO.append(argsList)
+                if ( "InputData->addParameter" in line and not "DONOTSHOW" in line):
                     if (declareModelConfigurationParameters<=0):
                         list_Data.append(formatParamDeclarationLine(line))
                     else:
                         list_DataConfig.append(formatParamDeclarationLine(line))
-                if ( "InputParam->addParameter" in line and not "DO NOT SHOW" in line):
+                if ( "InputParam->addParameter" in line and not "DONOTSHOW" in line):
                     if (declareModelConfigurationParameters<=0):
                         list_param.append(formatParamDeclarationLine(line))#.replace("\n","").split("&"))
                     else:
                         list_paramConfig.append(formatParamDeclarationLine(line))#.replace("\n","").split("&"))
                         #print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",formatParamDeclarationLine(line).replace("\n","").split("&"))
-                if ( "InputDataFull->addParameter" in line and not "DO NOT SHOW" in line):
+                if ( "InputDataFull->addParameter" in line and not "DONOTSHOW" in line):
                     list_RH.append(formatParamDeclarationLine(line))
-                if ( "InputDataTS->addParameter" in line and not "DO NOT SHOW" in line):
+                if ( "InputDataTS->addParameter" in line and not "DONOTSHOW" in line):
                     list_TS.append(formatParamDeclarationLine(line))
     except UnicodeDecodeError:
         print ("UnicodeError detected - abort automatic treatment for this file")
@@ -245,7 +263,7 @@ def make_toc(directory,models_list):
     for i in (models_list.keys()):
         rst_file = directory+i+"_toc.rst"
         with open( rst_file, 'w') as o:
-            #o.write(rst_file+"\n\n")
+            o.write(write_title((i[0]).upper()+i[1:]+"s models","=",double_titre= False))
             o.write(".. toctree::\n")
             o.write("   :maxdepth: 1\n\n")
             for j in models_list[i]:
@@ -263,6 +281,7 @@ def redact_files(perseegui_dir, directory_name0, dest_folder):
     dest_folder_path = perseegui_dir + dest_folder
     directory_name=perseegui_dir+directory_name0
     print ("In redact_files ",directory_name)
+    print("contains:",os.listdir(directory_name))
     models_list = dict()
     for dirpath, dirnames, filenames in os.walk(directory_name):
         print("dirpath: ", dirpath)
@@ -407,3 +426,4 @@ if __name__ == '__main__':
         redact_files(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
         redact_files(cairn_path, "//src//models", "//doc//user//")
+        redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//")

@@ -21,7 +21,8 @@
 #  define MODELINTERFACESHARED_EXPORT IMPORT
 #endif
 
-
+#include <typeinfo>
+#include <algorithm> 
 #include <vector>
 #include <string>
 

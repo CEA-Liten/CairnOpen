@@ -1,0 +1,3 @@
+Component Name ; GWP EnvGreyContentCoefficient_A ; GWP EnvGreyContentOffset_B ; GWP EnvGreyReplacement ; GWP EnvGreyReplacementConstant ; GWP PiecewiseEnvGreyContentCoeff_A ; GWP TryRelaxationEnvGreyContentCoeff_A
+Elec_Grid_Cheap ; 0.000000 ; 0.000000 ; 0.000000 ; 0.000000 ; false ; true
+Elec_Grid_LowCO2 ; 0.000000 ; 0.000000 ; 0.000000 ; 0.000000 ; false ; true

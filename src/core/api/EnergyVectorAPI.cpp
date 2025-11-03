@@ -27,7 +27,7 @@ void CairnAPI::EnergyVectorAPI::set_EnergyVector(EnergyVector* ap_EnergyVector)
 std::string CairnAPI::EnergyVectorAPI::get_Name() const
 {
 	if (m_EnergyVector) {
-		return m_EnergyVector->Name().toStdString();
+		return m_EnergyVector->Name();
 	}
 	return "";
 }
@@ -35,9 +35,16 @@ std::string CairnAPI::EnergyVectorAPI::get_Name() const
 std::string CairnAPI::EnergyVectorAPI::get_Type() const
 {
 	if (m_EnergyVector) {
-		return m_EnergyVector->Type().toStdString();
+		return m_EnergyVector->Type();
 	}
 	return "";
+}
+
+void CairnAPI::EnergyVectorAPI::rename(const std::string& name)
+{
+	if (m_EnergyVector) {
+		m_EnergyVector->setName((name));
+	}
 }
 
 // Returns the list of parameter names 
@@ -55,7 +62,8 @@ t_list CairnAPI::EnergyVectorAPI::get_SettingsListByType(ESettingsLimited a_setL
 		vRet = CairnAPIUtils::getParametersName({
 			m_EnergyVector->getCompoInputParam(),
 			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam() }
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() }
 		, a_setLimited);
 	}
 	return vRet;
@@ -69,7 +77,8 @@ t_value CairnAPI::EnergyVectorAPI::get_SettingValue(const std::string& a_Setting
 		vRet = CairnAPIUtils::getParameter({
 			m_EnergyVector->getCompoInputParam(),
 			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam() }
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() }
 		, a_SettingName);	
 	}
 	return vRet;
@@ -83,7 +92,8 @@ t_dict CairnAPI::EnergyVectorAPI::get_SettingValues()
 		CairnAPIUtils::getParameters({
 			m_EnergyVector->getCompoInputParam(),
 			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam() }
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() }
 			, vRet);		
 	}
 	return vRet;
@@ -97,7 +107,8 @@ void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingNam
 		bool vOk = CairnAPIUtils::setParameter({
 			m_EnergyVector->getCompoInputParam(),
 			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam()
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam()
 			}, a_SettingName, a_SettingValue);
 
 		if (vOk) {
@@ -116,7 +127,8 @@ void CairnAPI::EnergyVectorAPI::set_SettingValues(const t_dict& a_SettingValues)
 		bool vOk = CairnAPIUtils::setParameters({ 
 			m_EnergyVector->getCompoInputParam(), 
 			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam()
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam()
 			}, a_SettingValues);
 
 		if (vOk) {
@@ -125,4 +137,75 @@ void CairnAPI::EnergyVectorAPI::set_SettingValues(const t_dict& a_SettingValues)
 		vRet = (vOk) ? noError : errParam;		
 	}
 	CairnAPIUtils::setError(vRet);	
+}
+
+bool CairnAPI::EnergyVectorAPI::get_SettingMandatoryValue(const std::string& a_SettingName)
+{
+	bool vRet = true;
+	if (m_EnergyVector) {
+		vRet = CairnAPIUtils::getParamMandatoryValue({
+			m_EnergyVector->getCompoInputParam(),
+			m_EnergyVector->getCompoInputSettings(),
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() },
+			a_SettingName);
+	}
+	return vRet;
+}
+
+bool CairnAPI::EnergyVectorAPI::is_DependentSetting(const std::string& a_SettingName)
+{
+	bool vRet = false;
+	if (m_EnergyVector) {
+		vRet = CairnAPIUtils::isDependentParam({
+			m_EnergyVector->getCompoInputParam(),
+			m_EnergyVector->getCompoInputSettings(),
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() },
+			a_SettingName);
+	}
+	return vRet;
+}
+
+std::string CairnAPI::EnergyVectorAPI::get_SettingUnit(const std::string& a_SettingName)
+{
+	std::string vRet = "-";
+	if (m_EnergyVector) {
+		vRet = CairnAPIUtils::getParamUnit({
+			m_EnergyVector->getCompoInputParam(),
+			m_EnergyVector->getCompoInputSettings(),
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() },
+			a_SettingName);
+	}
+	return vRet;
+}
+
+std::string CairnAPI::EnergyVectorAPI::get_SettingShowConfig(const std::string& a_SettingName)
+{
+	std::string vRet = "";
+	if (m_EnergyVector) {
+		vRet = CairnAPIUtils::getParamShowConfig({
+			m_EnergyVector->getCompoInputParam(),
+			m_EnergyVector->getCompoInputSettings(),
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam() },
+			a_SettingName);
+	}
+	return vRet;
+}
+
+t_list CairnAPI::EnergyVectorAPI::get_ShowConfigList()
+{
+	t_list vRet = {};
+	if (m_EnergyVector) {
+		vRet = CairnAPIUtils::getShowConfigList({
+			m_EnergyVector->getCompoInputParam(),
+			m_EnergyVector->getCompoInputSettings(),
+			m_EnergyVector->getTimeSeriesParam(),
+			m_EnergyVector->getGUIData()->getGuiInputParam()
+			}
+		);
+	}
+	return vRet;
 }

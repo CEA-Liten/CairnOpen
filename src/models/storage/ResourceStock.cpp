@@ -1,10 +1,10 @@
 #include "ResourceStock.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new ResourceStock(aParent);
 }
 
-ResourceStock::ResourceStock(QObject* aParent) : StorageSubModel(aParent)
+ResourceStock::ResourceStock(CairnObject* aParent) : StorageSubModel(aParent)
 {
 
 }
@@ -21,26 +21,17 @@ int ResourceStock::checkConsistency()
     return 0;
 }
 
-void ResourceStock::closeExpressions()
+void ResourceStock::computeInitialData()
 {
-    SubModel::closeExpressions();
+    setMinValue(mMinSize);
+    setMaxValue(mTotalMaxSize);
+
 }
 
-void ResourceStock::buildModel() 
+void ResourceStock::computeModelContribution()
 {
-    if (!mAllocate)
-    {
-        closeExpressions();
-    }
 
-    setExpSizeMax(mMinSize,mTotalMaxSize, "MaxResourceUsed");
-
-    /** Compute all expressions */
-    computeAllContribution();
-
-    mAllocate = false;
 }
-
 
 void ResourceStock::computeEconomicalContribution()
 {

@@ -1,14 +1,15 @@
 .. _display_results:
 
-################## 
+###############
 Display results
-################## 
+###############
 
 This section describes how to plot the results and list the features available in the plotter.
 
 .. _plot_timeseries:
+
 Plot TimeSeries
-================
+===============
 
 After performing a simulation with |cairn|, the user can plot the result time series as shown in :numref:`PlotTimeSeries`.
 The user can switch to the plotter-view by clicking on the **Results** tab on top of the left-hand side area. 
@@ -48,7 +49,7 @@ The user can plot/unplot a time series by clicking its name in the list. The use
 	
    
 Plotter Menu
-=============
+============
 
 The plotter has a dedicated menu to perform the following actions (from left to right-hand side as shown in :numref:`PlotterMenu` ): 
 
@@ -90,7 +91,7 @@ The plotter has a dedicated menu to perform the following actions (from left to 
 
 .. _load_result_timeseries:
 Load Result TimeSeries
-=======================
+======================
 
 The user can load the result file from a previous simulation by opening the "Time Series" menu from the Toolbar then clicking "Load Result Time Series" item as shown in :numref:`LoadResultTimeSeries`.  
 This allows the comparison of results from different studies/scenarios by plotting them on the same graph.

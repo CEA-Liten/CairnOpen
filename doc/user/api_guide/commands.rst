@@ -2,8 +2,7 @@
 |cairn| |api| documentation
 ############################
 
-Description of the |api|
-========================
+
 
 .. automodule::cairn
 
@@ -49,8 +48,5 @@ cairn toolbox
 
 .. autofunction:: cairn.set_param
 
-Example through a notebook
-==========================
+.. autofunction:: cairn.copy_component
 
-.. raw:: html
-    :file: APIPython_Doc_Notebook.html

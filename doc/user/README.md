@@ -1,4 +1,4 @@
-# Persee
+# Contribute to Cairn users documentation : Guidelines
 
 ### Prérequis pour la documentation utilisateur :
 - CMake >= 3.23
@@ -98,3 +98,18 @@ En paragraphe: `.. math::`.
  ```
  .. include::file.rst
  ```
+
+
+## Citer des papiers
+
+- Ajouter le papier dans Cairn.bib (on peut généralement télécharger directement au format `bib` depuis le site de l'éditeur):
+```
+@inproceedings{ruby_persee_2024,
+	title = {PERSEE, a single tool for various optimizations of multi-carrier energy system sizing and operation},
+	author = {Ruby, Alain and Gaoua, Yacine and Crevon, Stéphanie and Parmentier, Pimprenelle and Lavialle, Gilles},
+	booktitle = {37th {International} {Conference} on {Efficiency}, {Cost}, {Optimization}, {Simulation} and {Environmental} {Impact} of {Energy} {Systems} ({ECOS} 2024)},
+	year = {2024},
+	url = {https://cea.hal.science/cea-04681216v1}
+}
+```
+- Citer grâce au nom de référence: ``` :cite:`ruby_persee_2024` ```

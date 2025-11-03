@@ -1,6 +1,6 @@
 #include "ConverterSubModel.h"
 
-ConverterSubModel::ConverterSubModel(QObject* aParent) :
+ConverterSubModel::ConverterSubModel(CairnObject* aParent) :
 TechnicalSubModel(aParent),
 mUseAgeing(false),
 mAgeingModel(nullptr)
@@ -12,7 +12,7 @@ ConverterSubModel::~ConverterSubModel()
     if (mAgeingModel) delete mAgeingModel;
 }
 
-void ConverterSubModel::declareInputParams(const QString& name)
+void ConverterSubModel::declareInputParams(const std::string& name)
 {
     SubModel::declareInputParams(name);
     mAgeingModel = new AgeingRunningHours(mInputParam, mInputData);
@@ -20,10 +20,7 @@ void ConverterSubModel::declareInputParams(const QString& name)
 
 void ConverterSubModel::setTimeData()
 {
-    SubModel::setTimeData();
-    mConverterUse.clear();
-    mConverterUse.resize(mHorizon);
-
+    TechnicalSubModel::setTimeData();
     if (mUseAgeing && mAgeingModel) {
         mAgeingModel->setTimeData();
     }
@@ -93,40 +90,24 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     if (mOptimalSize.size() > 0)
         mOptimalSizeAllCycles.push_back(mOptimalSize.at(0));
 
-    MilpPort* port;
-    QListIterator<MilpPort*> iport(mListPort);
+        
     bool firstPort = true;
     double memRunningTime = 0.;
     // Calcul running time
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString varName = port->Variable();
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "extraction";
-        else sens = "injection";
+
+    for (auto& port : mListPort) {
+        std::string varName = port->Variable();
+        
 
         if (port->VarType() == "vector")
         {
             MIPModeler::MIPExpression1D variable = *getMIPExpression1D(varName);
-            if (port->Direction() == GS::KPROD()) {
-                if (firstPort && sens == "extraction") {
-                    memRunningTime = mRunningTime.at(0);
-                    computeTime(true, mHorizon, mNpdtPast, variable, optSol, mRunningTime.at(0));
-                    computeTime(false, *mptrTimeshift, mNpdtPast, variable, optSol, mRunningTime.at(1));
-                    if (mRunningTime.at(0) > memRunningTime) {
-                        firstPort = false;
-                    }
-                }
-            }
-            else if (port->Direction() == GS::KCONS()) {
-                if (firstPort && sens == "injection") {
-                    memRunningTime = mRunningTime.at(0);
-                    computeTime(true, mHorizon, mNpdtPast, variable, optSol, mRunningTime.at(0));
-                    computeTime(false, *mptrTimeshift, mNpdtPast, variable, optSol, mRunningTime.at(1));
-                    if (mRunningTime.at(0) > memRunningTime) {
-                        firstPort = false;
-                    }
+            if (firstPort && port->Direction() == GS::KPROD()) {
+                memRunningTime = mRunningTime.at(0);
+                computeTime(true, mHorizon, mNpdtPast, variable, optSol, mRunningTime.at(0));
+                computeTime(false, *mptrTimeshift, mNpdtPast, variable, optSol, mRunningTime.at(1));
+                if (mRunningTime.at(0) > memRunningTime) {
+                    firstPort = false;
                 }
             }
         }
@@ -136,24 +117,17 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
         mAgeingModel->setHistRunningTime(mRunningTime.at(1));
     }
 
-    iport = mListPort;
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString portName = port->Name();
-        QString varName = port->Variable();
-        QString storageName = port->ptrEnergyVector()->StorageName();
-        QString storageUnit = port->ptrEnergyVector()->StorageUnit();
-        QString fluxUnit = port->ptrEnergyVector()->FluxUnit();
-        QString fluxName = port->ptrEnergyVector()->FluxName();
-        bool isHeatCarrier = port->ptrEnergyVector()->isHeatCarrier();
+    for (auto &port : mListPort) {    
+        std::string portName = port->Name();
+        std::string varName = port->Variable();
+        std::string storageName = port->getCarrier()->StorageName();
+        std::string storageUnit = port->getCarrier()->StorageUnit();
+        std::string fluxUnit = port->getCarrier()->FluxUnit();
+        std::string fluxName = port->getCarrier()->FluxName();
+        bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
 
         double aPort = port->VarCoeff();
         double bPort = port->VarOffset();
-
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "extraction";
-        else sens = "injection";
 
         if (port->VarType() == "vector")
         {
@@ -185,36 +159,36 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     } 
 }
 
-void ConverterSubModel::cleanFluxIOs(QString name) 
+void ConverterSubModel::cleanFluxIOs(std::string name) 
 {
     if (name != "INPUTFlux" && name != "OUTPUTFlux")
         return;
     for (auto& [key, vIO] : mIOExpressions) {
-        if (key.contains(name) && key != name + "1")
+        if (CairnUtils::contains( key, name) && key != name + "1")
         {
             bool vOK = false;
             for (int i = 1; i < mNbInputFlux; i++)
             {
-                if (key == name + QString::number(i + 1)) {
+                if (key == name + std::to_string(i + 1)) {
                     vOK = true;
                     break;
                 }
             }
             if (!vOK) {//=> key == name + "j", where j > mNbInputFlux/mNbOutputFlux
-                foreach(MilpPort * lptrport, mListPort)
+                for(MilpPort * lptrport: mListPort)
                 {
                     if (lptrport->Variable() == key) {
-                        QString paramName;
-                        QString paramValue;
+                        std::string paramName;
+                        std::string paramValue;
                         if (name == "INPUTFlux") {
                             paramName = "NbInputFlux";
-                            paramValue = QString::number(mNbInputFlux);
+                            paramValue = std::to_string(mNbInputFlux);
                         }
                         else {
                             paramName = "NbOutputFlux";
-                            paramValue = QString::number(mNbOutputFlux);
+                            paramValue = std::to_string(mNbOutputFlux);
                         }
-                        Cairn_Exception error("ERROR at " + getCompoName()  + ": " + paramName + " cannot be set to " + paramValue + " because " + key + " is used at port " + lptrport->ID() + "(" + lptrport->Name()+")", -1);
+                        Cairn_Exception error("ERROR at " + Name()  + ": " + paramName + " cannot be set to " + paramValue + " because " + key + " is used at port " + lptrport->ID() + "(" + lptrport->Name()+")", -1);
                         throw error;
                     }
                 }
@@ -237,22 +211,22 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
     mExpInput.resize(mNbInputFlux);
     for (int i = 1; i < mNbInputFlux; i++)
     {
-        if (getIOExpression("INPUTFlux" + QString::number(i + 1)) == nullptr) {
+        if (getIOExpression("INPUTFlux" + std::to_string(i + 1)) == nullptr) {
             bool found = false;
-            //Look if there is a port whose Variable = "INPUTFlux" + QString::number(i + 1)
-            foreach(MilpPort * lptrport, mListPort)//InnerLoop
+            //Look if there is a port whose Variable = "INPUTFlux" + std::to_string(i + 1)
+            for(MilpPort * lptrport: mListPort)//InnerLoop
             {
-                if (lptrport->Variable() == "INPUTFlux" + QString::number(i + 1))
+                if (lptrport->Variable() == "INPUTFlux" + std::to_string(i + 1))
                 {
-                    addIO("INPUTFlux" + QString::number(i + 1), &mExpInput[i], true, lptrport->pFluxUnit()); /** Computed input flow at port N_i */
+                    addIO("INPUTFlux" + std::to_string(i + 1), &mExpInput[i], true, lptrport->pFluxUnit()); /** Computed input flow at port N_i */
                     found = true;
                     break; //InnerLoop
                 }
             }
             if (!found) {//Use default port mPortINPUTFlux1. Don't use a dynamic unit!
-                QString unit = "FluxUnit";
-                if (defaultPort) unit = defaultPort->ptrEnergyVector()->FluxUnit();
-                addIO("INPUTFlux" + QString::number(i + 1), &mExpInput[i], true, unit); /** Computed input flow at port N_i */
+                std::string unit = "FluxUnit";
+                if (defaultPort) unit = defaultPort->getCarrier()->FluxUnit();
+                addIO("INPUTFlux" + std::to_string(i + 1), &mExpInput[i], true, unit); /** Computed input flow at port N_i */
             }
         }
     }
@@ -270,22 +244,22 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
     mExpOutput.resize(mNbOutputFlux);
     for (int i = 1; i < mNbOutputFlux; i++)
     {
-        if (getIOExpression("OUTPUTFlux" + QString::number(i + 1)) == nullptr) {
+        if (getIOExpression("OUTPUTFlux" + std::to_string(i + 1)) == nullptr) {
             bool found = false;
-            //Look if there is a port whose Variable = "OUTPUTFlux" + QString::number(i + 1)
-            foreach(MilpPort * lptrport, mListPort)//InnerLoop
+            //Look if there is a port whose Variable = "OUTPUTFlux" + std::to_string(i + 1)
+            for(MilpPort * lptrport: mListPort)//InnerLoop
             {
-                if (lptrport->Variable() == "OUTPUTFlux" + QString::number(i + 1))
+                if (lptrport->Variable() == "OUTPUTFlux" + std::to_string(i + 1))
                 {
-                    addIO("OUTPUTFlux" + QString::number(i + 1), &mExpOutput[i], true, lptrport->pFluxUnit()); /** Computed output flow at port N_i */
+                    addIO("OUTPUTFlux" + std::to_string(i + 1), &mExpOutput[i], true, lptrport->pFluxUnit()); /** Computed output flow at port N_i */
                     found = true;
                     break; //InnerLoop
                 }
             }
             if (!found) {//Use default port PortOUTPUTFlux1 ! Don't use a dynamic unit!
-                QString unit = "FluxUnit";
-                if (defaultPort) unit = defaultPort->ptrEnergyVector()->FluxUnit();
-                addIO("OUTPUTFlux" + QString::number(i + 1), &mExpOutput[i], true, unit); /** Computed output flow at port N_i */
+                std::string unit = "FluxUnit";
+                if (defaultPort) unit = defaultPort->getCarrier()->FluxUnit();
+                addIO("OUTPUTFlux" + std::to_string(i + 1), &mExpOutput[i], true, unit); /** Computed output flow at port N_i */
             }
         }
     }

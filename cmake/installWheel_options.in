@@ -1,0 +1,4 @@
+
+set(Python_ROOT_DIR @PYTHON_HOME@ CACHE INTERNAL "Python installation path")
+set(INSTALL_WHEEL_VENV @INSTALL_WHEEL_VENV@ CACHE INTERNAL "Cairn wheel installation path")
+set(CAIRNTESTS_HOME @CAIRNTESTS_HOME@ CACHE INTERNAL "Cairn tests path")

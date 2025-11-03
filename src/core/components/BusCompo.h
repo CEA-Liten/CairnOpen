@@ -1,10 +1,6 @@
 #ifndef BusCompo_H
 #define BusCompo_H
 
-//class BusCompo ;
-
-#include <QVector>
-#include <QDataStream>
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
 #include "MilpComponent.h"
@@ -19,7 +15,7 @@
 class CAIRNCORESHARED_EXPORT BusCompo : public MilpComponent
 {
 public:
-    BusCompo (QObject* aParent, const QMap<QString, QString>& aComponent, const QMap < QString, QMap<QString, QString> >& aPorts, 
+    BusCompo (CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map < std::string, std::map<std::string, std::string> >& aPorts, 
         MilpData *aMilpData, TecEcoEnv &aTecEcoEnv, ModelFactory* aModelFactory) ;
 
     virtual ~BusCompo();
@@ -33,29 +29,27 @@ public:
     virtual void initSubModelTopology() ; /**Send topology data to submodel : list of ports*/
     virtual void setBusFluxPortExpression(const double &aSignedCoefficient) ;/** Only deal with ports defined from .xml, not all Bus ports*/
     virtual void setBusSameValuePortExpression() ;
-    void defineMainEnergyVector() {
+    void defineMainCarrier() {
         /*
         * Do nothing. The main carrier of a Bus component is set from its VectorName in OptimProblem::createPortsAndLinksToBus
         */
     }
 
     void declareCompoInputParam();
-    void setCompoInputParam(const QMap<QString, QString> aComponent);
-
-    void declareIOVariables();
+    void setCompoInputParam(const std::map<std::string, std::string> aComponent);
 
     void exportPortResults(t_mapExchange& a_Export, uint modinitTS);
 
-    void jsonSaveGUIlistPortsData(QJsonArray& nodePortArray, const QString& aSide);
-    QList<MilpPort*> listSidePorts(const QString& aside);
-    int NbPorts(const QString& aDirection="");
+    void jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide);
+    std::vector<MilpPort*> listSidePorts(const std::string& aside);
+    int NbPorts(const std::string& aDirection="");
 
-    const QString VectorName() {return mVectorName ;}
-    const QList<MilpComponent*> ListComponent() {return mListComponent ;}        /** get component List of Ports */
+    const std::string VectorName() {return mVectorName ;}
+    const std::vector<MilpComponent*> &ListComponent() {return mListComponent ;}        /** get component List of Ports */
 
 protected:  
-    QString mVectorName ;
-    QList<MilpComponent*> mListComponent ;      /** List of connected MilpComponent onto Bus */
+    std::string mVectorName ;
+    std::vector<MilpComponent*> mListComponent ;      /** List of connected MilpComponent onto Bus */
 
     void createPortsExportListVars(t_mapExchange& a_Exchange);
 

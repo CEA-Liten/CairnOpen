@@ -24,7 +24,7 @@ class MODELS_DECLSPEC NodeEquality : public BusSubModel
 {
 public:
 //----------------------------------------------------------------------------------------------------
-    NodeEquality(QObject* aParent);
+    NodeEquality(CairnObject* aParent);
     ~NodeEquality();
 //----------------------------------------------------------------------------------------------------
     void computeModelContribution() override;

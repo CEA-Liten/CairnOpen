@@ -1,2 +1,0 @@
-copy %~dp0\test_constantProduction_constant_results_Results.csv %~dp0\test_constantProduction_constant_Results_Ref.csv
-copy %~dp0\test_constantProduction_variable_results_Results.csv %~dp0\test_constantProduction_variable_Results_Ref.csv

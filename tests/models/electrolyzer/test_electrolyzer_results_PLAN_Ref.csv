@@ -1,0 +1,63 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;365;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;3.26808e+07;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);-3.26808e+07;EUR;NPV
+TecEcoAnalysis;Computed Average Rate Of Return Factor;-1823.18;-;ComputedAverageRateOfReturnFactor
+TecEcoAnalysis;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
+TecEcoAnalysis;Current Rate Of Return perCent;-44.0648;%;CurrentRateOfReturnperCent
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;9.996e+06;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total Discounted Net OPEX;2.26848e+07;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total Discounted Pure OPEX;2.83277e+06;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total Discounted Sell Part;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total Discounted Buy Part;1.9852e+07;EUR;DiscountedBuyPart
+TecEcoAnalysis;Total Undiscounted Net OPEX;2.0012e+06;EUR;NetOPEX
+TecEcoAnalysis;Total Undiscounted Pure OPEX;249900;EUR;PureOPEX
+TecEcoAnalysis;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis;Total Undiscounted Buy Part;1.7513e+06;EUR;BuyPart
+Elec_Grid;Total Cost Function;1.65433e+07;EUR;TotCosts
+Elec_Grid;is installed;1;-;IsInstalled
+Elec_Grid;Opex part (including energy cost);1.45942e+06;EUR;OPEX
+Elec_Grid;Grid extraction time;7300;h;extraction Time
+Elec_Grid;Grid extraction ElectricalEnergy GridFlow;291883;MWh;TotGridFlow
+Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;3.30867e+06;MWh;LvlzdTotGridFlow
+Elec_Grid;Mean extraction ElectricalPower GridFlow;39.984;MW;MeanGridFlow
+Electrolyzer;Total Cost Function;1.61374e+07;EUR;TotCosts
+Electrolyzer;Capex part;9.996e+06;EUR;CAPEX
+Electrolyzer;is installed;1;-;IsInstalled
+Electrolyzer;Opex part (including energy cost);541783;EUR;OPEX
+Electrolyzer;Pure Opex part;249900;EUR;PureOPEX
+Electrolyzer;Replacement part;0;EUR;Replacement
+Electrolyzer;Sum up at;1;-;SumUp
+Electrolyzer;Installed Optimal Size;39.984;MW;Size
+Electrolyzer;Running time at power >0.;7300;h;RunningTime
+Electrolyzer;Running time availability;0.833333;-;RunningTimeAvailable
+Electrolyzer;PROD Total FluidH2Mass H2MassFlowRate;5.256e+06;kg;TotProdH2MassFlowRate
+Electrolyzer;PROD Levelized Total FluidH2Mass H2MassFlowRate;5.95799e+07;kg;LvlzdTotProdH2MassFlowRate
+Electrolyzer;PROD Mean Total FluidH2Flowrate H2MassFlowRate;720;kg/h;MeanProdH2MassFlowRate
+Electrolyzer;CONS Total ElectricalEnergy UsedPower;-291883;MWh;TotConsUsedPower
+Electrolyzer;CONS Levelized Total ElectricalEnergy UsedPower;-3.30867e+06;MWh;LvlzdTotConsUsedPower
+Electrolyzer;CONS Mean Total ElectricalPower UsedPower;-39.984;MW;MeanConsUsedPower
+Electrolyzer;CONS Total Power Factor UsedPower;1;-;PowerFactorUsedPower
+Electrolyzer;Rate of use UsedPower;0.833333;-;UseRateUsedPower
+H2_Load;Total Cost Function;0;EUR;TotCosts
+H2_Load;is installed;1;-;IsInstalled
+H2_Load;Opex part (including energy cost);0;EUR;OPEX
+H2_Load;Component Weight;1;Unit;Weight
+H2_Load;ImposedProfile load time;7300;h;ImposedProfileTime
+H2_Load;ImposedProfile FluidH2Mass SourceLoadFlow;-5.256e+06;kg;TotImposedProfileSourceLoadFlow
+H2_Load;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-5.95799e+07;kg;LvlzdTotImposedProfileSourceLoadFlow
+H2_Load;Mean FluidH2Flowrate SourceLoadFlow;-720;kg/h;MeanImposedProfileSourceLoadFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;kg;BusBalance

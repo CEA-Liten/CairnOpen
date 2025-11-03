@@ -1,10 +1,10 @@
 #include "Electrolyzer.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new Electrolyzer(aParent);
 }
 
-Electrolyzer::Electrolyzer(QObject* aParent) :
+Electrolyzer::Electrolyzer(CairnObject* aParent) :
     ConverterSubModel(aParent),
     mPortUsedPower(nullptr),
     mPortH2MassFlowRate(nullptr),
@@ -27,6 +27,8 @@ void Electrolyzer::computeInitialData()
 {
     setMaxValue(mMaxPower_H2);
     setMinValue(mMinSize);
+
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 void Electrolyzer::computeModelContribution()
@@ -35,8 +37,8 @@ void Electrolyzer::computeModelContribution()
     * Assumes that the default port "PortH2MassFlowRate" is mandatory to be used and its variable cannot be changed from FluidH2.
     * Otherwise, should loop over all ports and look for a connected output port whose variable is FluidH2.
     */
-    if (mPortH2MassFlowRate->ptrEnergyVector() != nullptr) {
-        mPci_H2 = mPortH2MassFlowRate->ptrEnergyVector()->LHV();
+    if (mPortH2MassFlowRate->getCarrier() != nullptr) {
+        mPci_H2 = mPortH2MassFlowRate->getCarrier()->LHV();
     }
 
     /**
@@ -46,8 +48,8 @@ void Electrolyzer::computeModelContribution()
     double efficiencyAgeing = Efficiency();
     double capacityAgeing = CapacityAgeing();
     if (mUseAgeing) {        
-        qInfo() << "Electrolyzer efficiency " << mEfficiency * efficiencyAgeing;
-        qInfo() << "Electrolyzer capcity ageing" << capacityAgeing;
+        cInfo() << "Electrolyzer efficiency " << mEfficiency * efficiencyAgeing;
+        cInfo() << "Electrolyzer capcity ageing" << capacityAgeing;
     }
     
     /**
@@ -97,10 +99,6 @@ void Electrolyzer::computeModelContribution()
     // variables, expressions and optional constraints
     // -----------------------------------------------
 
-    // Integer variables: On/Off
-    // -----------------------
-    addStateConstraints(varMilpHorizon());
-
     // constraints
     // ===========
 
@@ -128,11 +126,11 @@ void Electrolyzer::computeModelContribution()
 
     for (uint64_t t = 0; t < mHorizon; t++) {
         if (mAddAuxConso) {
-            addConstraint(mExpAuxConso[t] == mConverterUse[t] * mExpSizeMax * mAuxConso, "DefVarAuxConso"); // warning, it is not impacted by ageing
+            addConstraint(mExpAuxConso[t] == mComponentAvailabilityTS[t] * mExpSizeMax * mAuxConso, "DefVarAuxConso"); // warning, it is not impacted by ageing
             mExpTotalPower[t] += mExpAuxConso[t];
         }
         if (mAddStdByConso) {
-            addConstraint(mExpStdByConso[t] == mConverterUse[t] * mVarZ2(t), "DefVarStdByConso");
+            addConstraint(mExpStdByConso[t] == mComponentAvailabilityTS[t] * mVarZ2(t), "DefVarStdByConso");
             mExpTotalPower[t] += mExpStdByConso[t];
         }
     }
@@ -155,7 +153,7 @@ void Electrolyzer::computeModelContribution()
     }
 
     for (uint64_t t = 0; t < mHorizon; t++) {
-        addConstraint(mExpPower_H2[t] - mExpSizeMax * mConverterUse[t] <= 0, "ConverterUse", t);
+        addConstraint(mExpPower_H2[t] - mExpSizeMax * mComponentAvailabilityTS[t] <= 0, "ConverterUse", t);
     }
 }
 

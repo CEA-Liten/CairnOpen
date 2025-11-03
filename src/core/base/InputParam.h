@@ -1,9 +1,7 @@
 #ifndef InputParam_H
 #define InputParam_H
-class InputParam ;
+class InputParam;
 
-#include <QtCore>
-#include <QDir>
 #include "CairnCore_global.h"
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
@@ -14,6 +12,7 @@ class InputParam ;
 #endif
 #include "CairnAPI.h"
 #include "FlagParam.h"
+#include "UnitParam.h"
 #include <cmath>
 
 const double INFINITY_VAL = 1.e12;
@@ -32,314 +31,236 @@ enum EParamType {
     eString,
     eStringList,
     eVectorDouble,
-    eVectorInt,
-    eVectorEigen,
-    eQVectorfloat
+    //eVectorInt,
+    eVectorEigen    
 };
-typedef std::variant<double*, int*, bool*, QString*, QStringList*, std::vector<double>*, std::vector<int>*, Eigen::VectorXf*, QVector<float>*> t_pvalue;
+typedef std::variant<double*, int*, bool*, std::string*, std::vector<std::string>*, std::vector<double>*, Eigen::VectorXf*> t_pvalue;
 
 /**
  * \brief The InputParam class defines MilpComponent & MilpModel Input Parameter variables
  * Provides functionnality to read MilpComponent parameter values from settings and to set these values to Submodel Input Parameters
  */
 
-class CAIRNCORESHARED_EXPORT InputParam : public QObject
+class CAIRNCORESHARED_EXPORT InputParam : public CairnObject
 {
-    Q_OBJECT
+    
 public:
-    InputParam (QObject* aParent, QString aName="");
-    virtual ~InputParam();
+    InputParam (CairnObject* aParent, std::string aName="");
+    ~InputParam();
 
-    void removeParameter(const QString& aParamName);
+    void removeParameter(const std::string& aParamName);
     void removeParameters();
 
     /** @brief
-    @param aParamName QString: param name
-    @param aPtr t_pvalue: pointer on the param value (possible type: double*, int*, bool*, QString*, QStringList*, std::vector<double>*)
+    @param aParamName std::string: param name
+    @param aPtr t_pvalue: pointer on the param value (possible type: double*, int*, bool*, std::string*, std::vector<std::string>*, std::vector<double>*)
     @param aDfltValue t_value: default value
-    @param isBlocking bool: is this parameter mandatory?
-    @param isUsed bool: conditions for which the parameter is used
-    @param aDescription QString&: comment to be displayed to help the user
-    @param aUnit QString&: unit of the parameter
-    @param aConfigList QList<QString>: to be used to gather parameters in the same filter
+    @param aIsBlocking bool: is this parameter mandatory?
+    @param aIsUsed bool: conditions for which the parameter is used
+    @param aDescription std::string&: comment to be displayed to help the user
+    @param aUnit std::string&: unit of the parameter
+    @param aShowConfig std::vector<std::string>: to be used to gather parameters in the same filter
     */
-    void addParameter(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const std::string aShowConfig = "Base");
+    void addParameter(const std::string& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking = true, t_flag aIsUsed = true, 
+        const std::string& aDescription = "", const t_unit& aUnit = "", const std::string aShowConfig = "Base");
 
     /** @brief
-    @param aParamName QString: param name
-    @param aBoolPtr bool*: pointer on the bool value
-    @param aDfltValue bool: default value
-    @param isBlocking bool: is this parameter mandatory?
-    @param isUsed bool: conditions for which the parameter is used
-    @param aDescription QString&: comment to be displayed to help the user
-    @param aUnit QString&: unit of the parameter
-    @param aConfigList QList<QString>: to be used to gather parameters in the same filter
-    */
-    void addParameter(const QString &aParamName, bool* aBoolPtr, bool aDefaultValue, t_flag aIsBlocking=true, t_flag aIsUsed=true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
-    /** @brief
-    @param aParamName QString: param name
-    @param aQStringPtr QString*: pointer on the QString value
-    @param aDfltValue QString: default value
-    @param isBlocking bool: is this parameter mandatory?
-    @param isUsed bool: conditions for which the parameter is used
-    @param aDescription QString&: comment to be displayed to help the user
-    @param aUnit QString&: unit of the parameter
-    @param aConfigList QList<QString>: to be used to gather parameters in the same filter
-    */
-    void addParameter(const QString &aParamName, QString* aQstring, QString aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
-    /** @brief
-    @param aParamName QString: param name
-    @param aIntPtr int*: pointer on the int value
-    @param aDfltValue int: default value
-    @param isBlocking bool: is this parameter mandatory?
-    @param isUsed bool: conditions for which the parameter is used
-    @param aDescription QString&: comment to be displayed to help the user
-    @param aUnit QString&: unit of the parameter
-    @param aConfigList QList<QString>: to be used to gather parameters in the same filter
-    */
-    void addParameter(const QString &aParamName, int* aIntPtr, int aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed=true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
-    /** @brief
-    @param aParamName QString: param name
+    @param aParamName std::string: param (timeseries) name
     @param aDblePtr double*: pointer on the double value
-    @param aDfltValue double: default value
-    @param isBlocking bool: is this parameter mandatory?
-    @param isUsed bool: conditions for which the parameter is used
-    @param aDescription QString&: comment to be displayed to help the user
-    @param aUnit QString&: unit of the parameter
-    @param aConfigList QList<QString>: to be used to gather parameters in the same filter
+    @param a_default double: default value (the actual value is a vector of a_default)
+    @param aIsBlocking bool: is this parameter mandatory?
+    @param aIsUsed bool: conditions for which the parameter is used
+    @param aDescription std::string&: comment to be displayed to help the user
+    @param aUnit std::string&: unit of the parameter
+    @param aShowConfig std::vector<std::string>: to be used to gather parameters in the same filter
+    @param a_min double: minimum value allowed
+    @param a_max double: maximum value allowed
     */
-    void addParameter(const QString &aParamName, double* aDblePtr, double aDefaultValue, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString &aDescription="", const QString &aUnit="", const std::string aShowConfig = "Base") ;
-    
-    void addParameter(const QString& aParamName, QStringList* aQSLPtr, t_flag IsBlocking=true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const std::string aShowConfig = "Base");
-
-    void addPerfParam(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "");
-
-    void addTimeSeries(const QString& aParamName, std::vector<double>* aDblePtr, 
+    void addTimeSeries(const std::string& aParamName, std::vector<double>* aDblePtr, 
         double a_default = 1.0,        
-        t_flag IsBlocking = true, t_flag aIsUsed = true,
-        const QString& aDescription = "", const QString& aUnit = "",
+        t_flag aIsBlocking = true, t_flag aIsUsed = true,
+        const std::string& aDescription = "", const t_unit& aUnit = "",
         const std::string& aShowConfig = "Base",
         double a_min = std::nan("1"), double a_max = std::nan("1"));
 
+    /** @brief 
+    @param aParamName std::string: param name
+    @param aDblePtr double*: pointer on the double value
+    * it doesn't take a default value
+    @param aIsBlocking bool: is this parameter mandatory? 
+    @param aIsUsed bool: conditions for which the parameter is used
+    @param aDescription std::string&: comment to be displayed to help the user
+    @param aUnit std::string&: unit of the parameter
+    * it doesn't take and ShowConfig because  it is name is hard-coded
+    * it is not shown to the user as the user doesn't have to provide a name.
+    * it doesn't take min and max values
+    */
+    void addPerfParam(const std::string& aParamName, std::vector<double>* aDblePtr, t_flag aIsBlocking = true, t_flag aIsUsed = true, 
+        const std::string& aDescription = "", const t_unit& aUnit = "");
 
-    //used to tranfer data from MilpComponent to SubModel
-    void publishData(const QString& aParamName, bool* aBoolPtr);
-    void publishData(const QString& aParamName, QString* aQstring);
-    void publishData(const QString& aParamName, int* aIntPtr);
-    void publishData(const QString& aParamName, double* aDblePtr);
-    void publishData(const QString& aParamName, const double* aDblePtr);
-    void publishData(const QString& aParamName, Eigen::VectorXf* aVXfPtr);
-    void publishData(const QString& aParamName, int aSize, double aDefault);
+    /** @brief
+    * Method publishData is used to publish/export IO variables
+    @param aVarName std::string: IO variable name
+    @param aSize int: the size of the corresponding 1D-Expression
+    @param aDfltValue double: default value
+    */
+    void publishData(const std::string& aVarName, int aSize, double aDefault);
 
-    void addIndicator(const QString& aIndicatorName, std::vector<double>* aDblePtr, bool* aBoolPtr, const QString& aDescription = "", const QString& aUnit = "", const QString& aShortName = "");
-
-    int readParameters(const QMap<QString, QString>& aSettings);
-    void readVectorParameters (const QString &aName, const QString &aFileName, QList<QString>& aPerfParamNames) ;
+    /** @brief
+    @param aIndicatorName std::string: indicator name
+    @param aDblePtr double*: pointer on the double value
+    @param aIsExported bool*: whether to export the indicator or not (into the result file)
+    @param aDescription std::string&: comment to be displayed to help the user
+    @param aUnit std::string&: unit of the parameter
+    @param aShortName std::string: indicator short name (alias)
+    */
+    void addIndicator(const std::string& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported, const std::string& aDescription = "",
+        const t_unit& aUnit = "", const std::string& aShortName = "");
     
-    int fillVectorData(const QString& aName, const InputParam &aSrc, const uint& aOffset);
+   
+    /* ------------------------------------------------------------------------------------------------------------------------------- */
 
-    QString getParamQSValue(const QString& aParamName);
-    void getParameters(QList<QString>& a_List, const EParamType& a_Type);
-    void getParameters(QList<QString>& a_List, CairnAPI::ESettingsLimited a_setLimited = CairnAPI::all);
-    bool getParameterValue(const QString& a_SettingsName, QString& a_Value, const EParamType& a_Type = eUndefined);
-    bool getParameterValue(const QString& a_SettingsName, t_value& a_Value);
-    bool setParameterValue(const QString& a_SettingsName, const QString& a_SettingsValue);
-    bool setParameterValue(const QString& a_SettingsName, const t_value& a_SettingsValue);
+    int readParameters(const std::map<std::string, std::string>& aSettings);
+    void readVectorParameters (const std::string &aName, const std::string &aFileName, std::vector<std::string>& aPerfParamNames) ;
+    
+    int fillVectorData(const std::string& aName, const InputParam &aSrc, const uint& aOffset);
+
+    void getParameters(std::vector<std::string>& a_List, const EParamType& a_Type);
+    void getParameters(std::vector<std::string>& a_List, CairnAPI::ESettingsLimited a_setLimited = CairnAPI::all);
+    bool getParameterValue(const std::string& a_SettingsName, std::string& a_Value, const EParamType& a_Type = eUndefined);
+    bool getParameterValue(const std::string& a_SettingsName, t_value& a_Value);
+    bool setParameterValue(const std::string& a_SettingsName, const std::string& a_SettingsValue);
+    bool setParameterValue(const std::string& a_SettingsName, const t_value& a_SettingsValue);
 
     void addToShowConfigList(const std::string& aConfig);
-    static int checkProfile(const QString aName, const Eigen::VectorXf& aProfile, const float aInf, const float aSup);
+    static int checkProfile(const std::string aName, const Eigen::VectorXf& aProfile, const float aInf, const float aSup);
 
-    void jsonSaveGUIInputParam(QJsonArray& paramArray);
+    void jsonSaveGUIInputParam(ojson& paramArray);
 
     class ModelParam
     {
     public:
-        // default
-        ModelParam(const QString& a_Name = "",
+        // default contractor  
+        ModelParam(const std::string& a_Name = "",
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "", 
+            const std::string& a_Comment = "",
+            const t_unit& aUnit = "",
             const std::string& a_ShowConfig = "");
-        ModelParam(const QString& a_Name,
+
+        // t_pvalue (scalar and vector of string parameters) 
+        ModelParam(const std::string& a_Name,
             const t_pvalue &ap_Value,
             t_value a_defaultValue,
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
+            const std::string& a_Comment = "",
+            const t_unit& aUnit = "",
             const std::string& a_ShowConfig = "");
-        // bool
-        ModelParam(const QString& a_Name, bool* ap_Value);
-        ModelParam(const QString& a_Name,
-            bool* ap_Value,
-            bool a_defaultValue, 
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const std::string& a_ShowConfig = "");
-        // string
-        ModelParam(const QString& a_Name, QString* ap_Value);
-        ModelParam(const QString& a_Name,
-            QString* ap_Value,
-            QString a_defaultValue,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
-            const std::string& a_ShowConfig = "");
-        // double
-        ModelParam(const QString& a_Name, double* ap_Value);
-        ModelParam(const QString& a_Name,
-            double* ap_Value,
-            double a_defaultValue,
-            t_flag a_IsBlocking,
-            t_flag a_IsUsed,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
-            double a_min = std::nan("1"),
-            double a_max = std::nan("1"),
-            const std::string& a_ShowConfig = "");
-        // int
-        ModelParam(const QString& a_Name, int* ap_Value);
-        ModelParam(const QString& a_Name,
-            int* ap_Value,
-            int a_defaultValue,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
-            int a_min = std::numeric_limits<int>::max(),
-            int a_max = std::numeric_limits<int>::max(),
-            const std::string& a_ShowConfig = "");
-        // string list
-        ModelParam(const QString& a_Name,
-            QStringList* ap_Value,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const std::string& a_ShowConfig = "");
-        // vector double
-        ModelParam(const QString& a_Name,
-            std::vector<double>* ap_Value,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
-            const std::string& a_ShowConfig = "");
-        ModelParam(const QString& a_Name,
-            std::vector<double>* ap_Value,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QList<QString>& a_Quantities = { "" },
-            const std::string& a_ShowConfig = "");
-        ModelParam(const QString& a_Name,
+
+        // vector double (used for timeseries and performance parameters)
+        ModelParam(const std::string& a_Name,
             std::vector<double>* ap_Value,
             double a_default = 1.0,
             double a_min = std::nan("1"),
             double a_max = std::nan("1"),
             t_flag a_IsBlocking = false,
             t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
+            const std::string& a_Comment = "",
+            const t_unit& aUnit = "",
             const std::string& a_ShowConfig = "");
-        // vector int
-        ModelParam(const QString& a_Name,
-            std::vector<int>* ap_Value,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const QString& a_Comment = "",
-            const QString& a_Unit = "",
-            const std::string& a_ShowConfig = "");
-        // vector eigen
-        ModelParam(const QString& a_Name, Eigen::VectorXf* ap_Value);
-        ModelParam(const QString& a_Name, int aSize, double aDefault);
+
+        // publish IO var name
+        ModelParam(const std::string& a_Name, int aSize, double aDefault);
+
         ~ModelParam();
 
-        virtual QString toString();
-        virtual bool setValue(const QString& a_Value);
+        virtual std::string toString();
+        virtual bool setValue(const std::string& a_Value);
         virtual bool setValue(const t_value& a_Value);
         virtual t_value getValue();
         bool getNumValue(double &a_Value); // return if possible a double value
         bool copyValues(const ModelParam& aSrc, size_t aSize, size_t aOffset = 0);
-        bool copyValues(const QVector<float> &aSrc, size_t aOffset = 0);
+        bool copyValues(const std::vector<double> &aSrc, size_t aOffset = 0);
         bool setValues(const double& aValue, size_t aSize);
 
-        bool readParameter(const QMap<QString, QString>& aSettings); 
+        bool readParameter(const std::map<std::string, std::string>& aSettings); 
         bool IsBlocking();
         bool IsUsed();
+        bool isDependent(); /* whether m_IsBlocking is a scalr or depends on other parameetrs */
         TriState isModified();
 
-        const QString& getName() const { return m_Name; };
-        const QString& getDescription() const { return m_Comment; };
-        //const QString& getUnit() const { return m_Quantities[0]; };
-        const QList<QString>& getQuantities() const { return m_Quantities; };
+        const std::string& getName() const { return m_Name; };
+        const std::string& getDescription() const { return m_Comment; };
         const std::string& getShowConfig() const { return m_ShowConfig; };
         const EParamType& getType() const { return m_Type; };
-        bool isPValue() const;
-        const t_pvalue& getPtr() const { return p_Value; };
-        size_t  size();
-        t_value operator[](size_t i);
+        std::string getUnit() const;
+        const UnitParam* pUnitParam() const { return &m_Unit; }; /* Used to dynamically pass the unit e.g. from a timeseries ModelParam to the corresponding ModelTS */
 
         const t_value& getDefault() const { return m_default; };
         const t_value& getMin() const { return m_min; };
         const t_value& getMax() const { return m_max; };
 
+        bool isPValue() const;
+        const t_pvalue& getPtr() const { return p_Value; };
+        size_t  size();
+        t_value operator[](size_t i);
+
     protected:
-        QString m_Name;
+        std::string m_Name;
         EParamType m_Type;
-        QString m_Comment;
-        QList<QString> m_Quantities;
+        std::string m_Comment;
+        UnitParam m_Unit; 
         std::string m_ShowConfig; // In GUI, the parameter is displayed only if m_ShowConfig is selected from DataFilter
 
         t_pvalue p_Value;
         bool m_create{ false }; 
 
-        t_value m_default; // cas particulier pour vector<double>, le type peut être double
+        t_value m_default; // cas particulier pour vector<double>, le type peut ï¿½tre double
         t_value m_min;
         t_value m_max;
        
         FlagParam m_IsBlocking;
         FlagParam m_IsUsed;
         
-        virtual void readParam(const QString& aParamName, const QMap<QString, QString>& a_Settings);
-        virtual void readParam(const QString& aParamName, const QVariant& a_Setting);
+        virtual void readParam(const std::string& aParamName, const std::map<std::string, std::string>& a_Settings);
     };
     class ModelIndicator {
     public:
-        ModelIndicator(const QString& aIndicatorName = "", 
+        ModelIndicator(const std::string& aIndicatorName = "", 
             std::vector<double>* aDblePtr = nullptr, 
             bool* aBoolPtr = nullptr, 
-            const QString& aDesc = "", 
-            const QString& aUnit = "", 
-            const QString& aShortName = "");
+            const std::string& aDesc = "", 
+            const t_unit& aUnit = "",
+            const std::string& aShortName = "");
 
-        const QString& getName() const { return m_Name; };
-        const QString& getShortName() const { return m_ShortName; };
-        const QString& getUnit() const { return m_Unit; };
+        const std::string& getName() const { return m_Name; };
+        const std::string& getShortName() const { return m_ShortName; };
+        std::string getUnit() const;
         bool IsExported();
-        void Export(std::fstream& out, const QString& aComponentName, const std::string&range, bool aForceExport);
-        void Export(std::fstream& out, const QString& aComponentName, const std::string& range, bool aForceExport,
-            bool aIsSizeOptimized, bool aIsPriceOptimized, bool isRollingHorizon, const std::vector<double> &aOptimalSizeAllCycles);
+        void Export(std::fstream& out, const std::string& aComponentName, const std::string&range, bool aForceExport, 
+            const bool showDescription, const std::vector<std::string>& labels = {});
+        void Export(std::fstream& out, const std::string& aComponentName, const std::string& range, bool aForceExport, bool aIsSizeOptimized, 
+            bool aIsPriceOptimized, bool isRollingHorizon, const std::vector<double> &aOptimalSizeAllCycles, const bool showDescription, 
+            const std::vector<std::string>& labels = {});
         double getValue(size_t aIndex=0);
         void resetValue(); //reset indicator value to 0
     protected:
-        QString m_Name;
-        QString m_ShortName;
-        QString m_Comment;
-        QString m_Unit;
+        std::string m_Name;
+        std::string m_ShortName;
+        std::string m_Comment;
+        UnitParam m_Unit;
         bool *p_IsExported;
         std::vector<double>  *p_Value;
     };
     
     typedef std::vector<ModelIndicator*> t_Indicators;
-    typedef std::map<QString, ModelParam*> t_mapParams;
+    typedef std::map<std::string, ModelParam*> t_mapParams;
     
     const t_mapParams& getMapParams() const { return mMapParams; };    
 
-    void getParameters(QList<ModelParam*>& a_List, const EParamType& a_Type);
-    ModelParam* getParameter(const QString &aName);
+    void getParameters(std::vector<ModelParam*>& a_List, const EParamType& a_Type);
+    ModelParam* getParameter(const std::string &aName);
 
     const std::vector <std::string>& getShowConfigList() const { return mShowConfigList; };
 

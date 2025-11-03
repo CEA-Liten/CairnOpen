@@ -2,10 +2,9 @@
 #define TecEcoEnv_H
 class TecEcoEnv ;
 
-#include <QtCore>
 #include "CairnCore_global.h"
 #include "GUIData.h"
-#include <QtMath>
+#include <cmath>
 
 static inline int Newton(const double &aValue, const uint &aIarg, uint aOffset,const double aExtrapolateOverYear, double &X_Set, double (*Y_func)(const double&, const uint&, unsigned int,const double), bool (*Y_Test)(const double&, const double&))
 {
@@ -37,7 +36,7 @@ static inline int Newton(const double &aValue, const uint &aIarg, uint aOffset,c
 
         if (iter > 20)
         {
-            qDebug() << "INFO convergence :  after " << iter << " iterations iconv " << iconv
+            cDebug() << "INFO convergence :  after " << iter << " iterations iconv " << iconv
                      << " Y = " << Y << " at X = " << X_Set << " Delta_X " << Delta_X << " Yprim- " << YPDYm << " Yprim+ " << YPDYp ;
             return -iter;
         }
@@ -60,7 +59,7 @@ static inline int Newton(const double &aValue, const uint &aIarg, uint aOffset,c
 
         iconv = (*Y_Test)(Y, aValue) ;
 
-//        qDebug() << "INFO convergence :  " << iter << " iconv " << iconv << " target " << aValue
+//        cDebug() << "INFO convergence :  " << iter << " iconv " << iconv << " target " << aValue
 //                << " Y = " << Y << " at X = " << X_Set << " Delta_X " << Delta_X << " Yp- " << YPDYm << " Y+ " << YPDYp << " Yprim " << Yprim ;
         X_Set = X_Set + Delta_X ;
 
@@ -86,7 +85,7 @@ static inline double levelization(const double  &aDiscountRate, const unsigned i
     {
        sum += 1./pow((1.+aDiscountRate),i) ;
     }
-//    qDebug() << "levelization factor simple " << sum ;
+//    cDebug() << "levelization factor simple " << sum ;
     return sum*aExtrapolateOverYear ;
 }
 
@@ -100,7 +99,7 @@ static inline double discountRate(const double  &aDiscountFactor, const unsigned
     {
         int iconv = Newton (aDiscountFactor, aNyear, aOffset,aExtrapolateOverYear, discountRate, &levelization, &levelization_test) ;
 
-        if (iconv <0) qWarning ()<< "Non convergence in discountrate computation" << iconv ;
+        if (iconv <0) cWarning ()<< "Non convergence in discountrate computation" << iconv ;
     }
     else
     {
@@ -122,7 +121,7 @@ static inline double levelization(const double  aDiscountRate, const unsigned in
         extra = aExtrapolateOverYear;
     }
 
-    QVector<double> yearsHours;
+    std::vector<double> yearsHours;
     yearsHours.resize(aNbYearInput);
 
     int hours = 0;
@@ -147,33 +146,34 @@ static inline double levelization(const double  aDiscountRate, const unsigned in
         }
         else {
             pos += 1;
-//            qDebug() << "POS +=1 !! " << " absolutecurrent time step " << aAbsoluteCurrentTimeStep << yearsHours.size() ;
+//            cDebug() << "POS +=1 !! " << " absolutecurrent time step " << aAbsoluteCurrentTimeStep << yearsHours.size() ;
         }
     }
 
     unsigned int NbYearSimu = pos ;
 
-    QVector<double> levelizedFactors;
+    std::vector<double> levelizedFactors;
     levelizedFactors.resize(aNbYearInput+1);
+    int ceil = std::ceil((Nyear + aOffset) / aNbYearInput);
 
     for (int j = 0; j < levelizedFactors.size(); j++) {
         double factor = 0.;
-        for (int i = 0+aOffset; i < qCeil((Nyear+aOffset)/aNbYearInput); ++i) {
+        for (int i = 0+aOffset; i < ceil; ++i) {
             factor += 1./pow((1.+aDiscountRate),aNbYearInput*i+j) ;
         }
         levelizedFactors[j]=factor;
     }
 
-//    qDebug() << "levelization factor " << levelizedFactors[NbYearSimu] << " nbyear " << NbYearSimu << " absolutecurrent time step " << aAbsoluteCurrentTimeStep ;
+//    cDebug() << "levelization factor " << levelizedFactors[NbYearSimu] << " nbyear " << NbYearSimu << " absolutecurrent time step " << aAbsoluteCurrentTimeStep ;
     return levelizedFactors[NbYearSimu] * extra;
 }
 
-static inline QVector<double> levelizationTable(const double  aDiscountRate, const unsigned int Nyear,
+static inline std::vector<double> levelizationTable(const double  aDiscountRate, const unsigned int Nyear,
                                   const unsigned int aNbYearInput, const unsigned int aLeapYearPos, unsigned int aOffset,
                                                 const double aExtrapolateOverYear)
 {
     double extra;
-    QVector<double> vide(1,1.);
+    std::vector<double> vide(1,1.);
     if (Nyear <= 1) return vide ;
     if (aNbYearInput>1){
         extra = 1.;
@@ -182,7 +182,7 @@ static inline QVector<double> levelizationTable(const double  aDiscountRate, con
         extra = aExtrapolateOverYear;
     }
     int leapyear = aLeapYearPos;
-    QVector<double> yearsHours;
+    std::vector<double> yearsHours;
     yearsHours.resize(aNbYearInput);
 
     int hours = 0;
@@ -198,12 +198,12 @@ static inline QVector<double> levelizationTable(const double  aDiscountRate, con
       yearsHours[i] = hours;
     }
 
-    QVector<double> levelizedFactors;
+    std::vector<double> levelizedFactors;
     levelizedFactors.resize(aNbYearInput);
     int i = 0;
+    int ceil = std::ceil((Nyear + aOffset) / aNbYearInput);
     for (int j = 0; j < levelizedFactors.size(); j++) {
-        double factor = 0.;
-        int ceil = qCeil((Nyear + aOffset) / aNbYearInput);
+        double factor = 0.;        
         i = 0;
         while ((aNbYearInput * i + j) < Nyear) {
             factor += 1. / pow((1. + aDiscountRate), aNbYearInput * i + j);
@@ -212,11 +212,11 @@ static inline QVector<double> levelizationTable(const double  aDiscountRate, con
         levelizedFactors[j]=factor * extra;
     }
 
-    //qDebug() << "levelization factor " << levelizedFactors;
+    //cDebug() << "levelization factor " << levelizedFactors;
     return levelizedFactors;
 }
-static inline QVector<double> yearHourTable(const unsigned int aNbYearInput, const unsigned int aLeapYearPos){
-    QVector<double> yearsHours;
+static inline std::vector<double> yearHourTable(const unsigned int aNbYearInput, const unsigned int aLeapYearPos){
+    std::vector<double> yearsHours;
     yearsHours.resize(aNbYearInput);
 
     int hours = 0;
@@ -236,18 +236,18 @@ static inline QVector<double> yearHourTable(const unsigned int aNbYearInput, con
  * \brief The TecEcoEnv class implements Techno Economic analysis functionnalities for MilpComponent assessment :
  * yields information on OptimalObjective contribution, Optimal nominal power or storage capacity, Running time, produced mass or energy...
  */
-class CAIRNCORESHARED_EXPORT TecEcoEnv: public QObject
+class CAIRNCORESHARED_EXPORT TecEcoEnv: public CairnObject
 {
-    Q_OBJECT
+    
 public:
-    TecEcoEnv(QObject *aParent=nullptr, QString aName="",
+    TecEcoEnv(CairnObject *aParent=nullptr, std::string aName="",
               const double aDiscountRate=0.07,
               const double aImpactDiscountRate = 0.,
               const unsigned int aNbYear=20,
               const unsigned int aNbYearInput=1,
               const unsigned int aLeapYearPos=0,
               const double aExtrapolationFactor=1.,
-              QString aRange="PLAN"
+              std::string aRange="PLAN"
               );
     virtual ~TecEcoEnv();
 
@@ -261,51 +261,48 @@ public:
     double ImpactDiscountRate() { return mImpactDiscountRate; }
     double ExtrapolationFactor() {return mExtrapolationFactor;}
     double InternalRateOfReturn() { return mInternalRateOfReturn ; }
-    double RateOfReturnDiscountFactor() { return mRateOfReturnDiscountFactor; }
-    QStringList EnvImpactsList() { return mEnvImpactsList; }
-    QStringList EnvImpactsShortNamesList() { return mEnvImpactsShortNamesList; }
-    QStringList EnvImpactUnitsList() { return mEnvImpactUnitsList; }
+    std::vector<std::string> EnvImpactsList() { return mEnvImpactsList; }
+    std::vector<std::string> EnvImpactsShortNamesList() { return mEnvImpactsShortNamesList; }
+    std::vector<std::string> EnvImpactUnitsList() { return mEnvImpactUnitsList; }
     std::vector<double> EnvImpactCosts() { return mEnvImpactCosts; }
-    QString Range() { return mRange ; }
-    QString Currency() { return mCurrency ; }
-    QString ObjectiveUnit() { return mObjectiveUnit; }
+    std::string Range() { return mRange ; }
+    std::string Currency() { return mCurrency ; }
+    std::string ObjectiveUnit() { return mObjectiveUnit; }
 
     double ProductionContribution () const { return mProductionContribution ; }          /** Planned Production to be accounted for unit cost computation */
     double HistProductionContribution ()  const { return mHistProductionContribution ; }       /** Historical Production to be accounted for unit cost computation */
 
-    void setCurrency (const QString aCurrency) ;
-    void setRange (const QString aRange) ;
+    void setCurrency (const std::string aCurrency) ;
+    void setRange (const std::string aRange) ;
     void setNbYear (const int aNbYear) ;
     void setNbYearOffset (const int aNbYearOffset);
     void setNbYearInput (const int aNbYearInput) ;
     void setLeapYearPos (const int aLeapYearPos) ;
     void setDiscountRate (const double aDiscountRate) ;
     void setImpactDiscountRate(const double aImpactDiscountRate);
-    void setInternalRateOfReturn (const QString aInternalRateOfReturn) ;
+    void setInternalRateOfReturn (const std::string aInternalRateOfReturn) ;
     void setInternalRateOfReturn (const double aInternalRateOfReturn) ;
-    void setEnvImpactsList(const QStringList aEnvImpactsList);
-    void setEnvImpactsShortNamesList(const QStringList aEnvImpactsShortNamesList);
-    void setEnvImpactUnitsList(const QStringList aEnvImpactUnitsList);
+    void setEnvImpactsList(const std::vector<std::string> aEnvImpactsList);
+    void setEnvImpactsShortNamesList(const std::vector<std::string> aEnvImpactsShortNamesList);
+    void setEnvImpactUnitsList(const std::vector<std::string> aEnvImpactUnitsList);
     void setEnvImpactCosts(const std::vector<double> aEnvImpactCosts);
 
     void setHistNbHours(const double &aHistTime) {mHistNbHours += aHistTime;};
     double HistNbHours() { return mHistNbHours; }
 
     void setLevelizationTable();
-    QVector<double> LevelizationTable() {return mLevelizationTable;}
+    std::vector<double> LevelizationTable() {return mLevelizationTable;}
     void setImpactLevelizationTable();
-    QVector<double> ImpactLevelizationTable() { return mImpactLevelizationTable; }
+    std::vector<double> ImpactLevelizationTable() { return mImpactLevelizationTable; }
     void setTableYearsHours();
-    QVector<double> TableYearsHours() { return mTableYearsHours; }
+    std::vector<double> TableYearsHours() { return mTableYearsHours; }
     void setExtrapolationFactor(const double aExtrapolationFactor);
     void setOptimalSize(double aOptimalSize) { mOptimalSize = aOptimalSize ;}
 
 protected:
-    GUIData* mGUIData{ nullptr };     /** Pointer to GUI Data */
-
-    QString mCurrency ; /** Currency unit - default to EUR */
-    QString mObjectiveUnit;
-    QString mRange ;                 /** Evaluation range used for TecEco analysis : HIST = past operation, PLAN = planned operation */
+    std::string mCurrency ; /** Currency unit - default to EUR */
+    std::string mObjectiveUnit;
+    std::string mRange ;                 /** Evaluation range used for TecEco analysis : HIST = past operation, PLAN = planned operation */
     int mNbYear ;               /** Number of year for economic data extrapolation */
     int mNbYearOffset ;         /** Offset of nb of year for discount cost computation */
     int mNbYearInput ;          /** Number of years in the input time series */
@@ -314,11 +311,10 @@ protected:
     double mImpactDiscountRate;               /** Discount Rate for env impacts */
     double mExtrapolationFactor; //Should only be in OptimProblem!
     double mInternalRateOfReturn ;          /** Target Internal Rate of Return chosen by the user*/
-    double mRateOfReturnDiscountFactor ;           /** Average Rate of Return */
 
-    QStringList mEnvImpactsList;                /** List of the environmental impacts the user wants to consider */
-    QStringList mEnvImpactsShortNamesList{};                /** List of the environmental impacts short names the user wants to consider */
-    QStringList mEnvImpactUnitsList;                /** List of the units of the environmental impacts the user wants to consider */
+    std::vector<std::string> mEnvImpactsList;                /** List of the environmental impacts the user wants to consider */
+    std::vector<std::string> mEnvImpactsShortNamesList{};                /** List of the environmental impacts short names the user wants to consider */
+    std::vector<std::string> mEnvImpactUnitsList;                /** List of the units of the environmental impacts the user wants to consider */
     std::vector<double> mEnvImpactCosts;                   /** Costs of environmental impacts, in CURRENCY / kg */
 
     double mOptimalSize{ 0 };                      /** Resulting optimal size of component, if optimized - One per component - eg Nominal power, storage capacity...*/
@@ -340,10 +336,10 @@ protected:
     double mProduction ;                        /** Resulting Cumulated used energy during conversion */
     double mNLevConsumption ;                    /** Non Levelized Resulting Cumulated generated energy from conversion */
     double mNLevProduction ;                     /** Non Levelized Resulting Cumulated used energy during conversion */
-    QMap <QString, double> mConsumptionMap ;                       /** Resulting Cumulated levelized generated energy from conversion */
-    QMap <QString, double> mProductionMap ;                        /** Resulting Cumulated levelized used energy during conversion */
-    QMap <QString, double> mNLevConsumptionMap ;                    /** Non Levelized Resulting Cumulated generated energy from conversion */
-    QMap <QString, double> mNLevProductionMap ;                     /** Non Levelized Resulting Cumulated used energy during conversion */
+    std::map <std::string, double> mConsumptionMap ;                       /** Resulting Cumulated levelized generated energy from conversion */
+    std::map <std::string, double> mProductionMap ;                        /** Resulting Cumulated levelized used energy during conversion */
+    std::map <std::string, double> mNLevConsumptionMap ;                    /** Non Levelized Resulting Cumulated generated energy from conversion */
+    std::map <std::string, double> mNLevProductionMap ;                     /** Non Levelized Resulting Cumulated used energy during conversion */
     //Contractual Load/Grid analysis over time horizon (no projection)
     double mContractualEnergy;                  /** Resulting Cumulated contractual injected/extracted energy or mass */
     double mNLevContractualEnergy;              /** Non Levelized Resulting Cumulated contractual injected/extracted energy or mass */
@@ -365,10 +361,10 @@ protected:
     double mHistProduction ;                        /** History Cumulated Resulting used energy during conversion */
     double mHistNLevConsumption ;                    /** History Cumulated Resulting generated energy from conversion */
     double mHistNLevProduction ;                        /** History Cumulated Resulting used energy during conversion */
-    QMap <QString, double> mHistConsumptionMap ;                       /** Resulting History Cumulated generated energy from conversion */
-    QMap <QString, double> mHistProductionMap ;                        /** Resulting History Cumulated used energy during conversion */
-    QMap <QString, double> mHistNLevConsumptionMap ;                    /** Non Levelized Resulting History Cumulated generated energy from conversion */
-    QMap <QString, double> mHistNLevProductionMap ;                     /** Non Levelized Resulting History Cumulated used energy during conversion */
+    std::map <std::string, double> mHistConsumptionMap ;                       /** Resulting History Cumulated generated energy from conversion */
+    std::map <std::string, double> mHistProductionMap ;                        /** Resulting History Cumulated used energy during conversion */
+    std::map <std::string, double> mHistNLevConsumptionMap ;                    /** Non Levelized Resulting History Cumulated generated energy from conversion */
+    std::map <std::string, double> mHistNLevProductionMap ;                     /** Non Levelized Resulting History Cumulated used energy during conversion */
     //Contractual Load/Grid analysis over time horizon (no projection)
     double mHistContractualEnergy;                  /** History Cumulated Resulting contractual injected/extracted energy or mass */
     double mHistContractualEnergyOptimal ;
@@ -376,9 +372,9 @@ protected:
     //Contractual Load/Grid analysis over time horizon (no projection)
     double mHistFreeEnergy;                         /** History Cumulated Resulting free injected/extracted energy or mass */
     double mHistNLevFreeEnergy;                     /** Non Levelized History Cumulated Resulting free injected/extracted energy or mass */
-    QVector<double> mLevelizationTable;                /** tableau de levelization factor par année calculée */
-    QVector<double> mImpactLevelizationTable;          /** tableau de levelization factor par année calculée pour env impact*/
-    QVector<double> mTableYearsHours;               /** tableau des nombre de pas de temps par année cumulés */
+    std::vector<double> mLevelizationTable;                /** tableau de levelization factor par année calculée */
+    std::vector<double> mImpactLevelizationTable;          /** tableau de levelization factor par année calculée pour env impact*/
+    std::vector<double> mTableYearsHours;               /** tableau des nombre de pas de temps par année cumulés */
     int mHistNbHours; /** nombre d'heures déjà décompté par le passé (permet de faire la bonne actualisation) */
 };
 

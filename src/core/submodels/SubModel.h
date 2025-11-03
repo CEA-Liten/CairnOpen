@@ -5,10 +5,10 @@ class SubModel ;
 class MilpComponent;
 class MilpPort;
 
-#include <QDebug>
+
 #include <cmath>
 
-#include "MILPComponent_global.h"
+#include "CairnCore_global.h"
 #include "Cairn_Exception.h"
 #include "GlobalSettings.h"
 #include "MIPModeler.h"
@@ -33,11 +33,11 @@ struct SExpression1D {
     int* pSize{ nullptr };
 };
 
-class CAIRNCORESHARED_EXPORT SubModel : public QObject
+class CAIRNCORESHARED_EXPORT SubModel : public CairnObject
 {
-    Q_OBJECT
+    
 public:
-    SubModel(QObject* aParent = nullptr);
+    SubModel(CairnObject* aParent = nullptr);
     ~SubModel();
 
     /**----------------------- Methods that must be instantiated (overridden) in the individual models -------------------------------*/
@@ -78,26 +78,27 @@ public:
     virtual bool isSizeOptimized();
     virtual bool isPriceOptimized(); //Only SourceLoad
     virtual int checkConsistency() { return 0; };
-    virtual QString ObjectiveType() { return ""; };
+    virtual std::string ObjectiveType() { return ""; };
     virtual uint64_t exprMilpHorizon(); //Technical + Operation 
     virtual uint64_t varMilpHorizon(); //Technical + Operation 
 
     /**------------- Other methods that are common to all model types : Technical, Bus and Operational ---------------*/
-    virtual void declareInputParams(const QString& name);
+    virtual void declareInputParams(const std::string& name);
     void resetIndicators();
-    void exportIndicators(std::fstream& out, QString name, const std::string &range, bool forced, const bool isRollingHorizon);
+    void exportIndicators(std::fstream& out, std::string name, const std::string &range, const std::vector< std::string >& refLabelList, 
+        const bool showDescription, bool forced, const bool isRollingHorizon);
     void deleteEnvImpacts();
 
-    void addStateConstraints(const uint64_t& aCondensedNpdt);
-    void addStartUpShutDown(const uint64_t& nPdtCond); //Technical + Operation 
+    //Technical + Operation 
+    void addStateConstraints(const uint64_t& aCondensedNpdt, const MIPModeler::MIPExpression& aExpInstalled = MIPModeler::MIPExpression(1));
+    void addStartUpShutDown(const uint64_t& aCondensedNpdt, const MIPModeler::MIPExpression& aExpInstalled = MIPModeler::MIPExpression(1));
 
     void declareDefaultModelConfigurationParameters()
     {
         //bool 
         addParameter("ExportIndicators", &mExportIndicators, true, false, true, "Export component specific indicators", "");
-        //QString
-        setPossibleWeightUnits({ "-", "SurfaceUnit", "PeakUnit" }); //Only need to have the list for the GUI
-        addParameter("WeightUnit", &mWeightUnit, "-", false, true, "Unit of Weight. By default it has no unit");
+        //std::string
+        addParameter("WeightUnit", &mWeightUnit, "", false, true, "Unit of Weight. By default it has no unit");
     }
 
     void declareDefaultModelInterface() 
@@ -105,7 +106,7 @@ public:
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase)  
            Note, the size of 1D IO expressions is always equal to mHorizon
         */
-        addIO("isInstalled", &mExpInstalled, true, "bool");  /** Binary equals 1 if installed */
+        //..
 
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         // no 0D expression needs to be declared here
@@ -116,27 +117,25 @@ public:
 
     void writeSolution(const double* optimalSolution, std::map<std::string, std::vector<double>>& resultats); /** get optimal solution and set  */
 
-    void setPossibleWeightUnits(const QStringList aPossibleWeightUnits) {
+    void setPossibleWeightUnits(const std::vector<std::string> aPossibleWeightUnits) {
         mPossibleWeightUnits = aPossibleWeightUnits;
     }
     /**--------------------------------- Utility methods used by Milpcomponent --------------------------------------*/
     /** Methods for model parent, name, energyvector and topology */
-    void setSens(const double& aSens) { mSens = aSens; }
-    void setControlType(const QString& aControl) { mControl = aControl; }
-    QString getCompoName() { return mParentCompo->Name(); }
+    virtual double Sens() { return 0; }; /* To be overridden in Grid and SourceLoad*/
+    void setControlType(const std::string& aControl) { mControl = aControl; }
+    std::string Name() { return this->parent()->objectName(); }
     void setParentCompo(MilpComponent* aCompo) { mParentCompo = aCompo; }
-    void setEnergyVector(EnergyVector* aEnergyVector) { mEnergyVector = aEnergyVector; }
-    EnergyVector* getEnergyVector() { return mEnergyVector; }
-    //void setTopo(QList<MilpPort*> aListPort) { mListPort = aListPort; }
-    void setTopoCompo(QMap<QString, MilpComponent*>  aMapMilpComponents) { mMapMilpComponents = aMapMilpComponents; }
+    void setMainCarrier(EnergyVector* aEnergyVector) { mMainCarrier = aEnergyVector; }
+    EnergyVector* getMainCarrier() { return mMainCarrier; }
 
-    QList<MilpPort*> PortList() { return mListPort; }
+    const std::vector<MilpPort*> &PortList() { return mListPort; }
     void addPort(MilpPort* lptrport) { mListPort.push_back(lptrport); }
     void removePort(MilpPort* lptrport);
     void removeBusPort(MilpPort* lptrport);
-    MilpPort* getPort(const QString& aPortId);
-    MilpPort* getPortByType(const QString& aType, const QString& aDirection = "ANY");
-    QMap <QString, QMap<QString, QString>> const DefaultPorts() { return mDefaultPorts; }
+    MilpPort* getPort(const std::string& aPortId);
+    MilpPort* getPortByType(const std::string& aType, const std::string& aDirection = "ANY");
+    std::map <std::string, std::map<std::string, std::string>> const DefaultPorts() { return mDefaultPorts; }
 
     /** Exception */
     Cairn_Exception  getException() const { return mException; }
@@ -149,49 +148,46 @@ public:
     void setMIPModel(MIPModeler::MIPModel* aModel) { mModel = aModel; }
 
     /** Add parameter to Model  */
-    void addParameter(const QString& aParamName, const t_pvalue& aPtr, t_value aDefaultValue, t_flag aIsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "", const std::string& aShowConfig = "Base");
-
-    /** Add PerfParam to model */
-    void addPerfParam(const QString& aParamName, std::vector<double>* aPtr, t_flag aIsBlocking = true, t_flag aIsUsed = true, const QString& aDescription = "", const QString& aUnit = "");
+    void addParameter(const std::string& aParamName, const t_pvalue& aPtr, t_value aDefaultValue, t_flag aIsBlocking = true, t_flag aIsUsed = true, 
+        const std::string& aDescription = "", const t_unit& aUnit = "", const std::string& aShowConfig = "Base");
 
     /** Add TimeSeries to model */
-    void addTimeSeries(const QString& aParamName, std::vector<double>* aDblePtr,
+    void addTimeSeries(const std::string& aParamName, std::vector<double>* aDblePtr,
         t_flag IsBlocking = true, t_flag aIsUsed = true,
-        const QString& aDescription = "", const QString& aUnit = "",
+        const std::string& aDescription = "", const t_unit& aUnit = "",
         const std::string& aShowConfig = "Base",
         double a_default = 1.0, double a_min = std::nan("1"), double a_max = std::nan("1"));
 
+    /** Add PerfParam to model */
+    void addPerfParam(const std::string& aParamName, std::vector<double>* aPtr, t_flag aIsBlocking = true, t_flag aIsUsed = true, 
+        const std::string& aDescription = "", const t_unit& aUnit = "");
+
     /** Add expression to Model list of IO Interface */
-    void addIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString aUnit, const QString& aCurrency = "");
-    void addSizeMaxIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString aUnit, const QString& aCurrency = "");
-    void addIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString aUnit, const QString& aCurrency = "");
+    void addIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const t_unit& aUnit);
+    void addIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit);
 
-    void addIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString* aUnit, const QString& aCurrency = "");
-    void addSizeMaxIO(const QString& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const QString* aUnit, const QString& aCurrency = "");
-    void addIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString* aUnit, const QString& aCurrency = "");
+    void addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string aUnit);
+    void addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string* pUnit);
 
-    bool assertIONonExistence(const QString& name, const t_pExpr expression); /* throw an error if an IO with given name but different expression already exist (and vice versa)*/
+    bool assertIONonExistence(const std::string& name, const t_pExpr expression); /* throw an error if an IO with given name but different expression already exist (and vice versa)*/
     void assertIsSizeMaxExp(MIPModeler::MIPExpression* aExprPtr); /* throw an error if a given pointer doesn't point to the expression mExpSizeMax */
     void assertIsNotSizeMaxExp(MIPModeler::MIPExpression* aExprPtr); /* throw an error if a given pointer points to the expression mExpSizeMax */
 
     /** Add expression to Model list of Rolling Horizon elements */
-    void addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString aUnit, double* aValuePtr, double* aDefaultValue = nullptr, bool a_isMPC = true, const QString& aCurrency = "");
-    void addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString aUnit, std::vector<double>* aHistPtr, double* aDefaultValue = nullptr, bool a_isMPC = true, const QString& aCurrency = "");
+    void addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, double* aValuePtr, double* aDefaultValue = nullptr, bool a_isMPC = true);
+    void addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, std::vector<double>* aHistPtr, double* aDefaultValue = nullptr, bool a_isMPC = true);
 
-    void addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString* aUnit, double* aValuePtr, double* aDefaultValue = nullptr, bool a_isMPC = true, const QString& aCurrency = "");
-    void addControlIO(const QString& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const QString* aUnit, std::vector<double>* aHistPtr, double* aDefaultValue = nullptr, bool a_isMPC = true, const QString& aCurrency = "");
-
-    void removeIO(const QString& aName);
-    void removeEnvImpactIOs(const QString& aImpactName);
+    void removeIO(const std::string& aName);
+    void removeEnvImpactIOs(const std::string& aImpactName);
     void removeIOs();
 
-    typedef std::map<QString, ModelIO*> t_mapIOs;
+    typedef std::map<std::string, ModelIO*> t_mapIOs;
     const t_mapIOs& getMapIOExpression() { return mIOExpressions; }      /** Get List of Readable Expressions */
-    ModelIO* getIOExpression(const QString& aName);
+    ModelIO* getIOExpression(const std::string& aName);
     std::vector<ModelIO*> getIOExpressions(const EIOModelType& aIOType = EIOModelType::eMIPExpression1D);
-    MIPModeler::MIPExpression* getMIPExpression(QString aExpressionName);
-    MIPModeler::MIPExpression1D* getMIPExpression1D(QString aExpressionName);
-    MIPModeler::MIPExpression& getMIPExpression1D(uint i, QString aExpressionName);
+    MIPModeler::MIPExpression* getMIPExpression(std::string aExpressionName);
+    MIPModeler::MIPExpression1D* getMIPExpression1D(std::string aExpressionName);
+    MIPModeler::MIPExpression& getMIPExpression1D(uint i, std::string aExpressionName);
     void dumpIOExpressionList();
     void dumpIOExpression1DList();
 
@@ -201,7 +197,7 @@ public:
     const std::vector<SExpression1D>& getListExpression1D() { return mExpressions1D; }
     void addExp(MIPModeler::MIPExpression1D* aExprPtr1D, int* aSize) { mExpressions1D.push_back({ aExprPtr1D, aSize }); };
 
-    typedef std::map<QString, ControlVar*> t_mapRHs;
+    typedef std::map<std::string, ControlVar*> t_mapRHs;
     const t_mapRHs& getListControlIO() { return mListControlIO; }    /** Get List of Readable Vector of rolling horizon Expressions */
 
     void fillExpression(MIPModeler::MIPExpression1D& aExpress1D, MIPModeler::MIPVariable1D& aVariable);
@@ -239,34 +235,34 @@ public:
     InputParam* getInputPortImpactsParamTS() { return mTSInputPortImpacts; }
 
     /** Expressions */
-    QString getOptimalSizeExpression() { return mOptimalSizeExpression; }
+    std::string getOptimalSizeExpression() { return mOptimalSizeExpression; }
 
-    void    setVariableCostsExpression(QString aExpressionName) { mVariableCostsExpression = aExpressionName; }
-    QString getVariableCostsExpression() { return mVariableCostsExpression; }
+    void setVariableCostsExpression(std::string aExpressionName) { mVariableCostsExpression = aExpressionName; }
+    std::string getVariableCostsExpression() { return mVariableCostsExpression; }
 
-    void    setCapexExpression(QString aExpressionName) { mCapexExpression = aExpressionName; }
-    QString getCapexExpression() { return mCapexExpression; }
+    void setCapexExpression(std::string aExpressionName) { mCapexExpression = aExpressionName; }
+    std::string getCapexExpression() { return mCapexExpression; }
 
-    void    setOpexExpression(QString aExpressionName) { mOpexExpression = aExpressionName; }
-    QString getOpexExpression() { return mOpexExpression; }
+    void setOpexExpression(std::string aExpressionName) { mOpexExpression = aExpressionName; }
+    std::string getOpexExpression() { return mOpexExpression; }
 
-    void    setPureOpexExpression(QString aExpressionName) { mPureOpexExpression = aExpressionName; }
-    QString getPureOpexExpression() { return mPureOpexExpression; }
+    void setPureOpexExpression(std::string aExpressionName) { mPureOpexExpression = aExpressionName; }
+    std::string getPureOpexExpression() { return mPureOpexExpression; }
 
-    void    setReplacementExpression(QString aExpressionName) { mReplacementExpression = aExpressionName; }
-    QString getReplacementExpression() { return mReplacementExpression; }
+    void setReplacementExpression(std::string aExpressionName) { mReplacementExpression = aExpressionName; }
+    std::string getReplacementExpression() { return mReplacementExpression; }
 
-    void    setEnvImpactCostExpression(QString aExpressionName) { mEnvImpactCostExpression.push_back(aExpressionName); }
-    QString getEnvImpactCostExpression(int i) { return mEnvImpactCostExpression.at(i); }
+    void setEnvImpactCostExpression(std::string aExpressionName) { mEnvImpactCostExpression.push_back(aExpressionName); }
+    std::string getEnvImpactCostExpression(int i) { return mEnvImpactCostExpression.at(i); }
 
-    void    setEnvImpactMassExpression(QString aExpressionName) { mEnvImpactMassExpression.push_back(aExpressionName); }
-    QString getEnvImpactMassExpression(int i) { return mEnvImpactMassExpression.at(i); }
+    void setEnvImpactMassExpression(std::string aExpressionName) { mEnvImpactMassExpression.push_back(aExpressionName); }
+    std::string getEnvImpactMassExpression(int i) { return mEnvImpactMassExpression.at(i); }
 
-    void    setEnvGreyImpactCostExpression(QString aExpressionName) { mEnvGreyImpactCostExpression.push_back(aExpressionName); }
-    QString getEnvGreyImpactCostExpression(int i) { return mEnvGreyImpactCostExpression.at(i); }
+    void setEnvGreyImpactCostExpression(std::string aExpressionName) { mEnvGreyImpactCostExpression.push_back(aExpressionName); }
+    std::string getEnvGreyImpactCostExpression(int i) { return mEnvGreyImpactCostExpression.at(i); }
 
-    void    setEnvGreyImpactMassExpression(QString aExpressionName) { mEnvGreyImpactMassExpression.push_back(aExpressionName); }
-    QString getEnvGreyImpactMassExpression(int i) { return mEnvGreyImpactMassExpression.at(i); }
+    void setEnvGreyImpactMassExpression(std::string aExpressionName) { mEnvGreyImpactMassExpression.push_back(aExpressionName); }
+    std::string getEnvGreyImpactMassExpression(int i) { return mEnvGreyImpactMassExpression.at(i); }
 
     void clearEnvImpactExpressionLists() {
         mEnvImpactCostExpression.clear();
@@ -275,16 +271,16 @@ public:
         mEnvGreyImpactMassExpression.clear();
     }
 
-    void    setPenaltyConstraintExpression(QString aExpressionName) { mPenaltyConstraintExpression = aExpressionName; }
-    QString getPenaltyConstraintExpression() { return mPenaltyConstraintExpression; }
+    void    setPenaltyConstraintExpression(std::string aExpressionName) { mPenaltyConstraintExpression = aExpressionName; }
+    std::string getPenaltyConstraintExpression() { return mPenaltyConstraintExpression; }
 
-    void    setSubobjectiveExpression(QString aExpressionName) { mSubObjectiveExpression = aExpressionName; }
-    QString getSubobjectiveExpression() { return mSubObjectiveExpression; }
+    void    setSubobjectiveExpression(std::string aExpressionName) { mSubObjectiveExpression = aExpressionName; }
+    std::string getSubobjectiveExpression() { return mSubObjectiveExpression; }
 
     /** Env Impact Methods */
-    void setEnvImpactsList(QStringList aEnvImpactsList) { mEnvImpactsList = aEnvImpactsList; }
-    void setEnvImpactsShortNamesList(QStringList aEnvImpactsShortNamesList) { mEnvImpactsShortNamesList = aEnvImpactsShortNamesList; }
-    void setEnvImpactUnitsList(QStringList aEnvImpactUnitsList) { mEnvImpactUnitsList = aEnvImpactUnitsList; }
+    void setEnvImpactsList(std::vector<std::string> aEnvImpactsList) { mEnvImpactsList = aEnvImpactsList; }
+    void setEnvImpactsShortNamesList(std::vector<std::string> aEnvImpactsShortNamesList) { mEnvImpactsShortNamesList = aEnvImpactsShortNamesList; }
+    void setEnvImpactUnitsList(std::vector<std::string> aEnvImpactUnitsList) { mEnvImpactUnitsList = aEnvImpactUnitsList; }
     void setEnvImpactCosts(std::vector<double> aEnvImpactCosts) { mEnvImpactCosts = aEnvImpactCosts; }
 
     std::vector<class EnvImpact*> getEnvImpacts() { return mEnvImpacts; }
@@ -310,12 +306,8 @@ public:
     void setFuturesize(const uint* i) { mptrFuturesize = i; }
     uint npdtPast() { return mNpdtPast; }
     
-
-    /** Util Methods */
     bool getAllocate() const { return mAllocate; }
     void setTimeSteps(const bool& useVariableTimeSteps, std::vector<double> aTimeSteps, uint64_t aTimeStepBeginLP, uint64_t aTimeStepBeginForecast, uint64_t aDecreaseOptimizationHorizon);   /** TimeStep settings */
-    QString convertUnits(EnergyVector* ptrEnergyVector, const QList<QString> &aUnit);
-    QString getUnit(const QString &aExpressionName);
     void decreaseOptimizationHorizon();                /** Update mTimeSteps */
     std::vector<double> getOptimalSizeAllCycles() { return mOptimalSizeAllCycles; }
 
@@ -329,13 +321,13 @@ public:
 
     std::string CName(const std::string aRadical, const uint& t) const
     {
-        std::string aname = "c" + aRadical + parent()->objectName().toStdString() + std::to_string(t);
+        std::string aname = "c" + aRadical + parent()->objectName() + std::to_string(t);
         return aname;
     }
 
     std::string CName(std::string aRadical) const
     {
-        std::string aname = "v" + aRadical + parent()->objectName().toStdString();
+        std::string aname = "v" + aRadical + parent()->objectName();
         return aname;
     }
 
@@ -344,19 +336,21 @@ public:
     double getMaxBound(); /** Upper bound of size equal to weight * maxval */
     double getMinBound(); /** Lower bound of size equal to weight * minval */
     void addVarSizeMax(const double& aMaxVal, const std::string& aStrName);   // define upper bound for sizeMax variable ie weight or maxPower
-    void setExpSizeMax(const double& aMinVal, const double& aMaxVal, const std::string& aStrName);
-    void setExpSizeMax();
+    void setExpSizeMax(const MIPModeler::MIPExpression& aExpInstalled = MIPModeler::MIPExpression(1));
 
-
-    bool isIndicatorNameUnique(MilpPort* targetPort, QString quantityName = "");
+    bool isIndicatorNameUnique(MilpPort* targetPort, std::string quantityName = "");
     void resetFlags() {
         mAllocate = true;
     }
 
-    QString Currency() const { return mCurrency; }
-    void setCurrency(const QString& aCurrency) { mCurrency = aCurrency; }
+    void setCurrency(const std::string& aCurrency) { mCurrency = aCurrency; }
+    const std::string* pCurrency() const { return &mCurrency; }
 
-    QString getOptimalSizeUnit() const;
+    std::string OptimalSizeUnit() const;
+    const std::string* pOptimalSizeUnit() const;
+
+    std::string ExpUnit(const std::string& aExpressionName); /* get the unit value of a given expression */
+    const UnitParam* pExpUnitParam(const std::string& aExpressionName); /* get a pointer to the UnitParam of a given expression (IO) in order to dynamically pass it to e.g. ZEVariables */
 
     std::string getAbsoluteFileName(const std::string& filename)
     {
@@ -364,33 +358,34 @@ public:
         return filename;
     }
 
+    const std::map<std::string, std::string>& getLabelMap() const { return mLabelMap; };
+    void setLabelMap(const std::map<std::string, std::string>& aLabelMap) { mLabelMap = aLabelMap; };
+    void setLabel(const std::string& aLabel, const std::string& aValue) { mLabelMap[aLabel] = aValue; };
+    std::string getLabelValue(const std::string& aLabel) const;
+
 private:
-    /** Unit of Optimal size variable */
-    QString m_OptimalSizeUnit;                 
-    const QString* p_OptimalSizeUnit;  
-
+    std::string m_OptimalSizeUnit;
+    const std::string* p_OptimalSizeUnit;  
     bool mComputeSizeMax; /* If true then compute mExpSizeMax (call setExpSizeMax). It is automatically set to true on "add SizeMaxIO"*/
-
+    std::map<std::string, std::string> mLabelMap;
 
 protected:
     int checkBusSameValueVarName(MilpPort* port);
-    virtual int checkBusFlowBalanceVarName(MilpPort* port, int &inumberchange, QString &varUseCheck);
+    virtual int checkBusFlowBalanceVarName(MilpPort* port, int &inumberchange, std::string &varUseCheck);
     virtual bool defineDefaultVarNames(MilpPort* port);
 
-    QString mCurrency;
-    QString convertUnit(EnergyVector* ptrEnergyVector, QString aUnit);
+    std::string mCurrency;
 
     Cairn_Exception mException;
 
     /** Pointers **/
     MIPModeler::MIPModel* mModel;      /** Pointer to global MIPModel */
     MilpComponent* mParentCompo;       /** Parent Component wearing the submodel */
-    EnergyVector* mEnergyVector;       /** Equals to parent EnergyVector (taken from linked Bus) ! Why having this ! */
-    QMap<QString, MilpComponent*>   mMapMilpComponents;   // pointeurs des composants MILPs du probleme
+    EnergyVector* mMainCarrier;       /** Main carrier of the component (in case of Bus, it is the only carrier) */
 
     /** Ports */
-    QMap <QString, QMap<QString, QString>> mDefaultPorts;
-    QList<MilpPort*> mListPort;        /** List of connexion MilpPort of Component  */
+    std::map <std::string, std::map<std::string, std::string>> mDefaultPorts;
+    std::vector<MilpPort*> mListPort;        /** List of connexion MilpPort of Component  */
     bool mVariablePortNumber;          /** Model can have variable number of physical inlet and outlet - they must be <= number of total NbInputPorts or outputs */
     int mNbInputPorts;                 /** Number of Componen Input Ports */
     int mNbOutputPorts;                /** Number of Component Outputs Ports */
@@ -401,49 +396,38 @@ protected:
     t_mapIOs mIOExpressions; /** Model List of Readable Expressions */
     /** Model Rolling Horizon interface */
     t_mapRHs mListControlIO; /** Model List of variable that should remain in memory for rolling horizon */
-    QString mOptimalSizeExpression;           /** Name of expression to be used for OptimalSize evaluation */
+    std::string mOptimalSizeExpression;           /** Name of expression to be used for OptimalSize evaluation */
     /** Expressions */
     std::vector<MIPModeler::MIPExpression*> mExpressions0D; /* A map of 0D expressions that are not IO (not in mIOExpressions) */
     std::vector<SExpression1D> mExpressions1D; /* A map of 1D expressions that are not IO (not in mIOExpressions) */
 
     MIPModeler::MIPExpression   mExpSizeMax;           /** Optimal capacity expression */
-    MIPModeler::MIPExpression   mExpInstalled;         /** Binary equals 1 if installed */
-    MIPModeler::MIPExpression1D mExpState;
-    MIPModeler::MIPExpression1D mExpStartUp;
-    MIPModeler::MIPExpression1D mExpShutDown;
 
     /** MIPModel Variables */
-    MIPModeler::MIPVariable0D mVarInstalled;
     MIPModeler::MIPVariable0D mVarWeight;
     MIPModeler::MIPVariable0D mVarSizeMax;      /** MILP 0D Variable on component Optimal capacity (power or storage) */
-    MIPModeler::MIPVariable1D mStartUp;
-    MIPModeler::MIPVariable1D mShutDown;
-    MIPModeler::MIPData1D mHistState;
-    MIPModeler::MIPVariable1D mState;
 
-    /** Expression Names TODO: use hard-coded names e.g. const QString CapexExpName = "Capex" */ 
-    QString mSubObjectiveExpression;          /** Name of expression to be used for Subobjective evaluation */
-    QString mCapexExpression;                 /** Name of expression to be used for Capex evaluation */
-    QString mOpexExpression;                  /** Name of expression to be used for Opex evaluation */
-    QString mPureOpexExpression;              /** Name of expression to be used for PureOpex evaluation */
-    QString mReplacementExpression;           /** Name of expression to be used for Replacement evaluation */
-    QString mVariableCostsExpression;         /** Name of expression to be used for VariableCosts evaluation */
-    QString mPenaltyConstraintExpression;     /** Name of expression to be used for Penalty evaluation */
-    QStringList mEnvGreyImpactCostExpression;       /** Name of expression to be used for EnvGreyImpactCost evaluation */
-    QStringList mEnvGreyImpactMassExpression;       /** Name of expression to be used for EnvGreyImpactMass evaluation */
-    QStringList mEnvImpactCostExpression;           /** Name of expression to be used for EnvImpactCost evaluation */
-    QStringList mEnvImpactMassExpression;           /** Name of expression to be used for EnvImpactMass evaluation */
+    /** Expression Names TODO: use hard-coded names e.g. const std::string CapexExpName = "Capex" */ 
+    std::string mSubObjectiveExpression;          /** Name of expression to be used for Subobjective evaluation */
+    std::string mCapexExpression;                 /** Name of expression to be used for Capex evaluation */
+    std::string mOpexExpression;                  /** Name of expression to be used for Opex evaluation */
+    std::string mPureOpexExpression;              /** Name of expression to be used for PureOpex evaluation */
+    std::string mReplacementExpression;           /** Name of expression to be used for Replacement evaluation */
+    std::string mVariableCostsExpression;         /** Name of expression to be used for VariableCosts evaluation */
+    std::string mPenaltyConstraintExpression;     /** Name of expression to be used for Penalty evaluation */
+    std::vector<std::string> mEnvGreyImpactCostExpression;       /** Name of expression to be used for EnvGreyImpactCost evaluation */
+    std::vector<std::string> mEnvGreyImpactMassExpression;       /** Name of expression to be used for EnvGreyImpactMass evaluation */
+    std::vector<std::string> mEnvImpactCostExpression;           /** Name of expression to be used for EnvImpactCost evaluation */
+    std::vector<std::string> mEnvImpactMassExpression;           /** Name of expression to be used for EnvImpactMass evaluation */
 
     /** Flags */
     bool mAllocate;           /** Allocation flag to prevent from multiple allocations and memory leaks during rolling horizon process */
     bool mExportIndicators;   /** bool indicating the export of component specific indicators if = true*/
-    bool mAddStateVariable;   /** bool to add state variables like ON / OFF */
-    //bool mAddStartUpShutDownVariable;      /** bool to add StartUp and ShutDown variables */
 
-    QString mControl;                          /** Control type taken into account : */
+    std::string mControl;                          /** Control type taken into account : */
 
     /** InputParam */
-    InputParam* mInputParam ;                   /** Parameters are MILP constant parameters comming from Settings File */
+    InputParam* mInputParam;                   /** Parameters are MILP constant parameters comming from Settings File */
     InputParam* mInputPerfParam;               /** Performance Parameters are MILP constant vectors comming from DataFile csv File */
     InputParam* mInputData;                    /** Data are MILP constant (scalar or vectors) comming from Description files */
     InputParam* mInputDataTS;                  /** Data are MILP time series comming from Description files */
@@ -458,8 +442,8 @@ protected:
     bool mUseWeightOptimization;          /** bool indicating use sizing based on Weight if = true - default to false*/
     bool mLPWeightOptimization;           /** bool indicating use LP sizing if Weight if = true - default to false*/ 
     bool mLPModelOnly;                    /** bool indicating use of LPModelOnly if = true - default to false*/
-    QString mWeightUnit;
-    QStringList mPossibleWeightUnits;     /** List of possible weight units */
+    std::string mWeightUnit;
+    std::vector<std::string> mPossibleWeightUnits;     /** List of possible weight units */
 
     double mMaxValue;                     
     double mMinValue;                      
@@ -490,21 +474,33 @@ protected:
 
     /** Env Impacts */
     std::vector<class EnvImpact*> mEnvImpacts;
-    QStringList mEnvImpactsList;                            /** List of the considered environmental impacts */
-    QStringList mEnvImpactsShortNamesList;             /** List of the considered environmental impacts short names*/
-    QStringList mEnvImpactUnitsList;                /** List of the units of the considered environmental impacts */
+    std::vector<std::string> mEnvImpactsList;                            /** List of the considered environmental impacts */
+    std::vector<std::string> mEnvImpactsShortNamesList;             /** List of the considered environmental impacts short names*/
+    std::vector<std::string> mEnvImpactUnitsList;                /** List of the units of the considered environmental impacts */
     std::vector<double> mEnvImpactCosts;
 
     std::vector<double> mOptimalSizeAllCycles; //Size = Number of cycles; PLAN from each cycle
+
+    /* State and StartUpShutDown */
+    bool mAddStateVariable;   /** bool to add state variables like ON / OFF */
+    MIPModeler::MIPData1D mHistState;
+    MIPModeler::MIPVariable1D mState;
+    MIPModeler::MIPExpression1D mExpState;
+    int mAbsInitialState;
+
+    bool mAddStartUpShutDownVariable;      /** bool to add StartUp and ShutDown variables */
+    MIPModeler::MIPData1D mHistStartUp;
+    MIPModeler::MIPVariable1D mStartUp;
+    MIPModeler::MIPExpression1D mExpStartUp;
+
+    MIPModeler::MIPData1D mHistShutDown;
+    MIPModeler::MIPVariable1D mShutDown;
+    MIPModeler::MIPExpression1D mExpShutDown;
 
     /** if condense variables on typical periods */
     bool mCondenseVariablesOnTP;
     bool mCondenseBinariesOnly;
     bool mActivateConstraintsBetweenTP;
-    int mAbsInitialState;
-
-    /* For Grid and SourceLoad*/
-    double mSens;
 };
 
 #endif // SubModel_H

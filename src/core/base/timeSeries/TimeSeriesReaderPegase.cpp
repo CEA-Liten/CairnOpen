@@ -11,12 +11,10 @@ bool TimeSeriesReaderPegase::open(const std::string& aTSfile)
 }
 
 void TimeSeriesReaderPegase::readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader)
-{
-    m_Data.clear();       
+{      
     for (auto& iSubscribedVariable : aListSubscribedVariables) {
         ZEVariables* var = iSubscribedVariable.second;
-        aHeader.push_back({ var->Name().toStdString() , var->Unit().toStdString(), (int)aHeader.size()});
-        m_Data.push_back(var->ptrVariable());
+        aHeader.push_back({ var->Name() , var->Unit(), (int)aHeader.size()});
     }    
 }
 
@@ -27,13 +25,7 @@ bool TimeSeriesReaderPegase::readTimes(std::vector<double>& aTimes)
 
 void TimeSeriesReaderPegase::readValues(int a_index, std::vector<double>& aValues)
 {
-    if (a_index >= 0 && a_index < m_Data.size()) {
-        const QVector<float>& vValues = *m_Data[a_index];
-        aValues.resize(vValues.size());
-        for (size_t i = 0;i < vValues.size(); i++) {
-            aValues[i] = vValues[i];
-        }
-    }
+  // nothing to do
 }
 
 void TimeSeriesReaderPegase::close()

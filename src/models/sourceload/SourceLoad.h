@@ -86,7 +86,7 @@ ImposedFlow defines the input data on which to apply flexibility:
 
  - Load shedding:
 
-   - Is only allowed for loads (`mSens > 0.`).
+   - Is only allowed for loads (`Sens() > 0.`).
    - Is incompatible with `mLPModelOnly = true`.
    - Requires that the past horizon (`mNpdtPast`) is larger than shedding activation/deactivation times if rolling horizon is used.
 
@@ -107,11 +107,12 @@ class MODELS_DECLSPEC SourceLoad : public SourceLoadSubModel {
 
 public:
     //----------------------------------------------------------------------------------------------------
-    SourceLoad(QObject* aParent);
+    SourceLoad(CairnObject* aParent);
     ~SourceLoad();
     //----------------------------------------------------------------------------------------------------
     int checkConsistency();
-    void buildModel();
+    void computeInitialData() override;
+    void computeModelContribution() override;
     //----------------------------------------------------------------------------------------------------
     void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol) override;
@@ -169,25 +170,25 @@ public:
         addParameter("TimeSpan", &mTimeSpan, 1, &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "TimeSpan number of timesteps periods to be used for flexibility."); 	/** */
 
         //double
-        addParameter("CostShedding", &mCostShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Penalty Cost associated to the shedding", "Currency/PowerUnit"); /* Penalty introduced when power shedding is activated*/
-        addParameter("MaxShedding", &mMaxShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Max Shedded Power", "PowerUnit"); /* Maximum power shedding on the imposed flow */
-        addParameter("MaxFlow", &mMaxFlux, 1.e4, true, true, "", "FluxUnit");		/** Maximum injected or extracted flow */
-        addParameter("MaxPrice", &mMaxOptimalPrice, 100, &mComputeOptimalPrice, &mComputeOptimalPrice, "Maximum price", "Currency");		/** Maximum injected or extracted flow */
+        addParameter("CostShedding", &mCostShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Penalty Cost associated to the shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} })); /* Penalty introduced when power shedding is activated*/
+        addParameter("MaxShedding", &mMaxShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Maximum shedding power on the imposed flow", mMainCarrier->pPowerUnit());  
+        addParameter("MaxFlow", &mMaxFlux, 1.e4, true, true, "Maximum injected or extracted flow", mMainCarrier->pFluxUnit());		 
+        addParameter("MaxPrice", &mMaxOptimalPrice, 100, &mComputeOptimalPrice, &mComputeOptimalPrice, "Maximum price", pCurrency());
 
-        addParameter("StaticCompensationValue", &mStaticCompensationValue, 0., &mFixedStaticCompensation, &mFixedStaticCompensation, "Static Compensation imposed by the user", "", "CompensationConstraints"); /**  */
+        addParameter("StaticCompensationValue", &mStaticCompensationValue, 0., &mFixedStaticCompensation, &mFixedStaticCompensation, "Static Compensation imposed by the user", "", "CompensationConstraints");  
         
         //Peak shaving
-        addParameter("MaxEffect", &mMaxEffect, 0., &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "Maximum quantity of flux for each timestep that can be removed from or added to the reference flux. It can be optimized by specifying a negative value", "FluxUnit");
-        addParameter("MaxEffectCapex", &mMaxEffectCapex, 0., &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "Used for computing a contribution to the objective function. Applies proportionally on the maximum of the parameter mMaxEffect.", "Currency/PowerUnit");
+        addParameter("MaxEffect", &mMaxEffect, 0., &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "Maximum quantity of flux for each timestep that can be removed from or added to the reference flux. It can be optimized by specifying a negative value", mMainCarrier->pFluxUnit());
+        addParameter("MaxEffectCapex", &mMaxEffectCapex, 0., &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "Used for computing a contribution to the objective function. Applies proportionally on the maximum of the parameter mMaxEffect.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pFluxUnit()} }) );
         addParameter("MaxEffectOpex", &mMaxEffectOpex, 0., &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "used for computing a contribution to the objective function. Applies proportionally on the product of  mMaxEffect and MaxEffectCapex (%MaxEffectCapex/year).", "-");
     
         //vector
-        addTimeSeries("UseProfileLoadFlux", &mImposedFlux, SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), "", "FluxUnit/WeightUnit" );	/** External Time series of Imposed flow injected (source) or extracted (sink) if UseControlledFlux not activated*/
-        addTimeSeries("UseProfileEnergyPrice", &mEnergyPrice, &mAddVariableCostModel, &mAddVariableCostModel, " External TimeSeries of energy price defining variable cost for positive value or revenue if negative ", "Currency/StorageUnit");
+        addTimeSeries("UseProfileLoadFlux", &mImposedFlux, SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), "", SFunctionUnit({ eFTypeDivision, { mMainCarrier->pFluxUnit(), &mWeightUnit} }) );	/** External Time series of Imposed flow injected (source) or extracted (sink) if UseControlledFlux not activated*/
+        addTimeSeries("UseProfileEnergyPrice", &mEnergyPrice, &mAddVariableCostModel, &mAddVariableCostModel, " External TimeSeries of energy price defining variable cost for positive value or revenue if negative ", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
         addTimeSeries("UseStartStopProfile", &mStartStopProfile, &mUseWeightedFlux, &mUseWeightedFlux, "Add imposed startstop profile weight from External Time series if mUseWeightedFlux activated", "", "ControlOptions", 0);	 
-        addTimeSeries("UseProfileLoadFluxSeasonal", &mImposedFluxSeasonal, &mSeasonalPrevisions, &mSeasonalPrevisions, "", "FluxUnit/WeightUnit");
-        addTimeSeries("UseProfileMaxShedding", &mMaxSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External TimeSeries defining the shedding", "PowerUnit"); /* External time series of power shedding giving the max that can be substracted to the imposed flux*/
-        addTimeSeries("UseProfileCostShedding", &mCostSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External TimeSeries defining the cost of shedding", "Currency/PowerUnit"); /* External time series of the cost of power shedding over the desired time horizon*/
+        addTimeSeries("UseProfileLoadFluxSeasonal", &mImposedFluxSeasonal, &mSeasonalPrevisions, &mSeasonalPrevisions, "", SFunctionUnit({ eFTypeDivision, { mMainCarrier->pFluxUnit(), &mWeightUnit} }) );
+        addTimeSeries("UseProfileMaxShedding", &mMaxSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External time series of power shedding giving the max that can be substracted to the imposed flux", mMainCarrier->pPowerUnit());  
+        addTimeSeries("UseProfileCostShedding", &mCostSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External TimeSeries defining the cost of shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} }) );
     }
 
     inline void declareModelInterface()
@@ -208,22 +209,22 @@ public:
         //UseWeightedFlux
         addIO("FluxWeight", &mExpFluxWeight, &mUseWeightedFlux, "Unit");       /** Input expression for flux weighting if mUseWeightedFlux=true */
 
-        addIO("SourceLoadFlow", &mExpFlux, true, mEnergyVector->pFluxUnit()); /** Computed or Controlled Imposed flow injected (source) or extracted (sink) - Positive value means injection for Source field and extraction for Sink field */
-        addIO("WeightedImposedFlux", &mExpImposedFlux, true, mEnergyVector->pFluxUnit());
+        addIO("SourceLoadFlow", &mExpFlux, true, mMainCarrier->pFluxUnit()); /** Computed or Controlled Imposed flow injected (source) or extracted (sink) - Positive value means injection for Source field and extraction for Sink field */
+        addIO("WeightedImposedFlux", &mExpImposedFlux, true, mMainCarrier->pFluxUnit());
         
         //AddHeatConsumerModel
-        addIO("OUTPUTFlux1", &mExpPowerOut, true, mEnergyVector->pFluxUnit()); /** Computed output power output port 1 */
-        addIO("INPUTFlux1", &mExpPowerIn, &mAddHeatConsumerModel, mEnergyVector->pFluxUnit()); /** Computed output power output port 1 */
+        addIO("OUTPUTFlux1", &mExpPowerOut, true, mMainCarrier->pFluxUnit()); /** Computed output power output port 1 */
+        addIO("INPUTFlux1", &mExpPowerIn, &mAddHeatConsumerModel, mMainCarrier->pFluxUnit()); /** Computed output power output port 1 */
         
         //AddStaticCompensation
-        addIO("ReactivePower", &mExpReactivePower, &mAddStaticCompensation, mEnergyVector->pFluxUnit()); /** Reactive power associated to the production of the source load. If  static compensation is not given it is an optimized factor*/
+        addIO("ReactivePower", &mExpReactivePower, &mAddStaticCompensation, mMainCarrier->pFluxUnit()); /** Reactive power associated to the production of the source load. If  static compensation is not given it is an optimized factor*/
         
         //AddPeakShaving
-        addIO("PowerPeakShaving", &mExpPowerPeakShaving, &mAddPeakShavingDetailed, mEnergyVector->pPowerUnit()); /* Peak shaving power */
+        addIO("PowerPeakShaving", &mExpPowerPeakShaving, &mAddPeakShavingDetailed, mMainCarrier->pPowerUnit()); /* Peak shaving power */
 
         //AddSheddingDetailed)
-        addIO("PowerShedding", &mExpPowerShedding, &mAddSheddingDetailed, mEnergyVector->pPowerUnit()); /* Shedded power */
-        addIO("CostShedding", &mExpCostShedding, &mAddSheddingDetailed, mEnergyVector->pPowerUnit(), mCurrency); /* Shedding penalty cost */
+        addIO("PowerShedding", &mExpPowerShedding, &mAddSheddingDetailed, mMainCarrier->pPowerUnit()); /* Shedded power */
+        addIO("CostShedding", &mExpCostShedding, &mAddSheddingDetailed, SFunctionUnit({ eFTypeDivision, { mMainCarrier->pPowerUnit(), pCurrency() } })); /* Shedding penalty cost */
         addControlIO("OnShedding", &mExpShedOn, &mAddSheddingDetailed, "bool", &mExpHistOn, &mOnIni); /** Shedding activation, 1 if shedding is activated, 0 otherwise */
         addControlIO("OffShedding", &mExpShedOff, &mAddSheddingDetailed, "bool", &mExpHistOff, &mOffIni); /** Shedding deactivation, 1 if shedding is deactivated, 0 otherwise */
         addControlIO("StateShedding", &mExpShedState, &mAddSheddingDetailed, "bool", &mShedStateIni, &mStateIni); /** Load shedding state, 1 if shedding, 0 otherwise */
@@ -247,12 +248,26 @@ public:
     void addLoadShedding();
     void addPeakShaving();
 
-    double getTemperature(const QString& direction);
+    double getTemperature(const std::string& direction);
+
+    void initDefaultPorts() {
+        mDefaultPorts.clear();
+        //PortSourceLoadFlow - left
+        std::map<std::string, std::string> portSourceLoadFlow;
+        portSourceLoadFlow["Name"] = "PortL0";
+        portSourceLoadFlow["Position"] = "left";
+        portSourceLoadFlow["CarrierType"] = ANY_TYPE();
+        portSourceLoadFlow["Direction"] = KCONS();
+        portSourceLoadFlow["Variable"] = "SourceLoadFlow";
+        mDefaultPorts["PortSourceLoadFlow"] = portSourceLoadFlow;
+    }
+
+    void setPortPointers() {
+        mSourceLoadDefaultPort = getPort("PortSourceLoadFlow");
+    }
 
     //----------------------------------------------------------------------------------------------------
 protected:
-    virtual int checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange, QString& varUseCheck);
-
     //MILP Variable
     MIPModeler::MIPVariable1D mVarPowerPeakShaving;
     MIPModeler::MIPVariable0D mVarOptimalPrice;

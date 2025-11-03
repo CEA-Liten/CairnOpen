@@ -2,38 +2,65 @@
 #include "GlobalSettings.h"
 
 ZEVariables::ZEVariables(
-    const QString& a_Name,
-    const QString& a_Unit,
-    const QString& a_Desc,
-    const QString& a_Coeff,
-    const QString& a_Offset,
+    const std::string& a_Name,
+    const t_unit& a_Unit,
+    const std::string& a_Desc,
+    const std::string& a_Coeff,
+    const std::string& a_Offset,
     const bool& aIsMPC
 )
 {
     // export
     mName = a_Name;
-    mUnit = a_Unit;
+    mUnit.set_Value(a_Unit);
     mDesc = a_Desc;
     m_IsMPC = aIsMPC;
-    bool vOk;
-    mCoeffExport = a_Coeff.toDouble(&vOk);
-    if (!vOk)
+    try
+    {
+        mCoeffExport = std::stod(a_Coeff);
+        if (mCoeffExport != 1.0)
+            mDesc += " x " + a_Coeff;
+    }
+    catch (const std::exception&)
+    {
         mCoeffExport = 1.0;
-    else if (mCoeffExport != 1.0)
-        mDesc += " x " + a_Coeff;
-    mCoeffOffset = a_Offset.toDouble(&vOk);
-    if (!vOk)
+    }
+    try
+    {
+        mCoeffOffset = std::stod(a_Offset);
+        if (mCoeffOffset)
+            mDesc += " + " + a_Offset;
+    }
+    catch (const std::exception&)
+    {
         mCoeffOffset = 0.0;
-    else if (mCoeffOffset)
-        mDesc += " + " + a_Offset;
+    }    
 }
 
-QVector<float>* ZEVariables::ptrVariable()
+ZEVariables::ZEVariables(
+    const std::string& a_Name,
+    const UnitParam* a_Unit,
+    const std::string& a_Desc,
+    const std::string& a_Coeff,
+    const std::string& a_Offset,
+    const bool& aIsMPC
+)
+    : ZEVariables::ZEVariables(a_Name, t_unit(std::string("-")), a_Desc, a_Coeff, a_Offset, aIsMPC)
+{
+    if (a_Unit) mUnit = *a_Unit;
+}
+
+std::string ZEVariables::Unit() const
+{
+    return mUnit.get_Value();
+}
+
+std::vector<double>* ZEVariables::ptrVariable()
 {
    return &m_Values;
 }
 
-QVector<float>* ZEVariables::ptrOutVariable()
+std::vector<double>* ZEVariables::ptrOutVariable()
 {
     if (m_IsExt)
         return &m_OutValues;
@@ -65,7 +92,7 @@ bool ZEVariables::update_PastValues(int npdtPast, int timeShift)
     bool vRet = false;
     for (uint i = 0; i < timeShift; i++)
     {
-        if (isnan(m_Values[npdtPast - timeShift + i]) && !isnan(m_Values[npdtPast]))
+        if (std::isnan(m_Values[npdtPast - timeShift + i]) && !std::isnan(m_Values[npdtPast]))
         {
             m_Values[npdtPast - timeShift + i] = m_Values[npdtPast]; // update next past with new present
 

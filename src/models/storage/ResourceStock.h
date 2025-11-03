@@ -17,14 +17,14 @@ class MODELS_DECLSPEC ResourceStock : public StorageSubModel {
 
 public:
     //----------------------------------------------------------------------------------------------------
-    ResourceStock(QObject* aParent);
+    ResourceStock(CairnObject* aParent);
     ~ResourceStock();
     //----------------------------------------------------------------------------------------------------
     int checkConsistency();
     void setTimeData();
     //----------------------------------------------------------------------------------------------------
-    void closeExpressions() override;
-    void buildModel() override;
+    void computeInitialData() override;
+    void computeModelContribution() override;
     //----------------------------------------------------------------------------------------------------
     void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol) override;
@@ -60,11 +60,11 @@ public:
     void initDefaultPorts() {
         mDefaultPorts.clear();
         //PortFlux - left
-        QMap<QString, QString> portFlux;
+        std::map<std::string, std::string> portFlux;
         portFlux["Name"] = "PortL0";
         portFlux["Direction"] = KDATA();
         portFlux["Variable"] = "ResourceUsed";
-        mDefaultPorts.insert("PortFlux", portFlux);
+        mDefaultPorts["PortFlux"] = portFlux;
 
     }
 

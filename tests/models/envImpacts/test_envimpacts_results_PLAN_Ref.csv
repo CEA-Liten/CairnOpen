@@ -1,0 +1,94 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0.08;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;10.6036;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;365;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;2.81143e+08;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-2.81143e+08;EUR;NPV
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;0;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total project discounted operation cost;2.81143e+08;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total project buying cost;2.4825e+08;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total project cost of env impact of Climate change#Global Warming Potential 100;2.80283e+07;EUR;GWPDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Project env impact of Climate change#Global Warming Potential 100;2.62249e+07;kg CO2 eq;GWPDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total project cost of env impact of Water use#User Deprivation Potential;4.97009e+06;EUR;WUDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Project env impact of Water use#User Deprivation Potential;9.29894e+06;kg world eq deprived;WUDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Climate change#Global Warming Potential 100;100250;kg CO2 eq;GWPGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Water use#User Deprivation Potential;10000;kg world eq deprived;WUGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact cost of Climate change#Global Warming Potential 100;2.79281e+07;EUR;GWP
+TecEcoAnalysis#1;Total Project Operational impact of Climate change#Global Warming Potential 100;2.61246e+07;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact cost of Water use#User Deprivation Potential;4.96509e+06;EUR;WU
+TecEcoAnalysis#1;Total Project Operational impact of Water use#User Deprivation Potential;9.28894e+06;kg world eq deprived;WUDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Total Undiscounted Net OPEX;2.48018e+07;EUR;NetOPEX
+TecEcoAnalysis#1;Total Undiscounted Pure OPEX;0;EUR;PureOPEX
+TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
+TecEcoAnalysis#1;Total Undiscounted Buy Part;2.19e+07;EUR;BuyPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;2.46375e+06;EUR;GWPFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;2.46375e+06;kg CO2 eq;GWPFlowEnvImpactMass
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Water use#User Deprivation Potential;438009;EUR;WUFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Water use#User Deprivation Potential;876018;kg world eq deprived;WUFlowEnvImpactMass
+Converter;Total Cost Function;0;EUR;TotCosts
+Converter;Capex part;0;EUR;CAPEX
+Converter;is installed;1;-;IsInstalled
+Converter;Opex part (including energy cost);0;EUR;OPEX
+Converter;Pure Opex part;0;EUR;PureOPEX
+Converter;Replacement part;0;EUR;Replacement
+Converter;Climate change#Global Warming Potential 100 Env impact penalty part;0;EUR;GWPDirectCost
+Converter;Climate change#Global Warming Potential 100 Env impact mass;0;kg CO2 eq;GWPDirectMass
+Converter;Climate change#Global Warming Potential 100 EnvGrey impact cost;100250;EUR;GWPGreyCost
+Converter;Climate change#Global Warming Potential 100 EnvGrey impact mass;100250;kg CO2 eq;GWPGreyMass
+Converter;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
+Converter;Water use#User Deprivation Potential Env impact penalty part;0;EUR;WUDirectCost
+Converter;Water use#User Deprivation Potential Env impact mass;0;kg world eq deprived;WUDirectMass
+Converter;Water use#User Deprivation Potential EnvGrey impact cost;5000;EUR;WUGreyCost
+Converter;Water use#User Deprivation Potential EnvGrey impact mass;10000;kg world eq deprived;WUGreyMass
+Converter;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
+Converter;Sum up at;1;;SumUp
+Converter;Installed Optimal Size;1000;MW;Size
+Converter;Running time at power >0.;8760;h;RunningTime
+Converter;Running time availability;1;-;RunningTimeAvailable
+Converter;CONS Total ElectricalEnergy PowerIn;-4.38e+06;MWh;TotConsPowerIn
+Converter;CONS Levelized Total ElectricalEnergy PowerIn;-4.96499e+07;MWh;LvlzdTotConsPowerIn
+Converter;CONS Mean Total ElectricalPower PowerIn;-500;MW;MeanConsPowerIn
+Converter;CONS Total Power Factor PowerIn;0.5;-;PowerFactorPowerIn
+Converter;Rate of use PowerIn;0.5;-;UseRatePowerIn
+Converter;PROD Total ElectricalEnergy PowerOut;3.504e+06;MWh;TotProdPowerOut
+Converter;PROD Levelized Total ElectricalEnergy PowerOut;3.97199e+07;MWh;LvlzdTotProdPowerOut
+Converter;PROD Mean Total ElectricalPower PowerOut;400;MW;MeanProdPowerOut
+Elec_Grid;Total Cost Function;2.79019e+08;EUR;TotCosts
+Elec_Grid;is installed;1;-;IsInstalled
+Elec_Grid;Opex part (including energy cost);2.48018e+07;EUR;OPEX
+Elec_Grid;Climate change#Global Warming Potential 100 Env impact penalty part;2.46375e+06;EUR;GWPDirectCost
+Elec_Grid;Climate change#Global Warming Potential 100 Env impact mass;2.46375e+06;kg CO2 eq;GWPDirectMass
+Elec_Grid;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
+Elec_Grid;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
+Elec_Grid;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
+Elec_Grid;Water use#User Deprivation Potential Env impact penalty part;438009;EUR;WUDirectCost
+Elec_Grid;Water use#User Deprivation Potential Env impact mass;876018;kg world eq deprived;WUDirectMass
+Elec_Grid;Water use#User Deprivation Potential EnvGrey impact cost;0;EUR;WUGreyCost
+Elec_Grid;Water use#User Deprivation Potential EnvGrey impact mass;0;kg world eq deprived;WUGreyMass
+Elec_Grid;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
+Elec_Grid;Grid extraction time;8760;h;extraction Time
+Elec_Grid;Grid extraction ElectricalEnergy GridFlow;4.38e+06;MWh;TotGridFlow
+Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;4.96499e+07;MWh;LvlzdTotGridFlow
+Elec_Grid;Mean extraction ElectricalPower GridFlow;500;MW;MeanGridFlow
+Elec_Load;Total Cost Function;0;EUR;TotCosts
+Elec_Load;is installed;1;-;IsInstalled
+Elec_Load;Opex part (including energy cost);0;EUR;OPEX
+Elec_Load;Component Weight;1;Unit;Weight
+Elec_Load;ImposedProfile load time;8760;h;ImposedProfileTime
+Elec_Load;ImposedProfile ElectricalEnergy SourceLoadFlow;-3.504e+06;MWh;TotImposedProfileSourceLoadFlow
+Elec_Load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-3.97199e+07;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Elec_Load;Mean ElectricalPower SourceLoadFlow;-400;MW;MeanImposedProfileSourceLoadFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;MWh;BusBalance

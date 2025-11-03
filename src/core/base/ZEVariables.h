@@ -7,30 +7,37 @@
  * \details
 * This component defines the variables to be exchanged with PEGASE simulation environment.
 */
-class CAIRNCORESHARED_EXPORT ZEVariables: public QObject
+class CAIRNCORESHARED_EXPORT ZEVariables
 {
-    Q_OBJECT
+    
 public:
     ZEVariables(
-        const QString& aName = "",
-        const QString& aUnit = "",
-        const QString& aDesc = "",        
-        const QString& asCoeffExport = "1",
-        const QString& asOffsetExport = "0",
+        const std::string& aName = "",
+        const t_unit& aUnit = "",
+        const std::string& aDesc = "",        
+        const std::string& asCoeffExport = "1",
+        const std::string& asOffsetExport = "0",
         const bool& aIsMPC = false);
   
+    ZEVariables(
+        const std::string& aName,
+        const UnitParam* aUnit,
+        const std::string& aDesc = "",
+        const std::string& asCoeffExport = "1",
+        const std::string& asOffsetExport = "0",
+        const bool& aIsMPC = false);
 
-    QVector<float>* ptrVariable();     /** Access to Pointer to vector of IO float variable */
-    QVector<float>* ptrOutVariable();
-    QString Name() {return mName;}                       /** Access to Associated name of variable */
-    QString Unit() {return mUnit;}                       /** Access to Associated unit of variable */
-    QString Desc() {return mDesc;}                       /** Access to Associated description of variable */
-    float initValue() {return minitValue;}                   /** Access to Associated initial value of variable */
-    float CoeffExport() {return mCoeffExport;}                   /** Associated multiplicative factor for export */
-    float CoeffOffset() {return mCoeffOffset;}                   /** Associated offset value for export */
+    std::vector<double>* ptrVariable();     /** Access to Pointer to vector of IO float variable */
+    std::vector<double>* ptrOutVariable();
+    std::string Name() {return mName;}             /** Access to Associated name of variable */
+    std::string Unit() const;                      /** Access to Associated unit of variable */
+    std::string Desc() {return mDesc;}             /** Access to Associated description of variable */
+    float initValue() {return minitValue;}         /** Access to Associated initial value of variable */
+    float CoeffExport() {return mCoeffExport;}     /** Associated multiplicative factor for export */
+    float CoeffOffset() {return mCoeffOffset;}     /** Associated offset value for export */
     bool IsMPC() { return m_IsMPC; }
 
-    void setName(const QString& a_Name) { mName = a_Name; }
+    void setName(const std::string& a_Name) { mName = a_Name; }
 
     void setCoeffExport(float aCoeffExport) {mCoeffExport=aCoeffExport;}
     void setCoeffOffset(float aCoeffOffset) {mCoeffOffset=aCoeffOffset;}
@@ -41,19 +48,19 @@ public:
 
     void IsExt(bool a_IsExt) { m_IsExt = a_IsExt; };
 private:
-    QString mName ;             /** Associated name of variable */
-    QString mUnit ;             /** Associated unit of variable */
-    QString mDesc ;             /** Associated description of variable */
+    std::string mName ;             /** Associated name of variable */
+    UnitParam mUnit ;             /** Associated unit of variable */
+    std::string mDesc ;             /** Associated description of variable */
     float minitValue ;              /** Associated initial value of variable */
     float mCoeffExport ;             /** Associated multiplicative factor for export */
     float mCoeffOffset ;             /** Associated offset factor for export */
 
-    QVector<float> m_Values;
-    QVector<float> m_OutValues;
+    std::vector<double> m_Values;
+    std::vector<double> m_OutValues;
     bool m_IsMPC{ false };
     bool m_IsExt{ false };
 };
 
-typedef std::map<QString, ZEVariables*> t_mapExchange;
+typedef std::map<std::string, ZEVariables*> t_mapExchange;
 
 #endif // ZEVariables_H

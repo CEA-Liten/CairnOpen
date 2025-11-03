@@ -9,12 +9,12 @@
  */
 
 #include "MinStateTime.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new MinStateTime(aParent);
 }
 
-MinStateTime::MinStateTime(QObject* aParent) : OperationSubModel(aParent),
+MinStateTime::MinStateTime(CairnObject* aParent) : OperationSubModel(aParent),
 mNbStartUps(2, 0.),
 mNbShutDowns(2, 0.),
 mLevStartUpsCost(2, 0.),
@@ -80,14 +80,13 @@ void MinStateTime::setParameters(double aMinConstraintBusValue, double aMaxConst
 void MinStateTime::setTimeData()
 {
     SubModel::setTimeData();
-    mConverterUse.resize(mHorizon, 1.0);
 }
 
 int MinStateTime::checkConsistency()
 {
     if (mControl == "MPC" || mControl == "RollingHorizon") {
         if ((mAddMinProductionTime && mMinProductionTime > mNpdtPast * TimeStep(0)) || (mAddMinStandbyTime && mMinStandbyTime > mNpdtPast * TimeStep(0))) {
-            qCritical() << parent()->objectName() << ":Npdt past  size is equal to " << mNpdtPast <<
+            cCritical() << parent()->objectName() << ":Npdt past  size is equal to " << mNpdtPast <<
                 " but should be greater than MinProductionTime and MinStandbyTime, eg " << max(ceil(mMinProductionTime / TimeStep(0)), ceil(mMinStandbyTime / TimeStep(0)));
             return -1;
         }
@@ -96,22 +95,23 @@ int MinStateTime::checkConsistency()
     return 0; // ier;
 }
 
+void MinStateTime::computeInitialData()
+{
+    mAddStateVariable = true; /* always add state constraints */
+    mAddStartUpShutDownVariable = true; /* always add StartUpShutDown constraints */
+}
+
+
 
 void MinStateTime::computeModelContribution()
 {
-    addVariable(mVarInstalled, "Installed");
-    mExpInstalled = mVarInstalled;
-
-    addStateConstraints(varMilpHorizon());
-    addStartUpShutDown(varMilpHorizon());
-
     if (mAddStartUpCost) {
         for (uint64_t t = 0; t < mHorizon; t++) {
             mExpStartUpCosts[t] += mExpStartUp[t] * mStartUpCost;
             mExpVariableCosts[t] += mExpStartUpCosts[t];
         }
-
     }
+
     if (mAddShutDownCost) {
         for (uint64_t t = 0; t < mHorizon; t++) {
             mExpShutDownCosts[t] += mExpShutDown[t] * mShutDownCost;
@@ -121,8 +121,6 @@ void MinStateTime::computeModelContribution()
 
     // constraints
     // ===========
-    addConstraint(mVarInstalled == 1, "sInstalled");
-
     if (mAddMinProductionTime) {
         addMinProductionTime();
     }

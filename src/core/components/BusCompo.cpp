@@ -1,7 +1,5 @@
 #include "BusCompo.h"
 #include "TechnicalSubModel.h"
-#include <QDebug>
-#include <QDir>
 #include <math.h>       /* fabs, log, pow */
 #include <iostream>
 #include "GlobalSettings.h"
@@ -12,11 +10,12 @@ using namespace GS ;
 
 using Eigen::Map;
 
-BusCompo::BusCompo(QObject* aParent, const QMap<QString, QString>& aComponent,
-    const QMap < QString, QMap<QString, QString> >& aPorts, 
+BusCompo::BusCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent,
+    const std::map < std::string, std::map<std::string, std::string> >& aPorts, 
     MilpData* aMilpData, TecEcoEnv &aTecEcoEnv, ModelFactory* aModelFactory) :
-    MilpComponent(aParent, aComponent["id"], aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
+    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
 {    
+    setObjectType("BusCompo");
 }
 
 BusCompo::~BusCompo()
@@ -29,24 +28,16 @@ void BusCompo::declareCompoInputParam()
     mCompoInputParam->addParameter("VectorName", &mVectorName, "", true, true, "VectorName", "string", "DONOTSHOW");
 }
 
-void BusCompo::setCompoInputParam(const QMap<QString, QString> aComponent)
+void BusCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent)
 {
     MilpComponent::setCompoInputParam(aComponent);
 
     if (mVectorName == "") {
-        qCritical() << "Critical ERROR : Missing carried VectorName specified for Bus " << (mCompoInputParam->getParamQSValue("id"));
-        Cairn_Exception erreur("Invalid void <Vector> name :  " + mVectorName + " for " + mName, -1);
+        cCritical() << "Critical ERROR : Missing carried VectorName specified for Bus " << Name();
+        Cairn_Exception erreur("Invalid void <Vector> name :  " + mVectorName + " for " + Name(), -1);
         throw& erreur;
     }
-    Q_ASSERT(mVectorName != "");
-}
-
-void BusCompo::declareIOVariables()
-{
-    //Declare IO variables
-    if (mCompoModel) {
-        mCompoModel->declareModelInterface();
-    }
+    assert(mVectorName != "");
 }
 
 void BusCompo::DeleteBusPort(MilpPort* lptrport)
@@ -71,12 +62,7 @@ int BusCompo::initPorts()
     int iData = 0 ;
     int numport = 0 ;
 
-    MilpPort* port ;
-    QListIterator<MilpPort*> iport(PortList());
-    while (iport.hasNext())
-    {
-       port = iport.next() ;
-
+    for (MilpPort* port : PortList()) {    
        ierr = port->initProblem(npdt()) ;
        if (ierr <0) return ierr ;
 
@@ -93,11 +79,11 @@ int BusCompo::initPorts()
 
     if (mCompoModelName == "BusFlowBalance" && mNbDataPorts == 0 && (mNbOutputPorts == 0 || mNbInputPorts == 0))
     {
-       qCritical() << " ERROR on component " << Name() ;
-       qCritical() << " Found consumer Ports : " << mNbInputPorts ;
-       qCritical() << " Found producer Ports : " << mNbOutputPorts ;
-       qCritical() << " Found data exchange Ports : " << mNbDataPorts ;
-       qCritical() << " You should have at least one consumer and one producer ! " ;
+       cCritical() << " ERROR on component " << Name();
+       cCritical() << " Found consumer Ports : " << mNbInputPorts ;
+       cCritical() << " Found producer Ports : " << mNbOutputPorts ;
+       cCritical() << " Found data exchange Ports : " << mNbDataPorts ;
+       cCritical() << " You should have at least one consumer and one producer ! " ;
        return -1 ;
      }
 
@@ -109,19 +95,15 @@ int BusCompo::checkPorts()
     int ierr = 0 ;
     if (mType != "BusSameValue") {
         /** Verify that all the connected ports have the same Unit */
-        QString busUnit = "none";        
-        MilpPort* port;
-        QListIterator<MilpPort*> iport(PortList());
-        while (iport.hasNext())
-        {
-            port = iport.next();
-            QString varFluxUnit = port->getFluxUnit();
+        std::string busUnit = "none";        
+        for (MilpPort* port : PortList()) {
+            std::string varFluxUnit = port->FluxUnit();
             if (busUnit == "none") {
                 busUnit = varFluxUnit;
             }
             else if (busUnit != varFluxUnit) {
-                qCritical() << ("ERROR at port " + port->Name() + " of Bus " + Name() + ". The port Flux unit is " + varFluxUnit);
-                qCritical() << ("But, another port of the same Bus is using Flux unit " + busUnit);
+                cCritical() << ("ERROR at port " + port->Name() + " of Bus " + Name() + ". The port Flux unit is " + varFluxUnit);
+                cCritical() << ("But, another port of the same Bus is using Flux unit " + busUnit);
                 return -1;
             }
         }
@@ -153,7 +135,10 @@ void BusCompo::RemoveLinkComponent(MilpComponent* lptr)
 {
     if (lptr != nullptr)
     {
-        mListComponent.removeOne(lptr);
+        std::vector<MilpComponent*>::iterator vIter = find(mListComponent.begin(), mListComponent.end(), lptr);
+        if (vIter != mListComponent.end()) {
+            mListComponent.erase(vIter);
+        }        
     }
 }
 
@@ -161,19 +146,19 @@ void BusCompo::exportPortResults(t_mapExchange& a_Export, uint modinitTS) {
 
 }
 
-void BusCompo::createPortsExportListVars(t_mapExchange& a_Exchange) {
-
+void BusCompo::createPortsExportListVars(t_mapExchange& a_Exchange) 
+{
+    /* Bus port variables should not be published because they are a copy of linked component variables */
 }
 
-int BusCompo::NbPorts(const QString& aDirection)
+int BusCompo::NbPorts(const std::string& aDirection)
 {
     if (aDirection == "") {
         return PortList().size();
     }
     else {
         int num = 0;
-        foreach(MilpPort * lptrport, PortList())
-        {
+        for (MilpPort* lptrport : PortList()) {        
             if (lptrport->Direction() == aDirection) {
                 num++;
             }
@@ -182,10 +167,10 @@ int BusCompo::NbPorts(const QString& aDirection)
     }
 }
 
-QList<MilpPort*> BusCompo::listSidePorts(const QString& aside)
+vector<MilpPort*> BusCompo::listSidePorts(const std::string& aside)
 {
-    QList<MilpPort*> ptrlist;
-    foreach(MilpPort * lptrport, PortList())
+    std::vector<MilpPort*> ptrlist;
+    for(MilpPort * lptrport : PortList())
     {
         if (lptrport->BusPortPosition() == aside) {
             ptrlist.push_back(lptrport);
@@ -198,13 +183,9 @@ QList<MilpPort*> BusCompo::listSidePorts(const QString& aside)
     return ptrlist;
 }
 
-void BusCompo::jsonSaveGUIlistPortsData(QJsonArray& nodePortArray, const QString& aSide)
+void BusCompo::jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide)
 {
-    MilpPort* port;
-    QListIterator<MilpPort*> iport(PortList());
-    while (iport.hasNext())
-    {
-        port = iport.next();
+    for (MilpPort* port : PortList()) {    
         if (port->BusPortPosition() == aSide) {
             port->jsonSaveGUIPortsData(nodePortArray, true);
         }

@@ -32,6 +32,12 @@ if "%CPLEX_PATH%" == "" (
 set CPLEX_PATH=-DCPLEX_ROOT:STRING="C:/Program Files/IBM/ILOG/CPLEX_Studio201/cplex"
 )
 
+set PYTHON_HOME=-DPYTHON_HOME:STRING="C:/PythonPegase/3_10_9/python"
+set PYTHON_VENV=-DPYTHON_VENV:STRING="C:/PythonPegase/3_10_9/envPegase"
+set pybind11_DIR=-Dpybind11_DIR:STRING="C:/PythonPegase/3_10_9/envPegase/Lib/site-packages/pybind11/share/cmake/pybind11"
+
+
+
 rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rem read project version
 for /f "tokens=2 delims=) " %%G in ('find /I "MAJOR_VERSION" ^< "%APPLI_PATH%\cmake\CairnVersion.cmake"') do set MAJOR_VERSION=%%G
@@ -46,6 +52,9 @@ rem prepare setup.py
 powershell -Command "(gc %APPLI_PATH%\cmake\setup.py.in) -replace '@PROJECT_VERSION@', '%PROJECT_VERSION%' | sc %APPLI_PATH%\setup.py"
 powershell -Command "(gc %APPLI_PATH%\setup.py) -replace '@PROJECT_OPTION1@', '%PROJECT_OPTION1%' | sc %APPLI_PATH%\setup.py"
 powershell -Command "(gc %APPLI_PATH%\setup.py) -replace '@PROJECT_OPTION2@', '%CPLEX_PATH%' | sc %APPLI_PATH%\setup.py"
+powershell -Command "(gc %APPLI_PATH%\setup.py) -replace '@PROJECT_OPTION3@', '%PYTHON_HOME%' | sc %APPLI_PATH%\setup.py"
+powershell -Command "(gc %APPLI_PATH%\setup.py) -replace '@PROJECT_OPTION4@', '%PYTHON_VENV%' | sc %APPLI_PATH%\setup.py"
+powershell -Command "(gc %APPLI_PATH%\setup.py) -replace '@PROJECT_OPTION5@', '%pybind11_DIR%' | sc %APPLI_PATH%\setup.py"
 
 rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rem production du wheel
@@ -55,7 +64,7 @@ if exist %APPLI_PATH%\_skbuild (
 
 pip wheel . -w %EXPORT_PATH%
 
-del %EXPORT_PATH%\fullrelease\bin\Qt5Core.dll
+rem del %EXPORT_PATH%\fullrelease\bin\Qt5Core.dll
 
 rem ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 rem installation in virtual environment 

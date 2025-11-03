@@ -6,12 +6,12 @@
 * \date		06/12/2019
 */
 #include "Compressor.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new Compressor(aParent);
 }
 
-Compressor::Compressor(QObject* aParent) 
+Compressor::Compressor(CairnObject* aParent) 
     : ConverterSubModel(aParent),
     mPortInMassFlowRate(nullptr),
     mPortOutMassFlowRate(nullptr),
@@ -28,7 +28,6 @@ Compressor::Compressor(QObject* aParent)
     mPowerUnit("MW"),
     mMassUnit("kg")
 {
-    mAddStateVariable = true;
 }
 
 Compressor::~Compressor() {}
@@ -37,7 +36,7 @@ int Compressor::checkConsistency ()
 {
     int ier = TechnicalSubModel::checkConsistency();
     if (mUseVariablePOut && mUseVariableTIn){
-        qCritical() << "ERROR (compressor): it is not possible to optimize TIn and POut as the same time. Please put UseVariableTIn or UseVariablePOut on false" ;
+        cCritical() << "ERROR (compressor): it is not possible to optimize TIn and POut as the same time. Please put UseVariableTIn or UseVariablePOut on false" ;
         return -1 ;
     }
     return ier ;
@@ -157,16 +156,16 @@ void Compressor::computeUsedPower_Steam_PressureOut(const bool aRelaxedFormSOE){
 double Compressor::getInletPressure() 
 {
     //Check default port first
-    if (mPortInMassFlowRate->PotentialName() == "Pressure" && mPortInMassFlowRate->ptrEnergyVector() != nullptr)
+    if (mPortInMassFlowRate->PotentialName() == "Pressure" && mPortInMassFlowRate->getCarrier() != nullptr)
     {
-        return mPortInMassFlowRate->ptrEnergyVector()->Potential();
+        return mPortInMassFlowRate->getCarrier()->Potential();
     }
     //Look for any Input port with PotentialName == "Pressure" ! (should not be the case if the Compressor ports are correctly used).
-    foreach(MilpPort * lptrport, mListPort)
+    for(MilpPort * lptrport: mListPort)
     {
-        if (lptrport->Direction() == KCONS() && lptrport->PotentialName() == "Pressure" && lptrport->ptrEnergyVector() != nullptr)
+        if (lptrport->Direction() == KCONS() && lptrport->PotentialName() == "Pressure" && lptrport->getCarrier() != nullptr)
         {
-            return lptrport->ptrEnergyVector()->Potential();
+            return lptrport->getCarrier()->Potential();
         }
     }
     return 0.;
@@ -175,17 +174,17 @@ double Compressor::getInletPressure()
 double Compressor::getOutletPressure()
 {
     //Check default port first
-    if (mPortOutMassFlowRate->PotentialName() == "Pressure" && mPortOutMassFlowRate->ptrEnergyVector() != nullptr)
+    if (mPortOutMassFlowRate->PotentialName() == "Pressure" && mPortOutMassFlowRate->getCarrier() != nullptr)
     {
-        return mPortOutMassFlowRate->ptrEnergyVector()->Potential();
+        return mPortOutMassFlowRate->getCarrier()->Potential();
     }
 
     //Look for any Output port with PotentialName == "Pressure" ! (should not be the case if the Compressor ports are correctly used).
-    foreach(MilpPort * lptrport, mListPort)
+    for(MilpPort * lptrport: mListPort)
     {
-        if (lptrport->Direction() == KPROD() && lptrport->PotentialName() == "Pressure" && lptrport->ptrEnergyVector() != nullptr)
+        if (lptrport->Direction() == KPROD() && lptrport->PotentialName() == "Pressure" && lptrport->getCarrier() != nullptr)
         {
-            return lptrport->ptrEnergyVector()->Potential();
+            return lptrport->getCarrier()->Potential();
         }
     }
     return 0.;
@@ -197,14 +196,14 @@ void Compressor::computeInitialData()
     mPInlet = getInletPressure();
     mPOutlet = getOutletPressure();
 
-    if (mPortInMassFlowRate->ptrEnergyVector()) {
-        QString vectorType = mPortInMassFlowRate->ptrEnergyVector()->Type();
-        mSpecificHeatRatio = *(mPortInMassFlowRate->ptrEnergyVector()->pSpecificHeatRatio(vectorType));
-        mPowerUnit = mPortInMassFlowRate->ptrEnergyVector()->PowerUnit();
-        mMassUnit = mPortInMassFlowRate->ptrEnergyVector()->MassUnit();
+    if (mPortInMassFlowRate->getCarrier()) {
+        std::string vectorType = mPortInMassFlowRate->getCarrier()->Type();
+        mSpecificHeatRatio = *(mPortInMassFlowRate->getCarrier()->pSpecificHeatRatio(vectorType));
+        mPowerUnit = mPortInMassFlowRate->getCarrier()->PowerUnit();
+        mMassUnit = mPortInMassFlowRate->getCarrier()->MassUnit();
     }
 
-    EV::Fluid_Type Type = EnergyVector::getFluidTypeFromQString(mEnergyVector->Type());
+    EV::Fluid_Type Type = EnergyVector::getFluidTypeFromQString(mMainCarrier->Type());
 
     mCp_Gas = EnergyVector::Compute_Cp(mTInlet, EnergyVector::Get_Pointer_To_Fluid_Properties(Type));   // Cp in J/DegC/kg
 
@@ -227,7 +226,7 @@ void Compressor::computeInitialData()
         / mMotorEfficiency * EnergyVector::MassToKg(mMassUnit);
 
     if (isnan(mPowerConsumption)) {
-        QString error_message = "A division by 0 is detected while computing Power Consumption of " + getCompoName() + ".";
+        std::string error_message = "A division by 0 is detected while computing Power Consumption of " + Name() + ".";
         if (fabs(mPInlet) < 1.e-6) {
             error_message += " The value of the parameter Potential of the carrier used by the first input port is 0.";
         }
@@ -246,14 +245,14 @@ void Compressor::computeInitialData()
 
     setMinValue(mMinSize);
     setMaxValue(mMaxPower);
+
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 
 void Compressor::computeModelContribution()
 {
     //variable
-    addStateConstraints(varMilpHorizon());
-
     addVariable(mUsedPower,"UsedPower", 0.f, abs(mMaxPower));
     addVariable(mMassFlow,"MassFlow", 0.f, abs(mMaxFlow));
     addVariable(mPOut,"POutComp", 0.f, abs(10000));
@@ -280,9 +279,9 @@ void Compressor::computeModelContribution()
         if (mUseVariablePOut) {
             ComputeElecPowerMapPOut(mCp_Gas, mK, mEta, false, methode);
             for (uint64_t t = 0; t < mHorizon; ++t) {
-                addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mConverterUse[t] * mExpState[t] <= 0, "UseComp", t);
-                addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mConverterUse[t] * mExpState[t] >= 0, "PowMin", t);
-                addConstraint(mExpUsedPower[t] - mExpSizeMax * mConverterUse[t] <= 0, "Max", t);
+                addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mComponentAvailabilityTS[t] * mExpState[t] <= 0, "UseComp", t);
+                addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mComponentAvailabilityTS[t] * mExpState[t] >= 0, "PowMin", t);
+                addConstraint(mExpUsedPower[t] - mExpSizeMax * mComponentAvailabilityTS[t] <= 0, "Max", t);
             }
         }
         else if (mUseVariableTIn) {
@@ -290,9 +289,9 @@ void Compressor::computeModelContribution()
             fillExpression(mExpTIn, mTIn);
             ComputeElecPowerMapTIn(mCp_Gas, mK, mEta, false, methode);
             for (uint64_t t = 0; t < mHorizon; ++t) {
-                addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mConverterUse[t] * mExpState[t] <= 0, "UseComp", t);
-                addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mConverterUse[t] * mExpState[t] >= 0, "PowMin", t);
-                addConstraint(mExpUsedPower[t] - mExpSizeMax * mConverterUse[t] <= 0, "Max", t);
+                addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mComponentAvailabilityTS[t] * mExpState[t] <= 0, "UseComp", t);
+                addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mComponentAvailabilityTS[t] * mExpState[t] >= 0, "PowMin", t);
+                addConstraint(mExpUsedPower[t] - mExpSizeMax * mComponentAvailabilityTS[t] <= 0, "Max", t);
             }
         }
     }
@@ -301,8 +300,8 @@ void Compressor::computeModelContribution()
         for (uint64_t t = 0; t < mHorizon; ++t) {
             addConstraint(mExpInMassFlow[t]>=mExpState[t]*mMinFlow,"MinFlow",t);
             addConstraint(mExpInMassFlow[t]<= mExpState[t] *mMaxFlow,"MaxFlow",t);
-            addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mConverterUse[t] * mExpState[t] >= 0,"PowMin",t);
-            addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mConverterUse[t] * mExpState[t] <= 0,"UseComp",t) ;
+            addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mComponentAvailabilityTS[t] * mExpState[t] >= 0,"PowMin",t);
+            addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mComponentAvailabilityTS[t] * mExpState[t] <= 0,"UseComp",t) ;
         }
     }
     else {
@@ -311,9 +310,9 @@ void Compressor::computeModelContribution()
             addConstraint(mExpUsedPower[t] - mExpInMassFlow[t] * mPowerConsumption == 0.f, "PowComp", t);
         }
         for (uint64_t t = 0; t < mHorizon; ++t) {
-            addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mConverterUse[t] * mExpState[t] <= 0,"UseComp",t) ;
-            addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mConverterUse[t] * mExpState[t] >= 0,"PowMin",t);
-            addConstraint(mExpUsedPower[t] - mExpSizeMax * mConverterUse[t] <= 0,"Max",t) ;
+            addConstraint(mExpUsedPower[t] - fabs(mMaxPower) * mComponentAvailabilityTS[t] * mExpState[t] <= 0,"UseComp",t) ;
+            addConstraint(mExpUsedPower[t] - fabs(mMinPower) * mComponentAvailabilityTS[t] * mExpState[t] >= 0,"PowMin",t);
+            addConstraint(mExpUsedPower[t] - mExpSizeMax * mComponentAvailabilityTS[t] <= 0,"Max",t) ;
         }
     }
 

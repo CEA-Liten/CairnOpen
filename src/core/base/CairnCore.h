@@ -2,54 +2,49 @@
 #define CAIRNCORE_H
 class CairnCore ;
 
-#include <QObject>
-#include <QtCore>
-#include <QVector>
-#include <QStringList>
+#include "CairnObject.h"
 
 #include <cmath>
 
-//#include "MILPComponent_global.h"
 #include "CairnCore_global.h"
+#include "CairnLogger.h"
 #include "OptimProblem.h"
 #include "MilpData.h"
 #include "GlobalSettings.h"
 #include "StudyPathManager.h"
 #include "TimeSeriesManager.h"
 
-class CAIRNCORESHARED_EXPORT CairnCore : public QObject
+class CAIRNCORESHARED_EXPORT CairnCore : public CairnObject
 {
-Q_OBJECT
-
 public:
-    CairnCore(QObject *aParent, const QString &aName,
+    CairnCore(const std::string &aName,
                const double &aPdt,
                const uint &aNpdtPast,
                const uint &aNpdtFuture,
                const uint &aTimeshift,
-               const uint &aIHMFuturSize, const QString &aGlobalTimeStepFile, const QString &aGlobalTypicalPeriodsFile,
-               const QString &aArchFile, const QString &aResultFile, const QString& aScenarioName = "");
+               const uint &aIHMFuturSize, const std::string &aGlobalTimeStepFile, const std::string &aGlobalTypicalPeriodsFile,
+               const std::string &aArchFile, const std::string &aResultFile, const std::string& aScenarioName = "");
 
-    CairnCore(QObject *aParent, const QString &aName, const QString& aStudyName = "", const QString& aResultFile = "",
-               const QString & aGlobalTimeStepFile = "", const QString & aGlobalTypicalPeriodsFile = "", const QString& aScenarioName = "");
+    CairnCore(const std::string &aName, const std::string& aStudyName = "", const std::string& aResultFile = "",
+               const std::string & aGlobalTimeStepFile = "", const std::string & aGlobalTypicalPeriodsFile = "", const std::string& aScenarioName = "");
 
     ~CairnCore();
 
     void setStopSignal(int* stopSignal);
     void doInit(bool aLoad=true);
-    int doStep(const QString encoding="UTF-8", const QMap<QString, bool> paramMap=QMap<QString, bool>());
+    int doStep(const std::string& encoding = "UTF-8", const std::map<std::string, bool> paramMap=std::map<std::string, bool>());
     int doTerminate();
 
     void importTS(const t_list &aTSfileList, const int &iShift) ;
 
-    int exportTS(const std::string &aTSfile, int iter = 0, bool rh = false, std::string encoding="UTF-8");
-    int exportTS(const std::string& aTSfile, std::map<std::string, std::vector<double>>& resultats, std::string encoding = "UTF-8");
+    int exportTS(const std::string &aTSfile, int iter = 0, bool rh = false, const std::string& encoding = "UTF-8");
+    int exportTS(const std::string& aTSfile, std::map<std::string, std::vector<double>>& resultats, const std::string& encoding = "UTF-8");
   
     const t_mapExchange &ListSubscribedVariables() { return mProblem->ListSubscribedVariables() ;}
     t_mapExchange &ListPublishedVariables() { return mProblem->ListPublishedVariables() ;}
 
     //Other API functions
-    QString StudyName() { return QString(mStudy.StudyName().c_str()); }
+    std::string StudyName() { return std::string(mStudy.StudyName().c_str()); }
     MilpData* getTimeData() { return mMilpData; }
 
     double timeStep() const {return mMilpData->TimeStep(0);}
@@ -57,66 +52,49 @@ public:
     uint npdtPast() const {return mMilpData->npdtPast();}
     uint npdtTot() const {return mMilpData->npdtTot();}
     uint nbcycle() const {return mMilpData->nbcycle();}
-    QString rollingMode() const { return mMilpData->rollingMode(); }
-    QString readingMode() const { return mMilpData->readingMode(); }
+    std::string rollingMode() const { return mMilpData->rollingMode(); }
+    std::string readingMode() const { return mMilpData->readingMode(); }
     bool runUntilEnd() const { return mMilpData->runUntilEnd(); }
     bool ExportResultsEveryCycle() const { return mMilpData->ExportResultsEveryCycle(); }
+    bool ShowIndicatorDescription() const { return mMilpData->ShowIndicatorDescription(); }
     bool UseExtrapolationFactor() const { return mMilpData->UseExtrapolationFactor(); }
 
     uint npdtTimeshift() const {return mMilpData->timeshift();}
     uint npdtLongTerm() const {return mMilpData->iHMFuturSize();}
 
     // get results and input files
-    QString resultFile()   const { return QString(mStudy.resultFile().c_str()); }   
-    QString archFile()     const { return QString(mStudy.archFile().c_str()); }
-    QString projectDir()     const { return QString(mStudy.projectDir().c_str());}
-    QString resultsDir()     const { return QString(mStudy.resultsDir().c_str());}
+    std::string resultFile()   const { return std::string(mStudy.resultFile().c_str()); }   
+    std::string archFile()     const { return std::string(mStudy.archFile().c_str()); }
+    std::string projectDir()     const { return std::string(mStudy.projectDir().c_str());}
+    std::string resultsDir()     const { return std::string(mStudy.resultsDir().c_str());}
 
   
     OptimProblem* getProblem() {return mProblem ;}
-
-    // get component list of problem
-    QObjectList objectList() {return mProblem->children();}
-
-    QList<MilpComponent*> getComponentList() {return mProblem->findChildren<MilpComponent*>();}
-    MilpComponent* getComponent(const QString & aName) {return mProblem->findChild<MilpComponent*>(aName);}
-
-    //QList<BusCompo*> getBusComponentList() {return mProblem->findChildren<BusCompo*>();}
-    //BusCompo* getBusComponent(const QString & aName) {return mProblem->findChild<BusCompo*>(aName);}
-
-    QList<EnergyVector*> getEnergyVectorList() {return mProblem->findChildren<EnergyVector*>();}
-    EnergyVector* getEnergyVector(const QString & aName) {return mProblem->findChild<EnergyVector*>(aName);}
-
-    QList<MilpPort*> getMilpPortList(MilpComponent* aMilpComponent) {return aMilpComponent->findChildren<MilpPort*>();}
-    MilpPort* getMilpPort(MilpComponent* aMilpComponent, const QString & aName) {return aMilpComponent->findChild<MilpPort*>(aName);}
-
-    // set parameter &component param=value
-    // void setValue(MilpComponent* aMilpComponent, const QString & aParam, const QVariant & aValue);
-
-   
+    MilpComponent* getComponent(const std::string & aName) {return mProblem->findChild<MilpComponent>(aName); }
+       
     void exportTotalTimeResolutionAllCycles(const std::string& aFileName);
-    int exportResults(const int& aNsol, const bool& isRollingHorizon, const int& istat, std::string encoding = "UTF-8");
-    void exportAnalysis(const int& aNsol, const bool& isRollingHorizon, std::string encoding = "UTF-8");
+    int exportResults(const int& aNsol, const bool& isRollingHorizon, const int& istat, const std::string& encoding = "UTF-8");
+    void exportAnalysis(const int& aNsol, const bool& isRollingHorizon, const std::string& encoding = "UTF-8");
 
-    void setStudyName(const QString& aStudyName, const QString& aResultFile="");
-    void setResultFile(const QString& aResultFile);
-    void setResultsDir(const QString& aResultsDir);
-    void setScenarioName(const QString& aScenarioName);
-    void setTimeStepFile(const QString& aTimeStepFile);
-    void setTypicalPeriodsFile(const QString& aTypicalPeriodsFile);
+    void setStudyName(const std::string& aStudyName, const std::string& aResultFile="");
+    void setResultFile(const std::string& aResultFile);
+    void setResultsDir(const std::string& aResultsDir);
+    void setScenarioName(const std::string& aScenarioName);
+    void setTimeStepFile(const std::string& aTimeStepFile);
+    void setTypicalPeriodsFile(const std::string& aTypicalPeriodsFile);
 
     class OrCheckUnits CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check = true);
 
     /* 
         Get Possible parameter values for GUI
     */
-    QStringList getPossibleImpactNames() const {
+    std::vector<std::string> getPossibleImpactNames() const {
         if (mProblem != nullptr && mProblem->getTecEcoAnalysis() != nullptr) 
             return mProblem->getTecEcoAnalysis()->getPossibleImpactNames();
         return {};
     }
 
-    QStringList getPossibleImpactShortNames() const  {
+    std::vector<std::string> getPossibleImpactShortNames() const  {
         if (mProblem != nullptr && mProblem->getTecEcoAnalysis() != nullptr)
             return mProblem->getTecEcoAnalysis()->getPossibleImpactShortNames();
         return {};
@@ -124,7 +102,7 @@ public:
     //----------------------------------------------------
    
     int getNumberOfSolutions() { return mProblem->getNumberOfSolutions();  }
-    QString getOptimLogFile() { return mOptimLogFile; }
+    std::string getOptimLogFile() { return mOptimLogFile; }
     std::string getResultsTimeSeriesFileName(const int& aNsol) { return mStudy.getScenarioFile("_Results.csv", aNsol); }
     std::string getGlobalResultsFileName(const int& aNsol) { return mStudy.getScenarioFile("_PLAN.csv", aNsol); }
 
@@ -137,12 +115,10 @@ private:
     int* mStopSignal;
     int mIter;
 
-    QString mOptimLogFile; 
+    std::string mOptimLogFile; 
     StudyPathManager mStudy;
     
     std::vector<double> mSolverRunningTimeAllCycles;
-
-    Q_LOGGING_CATEGORY(log, "CairnCore", QtDebugMsg)
 };
 
 #endif // CAIRNCORE_H

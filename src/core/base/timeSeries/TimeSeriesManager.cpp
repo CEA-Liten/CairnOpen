@@ -30,7 +30,7 @@ void TimeSeriesManager::importTS(const std::vector<std::string>& aTSfileList, co
         ZEVariables* var = iSubscribedVariable.second;
         if (!var->IsMPC())
         {   //Add to the list if it is not a controlled variable
-            listNotFoundNames.push_back(var->Name().toStdString());
+            listNotFoundNames.push_back(var->Name());
         }
     }
 
@@ -85,12 +85,12 @@ void TimeSeriesManager::importTS(const std::string& aTSfile, const t_mapExchange
         //Read timeseries data        
         for (auto& iSubscribedVariable : aListSubscribedVariables) {
             ZEVariables* var = iSubscribedVariable.second;
-            std::string zeVarName = var->Name().toStdString();
+            std::string zeVarName = var->Name();
             bool ifound = false;
 
             for (auto& vHeader : vHeaders) {    
                 if (vHeader.Name == zeVarName) {
-                    std::string zeVarUnit = var->Unit().toStdString();
+                    std::string zeVarUnit = var->Unit();
                     OrCheckUnits checkUnits = CheckUnits(vHeader.Unit, zeVarUnit, true);
                     if (!checkUnits.isConsistency) {
                         vUnitErrs.push_back(SUnitErr(zeVarName, zeVarUnit, vHeader.Unit));
@@ -114,12 +114,7 @@ void TimeSeriesManager::importTS(const std::string& aTSfile, const t_mapExchange
                         else
                             importZEVarAverage(var, vValues, vTimes, iShift);
                     }
-                    else {
-                        QVector<float>& vZEValues = *var->ptrVariable();                        
-                        vZEValues.resize(vValues.size());
-                        for (size_t i = 0;i < vValues.size(); i++) {
-                            vZEValues.replace(i, vValues[i]);
-                        }
+                    else {                       
                         // Average for multi timesteps: var                    
                         Average(var, r_MilpData.pdtHeure(), r_MilpData.TimeSteps(), r_MilpData.npdtPast());
                     }                                                            
@@ -152,7 +147,7 @@ void TimeSeriesManager::importTS(const std::string& aTSfile, const t_mapExchange
         }
         else {
             //Write a warnning in the log but continue the simulation
-            qWarning() << QString(vErrMsg.c_str());
+            cWarning() << vErrMsg;
         }
     }
 }
@@ -178,8 +173,8 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
             throw cairn_error;
         }
         else if (vReadTimes[0] < 3600 * r_MilpData.TimeStep(0)) {
-            qWarning() << "The first time value is " + QString::number(vReadTimes[0]) + " which is less than TimeStep=" + QString::number(3600 * r_MilpData.TimeStep(0)) + ".";
-            qWarning() << "The first point is at time=TimeStep." + r_MilpData.readingMode() + "will be applied in this case.";
+            cWarning() << "The first time value is " << vReadTimes[0] << " which is less than TimeStep=" << (3600 * r_MilpData.TimeStep(0)) << ".";
+            cWarning() << "The first point is at time=TimeStep." + r_MilpData.readingMode() + "will be applied in this case.";
 
         }
         //Find the first row where time is greater than or equal to 3600 * r_MilpData.TimeStep(0) * iShift
@@ -209,17 +204,17 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
                 else if (k == vReadTimes.size() - 1) {
                     if (r_MilpData.rollingMode() == "Periodic" || r_MilpData.rollingMode() == "Persistent") {
                         if (k_periodic == 0) {
-                            qWarning() << "Importing: " + QString(aTSfile.c_str());
-                            qWarning() << "The TimeShift used is beyond the Time values! Reading recursively - Rolling Mode is : " + r_MilpData.rollingMode();
-                            qDebug() << "Number of lines = " << vReadTimes.size() << ", current TimeShift in TimeStep = " << iShift;
+                            cWarning() << "Importing: " + aTSfile;
+                            cWarning() << "The TimeShift used is beyond the Time values! Reading recursively - Rolling Mode is : " + r_MilpData.rollingMode();
+                            cDebug() << "Number of lines = " << vReadTimes.size() << ", current TimeShift in TimeStep = " << iShift;
                         }
                         k = 0;
                         k_periodic += 1;
                         continue;
                     }
                     else {
-                        Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe TimeShift used is beyond the Time values! Rolling Mode is : " + r_MilpData.rollingMode().toStdString(), -1);
-                        qDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
+                        Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe TimeShift used is beyond the Time values! Rolling Mode is : " + r_MilpData.rollingMode(), -1);
+                        cDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
                         throw cairn_error;
                     }
                 }
@@ -255,12 +250,12 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
                 else
                 {
                     Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe number of lines for Time column is not enough!", -1);
-                    qDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
+                    cDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
                     throw cairn_error;
                 }
             }
 
-            if (isnan(aTimes[l])) {
+            if (std::isnan(aTimes[l])) {
                 Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe time value at line " + std::to_string(p_Reader->getNumLine(l + 1)) + " is NAN!", -1);
                 throw cairn_error;
             }
@@ -300,8 +295,8 @@ void TimeSeriesManager::extrapolation(const std::string& aTSfile, const int& iSh
             }
             else {
                 if (i + m_rowShift == vValues.size()) {
-                    qWarning() << "Last point for " + QString(aHeader.Name.c_str()) + " has been reached!";
-                    qInfo() << r_MilpData.rollingMode() + " mode will be applied for " + QString(aHeader.Name.c_str());
+                    cWarning() << "Last point for " + aHeader.Name + " has been reached!";
+                    cInfo() << r_MilpData.rollingMode() + " mode will be applied for " + aHeader.Name;
                 }
                 if (r_MilpData.rollingMode() == "Periodic") {//loop from the beginning not timeshift
                     if (r > vValues.size() - 1) {
@@ -322,12 +317,12 @@ void TimeSeriesManager::extrapolation(const std::string& aTSfile, const int& iSh
                 else // if (rollingMode() == "Stop")
                 {
                     Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe number of lines for variable " + aHeader.Name + " in the input CSV file is not enough!", -1);
-                    qDebug() << "Number of lines = " << vValues.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
+                    cDebug() << "Number of lines = " << vValues.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
                     throw cairn_error;
                 }
             }
 
-            if (isnan(aValues[i])) {
+            if (std::isnan(aValues[i])) {
                 Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe value of " + aHeader.Name + " at index " + std::to_string(i) + " is NAN!", -1);
                 throw cairn_error;
             }
@@ -390,7 +385,7 @@ void TimeSeriesManager::importZEVarInterpolation(ZEVariables* var, std::vector<d
         }
 
         if (fabs(time - pdtVec[iRow]) < 10e-6) {
-            var->ptrVariable()->replace(j, aVec[iRow]);
+            (*var->ptrVariable())[j] =  aVec[iRow];
         }
         else {
             double interVal = 0.0;
@@ -399,26 +394,27 @@ void TimeSeriesManager::importZEVarInterpolation(ZEVariables* var, std::vector<d
             else
                 interVal = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
 
-            if (isnan(interVal)) {
-                Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + QString::number(time) + ", row: " + QString::number(iRow), -1);
+            if (std::isnan(interVal)) {
+                Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
                 throw cairn_error;
             }
 
             //Values for variables that are not temperature or price cannot be negative 
             if (interVal < 0)
             {
-                if (var->Unit().toLower() == "degc" || var->Unit().toLower() == "degk" || var->Unit().toLower() == "k"
-                    || var->Unit().toLower().contains("eur") || var->Unit().toLower().contains("currency"))
+                std::string vUpperUnit = CairnUtils::toUpper(var->Unit());
+                if (vUpperUnit == "DEGC" || vUpperUnit == "DEGK" || vUpperUnit == "K"
+                    || CairnUtils::contains(vUpperUnit, "EUR") || CairnUtils::contains(vUpperUnit, "CURRENCY"))
                 {
                     //temperature or price : do nothing
                 }
                 else if (fabs(interVal) < 1.e-5) //Correction for negligible negative values that might result from sum computation 
                     interVal = 0.0;
                 else
-                    qDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << interVal << aVec[iRow];
+                    cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << interVal << aVec[iRow];
             }
 
-            var->ptrVariable()->replace(j, interVal);
+            (*var->ptrVariable())[j] = interVal;
         }
 
         time = time + 3600. * (r_MilpData.TimeStep(j - r_MilpData.npdtPast()));
@@ -466,11 +462,12 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
         }
 
         //Don't take average value for temperature and price
-        if (var->Unit().toLower() == "degc" || var->Unit().toLower() == "degk" || var->Unit().toLower() == "k"
-            || var->Unit().toLower().contains("eur") || var->Unit().toLower().contains("currency"))
-        {
+        std::string vUpperUnit = CairnUtils::toUpper(var->Unit());
+        if (vUpperUnit == "DEGC" || vUpperUnit == "DEGK" || vUpperUnit == "K"
+            || CairnUtils::contains(vUpperUnit, "EUR") || CairnUtils::contains(vUpperUnit, "CURRENCY"))
+        {        
             if (time - pdtVec[iRow] < 10e-6) {
-                var->ptrVariable()->replace(j, aVec[iRow]);
+                (*var->ptrVariable())[j] = aVec[iRow];
             }
             else {
                 double sval = 0.0;
@@ -479,12 +476,12 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                 else
                     sval = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
 
-                if (isnan(sval)) {
-                    Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + QString::number(time) + ", row: " + QString::number(iRow), -1);
+                if (std::isnan(sval)) {
+                    Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
                     throw cairn_error;
                 }
 
-                var->ptrVariable()->replace(j, sval);
+                (*var->ptrVariable())[j] = sval;
             }
 
             if (iRow < pdtVec.size() - 1) iRow++;
@@ -494,7 +491,7 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
             if (iRow == previRow + 1)  //To have a better precision for the basic case
             {
                 if (fabs(time - pdtVec[iRow]) < 10e-6) {
-                    var->ptrVariable()->replace(j, aVec[iRow]);
+                    (*var->ptrVariable())[j] = aVec[iRow];
                 }
                 else {
                     double sval = 0.0;
@@ -503,8 +500,8 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                     else
                         sval = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
 
-                    if (isnan(sval)) {
-                        Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + QString::number(time) + ", row: " + QString::number(iRow), -1);
+                    if (std::isnan(sval)) {
+                        Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
                         throw cairn_error;
                     }
 
@@ -515,10 +512,10 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                         if (fabs(sval) < 1.e-5)
                             sval = 0.0;
                         else
-                            qDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << sval << aVec[iRow];
+                            cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << sval << aVec[iRow];
                     }
 
-                    var->ptrVariable()->replace(j, sval);
+                    (*var->ptrVariable())[j] = sval;
                 }
 
                 sumTime = 0.0;
@@ -540,8 +537,8 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                 sumTime += (time - pdtVec[iRow - 1]);
                 sumValue += (time - pdtVec[iRow - 1]) * valInterp;
 
-                if (isnan(sumValue / sumTime)) {
-                    Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + QString::number(time) + ", row: " + QString::number(iRow), -1);
+                if (std::isnan(sumValue / sumTime)) {
+                    Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
                     throw cairn_error;
                 }
 
@@ -552,10 +549,10 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                     if (fabs(sumValue / sumTime) < 1.e-5)
                         sumValue = 0.0;
                     else
-                        qDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << (sumValue / sumTime) << aVec[iRow];
+                        cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << (sumValue / sumTime) << aVec[iRow];
                 }
 
-                var->ptrVariable()->replace(j, (sumValue / sumTime));
+                (*var->ptrVariable())[j] = (sumValue / sumTime);
 
                 sumTime = (pdtVec[iRow] - time);
                 sumValue = (pdtVec[iRow] - time) * valInterp;
@@ -573,7 +570,7 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
 void TimeSeriesManager::Average(ZEVariables* var, double aTimeStepIn, const std::vector<double> &aTimeStepsOut, uint aNpdtPast)
 {
     var->IsExt(true);
-    QVector<float>& vFineIn = *var->ptrVariable();
+    std::vector<double>& vFineIn = *var->ptrVariable();
     const uint64_t aSizeFine = vFineIn.size(); //pastSize+futurSize
     const uint64_t aSizeCoarse = aTimeStepsOut.size() + aNpdtPast; //pastSize+ComputationfuturSize
 
@@ -584,16 +581,17 @@ void TimeSeriesManager::Average(ZEVariables* var, double aTimeStepIn, const std:
 
     if (aSizeFine < aSizeCoarse)
     {
-        qCritical() << "aSizeFine = " << aSizeFine;
-        qCritical() << "aSizeCoarse = " << aSizeCoarse;
-        qCritical() << "ANOMALIE ! " << aTimeStepIn << aNpdtPast;
+        cCritical() << "aSizeFine = " << aSizeFine;
+        cCritical() << "aSizeCoarse = " << aSizeCoarse;
+        cCritical() << "ANOMALIE ! " << aTimeStepIn << aNpdtPast;
     }
-    QVector<float>& vCoarseOut = *var->ptrOutVariable();            
-    vCoarseOut.fill(0.0, aSizeCoarse);  // raz Out  
+    std::vector<double>& vCoarseOut = *var->ptrOutVariable();      
+    vCoarseOut.clear();
+    vCoarseOut.resize(aSizeCoarse, 0.0); // raz Out      
     
     if (aSizeFine == 0)
     {
-        qCritical() << "Abnormal missing allocation aSizeFine = " << aSizeFine;        
+        cCritical() << "Abnormal missing allocation aSizeFine = " << aSizeFine;        
         return;
     }
     TimeStepsIn.assign(aSizeFine, aTimeStepIn);
@@ -616,12 +614,12 @@ void TimeSeriesManager::Average(ZEVariables* var, double aTimeStepIn, const std:
             vCoarseOut[icoarse] += vFineIn[ifine] * TimeStepsIn[ifine];
             localIn[ifine] = vFineIn[ifine];
             tmpFine += TimeStepsIn[ifine];
-            //qDebug() << "vFineIn ifine " << ifine << aSizeFine << vFineIn[ifine];
+            //cDebug() << "vFineIn ifine " << ifine << aSizeFine << vFineIn[ifine];
         }
         if (dt >= aTimeStepsOut[icoarse - aNpdtPast])
         {
             vCoarseOut[icoarse] = vCoarseOut[icoarse] / dt;
-            //qDebug() << "vCoarseOut icoarse " << icoarse << aSizeCoarse << vCoarseOut[icoarse];
+            //cDebug() << "vCoarseOut icoarse " << icoarse << aSizeCoarse << vCoarseOut[icoarse];
             tmpCoarse += aTimeStepsOut[icoarse - aNpdtPast];
             dt = 0.;
             icoarse++;
@@ -629,10 +627,10 @@ void TimeSeriesManager::Average(ZEVariables* var, double aTimeStepIn, const std:
     }
     if (tmpFine != tmpCoarse || icoarse != aSizeCoarse)
     {
-        qCritical() << "Bad timesteps definition : the sum of coarse timesteps " << tmpCoarse << " must be equal to the sum of constant fine timestep " << tmpFine;
-        qCritical() << "Bad timesteps definition : icoarse " << icoarse << " must be equal to aSizeCoarse " << aSizeCoarse;
+        cCritical() << "Bad timesteps definition : the sum of coarse timesteps " << tmpCoarse << " must be equal to the sum of constant fine timestep " << tmpFine;
+        cCritical() << "Bad timesteps definition : icoarse " << icoarse << " must be equal to aSizeCoarse " << aSizeCoarse;
 
         vCoarseOut[aSizeCoarse - 1] = vCoarseOut[aSizeCoarse - 1] / aTimeStepsOut[aTimeStepsOut.size() - 1];
-        qCritical() << "Final value of coarse timeseries will be biased : " << aSizeCoarse << vCoarseOut[aSizeCoarse - 1];
+        cCritical() << "Final value of coarse timeseries will be biased : " << aSizeCoarse << vCoarseOut[aSizeCoarse - 1];
     }
 }

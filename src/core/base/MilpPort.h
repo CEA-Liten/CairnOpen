@@ -1,6 +1,6 @@
 #ifndef MILPPORT_H
 #define MILPPORT_H
-class MilpPort ;
+class MilpPort;
 
 #include "MIPModeler.h"
 
@@ -15,44 +15,42 @@ using namespace std ;
  * \brief The MilpPort class defines MilpComponent ports used to exchange MilpExpression with agregator (bus components)
  * Expression may be Flow (for balance) or Potential (simple value)
  */
-class CAIRNCORESHARED_EXPORT MilpPort : public QObject
+class CAIRNCORESHARED_EXPORT MilpPort : public CairnObject
 {
-    Q_OBJECT
+    
 public:
-    MilpPort(QObject *aParent, QString aID, QString aName, const QMap<QString, QString> aComponent);
+    MilpPort(CairnObject *aParent, std::string aID, std::string aName, const std::map<std::string, std::string> aComponent);
     virtual ~MilpPort();
 
     virtual int initProblem(const uint aNpdtTot);
     InputParam* getInputParam() { return mInputParam; }
     void declareParameters();
-    void setParameters(const QMap<QString, QString>& portParams);
-    void completePortInfo(QMap<QString, QString>& portParams);
+    void setParameters(const std::map<std::string, std::string>& portParams);
+    void completePortInfo(std::map<std::string, std::string>& portParams);
 
-    QString ID() const { return mID; }
-    QString Name() const { return mName; }
-    QString Position() const { return mPosition; }
-    QString Carrier() const { return mCarrierName; }
-    QString CarrierType() const { return mCarrierType; }
+    std::string ID() const { return mID; }
+    std::string Name() const { return std::string(this->objectName().c_str()); }
+    std::string Position() const { return mPosition; }
+    std::string CarrierName();
+    std::string CarrierType() const { return mCarrierType; }
     bool IsDefaultPort() const { return mIsDefaultPort; } 
     void setIsDefaultPort(const bool& isDefault) { mIsDefaultPort = isDefault; }
 
-    QString Variable() const { return mVariable; }
-    QString VarType() const { return mVarType; }
-    QString Direction() const { return mDirection; }
-    QString VarCheckUnit() const { return mVarCheckUnit; }
+    std::string Variable() const { return mVariable; }
+    std::string VarType() const { return mVarType; }
+    std::string Direction() const { return mDirection; }
+    std::string VarCheckUnit() const { return mVarCheckUnit; }
     double  VarCoeff() const { return mVarCoeff; }
     double  VarOffset() const { return mVarOffset; }
 
-    QString CompoName() const { return mCompoName; }
-    QString LinkedComponent() const {return mLinkedComponent ;}
-    void setLinkedComponent(QString& aLinkedComponent) { mLinkedComponent = aLinkedComponent ;  };
-    QString PortType() const { return mBusType; } //BusFlowBalance, BusSameValue, or MultiObjCompo 
-    QString BusPortName() const { return mBusPortName; }
-    void setBusPortName(const QString& aBusPortName)  { mBusPortName = aBusPortName; }
-    QString BusPortPosition() const { return mBusPortPosition; }
-    void setBusPortPosition(const QString& aBusPortPosition) { mBusPortPosition = aBusPortPosition; }
+    std::string CompoName() { return std::string(this->parent()->objectName().c_str()); }
+    std::string LinkedBusName();
+    std::string PortType() const { return mBusType; } //BusFlowBalance, BusSameValue, or MultiObjCompo 
+    std::string BusPortName() const { return mBusPortName; }
+    void setBusPortName(const std::string& aBusPortName)  { mBusPortName = aBusPortName; }
+    std::string BusPortPosition() const { return mBusPortPosition; }
+    void setBusPortPosition(const std::string& aBusPortPosition) { mBusPortPosition = aBusPortPosition; }
 
-    QString VectorName() const {return mEnergyVector->Name() ;}
     std::string GAMSVarName();
 
     void setPosition();
@@ -62,12 +60,13 @@ public:
     MIPModeler::MIPExpression & Flux0D(){return mFlux0D ;}
     MIPModeler::MIPExpression1D & ExpPotential(){return mPotential ;}
 
-    void setName(const QString &aName) {mName = aName;}
-    void setPortType(QString aPortType);
-    void setVarType(QString aVarType) {mVarType = aVarType;}
-    void setVariable(QString aVariable) { mVariable = aVariable;}
-    void setDirection(QString aDirection) { mDirection = aDirection;}
-    void setVarCheckUnit(QString aVarCheckUnit) {mVarCheckUnit = aVarCheckUnit;}
+    void setName(const std::string& name) { this->setObjectName(name); }
+    void setCompoName(const std::string& name) { this->parent()->setObjectName(name); }
+    void setPortType(std::string aPortType);
+    void setVarType(std::string aVarType) {mVarType = aVarType;}
+    void setVariable(std::string aVariable) { mVariable = aVariable;}
+    void setDirection(std::string aDirection) { mDirection = aDirection;}
+    void setVarCheckUnit(std::string aVarCheckUnit) {mVarCheckUnit = aVarCheckUnit;}
 
     void setVarCoeff(double aVarCoeff) { mVarCoeff =aVarCoeff;}
     void setVarOffset(double aVarOffset) { mVarOffset = aVarOffset;}
@@ -76,80 +75,77 @@ public:
     void setFlux0D(const double &aSignedCoeff, MIPModeler::MIPExpression& aFluxExpression) ;
     void setPotential(const unsigned int &aTime, MIPModeler::MIPExpression &aPotentialExpression) ;
 
-    EnergyVector* ptrEnergyVector() { return mEnergyVector; }
-    void setEnergyVector(EnergyVector* aptrEnergyVector); 
+    EnergyVector* getCarrier() { return mCarrier; }
+    void setCarrier(EnergyVector* aptrEnergyVector);
 
-    MilpComponent* ptrLinkedComponent() { return mptrLinkedComponent; }
-    void setptrLinkedComponent(MilpComponent* aptrLinkedComponent);
-    void DeleteptrLinkedComponent();
+    MilpComponent* getLinkedBus() { return mLinkedBus; }
+    void setLinkedBus(MilpComponent* aLinkedBus);
+    void DeleteLinkedBus();
 
-    const QString PotentialName() { 
-        if(mEnergyVector) return mEnergyVector->PotentialName(); 
+    const std::string PotentialName() { 
+        if(mCarrier) return mCarrier->PotentialName();
         return "";
     }
 
-    const QString getFluxName() {
-        if (mEnergyVector) return mEnergyVector->FluxName();
+    const std::string getFluxName() {
+        if (mCarrier) return mCarrier->FluxName();
         return "";
     }
 
-    const QString getStorageName() {
-        if (mEnergyVector) return mEnergyVector->StorageName();
+    const std::string getStorageName() {
+        if (mCarrier) return mCarrier->StorageName();
         return "";
     }
 
-    const QString* pFluxUnit() const { return mFluxUnit; }
-    const QString* pStorageUnit() const { return mStorageUnit; }
-    const QString* pPowerUnit() const { return mPowerUnit; }
-    const QString* pMassUnit() const { return mMassUnit; }
-    const QString* pPotentialUnit() const { return mPotentialUnit; }
+    const std::string* pFluxUnit() const { return mFluxUnit; }
+    const std::string* pStorageUnit() const { return mStorageUnit; }
+    const std::string* pPowerUnit() const { return mPowerUnit; }
+    const std::string* pMassUnit() const { return mMassUnit; }
+    const std::string* pPotentialUnit() const { return mPotentialUnit; }
 
-    QString getFluxUnit() const;
-    QString getStorageUnit() const;
-    QString getPotentialUnit() const;
+    std::string FluxUnit() const;
+    std::string StorageUnit() const;
+    std::string PotentialUnit() const;
 
-    void jsonSaveGUIPortsData(QJsonArray& nodePortArray, const bool& isBusPort=false);
+    void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusPort=false);
 
 private:
+    InputParam* mInputParam{ nullptr };
+
+    EnergyVector* mCarrier{ nullptr };  
+    MilpComponent* mLinkedBus{ nullptr };
+
     //Units and Phy. Names
-    const QString* mFluxUnit;
-    const QString* mStorageUnit;
-    const QString* mPowerUnit;
-    const QString* mMassUnit;
-    const QString* mPotentialUnit;
+    const std::string* mFluxUnit;
+    const std::string* mStorageUnit;
+    const std::string* mPowerUnit;
+    const std::string* mMassUnit;
+    const std::string* mPotentialUnit;
 
     //Attributes
-    QString mID;              /** Port unique Id */
-    QString mName ;           /** Port Name */
-    QString mPosition;       /** Used for port position on GUI */
-    QString mCarrierName;   /** Name of Carrier (EnergyVector mEnergyVector) */
-    QString mCarrierType;   /** Possible Carrier Type */
-    QString mIsEnabled;     /** The port is enabled in the GUI only when the value is true */
+    std::string mID;              /** Port unique Id */
+    std::string mPosition;       /** Used for port position on GUI */
+    std::string mCarrierType;   /** Possible Carrier Type */
+    std::string mIsEnabled;     /** The port is enabled in the GUI only when the value is true */
     bool mIsDefaultPort;
 
     //Parameters
-    QString mVariable ;          /** Expression Name to be used by the port*/
-    QString mDirection;          /** Expression use case : indicates whether flow is a consumption INPUT or a production OUTPUT flow - relevent for converters only ! */
-    QString mVarCheckUnit ;      /** QString telling if unit should be checked "Yes" or "No" */
+    std::string mVariable ;          /** Expression Name to be used by the port*/
+    std::string mDirection;          /** Expression use case : indicates whether flow is a consumption INPUT or a production OUTPUT flow - relevent for converters only ! */
+    std::string mVarCheckUnit ;      /** std::string telling if unit should be checked "Yes" or "No" */
     double mVarCoeff;            /** Multiplying coefficient to be applied to VarName Expression */
     double mVarOffset;           /** Offset coefficient to be applied to VarName Expression */
     
     //Associated 
-    QString mCompoName;            /** Component Name of this port */
-    QString mLinkedComponent;     /** Connected Bus Name */
-    QString mBusType;            /** Bus Type (BusSameValue or BusFlowBalance) */
-    QString mBusPortName;       /** The port name of the linked Bus - it is used to maintain the same name of Bus ports on the GUI*/
-    QString mBusPortPosition;  /** The port position of the linked Bus - it is used to maintain the same position of Bus ports on the GUI*/
+    std::string mBusType;            /** Bus Type (BusSameValue or BusFlowBalance) */
+    std::string mBusPortName;       /** The port name of the linked Bus - it is used to maintain the same name of Bus ports on the GUI*/
+    std::string mBusPortPosition;  /** The port position of the linked Bus - it is used to maintain the same position of Bus ports on the GUI*/
 
-    QString mVarType;           /** Expression Type Scalar or Vector to be carried */
+    std::string mVarType;           /** Expression Type Scalar or Vector to be carried */
     MIPModeler::MIPExpression1D mFlux;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression mFlux0D;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression1D mPotential;  /** MIP expression of potential based on Variable mPotentialVarName */
     double mTimeDependant;               /** 0 if not timeDependant, 1 else*/
-
-    EnergyVector* mEnergyVector{ nullptr }; //EnergyVector is set from the linked bus componenet (which has an Option "VectorName")
-    MilpComponent* mptrLinkedComponent{ nullptr };
-    InputParam* mInputParam{ nullptr };
 };
 
 #endif // MILPPORT_H

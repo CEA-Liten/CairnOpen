@@ -34,7 +34,7 @@ The power consumption is between minPower and maxPower.
 class MODELS_DECLSPEC Electrolyzer : public ConverterSubModel {
 public:
     //----------------------------------------------------------------------------
-    Electrolyzer(QObject* aParent);
+    Electrolyzer(CairnObject* aParent);
     ~Electrolyzer();
  
     //----------------------------------------------------------------------------------------------------
@@ -83,16 +83,16 @@ public:
         // 
         
         //Re-declare LifeTime and change default value
-        addParameter("LifeTime", &mLifeTime, 10., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");  /** LifeTime in years */
+        addParameter("LifeTime", &mLifeTime, 10., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");   
 
         //double
-        addParameter("Efficiency", &mEfficiency, 0.6, &mEfficiencyLHVbased, &mEfficiencyLHVbased, "Electrolyzer efficiency LHV based - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate ", ""); /** Total constant Converter efficiency*/
-        addParameter("Efficiency_Global", &mEfficiency_Global, 0.5, SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), "Electrolyzer global efficiency - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate ", ""); /** Total constant Converter efficiency*/
-        addParameter("MaxPower", &mMaxPower_H2, 0., true, true, "Electroysis system nominal power", "PowerUnit");
-        addParameter("MinPower", &mMinPower_H2, 0., true, true, "Electroysis system minimum power multiplying coefficient in the range 0 to 1", "");	  /** Electroysis system minimum power coefficient in the range 0 to 1 */
-        addParameter("AuxConso", &mAuxConso, 0., &mAddAuxConso, true, "Constant consumption in proportion of MaxPower", "AddOperationConstraints");
-        addParameter("StdByConso", &mStdByConso, 0., &mAddStdByConso, true, "Constant consumption in proportion of MaxPower only when the electrolyzer state is on standby", "AddOperationConstraints");
-        addParameter("Cost", &mCost, 0., false, true, "Cost per energy produced per hour (EUR/EnergyUnit)", "EUR/EnergyUnit"); /** Cost per energy produced per hour (EUR/EnergyUnit) */        
+        addParameter("Efficiency", &mEfficiency, 0.6, &mEfficiencyLHVbased, &mEfficiencyLHVbased, "Electrolyzer efficiency LHV based - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate");  
+        addParameter("Efficiency_Global", &mEfficiency_Global, 0.5, SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), SFunctionFlag({ eFTypeNotAnd, { &mEfficiencyLHVbased} }), "Electrolyzer global efficiency - computed only with variable part of energy used ie UsedPower - StdByConsumption Over Produced H2 flowrate");  
+        addParameter("MaxPower", &mMaxPower_H2, 0., true, true, "Electroysis system nominal power", mMainCarrier->pPowerUnit());
+        addParameter("MinPower", &mMinPower_H2, 0., true, true, "Electroysis system minimum power multiplying coefficient in the range 0 to 1");	  
+        addParameter("AuxConso", &mAuxConso, 0., &mAddAuxConso, true, "Constant consumption in proportion of MaxPower", "", "AddOperationConstraints");
+        addParameter("StdByConso", &mStdByConso, 0., &mAddStdByConso, true, "Constant consumption in proportion of MaxPower only when the electrolyzer state is on standby", "", "AddOperationConstraints");
+        addParameter("Cost", &mCost, 0., false, true, "Cost per energy produced per hour", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pEnergyUnit()} }) );
     }
 
  
@@ -105,22 +105,22 @@ public:
     {
         mDefaultPorts.clear();
         //PortUsedPower - left
-        QMap<QString, QString> portUsedPower;
+        std::map<std::string, std::string> portUsedPower;
         portUsedPower["Name"] = "PortL0"; 
         portUsedPower["Position"] = "left";
         portUsedPower["CarrierType"] = Electrical();
         portUsedPower["Direction"] = KCONS();  
         portUsedPower["Variable"] = "UsedPower";
-        mDefaultPorts.insert("PortUsedPower", portUsedPower);  
+        mDefaultPorts["PortUsedPower"] = portUsedPower;  
 
         //PortH2MassFlowRate - right
-        QMap<QString, QString> portH2MassFlowRate;
+        std::map<std::string, std::string> portH2MassFlowRate;
         portH2MassFlowRate["Name"] = "PortR0";
         portH2MassFlowRate["Position"] = "right";
         portH2MassFlowRate["CarrierType"] = FluidH2();
         portH2MassFlowRate["Direction"] = KPROD();
         portH2MassFlowRate["Variable"] = "H2MassFlowRate";
-        mDefaultPorts.insert("PortH2MassFlowRate", portH2MassFlowRate);
+        mDefaultPorts["PortH2MassFlowRate"] = portH2MassFlowRate;
     }
 
     void setPortPointers() {

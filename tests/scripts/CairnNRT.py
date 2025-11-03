@@ -8,54 +8,107 @@ import sys
 import re
 import pandas as pd
 from os import path, remove
-from subprocess import Popen
-from compare_results import compare_results
-from compare_results import compare_plan
-from compare_results import sort_files
+from subprocess import Popen, check_output
+from compare_results import new_compare_results
+from compare_results import compare_plan_rempl
 
-from checkPLAN import checkPLAN
 from compare_lp import test_comparaison
 from compareJson import compareJson
 
 from sys import platform
+import cairn as crn
 
+
+def updateFile(file_current, file_ref, overwrite, keep_current = True):
+    change = 0
+    if (not os.path.exists(file_ref)) and os.path.exists(file_current):
+        os.rename(file_current,file_ref)
+        change = 1
+    elif overwrite and os.path.exists(file_current):
+        os.remove(file_ref)
+        os.rename(file_current,file_ref)
+        change = 1
+    else:
+        print("File" + file_ref + "already exists, don't overwrite")
+    if not keep_current:
+        if os.path.exists(file_current):
+            os.remove(file_current)
+    return change
 
 class CairnNRT:
-    def __init__(self, app_home="", max_time=3600):
+    def __init__(self, name="", sampling="", dataseries = [], app_home="", max_time=3600, timestepFile = "", rolling_horizon=False, pegase=False):
         self.__buildDone = False
         self.__app_home = app_home
         self.__script_home = os.path.dirname(os.path.realpath(__file__))
         self.__max_time = max_time
-        self.__file_plan = ''
-        self.__file_plan_ref = ''
-        self.__file_hist = ''
-        self.__file_hist_ref = ''
-        self.__directory_res = ''
-        self.__file_res = ''
-        self.__file_ref = ''
-        self.__test_name = ''
+        self.__test_name = name
+        self.__study_file = os.path.join(app_home, name+'.json')
+        self.__file_plan = os.path.join(app_home, name+'_results_PLAN.csv')
+        self.__file_plan_ref = os.path.join(app_home, name+'_results_PLAN_Ref.csv')
+        self.__file_hist = os.path.join(app_home, name+'_results_HIST.csv')
+        self.__file_hist_ref = os.path.join(app_home, name+'_results_HIST_Ref.csv')
+        self.__directory_res = os.path.join(app_home, name+'_NRT')
+        self.__rolling_horizon = rolling_horizon
+        self.__file_res = os.path.join(app_home, name+'_results_Results.csv')
+        self.__file_ref = os.path.join(app_home, name+'_Results_Ref.csv')
+        self.__pegase = pegase
+        if pegase:
+            self.__file_res = os.path.join(app_home, name+'_pegase_Results.csv')
+            self.__file_ref = os.path.join(app_home, name+'_pegase_Results_Ref.csv')
+        self.__file_lp = os.path.join(app_home,"checklp", name+"_model.lp")
+        self.__file_lp_ref = os.path.join(app_home, name+"_model_Ref.lp")
+        self.__logfile = open(os.path.join(app_home, 'report_testing.txt'),'w')
+        self.__summary_file = os.path.join(app_home, 'summary_testing.txt')
+        self.__sampling_results = os.path.join(app_home, 'sampling_results.csv')
+        self.__sampling_results_ref = os.path.join(app_home, 'sampling_results_ref.csv')
+        self.__sampling_kpi = os.path.join(app_home, 'kpi_sampling.csv')
+        self.__threshold = 0.0001
+        if sampling != "":
+            self.__sampling = os.path.join(app_home,sampling)
+        else:
+            self.__sampling = ""
+        if dataseries == []:
+            self.__dataseries = [os.path.join(app_home, name+'_dataseries.csv')]
+        else:
+            self.__dataseries = dataseries
 
-    def setPlanHistFiles(self):
-        for file in os.listdir(self.__app_home):
-            if file.endswith("PLAN.csv"):
-                self.__file_plan = os.path.join(self.__app_home,
-                                                file)  # this file comes from svn extract, it will be rewritten during the run step
-                self.__file_plan_ref = self.__file_plan.replace("PLAN.csv", "PLAN-Reference.csv")
-            elif file.endswith("HIST.csv"):
-                self.__file_hist = os.path.join(self.__app_home,
-                                                file)  # this file comes from svn extract, it will be rewritten during the run step
-                self.__file_hist_ref = self.__file_hist.replace("HIST.csv", "HIST-Reference.csv")
+    def check_study_file_existence(self):
+        assert os.path.isfile(self.__study_file), self.__study_file + " not found"
+        for i in self.__dataseries:
+            assert os.path.isfile(i), i + " not found"
+        if self.__sampling == "" and os.path.isfile(os.path.join(self.__app_home,"sampling.csv")):
+            self.__sampling = os.path.join(self.__app_home,"sampling.csv")
 
-    def copyPlanHistFiles(self):
-        if os.path.exists(self.__file_plan_ref) and not os.path.exists(self.__file_plan_ref):
-            os.rename(self.__file_plan, self.__file_plan_ref)
-        if os.path.exists(self.__file_plan_ref) and not os.path.exists(self.__file_hist_ref):
-            os.rename(self.__file_hist, self.__file_hist_ref)
+    def check_study_fileref_existence(self):
+        assert os.path.isfile(self.__study_file), self.__study_file + " not found"
+        assert os.path.isfile(self.__file_plan_ref), self.__file_plan_ref + " not found"
+        assert os.path.isfile(self.__file_hist_ref), self.__file_hist_ref + " not found"
+        assert os.path.isfile(self.__file_ref), self.__file_ref + " not found"
+        if self.__sampling != "":
+            assert os.path.isfile(self.__sampling), self.__sampling + " not found"
+        for i in self.__dataseries:
+            assert os.path.isfile(i), i + " not found"
 
-    def run(self, tnr_dir="TNR", tnr_xml="TNR.xml", maxtime=1200):
+
+    def runCairn(self):
+        inst = crn.CairnAPI(False)
+        print("======================= running test ===================")
+        print(self.__study_file)
+        print(self.__dataseries)
+        problem = inst.read_study(self.__study_file)
+        for ts in self.__dataseries:
+            problem.add_timeseries(ts)
+        if problem.simulation_control["NbCycle"]>1:
+            self.__file_res = os.path.join(self.__app_home, self.__test_name+'_results_rollinghorizon.csv')
+            self.__file_ref = os.path.join(self.__app_home, self.__test_name+'_Results_rh_Ref.csv')
+        solution = problem.run()
+        assert solution.status == "Optimal"
+        return problem, inst
+    
+    def runPegase(self, tnr_dir="", tnr_xml="TNR.xml", maxtime=1200):
         if os.getenv('BUILD_STEP') is None or 'RUN' in os.getenv('BUILD_STEP'):
-            self.setPlanHistFiles()
-            self.copyPlanHistFiles()
+            #self.setPlanHistFiles()
+            #self.copyPlanHistFiles()
 
             xml_file = os.path.join(self.__app_home, tnr_dir, tnr_xml)
             assert os.path.exists(xml_file), "XML file not found " + xml_file
@@ -77,136 +130,132 @@ class CairnNRT:
                 for proc in psutil.process_iter():
                     if proc.pid == pid:
                         proc.terminate()
+            except Exception as e:
+                assert "error while running Pegase:", e
             print('Returning code=',p.returncode)
             assert p.returncode >= 0, " *** ERROR detected while running test *** "
 
-    #tnr_name is not used ! Can be used as ScenarioName
-    def runPersee(self, tnr_dir="TNR", tnr_xml="Study.json", tnr_series="Study_dataseries.csv", tnr_name="Study",
-                  maxtime=1200, timeStepFile="", tsFileList=[]): 
-        if os.getenv('BUILD_STEP') is None or 'RUN' in os.getenv('BUILD_STEP'):
-            self.setPlanHistFiles()
-            self.copyPlanHistFiles()
 
-            #script
-            run_script = os.path.join(self.__script_home, "runjson.bat")
-            assert os.path.exists(run_script), "run script not found " + run_script
+    
+    def runSampling(self):
+        inst = crn.CairnAPI(False)
+        if self.__sampling != "":
+            df_sens = pd.read_csv(self.__sampling, sep=";", decimal=".", header=[0,1], index_col=0)
+        if os.path.exists(self.__sampling_kpi):
+            df_kpi = pd.read_csv(self.__sampling_kpi, sep=";")
+        else:
+            df_kpi = pd.DataFrame()
+        problem = inst.read_study(self.__study_file)
+        for ts in self.__dataseries:
+            problem.add_timeseries(ts)
+        tab_results = crn.run_sensitivity(problem,df_sens,indicators=df_kpi)
+        inst.close_study()
+        return tab_results
 
-            #study file
-            study_file = os.path.join(self.__app_home, tnr_dir, tnr_xml)
-            assert os.path.exists(study_file), "Study file not found " + study_file
-            print("Running with ", study_file)
 
-            run_args = [run_script, study_file]
-
-            #dataseries files : use either tnr_series or tsFileList as time series file/files
-            csv_file_list = []
-            if tsFileList != []:
-                print("timeseries list ...")
-                for tsfile in tsFileList:
-                    print('tsfile :', tsfile)
-                    csv_file_list.append(os.path.join(self.__app_home, tnr_dir, tsfile))
-                    assert os.path.exists(tsfile), "TimeSeries file not found " + tsfile
-                run_args.extend(csv_file_list)
-            else:
-                csv_file = os.path.join(self.__app_home, tnr_dir, tnr_series)
-                assert os.path.exists(csv_file), "TimeSeries file not found " + csv_file
-                run_args.append(csv_file)
-            
-            #TimeStepFile
-            if timeStepFile != "":
-                timeStep_file = os.path.join(self.__app_home, tnr_dir, timeStepFile)
-                assert os.path.exists(csv_file), "TimeStepFile file not found " + timeStep_file
-                run_args.append("-TimeStepFile")
-                run_args.append(timeStep_file)
-
-            print(run_args)
-
-            p = Popen(run_args, cwd=self.__app_home)
-            pid = p.pid
-
-            print("CairnCmd process id: %d"%pid, flush=True)
+    def updateTest(self, overwrite, keep_current = False, checklp=True):
+        if self.__pegase==False:
+            problem, inst = self.runCairn()
+        else:
+            self.runPegase(tnr_xml=self.__test_name+".xml")
+        updateFile(self.__file_plan,self.__file_plan_ref,overwrite, keep_current=keep_current)
+        updateFile(self.__file_hist,self.__file_hist_ref,overwrite, keep_current=keep_current)
+        updateFile(self.__file_res,self.__file_ref,overwrite, keep_current=keep_current)
+        if checklp:
+            futuresize = problem.simulation_control["FutureSize"]
+            problem.simulation_control = {"FutureSize":10}
             try:
-                # ensure long time optimization can reach the end - 1200 s clearly too short !
-                stdout, stderr = p.communicate(timeout=maxtime)
-            except subprocess.TimeoutExpired:
-                for proc in psutil.process_iter():
-                    if proc.pid == pid:
-                        proc.terminate()
-                return -2
-            print('Returning code=', p.returncode)
-            assert p.returncode >= 0, " *** ERROR detected while running test *** "
-            return p.returncode
+                problem.run("checklp")
+            except:
+                problem.simulation_control = {"FutureSize":futuresize}
+                problem.run("checklp")
+            updateFile(self.__file_lp,self.__file_lp_ref,True, keep_current=keep_current)
+            problem.simulation_control = {"FutureSize":futuresize}
+        if self.__sampling!="":
+            tab_results = self.runSampling()
+            tab_results.to_csv(self.__sampling_results_ref, sep=";")
+        if self.__pegase==False:
+            inst.close_study()
 
-    def output(self, msg, logfile, summary_update_file, updated):
-        print(msg)
-        logfile.write(msg)
-        if summary_update_file:
-            file_res = self.__file_res.replace(self.__directory_res, '')
-            file_ref = self.__file_ref.replace(self.__directory_res, '')
-            file_plan = self.__file_plan.replace(self.__directory_res, '')
-            file_hist = self.__file_hist.replace(self.__directory_res, '')
-            summary_update_file.write(
-                "{0:<10s};{1:<40s};{2:<50s};{3:<80s};{4:<80s};{5:<80s};{6:<80s}".format(str(updated),
-                                                                                        self.__directory_res,
-                                                                                        self.__test_name, file_res,
-                                                                                        file_ref, file_plan, file_hist))
-            summary_update_file.write('\n')
-            summary_update_file.flush();
-
-    def checkPlanHist(self, planHist, planHist_file, planHist_ref_file, logfile, summary_update_file):
-        updated = False
-        threshold = 0.1
-        if os.path.exists(planHist_file) and os.path.exists(planHist_ref_file):
-            err = checkPLAN(planHist_ref_file, planHist_file, logfile, threshold)
-            if err < threshold:
-                updated = True
-                self.output(planHist + ' file difference < ' + str(threshold) + '%\n', logfile, summary_update_file, updated)
-            else:
-                self.output(planHist + ' file difference > ' + str(threshold) + '%\n', logfile, summary_update_file, updated)
-        else:
-            self.output(planHist + ' file not found\n', logfile, summary_update_file, updated)
-        return updated
-
-    def checkGlobal(self, typeFile='PLAN', fileNew='PLAN.csv', fileRef='refPLAN.csv'):
-        tnr_dir = '.'
-        fileNew_abs = os.path.join(self.__app_home, tnr_dir, fileNew)
-        fileRef_abs = os.path.join(self.__app_home, tnr_dir, fileRef)
-
-        updated = True
-        logfile = open(os.path.join(self.__app_home, tnr_dir, 'diff_' + typeFile + '_file.log'), 'a')
-        summary_update_file = open(os.path.join(self.__app_home, tnr_dir, "summary_file.txt"), 'a')
+    def generic_testing(self):
+        status = {}
+        problem,inst = self.runCairn()
+        future_size = problem.simulation_control["FutureSize"]
+        try:
+            problem.simulation_control = {"FutureSize":10}
+            solution = problem.run("checklp")
+            status["RUNLPFILE"] = solution.status
+            
+        except:
+            problem.simulation_control = {"FutureSize":future_size}
+            solution = problem.run("checklp")
+            status["RUNLPFILE"] = solution.status
+        problem.simulation_control = {"FutureSize":future_size}
+        status["LPFILE"] = self.checklp()
         
-        updated = self.checkPlanHist(typeFile, fileNew_abs, fileRef_abs, logfile, summary_update_file)
+        status["OPTIM"] = problem.run().status
+        status["PLAN"] = self.checkPlanHist("PLAN")
+        status["HIST"] = self.checkPlanHist("HIST")
+        status["TIMESERIES"] = self.check(0.001)
+        
+        inst.close_study()
+        return(status)
+        
+    def sampling_test(self):
 
-        logfile.close()
-        summary_update_file.close()
-
-        assert updated, typeFile + " file differ"
-
-        return updated
-
-    def checklp(self, typeFile='lp', fileNew='.lp', fileRef='_ref.lp'):
-        tnr_dir = '.'
-        fileNew_abs = os.path.join(self.__app_home, tnr_dir, fileNew)
-        fileRef_abs = os.path.join(self.__app_home, tnr_dir, fileRef)
-
-        updated = False
-        logfile = open(os.path.join(self.__app_home, tnr_dir, 'diff_' + typeFile + '_file.log'), 'a')
-        summary_update_file = open(os.path.join(self.__app_home, tnr_dir, "summary_file.txt"), 'a')
-        if os.path.exists(fileNew_abs) and os.path.exists(fileRef_abs):
-            updated = (test_comparaison(fileNew_abs,fileRef_abs))
-            if not(updated):
-                self.output(" difference in the lp files", logfile, summary_update_file, updated)
-            else:
-                self.output(" NO difference in the lp files", logfile, summary_update_file, updated)
+        tab_res = self.runSampling()
+        try:
+            tab_ref = pd.read_csv(self.__sampling_results_ref,sep=";", index_col=0)
+        except:
+            print("tab ref not found")
+            tab_ref = 0
+            return "No reference"
+        tab_res.to_csv(self.__sampling_results,sep=";")
+        diff = ((tab_res.round(decimals=3).reindex(sorted(tab_res.columns), axis=1)).compare((tab_ref.round(decimals=3)).reindex(sorted(tab_ref.columns), axis=1)))
+        self.output("\n Sampling test \n ================ \n")
+        if len(diff)==0:
+            self.output("Results are identical\n")
         else:
-            self.output(typeFile + ' file not found\n', logfile, summary_update_file, updated)
-        logfile.close()
-        summary_update_file.close()
+            self.output("Difference in the sampling\n")
+            self.output(diff.to_string())
+        if len(diff)>0:
+            return "Failed"
+        else:
+            return "Success"
 
-        assert updated, typeFile + " file differ"
+    def output(self, msg):
+        print(msg)
+        self.__logfile.write("\n")
+        self.__logfile.write(msg)
+        
 
-        return updated
+    def checkPlanHist(self,planOrHist,threshold = 0.1):
+        status = True
+        if planOrHist == "PLAN" or planOrHist == "":
+            planHist_file = self.__file_plan
+            planHist_ref_file = self.__file_plan_ref
+        else :
+            planHist_file = self.__file_hist
+            planHist_ref_file = self.__file_hist_ref
+        err = compare_plan_rempl(planOrHist, planHist_ref_file, planHist_file, self.__logfile, threshold)
+        if err < threshold:
+            status = True
+            self.output(planOrHist + ' file difference < ' + str(threshold) + ': %\n')
+        else:
+            status = False
+            self.output(planOrHist + ' file difference > ' + str(threshold) + '%\n')
+        return status
+
+    def checklp(self):
+        same_file,str_diff = (test_comparaison(self.__file_lp,self.__file_lp_ref))       
+        if not(same_file):
+            self.output("\n Difference in the lp files" + self.__file_lp+ " and " +self.__file_lp_ref + "\n")
+        else:
+            self.output("\n NO difference in the lp files" + self.__file_lp+ " and " +self.__file_lp_ref + "\n")
+        self.output("LP file check")
+        self.output("================")
+        self.output(str_diff)
+        return (same_file)
 
     def checkJson(self, typeFile='json', fileNew='new_study.json', fileRef='study.json', skipCompoX=""):
         tnr_dir = '.'
@@ -219,15 +268,15 @@ class CairnNRT:
         if os.path.exists(file_json) and os.path.exists(file_json_ref):
             noDiff = compareJson(file_json_ref, file_json, logfile, skipCompoX)
             if noDiff:
-                self.output("NO difference in the json files", logfile, summary_update_file, noDiff)
+                self.output("NO difference in the json files\n")
             else:
-                self.output("Difference in the json files", logfile, summary_update_file, noDiff)
+                self.output("Difference in the json files\n")
         else:
-            self.output(typeFile + ' file not found\n', logfile, summary_update_file, noDiff)
+            self.output(typeFile + ' file not found\n')
 
         logfile.close()
         summary_update_file.close()
-        assert noDiff, typeFile + " file differ"
+
         return noDiff
 
     def update(self, infos, log_file):
@@ -288,27 +337,16 @@ class CairnNRT:
             logfile.close()
             summary_update_file.close()
 
-    def check(self, tnr_dir="TNR", tnr_ref="Sortie-reference.csv", tnr_result="Sortie.csv", skip_rows=[1, 2],
-              decimal=','):
+    def check(self,folder_res = "",file_res = "", file_ref = "",threshold=0.01,):
+        # change name of results files if pegase
+        if file_res != "":
+            self.__file_res = os.path.join(self.__app_home,folder_res,file_res)
+        if file_ref != "":
+            self.__file_ref = os.path.join(self.__app_home,folder_res,file_ref)
         if os.getenv('BUILD_STEP') is None or 'CHECK' in os.getenv('BUILD_STEP'):
-            if tnr_dir.startswith("./"):
-                tnr_dir = tnr_dir[2:]
-            self.__file_ref = os.path.join(self.__app_home, tnr_dir, tnr_ref)
-            assert os.path.exists(self.__file_ref), "Reference file not found " + self.__file_ref
-
-            self.__file_res = os.path.join(self.__app_home, tnr_dir, tnr_result)
-            assert os.path.exists(self.__file_res), "Result file not found " + self.__file_res
-
-            print("Check ", self.__file_res, os.getenv('BUILD_STEP'))
-            log_dir = sys._getframe(1).f_code.co_name
-            if not os.path.exists(os.path.join(self.__app_home, tnr_dir, log_dir)):
-                os.makedirs(os.path.join(self.__app_home, tnr_dir, log_dir))
-            log_file = os.path.join(self.__app_home, tnr_dir, log_dir, "logfile.txt")
-
-            infos = compare_results(os.path.join(self.__app_home, tnr_dir), self.__file_ref, self.__file_res, skip_rows,
-                                    decimal, log_file, log_dir)
-            self.update(infos, log_file)
-            assert infos['error_message'] == '', infos['error_message']
-    
-
+            if not os.path.exists(self.__directory_res):
+                os.makedirs(self.__directory_res)
+            infos = new_compare_results(self.__app_home, self.__file_res, self.__file_ref, self.__logfile, self.__directory_res, threshold, pegase=self.__pegase)
+        
+        return infos
 

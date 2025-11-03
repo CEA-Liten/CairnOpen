@@ -1,6 +1,4 @@
 #include "SourceLoadCompo.h"
-#include <QDebug>
-#include <QDir>
 #include <math.h>       /* fabs, log, pow */
 #include <iostream>
 #include "GlobalSettings.h"
@@ -8,13 +6,13 @@
 using namespace GS ;
 using Eigen::Map;
 
-SourceLoadCompo::SourceLoadCompo(QObject *aParent,
-    const QMap<QString, QString>& aComponent,
-    const QMap < QString, QMap<QString, QString> >& aPorts,
+SourceLoadCompo::SourceLoadCompo(CairnObject *aParent,
+    const std::map<std::string, std::string>& aComponent,
+    const std::map < std::string, std::map<std::string, std::string> >& aPorts,
     MilpData* aMilpData,
     TecEcoEnv& aTecEcoEnv,
     ModelFactory* aModelFactory) :
-    MilpComponent(aParent, aComponent["id"], aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
+    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
 {
 }
 
@@ -25,29 +23,10 @@ SourceLoadCompo::~SourceLoadCompo()
 void SourceLoadCompo::declareCompoInputParam()
 {
     MilpComponent::declareCompoInputParam();
-    mCompoInputParam->addParameter("Direction", &mDirection, "Sink", false, true, "Direction of the SourceLoad component - Sink means extraction of power or mass from the system - Source means injection in the system");    
 }
 
-void SourceLoadCompo::setCompoInputParam(const QMap<QString, QString> aComponent) 
+void SourceLoadCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent) 
 {
     MilpComponent::setCompoInputParam(aComponent);
-    setCompoSens(mDirection);
 }
 
-void SourceLoadCompo::setCompoSens(const QString& direction)
-{
-    if (mDirection == "Sink") {
-        mSens = -1;
-
-    }
-    else if (mDirection == "Source") {
-        mSens = +1;
-    }
-    else
-    {
-        mSens = 0;
-        qCritical() << "ERROR : SourceLoad component /** ";
-        Cairn_Exception erreur("Invald <Direction> attribute : Sink or Source expected " + mName + " instead of " + mDirection + ".", -1);
-        throw& erreur;
-    }
-}

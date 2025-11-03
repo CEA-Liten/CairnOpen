@@ -35,9 +35,8 @@ include(ComponentSetup)
 create_component(${COMPONENT})
 target_compile_definitions(${COMPONENT} PRIVATE -DMODELINTERFACE_LIBRARY)
 
-find_package(Qt REQUIRED)
-set_property(TARGET ${COMPONENT} PROPERTY AUTOMOC OFF)
-
+include(SpdlogSetup)
+target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
 
 # ---- Installation ----
 # Call component_install_setup(<COMPONENT>)

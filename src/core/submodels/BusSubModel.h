@@ -6,7 +6,7 @@
 class CAIRNCORESHARED_EXPORT BusSubModel : public SubModel
 {
 public:
-    BusSubModel(QObject* aParent=nullptr);
+    BusSubModel(CairnObject* aParent=nullptr);
     ~BusSubModel();
 
     void buildModel();

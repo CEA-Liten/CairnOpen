@@ -1,6 +1,5 @@
 #include "base/MilpData.h"
 #include "GlobalSettings.h"
-#include <QDebug>
 
 using namespace GS ;
 // For mapping a vector subscribed in ZE to a VectorXf
@@ -10,10 +9,11 @@ using namespace GS ;
 //
 // Pegase-type constructor with full args - time data set right now
 //
-MilpData::MilpData(QObject* aParent, const QString& aName, const double& aPdt,
+MilpData::MilpData(CairnObject* aParent, const std::string& aName, const double& aPdt,
     const uint& aNpdtPast,
     const uint& aNpdtFuture,
-    const uint& aTimeshift, const uint& aIHMFuturSize, const QString& aGlobalTimeStepFile, const QString& aGlobalTypicalPeriodFile) : QObject(aParent),
+    const uint& aTimeshift, const uint& aIHMFuturSize, const std::string& aGlobalTimeStepFile, const std::string& aGlobalTypicalPeriodFile) 
+    : CairnObject(aParent, aName),
     mPdt(aPdt),
     mPdtHeure(mPdt / 3600.),
     mNpdtPast(aNpdtPast),
@@ -26,6 +26,7 @@ MilpData::MilpData(QObject* aParent, const QString& aName, const double& aPdt,
     mReadingMode("Average"),
     mRunUntilSimulationEnd(false),
     mExportResultsEveryCycle(false),
+    mShowIndicatorDescription(false),
     mUseExtrapolationFactor(true),
     mGlobalTimeStepFile(aGlobalTimeStepFile),
     mGlobalTypicalPeriodFile(aGlobalTypicalPeriodFile),
@@ -34,18 +35,17 @@ MilpData::MilpData(QObject* aParent, const QString& aName, const double& aPdt,
     mNDtTypicalPeriods(24),
     mUseTypicalPeriods(false)
 {
-    this->setObjectName(aName);
-
+    
     mStartingAbsoluteTimeStep = 0 ;
 
     setTimeSteps(mGlobalTimeStepFile) ;
     setTypicalPeriods(mGlobalTypicalPeriodFile) ;
 
     if (mPlanHorizon != aNpdtFuture) {
-        qCritical () << "Fatal ERROR : number of timesteps mismatch between ";
-        qCritical () << "- number of timestep values in studyName_ListeOfTimeSteps.csv file " << mPlanHorizon  ;
-        qCritical () << "- number of timestep values declared by <ComputationFuturSize> field in Pegase .xml file " << aNpdtFuture;
-        Q_ASSERT(mPlanHorizon == aNpdtFuture) ;
+        cCritical () << "Fatal ERROR : number of timesteps mismatch between ";
+        cCritical () << "- number of timestep values in studyName_ListeOfTimeSteps.csv file " << mPlanHorizon  ;
+        cCritical () << "- number of timestep values declared by <ComputationFuturSize> field in Pegase .xml file " << aNpdtFuture;
+        assert(mPlanHorizon == aNpdtFuture) ;
     }
 
 } // MilpData()
@@ -53,7 +53,8 @@ MilpData::MilpData(QObject* aParent, const QString& aName, const double& aPdt,
 //
 // default constructor with few args - time data set later on at doinit step from Cairn Settings file
 //
-MilpData::MilpData(QObject *aParent, const QString& aName, const QString &aGlobalTimeStepFile, const QString &aGlobalTypicalPeriodFile) : QObject(aParent),
+MilpData::MilpData(CairnObject *aParent, const std::string& aName, const std::string &aGlobalTimeStepFile, const std::string &aGlobalTypicalPeriodFile) 
+    : CairnObject(aParent, aName),
     mPdt(3600.),
     mPdtHeure(mPdt/3600.),
     mNpdtPast(1),
@@ -66,6 +67,7 @@ MilpData::MilpData(QObject *aParent, const QString& aName, const QString &aGloba
     mReadingMode("Average"),
     mRunUntilSimulationEnd(false),
     mExportResultsEveryCycle(false),
+    mShowIndicatorDescription(false),
     mUseExtrapolationFactor(true),
     mGlobalTimeStepFile(aGlobalTimeStepFile),
     mGlobalTypicalPeriodFile(aGlobalTypicalPeriodFile),
@@ -73,9 +75,7 @@ MilpData::MilpData(QObject *aParent, const QString& aName, const QString &aGloba
     mTypicalPeriods(365),
     mNDtTypicalPeriods(24),
     mUseTypicalPeriods(false)
-{
-    this->setObjectName(aName);
-
+{    
     mStartingAbsoluteTimeStep = 0 ;
     mTimeStepBeginLP = 0 ; // by default use LP models only ? or never ?
     mTimeStepBeginForecast = mNpdt ;
@@ -87,7 +87,7 @@ MilpData::~MilpData()
 {
 }  
 
-bool MilpData::setMilpDataFromSettings(const std::map<QString, InputParam::ModelParam*>& paramMap, const bool& isStdAloneMode)
+bool MilpData::setMilpDataFromSettings(const std::map<std::string, InputParam::ModelParam*>& paramMap, const bool& isStdAloneMode)
 {
     bool ierr = true;
     //if (mSettings) {
@@ -111,6 +111,7 @@ bool MilpData::setMilpDataFromSettings(const std::map<QString, InputParam::Model
 
         if (key == "RunUntilSimulationEnd" && param->getNumValue(value))    mRunUntilSimulationEnd = bool(value);
         if (key == "ExportResultsEveryCycle" && param->getNumValue(value))  mExportResultsEveryCycle = bool(value);
+        if (key == "ShowIndicatorDescription" && param->getNumValue(value)) mShowIndicatorDescription = bool(value);
         if (key == "UseExtrapolationFactor" && param->getNumValue(value))   mUseExtrapolationFactor = bool(value);
 
         if (key == "RollingMode")    mRollingMode   = param->toString();
@@ -129,16 +130,16 @@ bool MilpData::setMilpDataFromSettings(const std::map<QString, InputParam::Model
     setTypicalPeriods(mGlobalTypicalPeriodFile) ;
 
     if (mPlanHorizon != mNpdt) {
-        qCritical () << "Fatal ERROR : number of timesteps mismatch between ";
-        qCritical () << "- number of timestep values in studyName_ListeOfTimeSteps.csv file : mPlanHorizon = " << mPlanHorizon  ;
-        qCritical () << "- number of timestep values declared by <ComputationFutureVariableTimeStep> = " << mIHMFuturSize ;
+        cCritical () << "Fatal ERROR : number of timesteps mismatch between ";
+        cCritical () << "- number of timestep values in studyName_ListeOfTimeSteps.csv file : mPlanHorizon = " << mPlanHorizon  ;
+        cCritical () << "- number of timestep values declared by <ComputationFutureVariableTimeStep> = " << mIHMFuturSize ;
         ierr = false ;
     }
     return ierr ;
 }
-void MilpData::setTimeSteps (QString aCsvTimeStepFileName)
+void MilpData::setTimeSteps (std::string aCsvTimeStepFileName)
 {
-    QList<QStringList> data_Inputs = GS::readFromCsvFile (aCsvTimeStepFileName, ";");
+    std::vector<std::vector<std::string>> data_Inputs = CairnUtils::readFromCsvFile (aCsvTimeStepFileName, ";");
 
     if (data_Inputs.size() == 0) {
         mTimeSteps.resize(mNpdt);
@@ -149,7 +150,7 @@ void MilpData::setTimeSteps (QString aCsvTimeStepFileName)
     }
     else {
         // timesteps are expected in column #0, in HOUR
-        qInfo() << "Using variable timesteps from file " << aCsvTimeStepFileName ;
+        cInfo() << "Using variable timesteps from file " << aCsvTimeStepFileName;
         mUseVariableTimeSteps = true;
         mTimeSteps = getDataArray(data_Inputs, 0, 0) ;
         mTimeStepBeginLP = getIntDataArray(data_Inputs, 1, 0).at(0) ; // first row of column #1 indicates value for mTimeStepBeginLP
@@ -158,9 +159,9 @@ void MilpData::setTimeSteps (QString aCsvTimeStepFileName)
     }
     mPlanHorizon = mTimeSteps.size() ;
 }
-void MilpData::setTypicalPeriods (QString aCsvTimeStepFileName)
+void MilpData::setTypicalPeriods (std::string aCsvTimeStepFileName)
 {
-    QList<QStringList> data_Inputs = GS::readFromCsvFile (aCsvTimeStepFileName, ";");
+    std::vector<std::vector<std::string>> data_Inputs = CairnUtils::readFromCsvFile (aCsvTimeStepFileName, ";");
 
     if (data_Inputs.size() == 0) {
         mUseTypicalPeriods = false ;
@@ -181,9 +182,9 @@ void MilpData::setTypicalPeriods (QString aCsvTimeStepFileName)
         mNDtTypicalPeriods = getIntDataArray(data_Inputs, 2, 0).at(0) ; // first row of column #1 indicates value for mTimeStepBeginForecast
         if (mVectTypicalPeriods.size() != mNpdt)
         {
-            qCritical() << " Bad configuration in TypicalPeriodsFile : length " << mVectTypicalPeriods.size() << " while expected " << mNpdt ;
+            cCritical() << " Bad configuration in TypicalPeriodsFile : length " << mVectTypicalPeriods.size() << " while expected " << mNpdt ;
         }
-        qInfo() << " We will use " << mTypicalPeriods << " Typical Periods of " << mNDtTypicalPeriods << " timesteps instead of " << mNpdt << " yielding reduction factor : " <<  float(mNpdt/(mTypicalPeriods * mNDtTypicalPeriods)) ;
+        cInfo() << " We will use " << mTypicalPeriods << " Typical Periods of " << mNDtTypicalPeriods << " timesteps instead of " << mNpdt << " yielding reduction factor : " <<  float(mNpdt/(mTypicalPeriods * mNDtTypicalPeriods)) ;
     }
 }
 void MilpData::prepareOptim()

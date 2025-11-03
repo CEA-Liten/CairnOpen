@@ -28,7 +28,7 @@ void CairnAPI::SolutionAPI::set_Results(int a_Step)
 			m_timeSeries[s_Time] = t_values(ts);
 			for (auto& iPublishedVariable : vListPublishedVariables) {
 				ZEVariables* var = iPublishedVariable.second;
-				m_timeSeries[var->Name().toStdString()] = t_values(ts);	
+				m_timeSeries[var->Name()] = t_values(ts);	
 			}			
 		}
 		else {
@@ -45,9 +45,9 @@ void CairnAPI::SolutionAPI::set_Results(int a_Step)
 			
 			for (auto& iPublishedVariable : vListPublishedVariables) {			
 				ZEVariables* var = iPublishedVariable.second;
-				QString zeVarName = var->Name();
+				std::string zeVarName = var->Name();
 				if (var->ptrVariable()->size() > 0)	{
-					m_timeSeries[var->Name().toStdString()][j+previousSize] = var->ptrVariable()->at(j + npdtPast);					
+					m_timeSeries[var->Name()][j+previousSize] = var->ptrVariable()->at(j + npdtPast);					
 				}
 			}			
 		}
@@ -78,7 +78,7 @@ std::string CairnAPI::SolutionAPI::get_Status() const
 {
 	// return string status
 	if (m_Problem)
-		return m_Problem->getOptimisationStatus().toStdString();
+		return m_Problem->getOptimisationStatus();
 	else {
 		CairnAPIUtils::setError(noCairn);
 	}
@@ -100,13 +100,13 @@ void CairnAPI::SolutionAPI::exportTimeSeries(const std::string& a_path, int a_nu
 	if (m_Problem) {
 		if (m_status >= 0) {
 			CairnCore* vCairn = (CairnCore*)m_Problem->parent();
-			QString vTSFileName = QString(a_path.c_str());
+			std::string vTSFileName = std::string(a_path.c_str());
 			if (vTSFileName == "") {
 				vTSFileName = vCairn->projectDir() + vCairn->StudyName() + "_Results.csv";
 			}
 			// export OUTPUT Time series					
-			if (vCairn->exportTS(vTSFileName.toStdString())) {
-				CairnAPIUtils::setError(errWrite, vTSFileName.toStdString());
+			if (vCairn->exportTS(vTSFileName)) {
+				CairnAPIUtils::setError(errWrite, vTSFileName);
 			}
 		}
 		else {

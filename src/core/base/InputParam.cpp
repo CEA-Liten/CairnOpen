@@ -5,7 +5,7 @@
 //#include "base/OptimProblem.h"
 using namespace GS ;
 
-InputParam::InputParam (QObject *aParent, QString aName): QObject(aParent)
+InputParam::InputParam (CairnObject *aParent, std::string aName): CairnObject(aParent)
 {
     this->setObjectName(aName);
 }
@@ -23,15 +23,8 @@ InputParam::~InputParam()
     mIndicators.clear();
 }
 
-QString InputParam::getParamQSValue(const QString &aParamName)
-{ /** aParamName supposed to be existing in mMapParamQS */
-    QString vValue = "";
-    getParameterValue(aParamName, vValue, eString);
-    return vValue;
-}
-
 //Model InputParameter Interface
-void InputParam::removeParameter(const QString& aParamName) {
+void InputParam::removeParameter(const std::string& aParamName) {
     if (mMapParams.find(aParamName) != mMapParams.end()) {
         if(mMapParams[aParamName]) delete mMapParams[aParamName];
         mMapParams.erase(aParamName);
@@ -48,83 +41,52 @@ void InputParam::removeParameters() {
     mMapParams.clear();
 }
 
-//-------------------------------------------- general param --------------------------------------------
-void InputParam::addParameter(const QString& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const std::string aShowConfig)
+void InputParam::addParameter(const std::string& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, 
+    const std::string& aDescription, const t_unit& aUnit, const std::string aShowConfig)
 {
+    /* 
+    * used to add a parameter. A parameter is either a scalar (bool, int, double, string) 
+    * or a string vector (which is concatenated into a string at the end) 
+    */
     addToShowConfigList(aShowConfig);
     mMapParams[aParamName] = new ModelParam(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
 }
 
-//-------------------------------------------- scalar param --------------------------------------------
-void InputParam::addParameter(const QString &aParamName, bool* aBoolPtr, bool aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, const QString &aDescription, const QString &aUnit, const std::string aShowConfig)
-{   
-    addToShowConfigList(aShowConfig);
-    mMapParams[aParamName] = new ModelParam(aParamName, aBoolPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aShowConfig);
-}
-void InputParam::addParameter(const QString &aParamName, QString* aQstring, QString aDefaultValue, t_flag IsBlocking, t_flag aIsUsed, const QString &aDescription, const QString &aUnit, const std::string aShowConfig)
-{    
-    addToShowConfigList(aShowConfig);
-    mMapParams[aParamName] = new ModelParam(aParamName, aQstring, aDefaultValue, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
-}
-void InputParam::addParameter(const QString &aParamName, int* aIntPtr, int aDefaultValue, t_flag IsBlocking, t_flag aIsUsed, const QString &aDescription, const QString &aUnit, const std::string aShowConfig)
-{    
-    addToShowConfigList(aShowConfig);
-    mMapParams[aParamName] = new ModelParam(aParamName, aIntPtr, aDefaultValue, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
-}
-void InputParam::addParameter(const QString &aParamName, double *aDblePtr, double aDefaultValue, t_flag IsBlocking, t_flag aIsUsed, const QString &aDescription, const QString &aUnit, const std::string aShowConfig)
-{      
-    addToShowConfigList(aShowConfig);
-    mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr, aDefaultValue, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
-}
-//-------------------------------------------- vector of string param --------------------------------------------
-void InputParam::addParameter(const QString& aParamName, QStringList* aQSLPtr, t_flag IsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const std::string aShowConfig)
+void InputParam::addTimeSeries(const std::string& aParamName, std::vector<double>* aDblePtr, double a_default, t_flag aIsBlocking, t_flag aIsUsed,
+    const std::string& aDescription, const t_unit& aUnit, const std::string& aShowConfig, double a_min, double a_max)
 {
-    addToShowConfigList(aShowConfig);
-    mMapParams[aParamName] = new ModelParam(aParamName, aQSLPtr, IsBlocking, aIsUsed, aDescription, aShowConfig);
-}
-
-//------------------------------ vector of double param (perf param) --------------------------------------------
-
-void InputParam::addPerfParam(const QString& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit)
-{
-    mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr, IsBlocking, aIsUsed, aDescription, aUnit);
-}
-
-//------------------------------ vector of double param (time series) --------------------------------------------
-void InputParam::addTimeSeries(const QString& aParamName, std::vector<double>* aDblePtr, double a_default, t_flag aIsBlocking, t_flag aIsUsed, const QString& aDescription, const QString& aUnit, const std::string& aShowConfig, double a_min, double a_max)
-{
+    /*
+    * used to add a timeseries (a vector of double). 
+    * The user has to specify the name of a timeseries (as a scalar parameter), e.g. "UseProfileLoadFlux" : "MyFluxTimeSeries", 
+    * and provide the corresponding vector in an input .csv timeseries file (see TimeSeriesManager::importTS)
+    * The names of the columns in the input timeseries file should be the names provided by the user (not aParamName), e.g. "MyFluxTimeSeries".
+    */
     addToShowConfigList(aShowConfig);
     mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr, a_default, a_min, a_max, aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
 }
 
-//-------------------------------------------- used to transfer data from MilpComponent to SubModel --------------------------------------------
-void InputParam::publishData(const QString& aParamName, bool* aBoolPtr)
+void InputParam::addPerfParam(const std::string& aParamName, std::vector<double>* aDblePtr, t_flag aIsBlocking, t_flag aIsUsed, 
+    const std::string& aDescription, const t_unit& aUnit)
 {
-    mMapParams[aParamName] = new ModelParam(aParamName, aBoolPtr);
+    /*
+    * used to add a performance parameter (a vector of double). A performance parameters has a fixed hard-coded name.
+    * The user has to provide the name of the corresponding input .csv file using parameter "DataFile" (MilpComponent::mDataFile)
+    * The names of the columns in the input file should be the hard-coded names (i.e. aParamName).
+    */
+    mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr, 1.0, std::nan("1"), std::nan("1"), aIsBlocking, aIsUsed, aDescription, aUnit);
 }
-void InputParam::publishData(const QString& aParamName, QString* aQstring)
+
+void InputParam::publishData(const std::string& aVarName, int aSize, double aDefault)
 {
-    mMapParams[aParamName] = new ModelParam(aParamName, aQstring);
+    /* used to publish/export IO variables */
+    mMapParams[aVarName] = new ModelParam(aVarName, aSize, aDefault);
 }
-void InputParam::publishData(const QString& aParamName, int* aIntPtr)
+
+void InputParam::addIndicator(const std::string& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported, 
+    const std::string& aDesc, const t_unit& aUnit, const std::string& aShortName)
 {
-    mMapParams[aParamName] = new ModelParam(aParamName, aIntPtr);
-}
-void InputParam::publishData(const QString& aParamName, double* aDblePtr)
-{
-    mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr);
-}
-void InputParam::publishData(const QString& aParamName, const double* aDblePtr)
-{
-    mMapParams[aParamName] = new ModelParam(aParamName, const_cast<double*>(aDblePtr));
-}
-void InputParam::publishData(const QString& aParamName, Eigen::VectorXf* aVXfPtr)
-{
-    mMapParams[aParamName] = new ModelParam(aParamName, aVXfPtr);
-}
-void InputParam::publishData(const QString& aParamName, int aSize, double aDefault)
-{
-    mMapParams[aParamName] = new ModelParam(aParamName, aSize, aDefault);
+    /* add indicator */
+    mIndicators.push_back(new ModelIndicator(aIndicatorName, aDblePtr, aIsExported, aDesc, aUnit, aShortName));
 }
 
 void InputParam::addToShowConfigList(const std::string& aConfig)
@@ -136,28 +98,13 @@ void InputParam::addToShowConfigList(const std::string& aConfig)
     }
 }
 
-/*
-* Define an indicator
-* arg1: Name that will be displayed in _PLAN & _HIST
-* arg2: Pointer to value
-* arg3: Pointer to boolean to choose whether the indicator is exported or not
-* arg4: Comment that could be displayed as a tooltip 
-* arg5: Unit of the indicator
-* arg6: Shortname that will be displayed in UserDefinedIndicators
-*/
-void InputParam::addIndicator(const QString& aIndicatorName, std::vector<double>* aDblePtr, bool* aBoolPtr, const QString& aDesc, const QString& aUnit, const QString& aShortName)
-{
-    mIndicators.push_back(new ModelIndicator(aIndicatorName, aDblePtr, aBoolPtr, aDesc, aUnit, aShortName));    
-}
-
-
-int InputParam::checkProfile (const QString aName, const Eigen::VectorXf &aProfile, const float aInf, const float aSup)
+int InputParam::checkProfile (const std::string aName, const Eigen::VectorXf &aProfile, const float aInf, const float aSup)
 {
     float maxVal = aProfile.maxCoeff() ;
     float minVal = aProfile.minCoeff() ;
     if (maxVal < aInf || maxVal > aSup || minVal < aInf || minVal > aSup )
     {
-        qCritical() << "ERROR in profile " << aName
+        cCritical() << "ERROR in profile " << aName
                     << " values should be in the range ["<< aInf << ";" << aSup << "] "
                     << " instead of ["<< minVal << ";" << maxVal << "] " ;
         return -1 ;
@@ -166,34 +113,34 @@ int InputParam::checkProfile (const QString aName, const Eigen::VectorXf &aProfi
 }
 
 // create and fill vector parameters from reading of parameter file - Caution : for the moment only use double values !
-void InputParam::readVectorParameters (const QString &aName, const QString &aFileName, QList<QString> &aPerfParamNames)
+void InputParam::readVectorParameters (const std::string &aName, const std::string &aFileName, std::vector<std::string> &aPerfParamNames)
 {
-    fs::path vPath(aFileName.toStdString());    
+    fs::path vPath(aFileName);    
     if (!fs::exists(vPath)) {
         Cairn_Exception error("ERROR DataFile " + aFileName + " doesn't exist for component " + aName, -1);
         throw& error;
     }
     
-    std::vector<std::vector<std::string>> data_Inputs = CairnUtils::readFromCsvFile(aFileName.toStdString(), ";");
-    qInfo() << "Reading vector parameters from file " << aFileName ;
+    std::vector<std::vector<std::string>> data_Inputs = CairnUtils::readFromCsvFile(aFileName, ";");
+    cInfo() << "Reading vector parameters from file " << aFileName;
     // Loop on expected input parameters
     for (auto const& [iParName, val] : mMapParams) {
         if (val) {
             if (val->getType() == eVectorDouble) {
-                QString varName = QString(aName + "." + iParName);
+                std::string varName = std::string(aName + "." + iParName);
                 for (int i = 0; i < (data_Inputs.at(0)).size(); ++i)
                 {
-                    QString colName = QString((data_Inputs.at(0)).at(i).c_str());
-                    QString simplifiedColName = colName.simplified().replace(" ", "");
-                    QString simplifiedVarName = varName.simplified().replace(" ", "");
-                    if (simplifiedColName == simplifiedVarName || simplifiedColName.split("(")[0] == simplifiedVarName) // first line should include column description : element.arrayName
+                    std::string colName = std::string((data_Inputs.at(0)).at(i).c_str());
+                    std::string simplifiedColName = CairnUtils::replace(colName, " ", "");
+                    std::string simplifiedVarName = CairnUtils::replace(varName, " ", "");
+                    if (simplifiedColName == simplifiedVarName || CairnUtils::split(simplifiedColName, '(')[0] == simplifiedVarName) // first line should include column description : element.arrayName
                     {
                         std::vector<double> data_vector = CairnUtils::getDataArray(data_Inputs, i, 1);
-                        if (simplifiedColName.contains("(r=") || simplifiedColName.contains("(c=")) {
-                            int n = simplifiedColName.split("=")[1].split(")")[0].toInt();
-                            if (simplifiedColName.contains("(r=")) {//row
+                        if (CairnUtils::contains(simplifiedColName, "(r=") || CairnUtils::contains(simplifiedColName, "(c=")) {
+                            int n = std::stoi(CairnUtils::split(CairnUtils::split(simplifiedColName, '=')[1], ')')[0]);
+                            if (CairnUtils::contains(simplifiedColName, "(r=")) {//row
                                 if (data_vector.size() % n != 0) {
-                                    qCritical() << "ERROR: the data size in column " + colName + " is not a multiplication of " + QString::number(n);
+                                    cCritical() << "ERROR: the data size in column " << colName << " is not a multiplication of " << n;
                                     return;
                                 }
                                 else {
@@ -209,7 +156,7 @@ void InputParam::readVectorParameters (const QString &aName, const QString &aFil
                             }
                             else {//column
                                 if (data_vector.size() % n != 0) {
-                                    qCritical() << "ERROR: the data size in column " + colName + " is not a multiplication of " + QString::number(n);
+                                    cCritical() << "ERROR: the data size in column " << colName << " is not a multiplication of " << n;
                                     return;
                                 }
                                 else {
@@ -224,8 +171,10 @@ void InputParam::readVectorParameters (const QString &aName, const QString &aFil
                         else {
                             val->setValue(data_vector);
                         }
-                        qInfo() << "Found data for performance parameter: " << (aName + "." + iParName);
-                        aPerfParamNames.removeAll(iParName);
+                        cInfo() << "Found data for performance parameter: " << (aName + "." + iParName);
+                        std::vector<std::string>::iterator vIter = find(aPerfParamNames.begin(), aPerfParamNames.end(), iParName);
+                        if (vIter != aPerfParamNames.end())
+                            aPerfParamNames.erase(vIter);
                         break;
                     }
                 }
@@ -235,7 +184,7 @@ void InputParam::readVectorParameters (const QString &aName, const QString &aFil
 }
 
 // fill in Vector Data by copying elements of aMapParamVXf map of input Eigen::VectorXf* in map aMapParamVD of SubModel input of std::vector<double> *
-int InputParam::fillVectorData(const QString& aName, const InputParam& aSrc, const uint& aOffset)
+int InputParam::fillVectorData(const std::string& aName, const InputParam& aSrc, const uint& aOffset)
 {
     const t_mapParams& vSrcParams = aSrc.getMapParams();
     for (auto const& [key, val] : mMapParams) {
@@ -252,23 +201,23 @@ int InputParam::fillVectorData(const QString& aName, const InputParam& aSrc, con
                                 size_t vDestSize = val->size();                                
                                 if (vDestSize == 0 && isBlocking)
                                 {
-                                    qCritical() << "ERROR fillVectorData: in SubModel, allocation of vector variable is missing for " << (aName + "." + key);
+                                    cCritical() << "ERROR fillVectorData: in SubModel, allocation of vector variable is missing for " << (aName + "." + key);
                                     return -1;
                                 }
                                 else if (vDestSize == 0)
                                 {
-                                    qWarning() << "Warning fillVectorData: in SubModel, allocation of vector variable is missing for " << (aName + "." + key);
+                                    cWarning() << "Warning fillVectorData: in SubModel, allocation of vector variable is missing for " << (aName + "." + key);
                                     continue;
                                 }                                
                                 try
                                 {
                                     val->copyValues(*vIter->second, vDestSize, aOffset);
-                                    qInfo() << "- Read Vector Data Time Series : " << (aName + "." + key); //<< (*val)[0] ; // << " = " << (*versSubModel).at(0) << (*versSubModel).at((*versSubModel).size() - 1);
+                                    cInfo() << "- Read Vector Data Time Series : " << (aName + "." + key); //<< (*val)[0] ; // << " = " << (*versSubModel).at(0) << (*versSubModel).at((*versSubModel).size() - 1);
                                 }
                                 catch (const std::exception&e)
                                 {
-                                    qCritical() << "ERROR fillVectorData: in SubModel, variable size of " << (aName + "." + key) << vDestSize;
-                                    qCritical() << e.what();
+                                    cCritical() << "ERROR fillVectorData: in SubModel, variable size of " << (aName + "." + key) << vDestSize;
+                                    cCritical() << e.what();
                                     return -1;
                                 }                                                                
                             }
@@ -277,12 +226,12 @@ int InputParam::fillVectorData(const QString& aName, const InputParam& aSrc, con
                     if (!vFindSrc) {
                         if (isBlocking)
                         {
-                            qCritical() << "ERROR: nullptr pointer for component variable name " << (aName + "." + key);
+                            cCritical() << "ERROR: nullptr pointer for component variable name " << (aName + "." + key);
                             return -1;
                         }
                         else
                         {
-                            if (GS::iVerbose > 0) qWarning() << "Optionnal parameter not found in component - Hope will not be used by submodel ! " << (aName + "." + key) << endl << flush;
+                            if (GS::iVerbose > 0) cWarning() << "Optionnal parameter not found in component - Hope will not be used by submodel ! " << (aName + "." + key);
                             continue;
                         }
                     }
@@ -290,13 +239,13 @@ int InputParam::fillVectorData(const QString& aName, const InputParam& aSrc, con
                 else {
                     if (isBlocking)
                     {
-                        qCritical() << "ERROR fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
+                        cCritical() << "ERROR fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
                         return -1;
                     }
                     else
                     {
-                        if (GS::iVerbose > 0) qWarning() << "WARNING fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
-                        if (GS::iVerbose > 0) qWarning() << "SubModel vector variable will then NOT be initialized " << (aName + "." + key);
+                        if (GS::iVerbose > 0) cWarning() << "WARNING fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
+                        if (GS::iVerbose > 0) cWarning() << "SubModel vector variable will then NOT be initialized " << (aName + "." + key);
                     }
                 }
             }
@@ -305,34 +254,39 @@ int InputParam::fillVectorData(const QString& aName, const InputParam& aSrc, con
     return 0;
 }
 
-void InputParam::jsonSaveGUIInputParam(QJsonArray& paramArray)
-{
-    QJsonObject paramObject;
+void InputParam::jsonSaveGUIInputParam(ojson& paramArray)
+{    
     for (auto const& [key, val] : mMapParams) {
         if (val) {
-            paramObject.insert("key", QJsonValue::fromVariant(key));
+            ojson paramObject;
+            paramObject["key"] = key;
             switch (val->getType()) {
                 case eDouble:
-                    paramObject.insert("value", QJsonValue::fromVariant(*std::get<eDouble>(val->getPtr())));
+                    paramObject["value"] = *std::get<eDouble>(val->getPtr());
                     break;
                 case eInt:
-                    paramObject.insert("value", QJsonValue::fromVariant(*std::get<eInt>(val->getPtr())));
+                    paramObject["value"] = *std::get<eInt>(val->getPtr());
                     break;
                 case eBool:
                     if (*std::get<eBool>(val->getPtr()))
-                        paramObject.insert("value", QJsonValue::fromVariant(true));
+                        paramObject["value"] = true;
                     else
-                        paramObject.insert("value", QJsonValue::fromVariant(false));
+                        paramObject["value"] = false;
                     break;
                 case eString:
-                    paramObject.insert("value", QJsonValue::fromVariant(*std::get<eString>(val->getPtr())));
+                    paramObject["value"] = *std::get<eString>(val->getPtr());
                     break;
                 case eStringList: {
-                    paramObject.insert("value", QJsonValue::fromVariant(*(QStringList*)(std::get<eStringList>(val->getPtr()))));
+                    paramObject["value"] = ojson::array();
+                    ojson& vList = paramObject["value"];
+                    std::vector<std::string> &values = *(std::vector<std::string>*)(std::get<eStringList>(val->getPtr()));
+                    for (auto& value : values) {
+                        vList.push_back(value);
+                    }                    
                     break;
                 }
                 default:
-                    paramObject.insert("value", QJsonValue::fromVariant(val->toString()));
+                    paramObject["value"] = val->toString();
                     break;
             }
             paramArray.push_back(paramObject);
@@ -340,7 +294,7 @@ void InputParam::jsonSaveGUIInputParam(QJsonArray& paramArray)
     }
 }
 
-void InputParam::getParameters(QList<QString>& a_List, const EParamType& a_Type)
+void InputParam::getParameters(std::vector<std::string>& a_List, const EParamType& a_Type)
 {
     for (auto const& [key, val] : mMapParams) {
         if (val) {
@@ -350,7 +304,7 @@ void InputParam::getParameters(QList<QString>& a_List, const EParamType& a_Type)
     }
 }
 
-void InputParam::getParameters(QList<ModelParam*>& a_List, const EParamType& a_Type)
+void InputParam::getParameters(std::vector<ModelParam*>& a_List, const EParamType& a_Type)
 {
     for (auto const& [key, val] : mMapParams) {
         if (val) {
@@ -360,7 +314,7 @@ void InputParam::getParameters(QList<ModelParam*>& a_List, const EParamType& a_T
     }
 }
 
-InputParam::ModelParam* InputParam::getParameter(const QString& aName)
+InputParam::ModelParam* InputParam::getParameter(const std::string& aName)
 {
     ModelParam* vRet = nullptr;
     t_mapParams::iterator vIter = mMapParams.find(aName);
@@ -370,7 +324,7 @@ InputParam::ModelParam* InputParam::getParameter(const QString& aName)
     return vRet;
 }
 
-void InputParam::getParameters(QList<QString> &a_List, CairnAPI::ESettingsLimited a_setLimited)
+void InputParam::getParameters(std::vector<std::string> &a_List, CairnAPI::ESettingsLimited a_setLimited)
 {  
     if (a_setLimited == CairnAPI::all) {
         for (auto const& [key, val] : mMapParams) {
@@ -391,7 +345,7 @@ void InputParam::getParameters(QList<QString> &a_List, CairnAPI::ESettingsLimite
     }
 }
 
-bool InputParam::getParameterValue(const QString& a_SettingsName, QString &a_Value, const EParamType& a_Type)
+bool InputParam::getParameterValue(const std::string& a_SettingsName, std::string &a_Value, const EParamType& a_Type)
 {        
     t_mapParams::iterator vIter = mMapParams.find(a_SettingsName);
     if (vIter != mMapParams.end()) {
@@ -412,7 +366,7 @@ bool InputParam::getParameterValue(const QString& a_SettingsName, QString &a_Val
     return false;    
 }
 
-bool InputParam::getParameterValue(const QString& a_SettingsName, t_value &a_Value)
+bool InputParam::getParameterValue(const std::string& a_SettingsName, t_value &a_Value)
 {    
     t_mapParams::iterator vIter = mMapParams.find(a_SettingsName);
     if (vIter != mMapParams.end()) {
@@ -425,7 +379,7 @@ bool InputParam::getParameterValue(const QString& a_SettingsName, t_value &a_Val
     return false;
 }
 
-bool InputParam::setParameterValue(const QString& a_SettingsName, const QString& a_SettingsValue)
+bool InputParam::setParameterValue(const std::string& a_SettingsName, const std::string& a_SettingsValue)
 {    
     t_mapParams::iterator vIter = mMapParams.find(a_SettingsName);
     if (vIter != mMapParams.end()) {
@@ -436,7 +390,7 @@ bool InputParam::setParameterValue(const QString& a_SettingsName, const QString&
     return false;
 }
 
-bool InputParam::setParameterValue(const QString& a_SettingsName, const t_value& a_SettingsValue)
+bool InputParam::setParameterValue(const std::string& a_SettingsName, const t_value& a_SettingsValue)
 {
     t_mapParams::iterator vIter = mMapParams.find(a_SettingsName);
     if (vIter != mMapParams.end()) {
@@ -447,7 +401,7 @@ bool InputParam::setParameterValue(const QString& a_SettingsName, const t_value&
     return false;
 }
 
-int InputParam::readParameters(const QMap<QString, QString>& aSettings)
+int InputParam::readParameters(const std::map<std::string, std::string>& aSettings)
 {
     for (auto const& [key, val] : mMapParams) {
         if (val) {
@@ -463,12 +417,13 @@ int InputParam::readParameters(const QMap<QString, QString>& aSettings)
 
 /*****************************************************************************************************/
 
-InputParam::ModelParam::ModelParam(const QString& a_Name, t_flag a_IsBlocking, t_flag a_IsUsed, const QString& a_Comment, const QString& a_Unit, const std::string& a_ShowConfig)
+InputParam::ModelParam::ModelParam(const std::string& a_Name, t_flag a_IsBlocking, t_flag a_IsUsed, const std::string& a_Comment, 
+    const t_unit& a_Unit, const std::string& a_ShowConfig)
 {
     m_Type = EParamType::eUndefined;
     m_Name = a_Name;
     m_Comment = a_Comment;
-    m_Quantities.push_back(a_Unit);
+    m_Unit.set_Value(a_Unit);
     m_IsBlocking.set_Value(a_IsBlocking);
     m_IsUsed.set_Value(a_IsUsed);        
     m_default = std::nan("1");
@@ -477,14 +432,13 @@ InputParam::ModelParam::ModelParam(const QString& a_Name, t_flag a_IsBlocking, t
     m_ShowConfig = a_ShowConfig;
 
     if (IsBlocking() && !IsUsed()) {
-        qWarning() << "Parameter " + a_Name + " is mandatory but marked as not used! It would be good to review the flags of this parameter!";
+        cWarning() << "Parameter " + a_Name + " is mandatory but marked as not used! It would be good to review the flags of this parameter!";
     }
-
-    CairnUtils::printInfoParam(m_Name, IsBlocking(), a_Unit, m_Comment);
 }
 
-InputParam::ModelParam::ModelParam(const QString& a_Name, const t_pvalue &ap_Value, t_value a_defaultValue, t_flag a_IsBlocking, t_flag a_IsUsed, 
-    const QString& a_Comment, const QString& a_Unit, const std::string& a_ShowConfig)
+// t_pvalue (scalar and vector of string parameters)
+InputParam::ModelParam::ModelParam(const std::string& a_Name, const t_pvalue &ap_Value, t_value a_defaultValue, t_flag a_IsBlocking, t_flag a_IsUsed, 
+    const std::string& a_Comment, const t_unit& a_Unit, const std::string& a_ShowConfig)
     : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, a_Unit, a_ShowConfig)
 {
     p_Value = ap_Value;
@@ -498,10 +452,10 @@ InputParam::ModelParam::ModelParam(const QString& a_Name, const t_pvalue &ap_Val
     else if (std::get_if<int*>(&ap_Value)) {
         m_Type = EParamType::eInt;
     }
-    else if (std::get_if<QString*>(&ap_Value)) {
+    else if (std::get_if<std::string*>(&ap_Value)) {
         m_Type = EParamType::eString;              
     }
-    else if (std::get_if<QStringList*>(&ap_Value)) {
+    else if (std::get_if<std::vector<std::string>*>(&ap_Value)) {
         m_Type = EParamType::eStringList;
     }
     else if (std::get_if<std::vector<double>*>(&ap_Value)) {
@@ -509,139 +463,27 @@ InputParam::ModelParam::ModelParam(const QString& a_Name, const t_pvalue &ap_Val
     }
     else {
         // erreur?
-        qCritical() << "Bad type for the parameter " << m_Name;
+        cCritical() << "Bad type for the parameter " << m_Name;
     }
     setValue(m_default);  
 }
 
-InputParam::ModelParam::ModelParam(const QString& a_Name, std::vector<double>* ap_Value, double a_default, double a_min, double a_max, 
-    t_flag a_IsBlocking, t_flag a_IsUsed, const QString& a_Comment, const QString& a_Unit, const std::string& a_ShowConfig)
+// vector double (used for timeseries and performance parameters)
+InputParam::ModelParam::ModelParam(const std::string& a_Name, std::vector<double>* ap_Value, double a_default, double a_min, double a_max, 
+    t_flag a_IsBlocking, t_flag a_IsUsed, const std::string& a_Comment, const t_unit& a_Unit, const std::string& a_ShowConfig)
     : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, a_Unit, a_ShowConfig)
 {
     m_Type = EParamType::eVectorDouble;
     p_Value = ap_Value;
 
-    // cas particulier des timeseries, paramètres default, min, max de type double
+    // in case of a performance parameter, the values always set to 1.0, std::nan("1"), std::nan("1")
     m_default = a_default;
     m_min = a_min;
     m_max = a_max;
 }
 
-
-//scalars
-InputParam::ModelParam::ModelParam(const QString& a_Name, bool* ap_Value, bool a_defaultValue, t_flag a_IsBlocking, t_flag a_IsUsed, 
-    const QString& a_Comment, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, "", a_ShowConfig)
-{
-    m_Type = EParamType::eBool;
-    p_Value = ap_Value;
-    m_default = (a_defaultValue) ? 1 : 0; //t_value cannot be bool ! use int
-    setValue(QString::number(a_defaultValue));
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, QString* ap_Value, QString a_defaultValue, t_flag a_IsBlocking, t_flag a_IsUsed,
-    const QString& a_Comment, const QString& a_Unit, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, "", a_ShowConfig)
-{
-    m_Type = EParamType::eString;
-    p_Value = ap_Value;
-    m_default = a_defaultValue.toStdString();
-    setValue(a_defaultValue);
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, double* ap_Value, double a_defaultValue, t_flag a_IsBlocking, t_flag a_IsUsed,
-    const QString& a_Comment, const QString& a_Unit, double a_min, double a_max, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, a_Unit, a_ShowConfig)
-{
-    m_Type = EParamType::eDouble;
-    m_default = a_defaultValue;
-    m_max = a_max;
-    m_min = a_min;
-    p_Value = ap_Value;
-    setValue(QString::number(a_defaultValue));
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, int* ap_Value, int a_defaultValue, t_flag a_IsBlocking, t_flag a_IsUsed,
-    const QString& a_Comment, const QString& a_Unit, int a_min, int a_max, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, a_Unit, a_ShowConfig)
-{
-    m_Type = EParamType::eInt;
-    m_default = a_defaultValue;
-    m_max = a_max;
-    m_min = a_min;
-    p_Value = ap_Value;
-    setValue(QString::number(a_defaultValue));
-}
-//vectors
-InputParam::ModelParam::ModelParam(const QString& a_Name, QStringList* ap_Value, t_flag a_IsBlocking, t_flag a_IsUsed, 
-    const QString& a_Comment, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, "", a_ShowConfig)
-{
-    m_Type = EParamType::eStringList;
-    p_Value = ap_Value;
-    m_default = std::vector<std::string> {}; 
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, std::vector<double>* ap_Value, t_flag a_IsBlocking, t_flag a_IsUsed, 
-    const QString& a_Comment, const QString& a_Unit, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, a_Unit, a_ShowConfig)
-{
-    m_Type = EParamType::eVectorDouble;    
-    p_Value = ap_Value;
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, std::vector<double>* ap_Value, t_flag a_IsBlocking, t_flag a_IsUsed, 
-    const QString& a_Comment, const QList<QString>& a_Quantities, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, "", a_ShowConfig)
-{
-    m_Type = EParamType::eVectorDouble;
-    p_Value = ap_Value;
-    m_Quantities.clear();
-    for (auto& vQuantity : a_Quantities) m_Quantities.push_back(vQuantity);
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, std::vector<int>* ap_Value, t_flag a_IsBlocking, t_flag a_IsUsed, const QString& a_Comment, const QString& a_Unit, const std::string& a_ShowConfig)
-    : ModelParam(a_Name, a_IsBlocking, a_IsUsed, a_Comment, a_Unit, a_ShowConfig)
-{
-    m_Type = EParamType::eVectorInt;
-    p_Value = ap_Value;
-}
-
-
-/*****************************************************************************************************/
-//special params used to tranfer data from MilpComponent to SubModel
-InputParam::ModelParam::ModelParam(const QString& a_Name, bool* ap_Value)
-    : ModelParam(a_Name)
-{
-    m_Type = EParamType::eBool;
-    p_Value = ap_Value;
-}
-InputParam::ModelParam::ModelParam(const QString& a_Name, QString* ap_Value)
-    : ModelParam(a_Name)
-{
-    m_Type = EParamType::eString;
-    p_Value = ap_Value;
-}
-InputParam::ModelParam::ModelParam(const QString& a_Name, int* ap_Value)
-    : ModelParam(a_Name)
-{
-    m_Type = EParamType::eInt;
-    p_Value = ap_Value;
-}
-InputParam::ModelParam::ModelParam(const QString& a_Name, double* ap_Value)
-    : ModelParam(a_Name)
-{
-    m_Type = EParamType::eDouble;
-    p_Value = ap_Value;
-}
-InputParam::ModelParam::ModelParam(const QString& a_Name, Eigen::VectorXf* ap_Value)
-    : ModelParam(a_Name)
-{
-    m_Type = EParamType::eVectorEigen;   
-    p_Value = ap_Value;
-}
-
-InputParam::ModelParam::ModelParam(const QString& a_Name, int aSize, double aDefault)
+/* special ModelParam constructor used to publish IO variables */
+InputParam::ModelParam::ModelParam(const std::string& a_Name, int aSize, double aDefault)
     : ModelParam(a_Name)
 {
     m_Type = EParamType::eVectorEigen;
@@ -650,6 +492,7 @@ InputParam::ModelParam::ModelParam(const QString& a_Name, int aSize, double aDef
     for (size_t i = 0; i < aSize; i++) vect(i) = aDefault;
     m_create = true;
 }
+
 
 InputParam::ModelParam::~ModelParam()
 {
@@ -665,24 +508,21 @@ InputParam::ModelParam::~ModelParam()
 
 /*****************************************************************************************************/
 
-bool InputParam::ModelParam::readParameter(const QMap<QString, QString>& aSettings) 
+bool InputParam::ModelParam::readParameter(const std::map<std::string, std::string>& aSettings) 
 {   
     if (isPValue()) {
-        if (aSettings.contains(m_Name)) {
+        if (aSettings.find(m_Name)!=aSettings.end()) {
             readParam(m_Name, aSettings);            
         }
         else {
             if (IsBlocking()) {
-                qCritical() << "ERROR readParameters: missing value for parameter " << (m_Name);
+                cCritical() << "ERROR readParameters: missing value for parameter " << (m_Name);
                 return false;
-            }
-            else {
-                CairnUtils::printMissingParam(m_Name, toString());
-            }
+            }          
         }
     }
     else {
-        qCritical() << "ERROR readParameters: nullptr pointer for component variable name " << (m_Name);
+        cCritical() << "ERROR readParameters: nullptr pointer for component variable name " << (m_Name);
         return false;
     }
     return true;
@@ -698,8 +538,13 @@ bool InputParam::ModelParam::IsUsed()
     return m_IsUsed.get_Value(); 
 };
 
+bool InputParam::ModelParam::isDependent()
+{
+    return !(m_IsBlocking.is_Scalar());
+}
+
 TriState InputParam::ModelParam::isModified() {
-    if (m_Type == eVectorDouble || m_Type == eVectorInt) {
+    if (m_Type == eVectorDouble){
         return Undefined;
     }
     else if (m_default == getValue()) {
@@ -732,9 +577,6 @@ bool InputParam::ModelParam::isPValue() const
     case eVectorDouble:
         vRet = (std::get<eVectorDouble>(p_Value) != nullptr);
         break;
-    case eVectorInt:
-        vRet = (std::get<eVectorInt>(p_Value) != nullptr);
-        break;
     case eVectorEigen:
         vRet = (std::get<eVectorEigen>(p_Value) != nullptr);
         break;
@@ -745,6 +587,11 @@ bool InputParam::ModelParam::isPValue() const
     return vRet;
 }
 
+std::string InputParam::ModelParam::getUnit() const
+{
+    return m_Unit.get_Value();
+}
+
 size_t  InputParam::ModelParam::size()
 {
     size_t vRet = 0;    
@@ -752,13 +599,6 @@ size_t  InputParam::ModelParam::size()
         case eVectorDouble:
         {
             std::vector<double>* pValue = (std::vector<double>*)(std::get<eVectorDouble>(p_Value));
-            if (pValue)
-                vRet = pValue->size();
-            break;
-        }
-        case eVectorInt:
-        {
-            std::vector<int>* pValue = (std::vector<int>*)(std::get<eVectorInt>(p_Value));
             if (pValue)
                 vRet = pValue->size();
             break;
@@ -789,22 +629,19 @@ t_value InputParam::ModelParam::getValue()
         break;
     case eVectorDouble:
         vRet = (std::vector<double>)(*std::get<eVectorDouble>(p_Value));
-        break;
-    case eVectorInt:
-        vRet = (std::vector<int>)(*std::get<eVectorInt>(p_Value));
-        break;        
+        break;   
     case eString: 
         {
-            QString* pValue = (QString*)(std::get<eString>(p_Value));
-            vRet = pValue->toStdString();
+            std::string* pValue = (std::string*)(std::get<eString>(p_Value));
+            vRet = *pValue;
             break;
         } 
     case eStringList:
         {
-            QStringList* pValue = (QStringList*)(std::get<eStringList>(p_Value));
+            std::vector<std::string>* pValue = (std::vector<std::string>*)(std::get<eStringList>(p_Value));
             std::vector<std::string> pValue_list;
             for (auto const& val : *pValue) {
-                pValue_list.push_back(val.toStdString());
+                pValue_list.push_back(val);
             }
             vRet = pValue_list;
             break;
@@ -833,15 +670,15 @@ bool InputParam::ModelParam::getNumValue(double& a_Value)
     return vRet;
 }
 
-QString InputParam::ModelParam::toString()
+std::string InputParam::ModelParam::toString()
 {
-    QString vRet = "";
+    std::string vRet = "";
     switch (m_Type) {
     case eDouble:
-        vRet = QString::number(*std::get<eDouble>(p_Value));
+        vRet = std::to_string(*std::get<eDouble>(p_Value));
         break;
     case eInt:
-        vRet = QString::number(*std::get<eInt>(p_Value));
+        vRet = std::to_string(*std::get<eInt>(p_Value));
         break;
     case eBool:
         if (*std::get<eBool>(p_Value))
@@ -851,12 +688,12 @@ QString InputParam::ModelParam::toString()
         break;
     case eString:
     {
-        QString* pValue = (QString*)(std::get<eString>(p_Value));
+        std::string* pValue = (std::string*)(std::get<eString>(p_Value));
         vRet = *pValue;
         break;
     }
     case eStringList: {
-        vRet = (*(QStringList*)(std::get<eStringList>(p_Value))).join(",");
+        vRet = CairnUtils::join (*(std::vector<std::string>*)(std::get<eStringList>(p_Value)));
         break;
     }
     default:
@@ -865,43 +702,71 @@ QString InputParam::ModelParam::toString()
     return vRet;
 }
 
-void InputParam::ModelParam::readParam(const QString& aParamName, const QMap<QString, QString>& a_Settings)
+void InputParam::ModelParam::readParam(const std::string& aParamName, const std::map<std::string, std::string>& a_Settings)
 {    
     switch (m_Type) {
     case eDouble:
     {
         double* pValue = (double*)std::get<eDouble>(p_Value);
-        *pValue = a_Settings[aParamName].toDouble();
+        try
+        {
+            *pValue = std::stod(a_Settings.at(aParamName));
+        }
+        catch (const std::exception&)
+        {
+            *pValue = 0.0;
+        }        
         break;
     }              
     case eInt:
     {
         int* pValue = (int*)std::get<eInt>(p_Value);
-        *pValue = a_Settings[aParamName].toInt();
+        try
+        {
+            *pValue = std::stoi(a_Settings.at(aParamName));
+        }
+        catch (const std::exception&)
+        {
+            *pValue = 0;
+        }        
         break;
     }
     case eBool:
     {
         bool* pValue = (bool*)std::get<eBool>(p_Value);
-        *pValue = (a_Settings[aParamName] == "0") ? false : true;        
+        try
+        {
+            *pValue = (a_Settings.at(aParamName) == "0") ? false : true;
+        }
+        catch (const std::exception&)
+        {
+            *pValue = false;
+        }        
         break;
     }
     case eString: 
         {
-            QString* pValue = std::get<eString>(p_Value);
-            *pValue = a_Settings[aParamName];
+        std::string* pValue = std::get<eString>(p_Value);
+        try
+        {
+            *pValue = a_Settings.at(aParamName);
+        }
+        catch (const std::exception&)
+        {
+            *pValue = "";
+        }                       
             break;
         }
     case eStringList: {
-        QStringList* pValue = std::get<eStringList>(p_Value);
-        *pValue = QStringList({});
+        std::vector<std::string>* pValue = std::get<eStringList>(p_Value);
+        *pValue = std::vector<std::string>({});
         bool isImpactSelected = false; //at least one impact is selected
-        if (a_Settings[aParamName].simplified() != "")
+        if (CairnUtils::simplified(a_Settings.at(aParamName)) != "")
         {
-            QStringList stringList = a_Settings[aParamName].split(",", QString::SkipEmptyParts);
+            std::vector<std::string> stringList = CairnUtils::split(a_Settings.at(aParamName), ',');
             for (size_t i = 0; i < stringList.size(); i++) {
-                if (stringList[i].simplified() != "") {
-                    stringList[i] = stringList[i].simplified();
+                if (CairnUtils::simplified(stringList[i]) != "") {
+                    stringList[i] = CairnUtils::simplified(stringList[i]);
                     isImpactSelected = true;
                 }
             }
@@ -917,79 +782,36 @@ void InputParam::ModelParam::readParam(const QString& aParamName, const QMap<QSt
     
 }
 
-void InputParam::ModelParam::readParam(const QString & aParamName, const QVariant & a_Setting)
-{
-    switch (m_Type) {
-    case eDouble:
-    {
-        double* pValue = (double*)std::get<eDouble>(p_Value);
-        *pValue = a_Setting.toDouble();
-        break;
-    }
-    case eInt:
-    {
-        int* pValue = (int*)std::get<eInt>(p_Value);
-        *pValue = a_Setting.toInt();
-        break;
-    }
-    case eBool:
-    {
-        bool* pValue = (bool*)std::get<eBool>(p_Value);                
-        *pValue = a_Setting.toBool();
-        break;
-    }
-    case eString: 
-        {
-            QString* pValue = (QString*)std::get<eString>(p_Value);
-            *pValue = a_Setting.toString();
-            break;
-        }
-    case eStringList:
-    {
-        QStringList* pValue = (QStringList*)std::get<eStringList>(p_Value);
-        pValue->clear();
-        QList<QVariant> ql = a_Setting.toList();
-        QListIterator<QVariant> iQL(ql);
-        while (iQL.hasNext())
-        {
-            pValue->append(iQL.next().toString());
-        }
-        break;
-    }             
-    default:
-        break;
-    }
-}
-
-bool InputParam::ModelParam::setValue(const QString& a_Value)
+bool InputParam::ModelParam::setValue(const std::string& a_Value)
 {
     bool vRet = false;
     switch (m_Type) {
     case eDouble:
     {
         double* pValue = (double*)std::get<eDouble>(p_Value);
-        bool ok = false;
-        *pValue = a_Value.toDouble(&ok);
-        if (!ok) {
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not Double" << endl;            
-        }
-        else {
-            // in the bound ? clamp ? 
+        try
+        {
+            *pValue = std::stod(a_Value);
             vRet = true;
-        }        
+        }
+        catch (const std::exception&)
+        {
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not Double";
+        }                
         break;        
     }
     case eInt:
     {
         int* pValue = (int*)std::get<eInt>(p_Value);
-        bool ok = false;
-        *pValue = a_Value.toInt(&ok);
-        if (!ok) {
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not Integer" << endl;            
-        }
-        else {
+        try
+        {
+            *pValue = std::stoi(a_Value);
             vRet = true;
         }
+        catch (const std::exception&)
+        {
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not Integer";
+        }        
         break;
     }
     case eBool:
@@ -1001,20 +823,20 @@ bool InputParam::ModelParam::setValue(const QString& a_Value)
     }
     case eString:
     {
-        QString* pValue = std::get<eString>(p_Value);
-        *pValue = a_Value.toUtf8().constData();
+        std::string* pValue = std::get<eString>(p_Value);
+        *pValue = a_Value;
         vRet = true;
         break;
     }
     case eStringList:
     {//assumes that a_Value is a string with list elements sperated with comma
-        QStringList* pValue = std::get<eStringList>(p_Value);
-        QString value = a_Value.toUtf8().constData();
-        if (value.simplified() != "") {
-            *pValue = value.split(",");
+        std::vector<std::string>* pValue = std::get<eStringList>(p_Value);
+        std::string value = a_Value;
+        if (CairnUtils::simplified(value) != "") {
+            *pValue = CairnUtils::split(value);
         }
         else {
-            *pValue = QStringList();
+            *pValue = std::vector<std::string>();
         }
         vRet = true;
         break;
@@ -1044,7 +866,7 @@ bool InputParam::ModelParam::setValue(const t_value& a_Value)
             vRet = true;
         }
         else {
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not Double" << endl;
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not Double";
         }        
         break;
     }
@@ -1057,7 +879,7 @@ bool InputParam::ModelParam::setValue(const t_value& a_Value)
             vRet = true;
         }
         else {
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not Double" << endl;
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not Double";
         }
         break;
     }
@@ -1079,20 +901,20 @@ bool InputParam::ModelParam::setValue(const t_value& a_Value)
         else
         {
             // TODO: conversion ?
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not Bool" << endl;
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not Bool";
         }   
         break;
     }
     case eString:
     {
-        QString* pValue = std::get<eString>(p_Value);
+        std::string* pValue = std::get<eString>(p_Value);
         if (const std::string* pSrc = std::get_if<std::string>(&a_Value)) {
-            *pValue = QString(pSrc->c_str());
+            *pValue = std::string(pSrc->c_str());
             vRet = true;
         }
         else {
             // TODO: conversion ?
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not Bool" << endl;
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not Bool";
         }        
         break;
     }
@@ -1105,7 +927,7 @@ bool InputParam::ModelParam::setValue(const t_value& a_Value)
         }
         else {
             // TODO: conversion ?
-            qWarning() << "Conversion fails for the" << m_Name << " Value is not VectorDouble" << endl;
+            cWarning() << "Conversion fails for the" << m_Name << " Value is not VectorDouble";
         }
         break;
     }        
@@ -1136,7 +958,7 @@ bool InputParam::ModelParam::copyValues(const ModelParam& aSrc, size_t aSize, si
     return vRet;
 }
 
-bool InputParam::ModelParam::copyValues(const QVector<float>& aSrc, size_t aOffset)
+bool InputParam::ModelParam::copyValues(const std::vector<double>& aSrc, size_t aOffset)
 {
     bool vRet = false;
     if (m_Type == eVectorDouble) {
@@ -1147,7 +969,7 @@ bool InputParam::ModelParam::copyValues(const QVector<float>& aSrc, size_t aOffs
         }
         else {
             for (uint i = 0; i < pValue->size(); i++) {
-                (*pValue)[i] = double(aSrc[i + aOffset]);
+                (*pValue)[i] = aSrc[i + aOffset];
             }
             vRet = true;
         }
@@ -1174,9 +996,6 @@ t_value InputParam::ModelParam::operator[](size_t i)
             case eVectorDouble:
                 vRet = (std::vector<double>)(*std::get<eVectorDouble>(p_Value))[i];
                 break;
-            case eVectorInt:
-                vRet = (std::vector<int>)(*std::get<eVectorInt>(p_Value))[i];
-                break;
             case eVectorEigen:
             {
                 Eigen::VectorXf &vect = (Eigen::VectorXf&)(*std::get<eVectorEigen>(p_Value));
@@ -1188,17 +1007,17 @@ t_value InputParam::ModelParam::operator[](size_t i)
     return vRet;
 }
 
-InputParam::ModelIndicator::ModelIndicator(const QString& aIndicatorName, 
-    std::vector<double>* aDblePtr, bool* aBoolPtr, 
-    const QString& aDesc, const QString& aUnit, const QString& aShortName)
+InputParam::ModelIndicator::ModelIndicator(const std::string& aIndicatorName, 
+    std::vector<double>* aDblePtr, bool* aIsExported,
+    const std::string& aDesc, const t_unit& aUnit, const std::string& aShortName)
 {
     m_Name = aIndicatorName;
     m_ShortName = aShortName;
-    m_Unit = aUnit;
+    m_Unit.set_Value(aUnit);
     m_Comment = aDesc;
 
     p_Value = aDblePtr;
-    p_IsExported = aBoolPtr;
+    p_IsExported = aIsExported;
 }
 
 bool InputParam::ModelIndicator::IsExported()
@@ -1229,37 +1048,40 @@ void InputParam::ModelIndicator::resetValue()
     }
 }
 
-void InputParam::ModelIndicator::Export(std::fstream& out, const QString &aComponentName,
-    const std::string& range, bool aForceExport)
+std::string InputParam::ModelIndicator::getUnit() const
+{
+    return m_Unit.get_Value();
+}
+
+void InputParam::ModelIndicator::Export(std::fstream& out, const std::string &aComponentName, const std::string& range, 
+    bool aForceExport, const bool showDescription, const std::vector<std::string>& labels)
 {
     if (p_Value && (IsExported() || aForceExport))
     {
-        //Unit
-        QString unit = QString("-");
-        if (m_Unit != "") {
-            unit = m_Unit;
-        }
         //Published (declared) indicators        
-        if (range == "PLAN") {            
-            CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[0], unit, m_ShortName);
+        if (range == "PLAN") {     
+            if(showDescription)
+                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[0], getUnit(), m_ShortName, m_Comment, labels);
+            else 
+                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[0], getUnit(), m_ShortName, "N/A", labels);
         }
-        else if (range == "HIST") {            
-            CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[1], unit, m_ShortName);
+        else if (range == "HIST") {  
+            if (showDescription)
+                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[1], getUnit(), m_ShortName, m_Comment, labels);
+            else 
+                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[1], getUnit(), m_ShortName, "N/A", labels);
         }        
     }
 }
 
-void InputParam::ModelIndicator::Export(std::fstream& out, const QString& aComponentName, const std::string& range, bool aForceExport,
-    bool aIsSizeOptimized, bool aIsPriceOptimized, bool isRollingHorizon, const std::vector<double>& aOptimalSizeAllCycles)
+void InputParam::ModelIndicator::Export(std::fstream& out, const std::string& aComponentName, const std::string& range,
+    bool aForceExport, bool aIsSizeOptimized, bool aIsPriceOptimized, bool isRollingHorizon, const std::vector<double>& aOptimalSizeAllCycles, 
+    const bool showDescription, const std::vector<std::string>& labels)
 {
-    if (p_Value && (IsExported() || aForceExport))    {
-        //Unit
-        QString unit = QString("-");
-        if (m_Unit != "") {
-            unit = m_Unit;
-        }
+    if (p_Value && (IsExported() || aForceExport))    
+    {
         bool isOptimalSize = false;
-        QString varName = m_Name;
+        std::string varName = m_Name;
         //Manage optim/fixed sizing        
         if (m_Name == "Installed Size") {
             if (aIsSizeOptimized) varName = "Installed Optimal Size";
@@ -1285,16 +1107,26 @@ void InputParam::ModelIndicator::Export(std::fstream& out, const QString& aCompo
                 //Take the maximum values from all cycles
                 auto it_maxValue = std::max_element(aOptimalSizeAllCycles.begin(), aOptimalSizeAllCycles.end());
                 if (it_maxValue != aOptimalSizeAllCycles.end()) {
-                    CairnUtils::outputIndicator(out, aComponentName, varName, *it_maxValue, unit, m_ShortName);
+                    if(showDescription)
+                        CairnUtils::outputIndicator(out, aComponentName, varName, *it_maxValue, getUnit(), m_ShortName, m_Comment, labels);
+                    else
+                        CairnUtils::outputIndicator(out, aComponentName, varName, *it_maxValue, getUnit(), m_ShortName, "N/A", labels);
                 }
                 isOptimalSize = false;
             }
             else {
-                CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[0], unit, m_ShortName);
+                if (showDescription)
+                    CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[0], getUnit(), m_ShortName, m_Comment, labels);
+                else
+                    CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[0], getUnit(), m_ShortName, "N/A", labels);
+
             }
         }
         else if (range == "HIST") {
-            CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[1], unit, m_ShortName);
+            if (showDescription)
+                CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[1], getUnit(), m_ShortName, m_Comment, labels);
+            else 
+                CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[1], getUnit(), m_ShortName, "N/A", labels);
         }
     }
 }

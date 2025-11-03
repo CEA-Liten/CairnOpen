@@ -50,16 +50,6 @@ int main()
 
 	//---------------- Create a SourceLoad ------------------------------
 	CairnAPI::MilpComponentAPI vPV = m_Problem.create_Component("PV", "SourceLoad");
-	vPV.set_SettingValues({
-		{"Direction", "Source" },
-		{"Weight", "1"},
-		{"Opex", "0" },
-		{"Capex", "1000" },
-		{"MaxFlow", -10},
-		{"EcoInvestModel", "1"},
-		{"UseProfileLoadFlux","PVProduction"}
-		}
-	);
 
 	//Configure the default port
 	t_list vPV_DefaultPorts = vPV.get_DefaultPorts();
@@ -73,6 +63,18 @@ int main()
 		{"Direction", "OUTPUT"},
 		{"Variable", "SourceLoadFlow"}
 	});
+
+	vPV.set_SettingValues({
+		{"Direction", "Source" },
+		{"Weight", "1"},
+		{"Opex", "0" },
+		{"Capex", "1000" },
+		{"MaxFlow", -10},
+		{"EcoInvestModel", "1"},
+		{"UseProfileLoadFlux","PVProduction"}
+		}
+	);
+
 
     //Add link from the default port to Elec_Bus
 	CairnAPI::BusAPI vElec_Bus = m_Problem.get_Bus("Elec_Bus");

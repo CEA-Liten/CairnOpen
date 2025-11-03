@@ -1,12 +1,25 @@
 #include "TecEcoAnalysis.h"
+#include "OptimProblem.h"
 
-TecEcoAnalysis::TecEcoAnalysis(QObject* aParent, const QMap<QString, QString>& aComponent) :
+class OptimProblem;
+
+TecEcoAnalysis::TecEcoAnalysis(CairnObject* aParent, const std::map<std::string, std::string>& aComponent) :
+    TechnicalSubModel(aParent),
     mConfigParam(nullptr),
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
     mCompoEnvImpactsParam(nullptr),
     mEnvImpacts({})
 {    
+    /*
+    * TecEcoAnalysis is a TechnicalSubModel. 
+    * Its parent is OptimProblem which is an extension of MilpComponent
+    * Its Name() = this->parent()->objectName();
+    */
+
+    mEcoInvestModel = false;
+    mExportIndicators = true;
+
     mPossibleImpacts = {
     { "Climate change#Global Warming Potential 100", "GWP", "kg CO2 eq"},
     { "Ozone depletion#Ozone Depletion Potential","ODP","kg CFC-11 eq"},
@@ -27,8 +40,8 @@ TecEcoAnalysis::TecEcoAnalysis(QObject* aParent, const QMap<QString, QString>& a
     };
 
     mVDEnvImpactMaxConstraint.resize(mPossibleImpacts.size(), INFINITY_VAL);
-    mVBEnvImpactMaxConstraint.resize(mPossibleImpacts.size());
-    mVBEnvImpactMaxConstraint.fill(false);
+    mVBEnvImpactMaxConstraint.clear();
+    mVBEnvImpactMaxConstraint.resize(mPossibleImpacts.size(), 0);    
     mVDEnvImpactCost.resize(mPossibleImpacts.size(), 0.);
 
     doInit(aComponent);
@@ -40,10 +53,20 @@ TecEcoAnalysis::~TecEcoAnalysis()
     if (mCompoInputSettings) delete mCompoInputSettings;
     if (mCompoInputParam) delete mCompoInputParam;
     if (mCompoEnvImpactsParam) delete mCompoEnvImpactsParam;
-    if (mGUIData) delete mGUIData;
 }
 
-void TecEcoAnalysis::doInit(const QMap<QString, QString>& aComponent)
+std::map<std::string, MilpComponent*> TecEcoAnalysis::MilpComponents()
+{
+    if (mParentCompo) {
+        OptimProblem* optimProblem = (OptimProblem*)this->parent();
+        if (optimProblem) {
+            return optimProblem->MilpComponents();
+        }
+    }
+    return {};
+}
+
+void TecEcoAnalysis::doInit(const std::map<std::string, std::string>& aComponent)
 {
     //Init list of Settings parameters (scalar, double) by direct reading from aSettings file
 
@@ -57,29 +80,25 @@ void TecEcoAnalysis::doInit(const QMap<QString, QString>& aComponent)
 
     //TODO: Ensure that the mandatory parameters exist in TNR .json files ("type", "id", "Model", "Currency", "DiscountRate")
     //if (ierr1 < 0 || ierr2 < 0) {
-    //    Cairn_Exception cairn_error("Error reading Parameters of TecEcoAnalysis " + mName, -1);
+    //    Cairn_Exception cairn_error("Error reading Parameters of TecEcoAnalysis " + Name(), -1);
     //    throw cairn_error;
     //}
 
-    this->setObjectName(mName);
-
     //Build list of units of the considered environmental impacts that will be used to export the indicators
     mEnvImpactUnits = getImpactUnitsFromSelectedImpacts(mEnvImpacts);
-
-    //Init Gui data
-    if (mGUIData) delete mGUIData;
-    mGUIData = new GUIData(this, mName);
-    mGUIData->doInit(mType, mType, mType, mXpos, mYpos);
 }
 
 void TecEcoAnalysis::declareConfigurationParameters()
 {
-    mConfigParam = new InputParam(this, "ConfigParam" + mName);
-    //QStringList (no default value)
-    mConfigParam->addParameter("ConsideredEnvironmentalImpacts", &mEnvImpacts, false, true, "Selected environmental impacts to be considered (EF method)", "-");
+    mConfigParam = new InputParam(this, "ConfigParam" + Name());
+    //std::vector<std::string> (no default value)
+    mConfigParam->addParameter("ConsideredEnvironmentalImpacts", &mEnvImpacts, {}, false, true, "Selected environmental impacts to be considered (EF method)", "-");
+    //bool
+    mConfigParam->addParameter("MinConstraint", &mMinConstraint, false, false, true);   /** MinConstraint option enabling */
+    mConfigParam->addParameter("MaxConstraint", &mMaxConstraint, false, false, true);   /** MaxConstraint option enabling */
 }
 
-int TecEcoAnalysis::setConfigurationParameters(const QMap<QString, QString>& aComponent)
+int TecEcoAnalysis::setConfigurationParameters(const std::map<std::string, std::string>& aComponent)
 {
     int ierr = mConfigParam->readParameters(aComponent);
     return ierr;
@@ -88,18 +107,17 @@ int TecEcoAnalysis::setConfigurationParameters(const QMap<QString, QString>& aCo
 void TecEcoAnalysis::declareCompoInputParam()
 {
     //------------------------ parameters ----------------------------------
-    mCompoInputSettings = new InputParam(this, "CompoInputSettings" + mName);
+    mCompoInputSettings = new InputParam(this, "CompoInputSettings" + Name());
     //bool
     mCompoInputSettings->addParameter("ForceExportAllIndicators", &mForceExportAllIndicators, false, false, true, "Force the export of all Indicators regardless of the values of EcoInvestModel and EnvironmentModel and ExportIndicators");
+    //double
+    mCompoInputSettings->addParameter("MinConstraintValue", &mMinConstraintValue, 0., &mMinConstraint, &mMinConstraint); /**  NPV > Minconstraint value */
+    mCompoInputSettings->addParameter("MaxConstraintValue", &mMaxConstraintValue, INFINITY_VAL, &mMaxConstraint, &mMaxConstraint); /**  NPV < Maxconstraint value */
 
     //------------------------ options ----------------------------------
-    mCompoInputParam = new InputParam(this, "CompoInputParam" + mName);
-    //QString
-    mCompoInputParam->addParameter("type", &mType, "TecEcoAnalysis", true, true, "Component type", "", "DONOTSHOW");
-    mCompoInputParam->addParameter("id", &mName, "TecEco", true, true, "Component name", "", "DONOTSHOW");
+    mCompoInputParam = new InputParam(this, "CompoInputParam" + Name());
+    //std::string
     mCompoInputParam->addParameter("Model", &mModelName, "OptimNPV", true, true, "Model used");
-    mCompoInputParam->addParameter("Xpos", &mXpos, 100, false, true, "X position on planteditor", "", "DONOTSHOW");
-    mCompoInputParam->addParameter("Ypos", &mYpos, 10, false, true, "Y position on planteditor", "", "DONOTSHOW");
     mCompoInputParam->addParameter("Currency", &mCurrency, "EUR", true, true, "Currency unit - default to EUR");
     mCompoInputParam->addParameter("ObjectiveUnit", &mObjectiveUnit, "EUR", false, true, "Objective unit - default to currency unit");
     mCompoInputParam->addParameter("Range", &mRange, "HISTandPLAN", false, true, "Evaluation range used for TecEco analysis : HIST = past operation - PLAN = planned operation");
@@ -114,7 +132,7 @@ void TecEcoAnalysis::declareCompoInputParam()
     mCompoInputParam->addParameter("InternalRateOfReturn",&mInternalRateOfReturn, -1., false, true, "Target Internal Rate of Return chosen by the user");
 
     //------------------------ env impacts ----------------------------------
-    mCompoEnvImpactsParam = new InputParam(this, "CompoEnvImpactsParam" + mName);
+    mCompoEnvImpactsParam = new InputParam(this, "CompoEnvImpactsParam" + Name());
     declareEnvImpactParam();
 }
 
@@ -131,12 +149,12 @@ void TecEcoAnalysis::declareEnvImpactParam()
     //mVBEnvImpactMaxConstraint.resize(mEnvImpacts.size());
     //mVDEnvImpactCost.resize(mEnvImpacts.size());
     //Case API: clean unchecked EnvImpacts
-    QList<QString> paramNames;
+    std::vector<std::string> paramNames;
     mCompoEnvImpactsParam->getParameters(paramNames);
     for (int i = 0; i < paramNames.size(); i++) {
         bool found = false;
         for (int j = 0; j < mEnvImpacts.size(); j++) {
-            if (paramNames[i].contains(mEnvImpacts[j])) {
+            if (CairnUtils::contains(paramNames[i], mEnvImpacts[j])) {
                 found = true;
                 break;
             }
@@ -149,20 +167,20 @@ void TecEcoAnalysis::declareEnvImpactParam()
     for (int i = 0; i < mEnvImpacts.size(); i++) {
         int eIndex = getImpactIndex(mEnvImpacts[i]);
         //bool
-        if (!paramNames.contains(mEnvImpacts[i] + " MaxConstraint")) {
+        if (!CairnUtils::contains(paramNames, mEnvImpacts[i] + " MaxConstraint")) {
             mCompoEnvImpactsParam->addParameter(mEnvImpacts[i] + " MaxConstraint", &mVBEnvImpactMaxConstraint[eIndex], false, false, true, "Is max constraint considered?", "-");
         }
         //double 
-        if (!paramNames.contains(mEnvImpacts[i] + " MaxConstraintValue")) {
-            mCompoEnvImpactsParam->addParameter(mEnvImpacts[i] + " MaxConstraintValue", &mVDEnvImpactMaxConstraint[eIndex], INFINITY_VAL, false, true, "Maximum quantity of environmental impact", "ImpactUnit");
+        if (!CairnUtils::contains(paramNames, mEnvImpacts[i] + " MaxConstraintValue")) {
+            mCompoEnvImpactsParam->addParameter(mEnvImpacts[i] + " MaxConstraintValue", &mVDEnvImpactMaxConstraint[eIndex], INFINITY_VAL, false, true, "Maximum quantity of environmental impact", mPossibleImpacts[eIndex].Unit);
         }
-        if (!paramNames.contains(mEnvImpacts[i] + " Cost")) {
-            mCompoEnvImpactsParam->addParameter(mEnvImpacts[i] + " Cost", &mVDEnvImpactCost[eIndex], 0., false, true, "Cost of environmental impact in Currency", "EUR/ImpactUnit");
+        if (!CairnUtils::contains(paramNames, mEnvImpacts[i] + " Cost")) {
+            mCompoEnvImpactsParam->addParameter(mEnvImpacts[i] + " Cost", &mVDEnvImpactCost[eIndex], 0., false, true, "Cost of environmental impact in Currency", SFunctionUnit({ eFTypeDivision, {pCurrency()}, mPossibleImpacts[eIndex].Unit}));
         }
     }
 }
 
-int TecEcoAnalysis::setCompoInputParam(const QMap<QString, QString>& aComponent)
+int TecEcoAnalysis::setCompoInputParam(const std::map<std::string, std::string>& aComponent)
 {
     //read non-configuration parameters
     if (aComponent.size() != 0) {
@@ -173,7 +191,7 @@ int TecEcoAnalysis::setCompoInputParam(const QMap<QString, QString>& aComponent)
     }
     
     //set ObjectiveUnit to Currency if not provided
-    if (aComponent["ObjectiveUnit"] == "") {
+    if (CairnUtils::getParam(aComponent,"ObjectiveUnit") == "") {
         mObjectiveUnit = mCurrency;
     }
 
@@ -182,63 +200,75 @@ int TecEcoAnalysis::setCompoInputParam(const QMap<QString, QString>& aComponent)
     return 0;
 }
 
-void TecEcoAnalysis::jsonSaveGuiComponent(QJsonArray &componentsArray)
+bool TecEcoAnalysis::isValidLabel(const std::string& aLabel) const
 {
-    QJsonArray paramArray;
-    QJsonArray optionArray;
-    QJsonArray timeSeriesArray;
-    QJsonArray envImpactArray;
+    /*
+    * veify if the label is defined in TecEconAnalysis
+    */
+    if (std::find(mLabelList.begin(), mLabelList.end(), aLabel) != mLabelList.end())
+    {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void TecEcoAnalysis::jsonSaveGuiComponent(ojson &componentsArray)
+{
+    ojson compoObject;
+    std::string mainCarrier = "";
+    if (mMainCarrier) {
+        mainCarrier = mMainCarrier->Name();
+    }
+    mParentCompo->getGUIData()->jsonSaveGUILine(compoObject, mainCarrier);
+
+    ojson& nodePorts = compoObject["nodePorts"];    
+    compoObject["nodePortsData"] = ojson::array();
+    compoObject["paramListJson"] = ojson::array();
+    compoObject["optionListJson"] = ojson::array();
+    compoObject["envImpactsListJson"] = ojson::array();
+
+    ojson& paramArray = compoObject["paramListJson"];
+    ojson& nodePortsArray = compoObject["nodePortsData"];
     
     mConfigParam->jsonSaveGUIInputParam(paramArray);
     mCompoInputSettings->jsonSaveGUIInputParam(paramArray);
-    mCompoInputParam->jsonSaveGUIInputParam(optionArray);
-    mCompoEnvImpactsParam->jsonSaveGUIInputParam(envImpactArray);
-    
-    QJsonObject nodePorts;
-    QJsonArray nodePortsArray;
+    mCompoInputParam->jsonSaveGUIInputParam(compoObject["optionListJson"]);
+    mCompoEnvImpactsParam->jsonSaveGUIInputParam(compoObject["envImpactsListJson"]);
+        
+    compoObject["labelList"] = mLabelList;
 
     if (mParentCompo) {
         int portCount = mParentCompo->listSidePorts(Left()).size();
         if (portCount) {
-            nodePorts.insert(Left(), QJsonValue::fromVariant(portCount));
+            nodePorts[Left()] = portCount;
             mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Left());
         }
         portCount = mParentCompo->listSidePorts(Right()).size();
         if (portCount) {
-            nodePorts.insert(Right(), QJsonValue::fromVariant(portCount));
+            nodePorts[Right()] = portCount;
             mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Right());
         }
         portCount = mParentCompo->listSidePorts(Bottom()).size();
         if (portCount) {
-            nodePorts.insert(Bottom(), QJsonValue::fromVariant(portCount));
+            nodePorts[Bottom()] = portCount;
             mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Bottom());
         }
         portCount = mParentCompo->listSidePorts(Top()).size();
         if (portCount) {
-            nodePorts.insert(Top(), QJsonValue::fromVariant(portCount));
+            nodePorts[Top()] = portCount;
             mParentCompo->jsonSaveGUINodePortsData(nodePortsArray, Top());
         }
     }
-
-    QJsonObject compoObject;
-    QString mainCarrier = "";  
-    if (mEnergyVector) {
-        mainCarrier = mEnergyVector->Name();
-    }
-    mGUIData->jsonSaveGUILine(compoObject, mainCarrier);
-    compoObject.insert("nodePorts", nodePorts);
-    compoObject.insert("nodePortsData", nodePortsArray);
-    compoObject.insert("paramListJson", paramArray);
-    compoObject.insert("optionListJson", optionArray);
-    compoObject.insert("envImpactsListJson", envImpactArray);
-    
+       
     componentsArray.push_back(compoObject) ;
 }
 
 
-std::map<QString, InputParam::ModelParam*> TecEcoAnalysis::getParameters()
+std::map<std::string, InputParam::ModelParam*> TecEcoAnalysis::getParameters()
 {
-    std::map<QString, InputParam::ModelParam*> paramMap;
+    std::map<std::string, InputParam::ModelParam*> paramMap;
 
     paramMap.insert(getCompoInputParam()->getMapParams().begin(), getCompoInputParam()->getMapParams().end());
     paramMap.insert(getCompoInputSettings()->getMapParams().begin(), getCompoInputSettings()->getMapParams().end());
@@ -248,7 +278,7 @@ std::map<QString, InputParam::ModelParam*> TecEcoAnalysis::getParameters()
 }
 
 
-int TecEcoAnalysis::getImpactIndex(const QString& impactName)
+int TecEcoAnalysis::getImpactIndex(const std::string& impactName)
 {
     /*
     * returns the index of a given impactName in mPossibleImpacts
@@ -256,7 +286,7 @@ int TecEcoAnalysis::getImpactIndex(const QString& impactName)
     */
     int vRet = 0;
     for (auto& vImpact : mPossibleImpacts) {
-        if (vImpact.Name() == impactName) {
+        if (vImpact.Name == impactName) {
             break;
         }
         vRet++;
@@ -280,57 +310,57 @@ std::vector<double> TecEcoAnalysis::EnvImpactCosts() {
     return aVDEnvImpactCost;
 }
 
-QStringList TecEcoAnalysis::getPossibleImpactNames() const
+std::vector<std::string> TecEcoAnalysis::getPossibleImpactNames() const
 {
-    QStringList vRet;
+    std::vector<std::string> vRet;
     for (auto& vImpact : mPossibleImpacts) {
-        vRet.push_back(vImpact.Name());
+        vRet.push_back(vImpact.Name);
     }
     return vRet;
 }
 
-QStringList TecEcoAnalysis::getPossibleImpactShortNames() const
+std::vector<std::string> TecEcoAnalysis::getPossibleImpactShortNames() const
 {
-    QStringList vRet;
+    std::vector<std::string> vRet;
     for (auto& vImpact : mPossibleImpacts) {
-        vRet.push_back(vImpact.ShortName());
+        vRet.push_back(vImpact.ShortName);
     }
     return vRet;
 }
 
-QStringList TecEcoAnalysis::getImpactUnitsFromSelectedImpacts(const QStringList& aSelectedImpactsList) {
-    QList<QString> selectedImpactUnitsList;
+std::vector<std::string> TecEcoAnalysis::getImpactUnitsFromSelectedImpacts(const std::vector<std::string>& aSelectedImpactsList) {
+    std::vector<std::string> selectedImpactUnitsList;
     for (int i = 0; i < aSelectedImpactsList.size(); i++) {
         bool found = false;
         for (auto& vImpact : mPossibleImpacts) {
-            if (aSelectedImpactsList[i] == vImpact.Name()) {
-                selectedImpactUnitsList.append(vImpact.Unit());
+            if (aSelectedImpactsList[i] == vImpact.Name) {
+                selectedImpactUnitsList.push_back(vImpact.Unit);
                 found = true;
                 break;
             }
         }
         if (!found) {
-            selectedImpactUnitsList.append("-");
+            selectedImpactUnitsList.push_back("-");
         }
     }
     return selectedImpactUnitsList;
 }
 
-QString TecEcoAnalysis::getImpactShortName(const QString& name) {//name can be any string that contains an impact name as a sub-string
+std::string TecEcoAnalysis::getImpactShortName(const std::string& name) {//name can be any string that contains an impact name as a sub-string
     for (auto& vImpact : mPossibleImpacts) {
-        if (name.contains(vImpact.Name())) {
-            QString shortName = name;
-            return shortName.replace(vImpact.Name(), vImpact.ShortName());
+        if (CairnUtils::contains(name, vImpact.Name)) {
+            std::string shortName = name;
+            return CairnUtils::replace(shortName, vImpact.Name, vImpact.ShortName);
         }
     }
     return name;
 }
 
-QString TecEcoAnalysis::getImpactLongName(const QString& name) {//name can be any string that contains an impact short name as a sub-string
+std::string TecEcoAnalysis::getImpactLongName(const std::string& name) {//name can be any string that contains an impact short name as a sub-string
     for (auto& vImpact : mPossibleImpacts) {
-        if (name.contains(vImpact.ShortName()) && !name.contains(vImpact.Name())) {
-            QString longName = name;
-            return longName.replace(vImpact.ShortName(), vImpact.Name());
+        if (CairnUtils::contains(name, vImpact.ShortName) && !CairnUtils::contains(name, vImpact.Name)) {
+            std::string longName = name;
+            return CairnUtils::replace(longName, vImpact.ShortName, vImpact.Name);
         }
     }
     return name;
@@ -356,15 +386,15 @@ void TecEcoAnalysis::buildModel()
     TecEcoAnalysis::computePenaltyConstraintCosts();
 
     //Objective
-    if (mModelName.contains("OptimEnvImpact")) 
+    if (CairnUtils::contains(mModelName, "OptimEnvImpact"))
     {
-        int iSize = mModelName.size() - mModelName.indexOf("-") - 1;
-        QString impactShortName = mModelName.right(iSize);
-        if (!getPossibleImpactShortNames().contains(impactShortName)) {
+        std::vector<std::string> vNames = CairnUtils::split(mModelName, '-');        
+        std::string impactShortName = vNames[vNames.size() - 1];
+        if (!CairnUtils::contains(getPossibleImpactShortNames(), impactShortName)) {
             Cairn_Exception cairn_error("Error : unknown model name " + (mModelName)+" on component. Expected: OptimEnvImpact-$ImpactShortName" + (Name()), -1);
             throw cairn_error;
         }
-        QString impactName = getImpactLongName(impactShortName);
+        std::string impactName = getImpactLongName(impactShortName);
         //
         for (int i = 0; i < mEnvImpactsList.size(); i++) {
             if (mEnvImpactsList[i] == impactName) {
@@ -396,7 +426,7 @@ void TecEcoAnalysis::buildModel()
     //add constraints on EnvImpact Mass 
     for (int i = 0; i < mEnvImpacts.size(); i++) {
         int eIndex = getImpactIndex(mEnvImpacts.at(i));
-        if (mVBEnvImpactMaxConstraint[eIndex]) addConstraint(mExpCumulativeEnvImpact.at(eIndex)  <= mVDEnvImpactMaxConstraint[eIndex], "EnvImpactMaxConstraint");
+        if (mVBEnvImpactMaxConstraint[eIndex]) addConstraint(mExpCumulativeEnvImpact.at(i)  <= mVDEnvImpactMaxConstraint[eIndex], "EnvImpactMaxConstraint");
     }
 
     mAllocate = false;
@@ -539,11 +569,7 @@ void TecEcoAnalysis::closeExpressions() {
 
 void TecEcoAnalysis::computePenaltyConstraintCosts() {
     //Compute the total PenaltyConstraintCosts from all NodeLaws
-    QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
-    while (icomponent.hasNext())
-    {
-        icomponent.next();
-        MilpComponent* lptr = icomponent.value();
+    for (auto& [key, lptr] : MilpComponents()) {
         if (lptr->getMIPExpression("PenaltyConstraintCosts") != nullptr) {
             mExpPenaltyConstraintCosts += *(lptr->getMIPExpression("PenaltyConstraintCosts"));
         }
@@ -551,12 +577,8 @@ void TecEcoAnalysis::computePenaltyConstraintCosts() {
 }
 
 void TecEcoAnalysis::computeEconomicalContribution() {
-    QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
-    while (icomponent.hasNext())
-    {
-        icomponent.next();
-        MilpComponent* lptr = icomponent.value();
-
+    for (auto &[key, lptr] : MilpComponents()) {
+    
         // ---------------------- 0D ----------------------
         if (lptr->EcoInvestModel()) {
             mExpCapex += *(lptr->getMIPExpression("Capex"));
@@ -564,7 +586,7 @@ void TecEcoAnalysis::computeEconomicalContribution() {
 
         if (lptr->ModelClassName() == "ManualObjective") {
             MIPModeler::MIPExpression* expSubObjective = lptr->getMIPExpression("SubObjectiveExpression");
-            mMapSubObjective[icomponent.key()] = expSubObjective;
+            mMapSubObjective[key] = expSubObjective;
             if (lptr->ObjectiveType() == "Add") {
                 mExpSubObjective += *expSubObjective;
             }
@@ -579,7 +601,7 @@ void TecEcoAnalysis::computeEconomicalContribution() {
             MIPModeler::MIPExpression exReplacement_t;
             MIPModeler::MIPExpression expOpex_t;
 
-            uint t_hour = qCeil(t * TimeStep(t)) + mParentCompo->HistNbHours();
+            uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
             while (t_hour > mParentCompo->TableYearsHours().at(year) && year < mParentCompo->TableYearsHours().size() - 1) {
                 year += 1;
             }
@@ -616,12 +638,8 @@ void TecEcoAnalysis::computeEconomicalContribution() {
 
 void TecEcoAnalysis::computeEnvContribution()
 {   //Computes total Env contribution
-    QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
-    while (icomponent.hasNext())
+    for (auto& [key, lptr] : MilpComponents()) 
     {
-        icomponent.next();
-        MilpComponent* lptr = icomponent.value();
-
         if (lptr->EnvironmentModel()) {
             for (int i = 0; i < mEnvImpactsList.size(); i++)
             {
@@ -632,7 +650,7 @@ void TecEcoAnalysis::computeEnvContribution()
                     MIPModeler::MIPExpression expImpactCost_i_t;
                     MIPModeler::MIPExpression expImpactReplacement_i_t;
 
-                    uint t_hour = qCeil(t * TimeStep(t)) + mParentCompo->HistNbHours();
+                    uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
                     while (t_hour > mParentCompo->TableYearsHours().at(year) && year < mParentCompo->TableYearsHours().size() - 1) {
                         year += 1;
                     }
@@ -669,11 +687,7 @@ void TecEcoAnalysis::computeBuyAndSellExpressions(const double* optSol, MIPModel
     expBuyPart = MIPModeler::MIPExpression1D(mTimeSteps.size());
     expSellPart = MIPModeler::MIPExpression1D(mTimeSteps.size());
 
-    QMapIterator<QString, MilpComponent*> icomponent(mMapMilpComponents);
-    while (icomponent.hasNext())
-    {
-        icomponent.next();
-        MilpComponent* lptr = icomponent.value();
+    for (auto& [key, lptr] : MilpComponents()) {
 
         if (lptr->getMIPExpression1D("VariableCosts") == nullptr)
             continue; //case of non-TechnicalSubModel componenets 
@@ -755,9 +769,10 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
         //double opexDiscounted = mOpexContributionDiscounted(index);
         if (mParentCompo->InternalRateOfReturn() >= 0.) {
             mInternalRateOfReturnPerCent.at(0) = mInternalRateOfReturnPerCent.at(1) = mParentCompo->InternalRateOfReturn() * 100.;
-            mInternalRateOfReturnFactor.at(0) = mInternalRateOfReturnFactor.at(1) = mParentCompo->RateOfReturnDiscountFactor();
-            mNetPresentValueAtIRR.at(0) = -mCapexContribution.at(0) + (mOpexContribution.at(0) * mParentCompo->RateOfReturnDiscountFactor());
-            mNetPresentValueAtIRR.at(1) = -mCapexContribution.at(1) + (mOpexContribution.at(1) * mParentCompo->RateOfReturnDiscountFactor());
+            double RateOfReturnDiscountFactor = 0; // Why it is always 0 ?!!
+            mInternalRateOfReturnFactor.at(0) = mInternalRateOfReturnFactor.at(1) = RateOfReturnDiscountFactor;
+            mNetPresentValueAtIRR.at(0) = -mCapexContribution.at(0) + (mOpexContribution.at(0) * RateOfReturnDiscountFactor);
+            mNetPresentValueAtIRR.at(1) = -mCapexContribution.at(1) + (mOpexContribution.at(1) * RateOfReturnDiscountFactor);
         }
 
         mAverageRateOfReturnFactor.at(0) = -mCapexContribution.at(0) / (mOpexContribution.at(0) / ExtrapolationFactor); //PLAN
@@ -788,8 +803,8 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
             mVDEnvGreyImpactsCostContribution[i].at(0) = mVDEnvGreyImpactsCostContribution[i].at(1) = mExpEnvImpactEmbodiedCostVec.at(i).evaluate(optSol);
             mVDEnvGreyImpactsMassContribution[i].at(0) = mVDEnvGreyImpactsMassContribution[i].at(1) = mExpEnvImpactEmbodiedVec.at(i).evaluate(optSol);
 
-            SubModel::computeIndicator(mExpEnvImpactCostVec[i], optSol, mVDEnvImpactsCostContribution[i].at(0), mVDEnvImpactsCostContributionDiscounted[i].at(0), mVDEnvImpactsCostContribution[i].at(1), mVDEnvImpactsCostContributionDiscounted[i].at(1), true);
             SubModel::computeIndicator(mExpEnvImpactMassVec[i], optSol, mVDEnvImpactsMassContribution[i].at(0), mVDEnvImpactsMassContributionDiscounted[i].at(0), mVDEnvImpactsMassContribution[i].at(1), mVDEnvImpactsMassContributionDiscounted[i].at(1), true);
+            SubModel::computeIndicator(mExpEnvImpactCostVec[i], optSol, mVDEnvImpactsCostContribution[i].at(0), mVDEnvImpactsCostContributionDiscounted[i].at(0), mVDEnvImpactsCostContribution[i].at(1), mVDEnvImpactsCostContributionDiscounted[i].at(1), false);
 
             //Replacement
             SubModel::computeIndicator(mExpEnvImpactReplacementVec[i], optSol, mVDEnvImpactsReplacementContribution[i].at(0), mVDEnvImpactsReplacementContributionDiscounted[i].at(0), mVDEnvImpactsReplacementContribution[i].at(1), mVDEnvImpactsReplacementContributionDiscounted[i].at(1), true);

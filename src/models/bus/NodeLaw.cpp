@@ -9,13 +9,13 @@
  */
 # include "GlobalSettings.h"
 #include "NodeLaw.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new NodeLaw(aParent);
 }
 
 
-NodeLaw::NodeLaw(QObject* aParent)
+NodeLaw::NodeLaw(CairnObject* aParent)
     : BusSubModel(aParent),
     mBusEnergyBalance(2,0.) 
 {
@@ -50,12 +50,7 @@ void NodeLaw::computeModelContribution()
 {
     /** Build balance constraint once component constraints have created their own expressions
         Constraint linked to mListPort connected ports */
-	MilpPort* port ;
-	QListIterator<MilpPort*> iport (mListPort);
-
-	while (iport.hasNext())
-	{
-	    port = iport.next() ;
+    for (auto& port : mListPort) {
 
         double aSign = (port->Direction() == GS::KCONS())? -1.: 1.;
         double portVarTimeDepend = (port->FluxDim()==1) ? 1 : 0;
@@ -143,7 +138,7 @@ void NodeLaw::addStrictConstraint()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         std::string compoType = "StrictConstraint";
 
         pExternalModeler->addText("");
@@ -184,7 +179,7 @@ void NodeLaw::addMaxConstraint()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         std::string compoType = "MaxConstraint";
         pExternalModeler->addText("");
         pExternalModeler->addComment("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
@@ -224,7 +219,7 @@ void NodeLaw::addMinConstraint()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         std::string compoType = "MinConstraint";
         
         pExternalModeler->addText("");
@@ -277,7 +272,7 @@ void NodeLaw::addStrictIntegrateConstraint()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         std::string compoType = "StrictIntegrateConstraint";
 
         pExternalModeler->addText("");
@@ -335,7 +330,7 @@ void NodeLaw::addMaxIntegrateConstraint()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         std::string compoType = "MaxIntegrateConstraint";
 
         pExternalModeler->addText("");
@@ -387,7 +382,7 @@ void NodeLaw::addMinIntegrateConstraint()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         std::string compoType = "MinIntegrateConstraint";
 
         pExternalModeler->addText("");
@@ -427,7 +422,7 @@ void NodeLaw::addMaxIntegrateConstraint(int period)
 
     if(period>(int)mHorizon + (int)mNpdtPast)
     {
-        qCritical() << "ERROR : the interval of integration is greater than (futursize + pastsize)= "<< mHorizon + mNpdtPast<<". The constraint can't be computed ! " ;
+        cCritical() << "ERROR : the interval of integration is greater than (futursize + pastsize)= "<< mHorizon + mNpdtPast<<". The constraint can't be computed ! " ;
     }
     else
     {
@@ -470,7 +465,7 @@ void NodeLaw::addMaxIntegrateConstraint(int period)
 
         ModelerInterface* pExternalModeler = mModel->getExternalModeler();
         if (pExternalModeler != nullptr) {
-            std::string compoName = SubModel::parent()->objectName().toStdString();
+            std::string compoName = SubModel::parent()->objectName();
             std::string compoType = "RollingMaxIntegrateConstraint";
 
             pExternalModeler->addText("");
@@ -543,7 +538,7 @@ void NodeLaw::addMinIntegrateConstraint(int period)
 {
 
     if(period>(int)mHorizon){
-        qWarning() << "ERROR : the period has to be smaller than the timeshift. MaxIntegrateConstraint to be checked ! " ;
+        cWarning() << "ERROR : the period has to be smaller than the timeshift. MaxIntegrateConstraint to be checked ! " ;
         addMinIntegrateConstraint();
     }
     else{
@@ -587,7 +582,7 @@ void NodeLaw::addMinIntegrateConstraint(int period)
 
         ModelerInterface* pExternalModeler = mModel->getExternalModeler();
         if (pExternalModeler != nullptr) {
-            std::string compoName = SubModel::parent()->objectName().toStdString();
+            std::string compoName = SubModel::parent()->objectName();
             std::string compoType = "RollingMinIntegrateConstraint";
 
 
@@ -640,15 +635,15 @@ void NodeLaw::addIntegrateSeparateConstraint(int period, int intervalBetween)
     }
     if ((mHorizon-period) % intervalBetween != 0)
     {
-        qCritical() << "ERROR: to use separate constraint, the period"<<intervalBetween<<" should be a divisor of (futuresize - interval between integrate constraints) "<<(mHorizon-intervalBetween)<<"!";
+        cCritical() << "ERROR: to use separate constraint, the period"<<intervalBetween<<" should be a divisor of (futuresize - interval between integrate constraints) "<<(mHorizon-intervalBetween)<<"!";
     }
     if ( (*mptrTimeshift) % intervalBetween != 0)
     {
-        qCritical() << "ERROR: to use separate constraint, interval between integrates constraints "<<intervalBetween<<" should be a divisor of timeshift "<<*mptrTimeshift<<"!";
+        cCritical() << "ERROR: to use separate constraint, interval between integrates constraints "<<intervalBetween<<" should be a divisor of timeshift "<<*mptrTimeshift<<"!";
     }
     if ( period < intervalBetween)
     {
-        qCritical() << "ERROR: to use separate constraint, period of integration "<<(period)<<"should be > than interval between 2 periods"<<intervalBetween <<"!";
+        cCritical() << "ERROR: to use separate constraint, period of integration "<<(period)<<"should be > than interval between 2 periods"<<intervalBetween <<"!";
     }
     else
     {

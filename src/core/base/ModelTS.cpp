@@ -1,17 +1,16 @@
 #include "ModelTS.h"
 #include "ZEVariables.h"
 
-ModelTS::ModelTS(const QString& aName, const QString& a_Unit)
-    : ModelVar(aName, a_Unit, "")
+ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit)
+    : ModelVar(aName, "")
 {
     m_default = 1.0;
     m_min = std::nan("1");
     m_max = std::nan("1");
+    if(a_Unit) m_Unit = *a_Unit; /* Case of timeseries where the unit of corresponding ModelTS is a copy of that from ModelParam */
 }
 
-
-ModelTS::ModelTS(const QString& aName,
-    const QString& a_Unit, InputParam::ModelParam* ap_Variable)
+ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, InputParam::ModelParam* ap_Variable)
     : ModelTS(aName, a_Unit)
 {
     if (ap_Variable) {
@@ -36,7 +35,7 @@ ModelTS::~ModelTS()
     if (p_ZEVariable) delete p_ZEVariable;
 }
 
-void ModelTS::setName(const QString& a_Name)
+void ModelTS::setName(const std::string& a_Name)
 { 
     m_Name = a_Name;
     //update the name of the corresponding ZEVariable
@@ -57,7 +56,7 @@ void ModelTS::set_Values(uint aNpdtPast)
     if (p_ZEVariable && p_Variable) {
         bool vFill = false;
         bool isBlocking = p_Variable->IsBlocking();
-        QVector<float>& vZEHist = *p_ZEVariable->ptrOutVariable();
+        std::vector<double>& vZEHist = *p_ZEVariable->ptrOutVariable();
         if (p_Variable->getType() == eVectorDouble) {
             if (p_Variable->isPValue()) {
                 size_t vDestSize = p_Variable->size();
@@ -69,18 +68,18 @@ void ModelTS::set_Values(uint aNpdtPast)
                     }
                     catch (const std::exception& e)
                     {
-                        qCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name << ", size of " << vDestSize;
-                        qCritical() << e.what();                        
+                        cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name << ", size of " << vDestSize;
+                        cCritical() << e.what();                        
                     }
                 }                
             }
         }
         if (!vFill) {
             if (isBlocking) {
-                qCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name;
+                cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name;
             }
             else  {
-                qWarning() << "Warning fillVectorData: in SubModel, variable: " << m_Name;                
+                cWarning() << "Warning fillVectorData: in SubModel, variable: " << m_Name;
             }
         }        
     }   
@@ -90,7 +89,7 @@ void ModelTS::set_Values(size_t a_npdtTot, double a_Value)
 {
     if (a_npdtTot > 0) {
         if (p_ZEVariable) {
-            QVector<float>& vZEHist = *p_ZEVariable->ptrOutVariable();
+            std::vector<double>& vZEHist = *p_ZEVariable->ptrOutVariable();
             size_t vSize = vZEHist.size();
             size_t vOffset = std::min((size_t)0, vSize - a_npdtTot);
             for (size_t i = vOffset; i < vSize; i++)
@@ -107,8 +106,8 @@ bool ModelTS::checkProfile()
     bool vRet = true;
     if (p_ZEVariable) {
         if (m_Name != "" && !std::isnan(m_min) && !std::isnan(m_max)) {
-            qInfo() << "checking " << m_Name;
-            QVector<float>& vZEHist = *p_ZEVariable->ptrOutVariable();
+            cInfo() << "checking " << m_Name;
+            std::vector<double>& vZEHist = *p_ZEVariable->ptrOutVariable();
             size_t vSize = vZEHist.size();
             if (vSize) {
                 float vMin = vZEHist[0], vMax = vZEHist[0];
@@ -118,23 +117,23 @@ bool ModelTS::checkProfile()
                 }
                 if (vMax < m_min || vMax > m_max || vMin < m_min || vMin > m_max)
                 {
-                    qCritical() << "ERROR in profile " << m_Name
+                    cCritical() << "ERROR in profile " << m_Name
                         << " values should be in the range [" << m_min << ";" << m_max << "] "
                         << " instead of [" << vMin << ";" << vMax << "] ";
                     vRet = false;
                 }
             }           
-            qInfo() << "end checking " << m_Name;
+            cInfo() << "end checking " << m_Name;
         }
     }
     return vRet;
 }
 
-void ModelTS::subscribeTS(const QString& a_exName, t_mapExchange& a_Import, size_t a_npdtTot)
+void ModelTS::subscribeTS(const std::string& a_exName, t_mapExchange& a_Import, size_t a_npdtTot)
 {
-    p_ZEVariable = new ZEVariables(m_Name, getUnit(), m_Comment + " Profile ", "1", "0", true);
+    p_ZEVariable = new ZEVariables(m_Name, &m_Unit, m_Comment + " Profile ", "1", "0", true);
     a_Import[a_exName] = p_ZEVariable;
-    QVector<float>& vZEHist = *p_ZEVariable->ptrVariable();
-    vZEHist.resize(a_npdtTot);
+    std::vector<double>& vZEHist = *p_ZEVariable->ptrVariable();
+    vZEHist.resize(a_npdtTot, 0.0);
     set_Values(a_npdtTot, m_default);    
 }

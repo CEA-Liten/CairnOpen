@@ -47,11 +47,9 @@ set(${COMPONENT}_INTERFACE_INCLUDE_DIRECTORIES
 )
 
 # -- create/setup component target --
-set(${COMPONENT}_INSTALLRESOURCES
-  ${CMAKE_SOURCE_DIR}/resources/modelTypes.txt
-  ${CMAKE_SOURCE_DIR}/resources/DefUnits.json
-  ${CMAKE_SOURCE_DIR}/resources/images/cairn_logo.png
-  ${CMAKE_SOURCE_DIR}/resources/images/cairn.ico
+set(${COMPONENT}_RESOURCES_DIR
+  ../../resources  
+  ../../resources/images
   )
 
 include(ComponentSetup)
@@ -69,14 +67,6 @@ if(MSVC)
   target_compile_options(${COMPONENT} PRIVATE "/bigobj")
 endif()
 
-find_package(Qt REQUIRED Core)
-if(CMAKE_SYSTEM_NAME MATCHES Windows)
-	if(CMAKE_BUILD_TYPE MATCHES Release)
-           install(FILES ${Qt5_BIN}/Qt5Core.dll
-                     DESTINATION ${CMAKE_INSTALL_BINDIR}            
-            )
-    endif()
-endif()
 find_package(MIPModeler REQUIRED)
 find_package(Cairn REQUIRED CairnModelInterface)
 
@@ -88,8 +78,8 @@ target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPSolver)
 include(EigenSetup)
 target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
 
-#include(spdlogSetup)
-#target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
+include(SpdlogSetup)
+target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
 
 # ---- Installation ----
 # Call component_install_setup(<COMPONENT>)
@@ -119,8 +109,12 @@ endif()
 
 
 if (WITH_PYBIND)
+	
 	set(COMPONENT cairn)
 	message("-- Set up for ${PROJECT_NAME}_${COMPONENT} python binding ...")
+	message(STATUS "Python: ${Python_EXECUTABLE}")
+    message(STATUS "Python_INCLUDE_DIR: ${Python_INCLUDE_DIRS}")
+    message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 
 
 	set(BUILD_PYBIND ON)
 	set(${COMPONENT}_DIRS
@@ -131,9 +125,13 @@ if (WITH_PYBIND)
 	)
 	# find python package
 	find_package(Python REQUIRED COMPONENTS Interpreter Development)
-	set(PYBIND11_FINDPYTHON ON)
+	set(PYBIND11_FINDPYTHON ${Python_FOUND})
 	find_package(pybind11 CONFIG REQUIRED)
 
+	message(STATUS "Python: ${Python_EXECUTABLE}")
+    message(STATUS "Python_INCLUDE_DIR: ${Python_INCLUDE_DIRS}")
+    message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 
+	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 	create_component(${COMPONENT})
 
 	target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
@@ -148,16 +146,13 @@ if (WITH_PYBIND)
 	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPModeler)
 	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::ModelerInterface)
 	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPSolver)
-
-	target_link_libraries(${COMPONENT} PRIVATE ${QT_CORE_TARGET})
-	target_link_libraries(${COMPONENT} PRIVATE ${QT_XML_TARGET})
-	set_property(TARGET ${COMPONENT} PROPERTY AUTOMOC ON)
-
+	
 	target_link_libraries(${COMPONENT} PRIVATE CAIRN::CAIRN)
 
 	# -- Eigen to Cairn
 	target_compile_definitions(${COMPONENT} PRIVATE -DEIGEN_MPL2_ONLY)
 	target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
+	target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
 
 	component_install_setup(${COMPONENT} DESTINATION ..)
 	

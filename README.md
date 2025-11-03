@@ -1,4 +1,4 @@
-# Cairn 
+# Cairn
 
 ![logo_cairn](resources/images/cairnopen.png)
 
@@ -16,7 +16,7 @@ Cairn is developped by the CEA-Liten in Grenoble and Chambéry.
 ## 🛠️ Prerequisites
 Before installing Cairn, ensure your system meets the following prerequisites:
 
-- Operating System: Windows.
+- Operating System: Windows, Linux, macOS. 
 - C++ compiler compatible with C++17 or higher (for instance CMake)
 - Python 3.10
 
@@ -30,7 +30,7 @@ Before installing Cairn, ensure your system meets the following prerequisites:
 
 ## 📦 Installation
 They are have several options to use Cairn:
-- **Cairn Viewer**, a graphical interface, can be installed on Windows PC : see [releases](https://github.com/CEA-Liten/CairnOpen/releases).
+- **Cairn Viewer**, a graphical interface, can be installed on Windows PC : see releases.
 - **Cairn Python API** wheels are available on releases. 
 
 ## 🚀 Usage

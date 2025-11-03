@@ -1,7 +1,7 @@
 #include "TechnicalSubModel.h"
 
 
-TechnicalSubModel::TechnicalSubModel(QObject* aParent) :
+TechnicalSubModel::TechnicalSubModel(CairnObject* aParent) :
 SubModel(aParent),
 mObjectiveType(""),
 mHistPureOpexContributionDiscounted(0.),
@@ -34,6 +34,13 @@ TechnicalSubModel::~TechnicalSubModel()
 {
 }
 
+void TechnicalSubModel::setTimeData()
+{
+    SubModel::setTimeData();
+    mComponentAvailabilityTS.clear();
+    mComponentAvailabilityTS.resize(mHorizon);
+}
+
 void TechnicalSubModel::resetHistStoredVaues()
 {
     mHistPureOpexContributionDiscounted = 0.;
@@ -61,6 +68,30 @@ void TechnicalSubModel::resetHistStoredVaues()
     mNbCylesMap = {};
 }
 
+void TechnicalSubModel::setExpInstalled()
+{
+    /*
+    * Optimize size on the basis of weighting factor multiplying constant production or storage capacity
+    * Variable to multiply by the capex offset to model the "construction" work
+    */
+    addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_INT);
+
+    if (mUseWeightOptimization)
+    {
+        mExpInstalled = mVarInstalled;
+        if (mWeight >= 0.) {
+            addConstraint(mVarInstalled == 1, "sInstalled");
+        }
+    }
+    else
+    {
+        mExpInstalled = mVarInstalled;
+        if (mMaxValue >= 0.) {
+            addConstraint(mVarInstalled == 1, "sInstalled");
+        }
+    }
+}
+
 void TechnicalSubModel::buildModel()
 {
     if (mAllocate) {
@@ -71,7 +102,17 @@ void TechnicalSubModel::buildModel()
     }
 
     /* set SizeMax expression and add constraints on SizeMax and Installed variables */
-    setExpSizeMax();
+    setExpInstalled();
+    setExpSizeMax(mExpInstalled);
+
+    /* add State and StartUpShutDown constraints : add On/Off variable */
+    if (mAddStateVariable) {
+        addStateConstraints(varMilpHorizon(), mExpInstalled);
+    }
+
+    if (mAddStartUpShutDownVariable) {
+        addStartUpShutDown(varMilpHorizon(), mExpInstalled);
+    }
     
     /** compute expressions, add variables and add constraints */
     computeAllContribution();
@@ -91,14 +132,14 @@ int TechnicalSubModel::checkConsistency()
     // note that this function is not used for SourceLoad where the only dimensionning variable is the weight
     if (mPiecewiseCapex && mUseWeightOptimization)
     {
-        qCritical() << "ERROR : options PiecewiseCapex and UseWeightOptimization cannot be used together  " << mPiecewiseCapex << mUseWeightOptimization;
+        cCritical() << "ERROR : options PiecewiseCapex and UseWeightOptimization cannot be used together  " << mPiecewiseCapex << mUseWeightOptimization;
         return -1;
     }
 
     for (int i = 0; i < mEnvImpacts.size(); i++)
     {
         if (mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() && mUseWeightOptimization) {
-            qCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and UseWeightOptimization cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << mUseWeightOptimization;
+            cCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and UseWeightOptimization cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << mUseWeightOptimization;
             return -1;
         }
     }
@@ -131,7 +172,7 @@ void TechnicalSubModel::computeGeometricContribution()
 {
     if (mGeometryModel) {
         if (mPiecewiseArea) {
-            qInfo() << "Add Piecewise Area. Try Relaxation : " << mTryRelaxationArea;
+            cInfo() << "Add Piecewise Area. Try Relaxation : " << mTryRelaxationArea;
             computePiecewiseContribution(mAreaCapacitySetPoint, mAreaSetPoint, mTryRelaxationArea, 0, mExpArea);
         }
         else
@@ -140,7 +181,7 @@ void TechnicalSubModel::computeGeometricContribution()
         }
 
         if (mPiecewiseVolume) {
-            qInfo() << "Add Piecewise Volume. Try Relaxation : " << mTryRelaxationVolume;
+            cInfo() << "Add Piecewise Volume. Try Relaxation : " << mTryRelaxationVolume;
             computePiecewiseContribution(mVolumeCapacitySetPoint, mVolumeSetPoint, mTryRelaxationVolume, 0, mExpVolume);
         }
         else
@@ -149,7 +190,7 @@ void TechnicalSubModel::computeGeometricContribution()
         }
 
         if (mPiecewiseMass) {
-            qInfo() << "Add Piecewise Mass. Try Relaxation : " << mTryRelaxationMass;
+            cInfo() << "Add Piecewise Mass. Try Relaxation : " << mTryRelaxationMass;
             computePiecewiseContribution(mMassCapacitySetPoint, mMassSetPoint, mTryRelaxationMass, 0, mExpMass);
         }
         else
@@ -173,13 +214,9 @@ void TechnicalSubModel::computeEnvContribution()
         for (EnvImpact* impact : mEnvImpacts) {
             impact->setCapex(mCapex);
             impact->setLifeTime(mLifeTime);
-            impact->setOptimalSizeUnit(getOptimalSizeUnit());
-            MilpPort* port;
-            QListIterator<MilpPort*> iport(mListPort);
+            impact->setOptimalSizeUnit(OptimalSizeUnit());
             int j = 0;
-            while (iport.hasNext())
-            {
-                port = iport.next();
+            for (auto& port : mListPort) {            
                 if (port->VarType() == "vector")
                 {
                     if (port->Variable() != "") {
@@ -192,7 +229,7 @@ void TechnicalSubModel::computeEnvContribution()
         //Embodied emissions
         for (EnvImpact* impact : mEnvImpacts) {
             if (impact->PiecewiseEnvGreyContentCoeff()) {
-                qInfo() << "Add Piecewise EnvGreyContentCoeff. Try Relaxation : " << impact->TryRelaxationEnvGreyContentCoeff();
+                cInfo() << "Add Piecewise EnvGreyContentCoeff. Try Relaxation : " << impact->TryRelaxationEnvGreyContentCoeff();
                 computePiecewiseContribution(impact->CapacitySetPoint(), impact->SetPoint(), impact->TryRelaxationEnvGreyContentCoeff(),
                     impact->EnvGreyContentOffset(), *(impact->getExpEnvEmbodied()));
             }
@@ -222,11 +259,11 @@ void TechnicalSubModel::computePiecewiseContribution(const MIPModeler::MIPData1D
 
     bool aRelaxedFormSOE = false;
     if (aTryRelaxation) {
-        qInfo() << "Try convex ...";
+        cInfo() << "Try convex ...";
         aRelaxedFormSOE = MIPModeler::isConvexSet(aCapacitySetPoint, aCostSetPoint);
     }
     if (aRelaxedFormSOE) {
-        qInfo() << "Function is convex, linearization is continuous";
+        cInfo() << "Function is convex, linearization is continuous";
     }
 
     //compute ContentCoefficient
@@ -254,7 +291,7 @@ void TechnicalSubModel::computeEconomicalContribution()
     if (mEcoInvestModel)
     {
         if (mPiecewiseCapex) {
-            qInfo() << "Add Piecewise Capex. Try Relaxation : " << mTryRelaxationCapex;
+            cInfo() << "Add Piecewise Capex. Try Relaxation : " << mTryRelaxationCapex;
             computePiecewiseContribution(mCapexCapacitySetPoint, mCapexSetPoint, mTryRelaxationCapex, 0, mExpCapex);
         }
         else
@@ -290,7 +327,7 @@ void TechnicalSubModel::computeEconomicalContribution()
                 }
             }
             else {
-                Cairn_Exception cairn_error("An error occurred while computing the replacement cost of " + getCompoName() + ". The value of the parameter LifeTime cannot be 0.", -1);
+                Cairn_Exception cairn_error("An error occurred while computing the replacement cost of " + Name() + ". The value of the parameter LifeTime cannot be 0.", -1);
                 throw cairn_error;
             }
         }

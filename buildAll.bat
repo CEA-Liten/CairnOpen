@@ -49,6 +49,3 @@ if exist %BIN_PATH% (
 rem Install
 "%CMAKEPATH%\cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
 
-
-del %~dp0\bin\%CONFIGURATION%\bin\Qt5Core.dll
-

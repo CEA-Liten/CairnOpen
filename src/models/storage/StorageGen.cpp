@@ -1,10 +1,10 @@
 #include "StorageGen.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new StorageGen(aParent);
 }
 
-StorageGen::StorageGen(QObject* aParent) : StorageSubModel(aParent),
+StorageGen::StorageGen(CairnObject* aParent) : StorageSubModel(aParent),
     mInitialSoe(0.),
     mInitialSoe_Def(0.),
     mInternalLosses(2,0.)
@@ -14,18 +14,17 @@ StorageGen::StorageGen(QObject* aParent) : StorageSubModel(aParent),
 StorageGen::~StorageGen(){ }
 
 void StorageGen::setTimeData() {
-    SubModel::setTimeData();
+    StorageSubModel::setTimeData();
     mCapacityMultiplier.resize(mHorizon);
     mAllowCharge.resize(mHorizon);
     mAllowDischarge.resize(mHorizon);
-    mAllowStorage.resize(mHorizon);
     mFinalStorageValue.resize(mHorizon);
 }
 
 int StorageGen::checkConsistency()
 {
     if ((mInitSOC < 0. && mInitSOC != -1.) || mInitSOC > 1.) {
-        qCritical() << "ERROR : Storage " << parent()->objectName() << " expects an initial state of charge in the range [0,1] or -1 to use coupling within PEGASE. ";
+        cCritical() << "ERROR : Storage " << parent()->objectName() << " expects an initial state of charge in the range [0,1] or -1 to use coupling within PEGASE. ";
         return -1;
     }
     return 0;
@@ -38,7 +37,7 @@ void StorageGen::computeInitialData()
 
     /* Intial state used in Estock IO */
     mInitialSoe_Def = mInitSOC * getMaxBound();
-    qDebug() << "StorageGen mInitialSoe_Def : " << mInitialSoe_Def;
+    cDebug() << "StorageGen mInitialSoe_Def : " << mInitialSoe_Def;
 }
 
 void StorageGen::computeModelContribution()
@@ -69,15 +68,15 @@ void StorageGen::computeModelContribution()
 
     //if (mNpdtPast > 0 && mControl == "MPC") { // MPC getting intial from past external value
     //    mInitialSoe = mStateOfCharge[mNpdtPast - 1];
-    //    qInfo() << "StorageGen - initialSoe from past external value : " << mInitialSoe << parent()->objectName() ;
+    //    cInfo() << "StorageGen - initialSoe from past external value : " << mInitialSoe << parent()->objectName() ;
     //}
     //else if (mNpdtPast >0) { // Rolling Horizon getting initial from past internal value, or default behaviour with 1 past timestep
     //    mInitialSoe=mHistEstock[mNpdtPast-1];
-    //    qInfo() << "StorageGen - initialSoe from past internal value  " << mInitialSoe << parent()->objectName() ;
+    //    cInfo() << "StorageGen - initialSoe from past internal value  " << mInitialSoe << parent()->objectName() ;
     //}
     //else { // simple initial value from settings, with no past timestep
     //    mInitialSoe = mInitialSoe_Def;
-    //    qInfo() << "StorageGen - initialSoe from settings = " << mInitialSoe << parent()->objectName() ;
+    //    cInfo() << "StorageGen - initialSoe from settings = " << mInitialSoe << parent()->objectName() ;
     //}
 
     // avoid possible residual out of range values of initialSoe due to solving gaps in MPC or RH modes
@@ -96,7 +95,7 @@ void StorageGen::computeModelContribution()
         addConstraint(mExpStoIni == mInitialSoe, "StoIni0", 0);
     }
     for (uint64_t t = 0; t < mHorizon ; ++t) {
-        addConstraint(mExpEsto[t] - mExpSizeMax * mAllowStorage[t] <= 0,"M",t);
+        addConstraint(mExpEsto[t] - mExpSizeMax * mComponentAvailabilityTS[t] <= 0,"M",t);
 
         // M(ti)-M(ti-1) - (eta * MFRcharge - MFRdecharge / eta - Kpertes*Esto) * dt = 0
         // sauf au premier pas de temps ou le membre de droite vaut M(t-1) (issue de l'etat du plantModel) ou M(t=0) si optim sans retroaction
@@ -139,7 +138,7 @@ void StorageGen::computeModelContribution()
 
     //Muting on last time steps if pre-computed seasonalCosts model
     if (mSeasonalCosts) {
-        //qInfo() << "StorageGen, mSeasonalCosts = " << mSeasonalCosts ;
+        //cInfo() << "StorageGen, mSeasonalCosts = " << mSeasonalCosts ;
         for (uint64_t t = mMilpNpdt; t < mHorizon; t++) {
             addConstraint(mExpEsto[t] == 0 , "seasonalMute",t);
             addConstraint(mExpFlowCharge[t] == 0 , "seasonalMute",t);
@@ -159,7 +158,7 @@ void StorageGen::computeModelContribution()
     //GAMS
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         bool designModel = (getMaxBound() < 0.) ? true : false;
 
         pExternalModeler->addText("");

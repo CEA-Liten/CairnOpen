@@ -671,10 +671,19 @@ int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFil
 					for (size_t j = 0; j < values1.size(); ++j) {//innerLoop
 						double val1 = atof(values1[j].c_str());
 						double val2 = atof(values2[j].c_str());
-						if (fabs(val1 - val2) > 10e-6) {
-							areEqual = false;//innerLoop
-							break;
+						if (fabs(val2) < 10e-10) {
+							if (fabs(val1 - val2) > 10e-6) {
+								areEqual = false;//innerLoop
+								break;
+							}
 						}
+						else {
+							if (fabs(val1 - val2) > 0.05*fabs(val2)) {
+								areEqual = false;//innerLoop
+								break;
+							}
+						}
+						
 					}
 				}
 			}

@@ -46,9 +46,10 @@ class MODELS_DECLSPEC MinStateTime : public OperationSubModel
 {
 public:
 //----------------------------------------------------------------------------------------------------
-    MinStateTime(QObject* aParent);
+    MinStateTime(CairnObject* aParent);
     ~MinStateTime();
 //----------------------------------------------------------------------------------------------------
+    void computeInitialData() override;
     void computeModelContribution() override;
     void setTimeData();
     int checkConsistency();
@@ -70,8 +71,8 @@ public:
         //double
         addParameter("MinProductionTime", &mMinProductionTime, 0., false, true, "Minimal number of hours to keep the production on", "hour");
         addParameter("MinStandByTime", &mMinStandbyTime, 0., false, true, "Minimal number of hours to stay in stand by", "hour");
-        addParameter("StartUpCost", &mStartUpCost, 0., &mAddStartUpCost, &mAddStartUpCost, "Cost paid when moving from \"off\" to \"on\" status while cold", "Currency");
-        addParameter("ShutDownCost", &mShutDownCost, 0., &mAddShutDownCost, &mAddShutDownCost, "Cost paid when moving from \"on\" to \"off\" status", "Currency");
+        addParameter("StartUpCost", &mStartUpCost, 0., &mAddStartUpCost, &mAddStartUpCost, "Cost paid when moving from \"off\" to \"on\" status while cold", pCurrency());
+        addParameter("ShutDownCost", &mShutDownCost, 0., &mAddShutDownCost, &mAddShutDownCost, "Cost paid when moving from \"on\" to \"off\" status", pCurrency());
 
     }
 //----------------------------------------------------------------------------------------------------
@@ -80,9 +81,7 @@ public:
         declareDefaultModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addIO("State", &mExpState, true, "bool") ;      /** ON OFF state of the element connected to ramp */
-        addControlIO("StartUp", &mExpStartUp, true, "bool", &mHistStartUp);
-        addControlIO("ShutDown", &mExpShutDown, true, "bool", &mHistShutDown);
+        //...
 
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         // no ...
@@ -95,11 +94,10 @@ public:
     void declareModelIndicators() {
         OperationSubModel::declareDefaultModelIndicators();
 
-        QString currency = mParentCompo->Currency();
         mInputIndicators->addIndicator("Undiscounted number of startups", &mNbStartUps, &mExportIndicators, "Total nb of startups (undiscounted)", "-", "NbStartUps");
         mInputIndicators->addIndicator("Undiscounted number of shutdowns", &mNbShutDowns, &mExportIndicators, "Total nb of shutdowns (undiscounted)", "-", "NbShutDowns");
-        mInputIndicators->addIndicator("Levelized cost of startups", &mLevStartUpsCost, &mExportIndicators, "Levelized cost of startups", currency, "LevStartUpsCost");
-        mInputIndicators->addIndicator("Levelized cost of shutdowns", &mLevShutDownsCost, &mExportIndicators, "Levelized cost of shutdowns", currency, "LevShutDownsCost");
+        mInputIndicators->addIndicator("Levelized cost of startups", &mLevStartUpsCost, &mExportIndicators, "Levelized cost of startups", pCurrency(), "LevStartUpsCost");
+        mInputIndicators->addIndicator("Levelized cost of shutdowns", &mLevShutDownsCost, &mExportIndicators, "Levelized cost of shutdowns", pCurrency(), "LevShutDownsCost");
     }
 
     void computeAllIndicators(const double* optSol) override;
@@ -111,18 +109,16 @@ public:
     void initDefaultPorts() {
         mDefaultPorts.clear();
         //PortState - bottom
-        QMap<QString, QString> portState;
+        std::map<std::string, std::string> portState;
         portState["Name"] = "PortB0";
         portState["Position"] = "bottom";
         portState["CarrierType"] = ANY_TYPE();
         portState["Direction"] = KDATA();
         portState["Variable"] = "State";
-        mDefaultPorts.insert("PortState", portState);
+        mDefaultPorts["PortState"] = portState;
     }
 
 protected:
-    std::vector<double> mConverterUse;      /** time series for converter use availability */
-
     //indicators
     std::vector<double> mNbStartUps;
     std::vector<double> mNbShutDowns;
@@ -138,9 +134,6 @@ protected:
     double mMinProductionTime;
     double mStartUpCost;
     double mShutDownCost;
-
-    MIPModeler::MIPData1D mHistStartUp;
-    MIPModeler::MIPData1D mHistShutDown;
 
     MIPModeler::MIPExpression1D mExpStartUpCosts;
     MIPModeler::MIPExpression1D mExpShutDownCosts;

@@ -6,7 +6,7 @@
 class CAIRNCORESHARED_EXPORT OperationSubModel : public SubModel
 {
 public:
-    OperationSubModel(QObject* aParent=nullptr);
+    OperationSubModel(CairnObject* aParent=nullptr);
     ~OperationSubModel();
 
     void buildModel();
@@ -20,26 +20,31 @@ public:
         addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");          /** Use LP Model - ie binary variable imposed if true */
     }
 
-    void declareDefaultModelParameters() { 
+    void declareDefaultModelParameters() 
+    { 
     }
 
     void declareDefaultModelInterface()
     {
         SubModel::declareDefaultModelInterface();
         addIO("VariableCosts", &mExpVariableCosts, true, mCurrency);    /** Computed variable costs resulting from ramp cost */
+        addIO("State", &mExpState, &mAddStateVariable, "bool");  /** ON OFF state of the element connected to ramp */
+        addControlIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool", &mHistStartUp);
+        addControlIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool", &mHistShutDown);
     }
 
     void declareDefaultModelIndicators() {
-        QString currency = mParentCompo->Currency(); //for codeAnalyzer.py
-        mInputIndicators->addIndicator("Opex part", &mVariableCosts, &mExportIndicators, "Total cost of operation constraint", currency, "Opex");
+        mInputIndicators->addIndicator("Opex part", &mVariableCosts, &mExportIndicators, "Total cost of operation constraint", pCurrency(), "Opex");
     }
 
 protected:
+    //expressions
+    MIPModeler::MIPExpression1D mExpVariableCosts;                       
+
     //indicators
     std::vector<double> mVariableCosts;
 
-    MIPModeler::MIPExpression1D mExpVariableCosts;                       
-
+    //methods
     virtual bool defineDefaultVarNames(MilpPort* port);
 };
 

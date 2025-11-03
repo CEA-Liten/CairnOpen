@@ -3,13 +3,12 @@
 
 class SourceLoadCompo ;
 
-#include <QVector>
-#include <QDataStream>
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
 #include "MilpComponent.h"
 #include "CairnCore_global.h"
 #include "ModelFactory.h"
+#include "SourceLoadSubModel.h"
 
 /**
  * \brief The Load class provides functionnalities for IMPOSING time series energy flux load (sens =1) or time series energy flux source (sens=-1).\\
@@ -18,10 +17,8 @@ class SourceLoadCompo ;
  * \indent MILP Optimization on the weight of this component makes sense and yield relaxation of the problem !\\
  * \indent Weight parameter can still be set by outside optimization of the design
  */
-/** Use specific createZEVariablesList         for interface definition with PEGASE GUI        */
 /** Use specific setParameters                 for interface with User Data                    */
 /** Use specific prepareOptim                  for variable initialization from PEGASE coupling*/
-/** Use specific initProblem                   for MIP problem init, model creation & checkings*/
 /** Use generic MilpComponent::buildProblem()  for optimal problem building                    */
 /** - Build Model component behaviour : refer to model/buildModel()                            */
 /** - define behaviour model and associated Variables                                          */
@@ -36,15 +33,13 @@ class SourceLoadCompo ;
 class CAIRNCORESHARED_EXPORT SourceLoadCompo : public MilpComponent
 {
 public:
-    SourceLoadCompo(QObject* aParent, const QMap<QString, QString>& aComponent, const QMap<QString, QMap<QString, QString>>& aPorts,
+    SourceLoadCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map<std::string, std::map<std::string, std::string>>& aPorts,
         MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
 
     virtual ~SourceLoadCompo();
   
     void declareCompoInputParam();
-    void setCompoInputParam(const QMap<QString, QString> aComponent);
-
-    void setCompoSens(const QString& direction);
+    void setCompoInputParam(const std::map<std::string, std::string> aComponent);
 };
 
 #endif // SourceLoadCompo_H

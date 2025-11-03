@@ -31,6 +31,9 @@ public:
     FlagParam();
     void set_Value(t_flag a_Flag);
     bool get_Value();
+
+    bool is_Scalar();
+
 private:
     bool m_Value;
     bool* p_Value;

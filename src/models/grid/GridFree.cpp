@@ -9,13 +9,13 @@
 //---------------------------------------------------------------------------
 
 #include "GridFree.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new GridFree(aParent);
 }
 
 //---------------------------------------------------------------------------
-GridFree::GridFree(QObject* aParent) : GridSubModel(aParent),
+GridFree::GridFree(CairnObject* aParent) : GridSubModel(aParent),
 mSeasonalCosts(false),
 mSeasonalCostsFree(false),
 mUseConstantPrice(false),
@@ -44,13 +44,10 @@ void GridFree::setTimeData() {
 
 void GridFree::computeModelContribution()
 {
-    //setExpSizeMax(mMinSize, mMaxFlux, "MaxFlux");
     addVariable(mVarFluxGrid,"GFx", fabs(mMinFlux), fabs(mMaxFlux));
     
-    addStateConstraints(varMilpHorizon());
-
     for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpFlux[t] = mVarFluxGrid(t) * mGridUse[t];
+        mExpFlux[t] = mVarFluxGrid(t) * mComponentAvailabilityTS[t];
     }
 
     for (uint64_t t = 0; t < mHorizon; t++) {
@@ -74,7 +71,7 @@ void GridFree::computeModelContribution()
         }
     }
 
-    if (mSens < 0) {
+    if (Sens() < 0) {
         mEnergyPrice = mSellPrice;
     }
     else {
@@ -84,9 +81,9 @@ void GridFree::computeModelContribution()
     // fill mTemporalPrice here because used in GAMS and computeEconomicalContribution()
     mTemporalPrice.assign(mEnergyPrice.begin(), mEnergyPrice.end());
     if (mUseConstantPrice) {
-        qInfo() << "Using grid constant price instead of the one defined in the energy vector.";
+        cInfo() << "Using grid constant price instead of the one defined in the energy vector.";
         for (uint64_t t = 0; t < mHorizon; t++) {
-            if (mSens > 0) {
+            if (Sens() > 0) {
                 mTemporalPrice[t] = mConstantBuyPrice * mPriceMultiplier;
             } else {
                 mTemporalPrice[t] = mConstantSellPrice * mPriceMultiplier;
@@ -99,14 +96,14 @@ void GridFree::computeModelContribution()
         }
     }
     if (mSeasonalPrevisions) {
-        qInfo() << "Overwriting grid price by seasonal price on the forecasting part of the time horizon.";
+        cInfo() << "Overwriting grid price by seasonal price on the forecasting part of the time horizon.";
         
         for (uint64_t t = mTimeStepBeginForecast; t < mHorizon; t++) {
             mTemporalPrice[t] = mBuyPriceSeasonal[t] * mPriceMultiplier;
         }
     }
     if (mSeasonalCostsFree) {
-        qInfo() << "Overwriting grid price by zero on the LP part of the time horizon.";
+        cInfo() << "Overwriting grid price by zero on the LP part of the time horizon.";
 
         for (uint64_t t = mMilpNpdt; t < mHorizon; t++) {
             mTemporalPrice[t] = 0;
@@ -120,7 +117,7 @@ void GridFree::computeModelContribution()
 
     ModelerInterface* pExternalModeler = mModel->getExternalModeler();
     if (pExternalModeler != nullptr) {
-        std::string compoName = SubModel::parent()->objectName().toStdString();
+        std::string compoName = SubModel::parent()->objectName();
         pExternalModeler->addText("");
         pExternalModeler->addComment("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         pExternalModeler->addComment(" add new GridFree component");
@@ -130,7 +127,7 @@ void GridFree::computeModelContribution()
         vParams.addParam(compoName + "_p_EnergyPrice", "k", mTemporalPrice);
         vParams.addParam(compoName + "_p_MaxFlow", fabs(mMaxFlux));
         vParams.addParam(compoName + "_p_MinFlow", fabs(mMinFlux));
-        vParams.addParam(compoName + "_p_Direction", mSens);
+        vParams.addParam(compoName + "_p_Direction", Sens());
         pExternalModeler->setModelData(vParams);
 
 
@@ -146,7 +143,7 @@ void GridFree::computeEconomicalContribution() {
 
     for (uint64_t t = 0; t < mHorizon; t++) {
         if (!(mSeasonalCostsFree && t>=mMilpNpdt)) { // do not compute variable costs if mSeasonalCostsFree is True and t >= mMilpNpdt (LP part of the horizon)
-            mExpVariableCosts[t] += mSens * TimeStep(t) * mExpFlux[t] * mTemporalPrice[t];
+            mExpVariableCosts[t] += Sens() * TimeStep(t) * mExpFlux[t] * mTemporalPrice[t];
         }
     }
 }

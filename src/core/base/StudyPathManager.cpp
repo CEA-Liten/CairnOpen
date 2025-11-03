@@ -1,9 +1,10 @@
 
 #include "StudyPathManager.h"
+#include "CairnLogger.h"
 #include <filesystem>
 namespace fs = std::filesystem;
-#include <QDebug>
-#include <QString>
+
+
 
 void StudyPathManager::setStudyName(const std::string& aStudyName)
 {
@@ -12,6 +13,7 @@ void StudyPathManager::setStudyName(const std::string& aStudyName)
 
     vStudy.remove_filename();
     mProjectDir = vStudy.string();
+
     if (mResultsDir == "" || mResultFile == "") {
         setResultsDir(mProjectDir);
     }
@@ -44,7 +46,7 @@ void StudyPathManager::setResultsDir(const std::string& aResultsDir)
             std::error_code ec;
             if (!fs::create_directory(vResultsPath, ec)) {
                 std::string vErrMsg = "Cannot create directory " + vResultsPath.string() + ", " + ec.message();
-                qCritical() << QString(vErrMsg.c_str());
+                cCritical() << vErrMsg;
             }
         }        
     }
@@ -101,7 +103,7 @@ void StudyPathManager::copyFileToScenarioDir(const std::string& aFilePath)
             std::error_code ec;
             if (!fs::remove(vResultsPath, ec)) {
                 std::string vErrMsg = "Error while deleting already existing file " + vResultsPath.string() + ", " + ec.message();
-                qCritical() << QString(vErrMsg.c_str());
+                cCritical() << vErrMsg;
             }
         }
 
@@ -110,7 +112,7 @@ void StudyPathManager::copyFileToScenarioDir(const std::string& aFilePath)
         fs::copy(vFilePath, vResultsPath, ec);
         if (ec.value()) {
             std::string vErrMsg = "Error while copying " + vFileName + " to " + vResultsPath.remove_filename().string();
-            qInfo() << QString(vErrMsg.c_str());
+            cError() << vErrMsg;
         }
     }
 }

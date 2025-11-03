@@ -27,7 +27,7 @@ The buy price (resp. the sell price) is that of the energy vector by default but
 class MODELS_DECLSPEC GridFree : public GridSubModel {
 public:
 //----------------------------------------------------------------------------------------------------
-    GridFree(QObject* aParent);
+    GridFree(CairnObject* aParent);
     ~GridFree();
 //-----------------------------------------------------------------------------------------------------
     void setTimeData() ;
@@ -53,8 +53,8 @@ public:
     void declareModelParameters() {
         GridSubModel::declareDefaultModelParameters();
 
-        addParameter("ConstantBuyPrice", &mConstantBuyPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), "Constant buy price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", "Currency/StorageUnit");
-        addParameter("ConstantSellPrice", &mConstantSellPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), "Constant sell price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", "Currency/StorageUnit");
+        addParameter("ConstantBuyPrice", &mConstantBuyPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), "Constant buy price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
+        addParameter("ConstantSellPrice", &mConstantSellPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), "Constant sell price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
         addParameter("PriceMultiplier", &mPriceMultiplier, 1., false, true, "Multiplier coefficient on price acting on constant prices or timeseries.", "-");            
     }
 
@@ -66,13 +66,13 @@ public:
     void initDefaultPorts() {
         mDefaultPorts.clear();
         //PortGridFlow - right
-        QMap<QString, QString> portGridFlow;
+        std::map<std::string, std::string> portGridFlow;
         portGridFlow["Name"] = "PortR0"; //Needed only old versions
         portGridFlow["Position"] = "right";
         portGridFlow["CarrierType"] = ANY_TYPE();
         portGridFlow["Direction"] = KPROD(); //OUTPUT but should be able to be changed
         portGridFlow["Variable"] = "GridFlow";
-        mDefaultPorts.insert("PortGridFlow", portGridFlow);  //ID, paramMap
+        mDefaultPorts["PortGridFlow"] = portGridFlow;  //ID, paramMap
     }
 
     void setPortPointers() {
@@ -80,8 +80,6 @@ public:
     }
 
 protected:     
-    MilpPort* mPortGridFlow;
-
     //technical input
     bool mSeasonalCosts ;
     bool mSeasonalCostsFree;

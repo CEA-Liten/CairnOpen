@@ -33,10 +33,6 @@ namespace CairnAPIUtils {
 		errLink = 16
 	};
 
-	static std::vector<std::string> mNonModifiableParams = {
-		"id", "type", "ModelClass", "Xpos", "Ypos"
-	}; //list of parameters that cannot be modified
-
 	std::map<std::string, std::string> ParserTxt(const std::string& filename);
 
 	std::string convertTypeToUpperCase(const std::string type);
@@ -46,9 +42,8 @@ namespace CairnAPIUtils {
 
 	// Lookup model types in sourceDir
 	static std::map<std::string, std::string> mModelTypes;
-	void initModelTypesMap(const std::string& sourceDir);
-	//void lookupModelTypes(const std::string& sourceDir);
-
+	void initModelTypesMap();
+	
 	// Return the list of the all possibles model names
 	t_list get_Possible_Model_Names();
 
@@ -75,7 +70,13 @@ namespace CairnAPIUtils {
 	bool setParameters(std::vector<InputParam*> a_Inputs, const t_dict& a_Params);
 
 	t_list getShowConfigList(std::vector<InputParam*> a_Inputs);
-	t_value getShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+	std::string getParamShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+
+	bool getParamMandatoryValue(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+
+	bool isDependentParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+
+	std::string getParamUnit(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 
 	void setError(ECodeError a_Err, const std::string& a_msg = "");	
 }

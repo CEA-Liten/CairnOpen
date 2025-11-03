@@ -9,12 +9,12 @@
  */
 
 #include "Ramp.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new Ramp(aParent);
 }
 
-Ramp::Ramp(QObject* aParent)
+Ramp::Ramp(CairnObject* aParent)
     :OperationSubModel(aParent),
     mInitialValue(0.)
 {
@@ -32,7 +32,6 @@ void Ramp::setParameters(double aMinConstraintBusValue, double aMaxConstraintBus
 void Ramp::setTimeData()
 {
     SubModel::setTimeData();
-    mConverterUse.resize(mHorizon, 1.0);
     mRampUpLimit.resize(mHorizon);
     mRampDownLimit.resize(mHorizon);
 }
@@ -41,6 +40,8 @@ void Ramp::computeInitialData()
 {
     setMaxValue(mMaxWeight);
     setMinValue(mMinSize);
+
+    mAddStateVariable = mAddStartUpShutDownVariable;
 }
 
 void Ramp::computeModelContribution()
@@ -64,17 +65,9 @@ void Ramp::computeModelContribution()
         mExpInput[t] += mVarInput(t);
     }
 
-  // Integer variables: On/Off    
-  // -----------------------
-    if(mAllowShutDown) {
-        uint64_t nPdtCond = varMilpHorizon();
-        addStateConstraints(nPdtCond);
-        addStartUpShutDown(nPdtCond);
-    }
-
     // constraints
     // ===========
-    if (mAllowShutDown) {
+    if (mAddStartUpShutDownVariable) {
         addRelativeRampWithMinPower();
     }
     else {

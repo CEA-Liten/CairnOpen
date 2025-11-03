@@ -1,5 +1,5 @@
 {
-	"Saved with Cairn version": "5.0.12",
+	"Saved with Cairn version": "5.1.0",
 	"numberPages": 1,
 	"studyComment": "",
 	"mapParameters": {
@@ -796,7 +796,7 @@
 				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 40,
-				"x": 270,
+				"x": 212,
 				"y": 158,
 				"paramListJson": [
 					{
@@ -1019,7 +1019,7 @@
 				"headSocketName": "PortR0",
 				"listPoint": [
 					{
-						"x": 290,
+						"x": 232,
 						"y": 272
 					}
 				]

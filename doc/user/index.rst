@@ -8,10 +8,6 @@
   
 |
 
-  
-.. container:: center-text 
-
-
 .. admonition:: What is |cairn|?
 
 	- |cairn| is an optimizer tool for energy system studies. It allows to perform techno-economic and environmental analysis of energy systems 
@@ -33,43 +29,27 @@
 
    about_cairn/what_is_cairn
    about_cairn/installation
-   about_cairn/running_modes_of_cairn
 
-.. toctree::
+.. toctree:: 
    :maxdepth: 2
-   :caption: Theoretical elements
-
-   theoretical_elements/principles_cairn.rst
-   theoretical_elements/optimization_vs_simulation
-   theoretical_elements/milp
-   theoretical_elements/investment_decision
-   theoretical_elements/LCA
+   :caption: Cairn Open User Guide Lines
+   
+   cairn_open_user_guide_lines/general
+   cairn_open_user_guide_lines/time_management
+   cairn_open_user_guide_lines/input_output_files
+   cairn_open_user_guide_lines/economic_aspects
+   cairn_open_user_guide_lines/environmental_aspects
+   cairn_open_user_guide_lines/mixed_integer_linear_optimization
 
 .. ifconfig:: cea_content
 
    .. toctree::
       :maxdepth: 2
       :caption: Cairn Solus User Guide Lines
-
-      privateDoc/cairn_user_guide_lines/how_to_model
+	  
       privateDoc/cairn_user_guide_lines/how_to_perform
+    
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Cairn Open User Guide Lines
-
-   cairn_open_user_guide_lines/how_to_define_an_energy_carrier
-   cairn_open_user_guide_lines/how_to_make_a_cairn_timeseries_file
-   cairn_open_user_guide_lines/how_to_make_a_performance_map_file
-   cairn_open_user_guide_lines/What_are_the_input_and_output_files_of_a_cairn_simulation
-   cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects
-   cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts
-   cairn_open_user_guide_lines/how_to_take_into_account_environmental_aspects
-   cairn_open_user_guide_lines/What_are_the_input_and_output_files_of_a_cairn_simulation
-   cairn_open_user_guide_lines/how_to_model_multiconverter
-   cairn_open_user_guide_lines/rolling_horizon
-
-   
 .. toctree::
    :maxdepth: 2
    :caption: Cairn Viewer Guide 
@@ -87,42 +67,53 @@
     :caption: API Guide
 
     api_guide/commands
+    api_guide/notebook
 
-.. toctree::
-    :maxdepth: 3
-    :caption: Components description
-    
-    models/models
 
-.. ifconfig:: cea_content
-
-   .. toctree::
-      :maxdepth: 2
-      :caption: Cairn Solus components
-    
-      privateDoc/models/modelSolus_toc
-
-.. toctree::
-    :maxdepth: 2
-    :caption: Guidelines and examples
-
-    guidelines_examples/simple_case
-    guidelines_examples/rolling_horizon
-    guidelines_examples/performance_maps
-    guidelines_examples/time_agregation
-    guidelines_examples/converter_advanced_use
-	
 .. toctree:: 
    :maxdepth: 2
    :caption: Advanced features
 
    privateDoc/advanced_features/pegase_cairn
    privateDoc/advanced_features/develop_model_with_installer
-   privateDoc/advanced_features/cplex
-   privateDoc/advanced_features/better_write_milp_pb
    privateDoc/advanced_features/cairn_Uranie
    privateDoc/advanced_features/Transport_network
    privateDoc/advanced_features/investment_phases
+   privateDoc/cairn_user_guide_lines/how_to_perform/how_to_perform_a_sensitivity_study
+   privateDoc/cairn_user_guide_lines/how_to_perform/how_to_perform_sizing_optimization
+   privateDoc/cairn_user_guide_lines/how_to_perform/uncertainties_analysis
+
+.. toctree::
+    :maxdepth: 3
+    :caption: Components description
+    
+    models/models
+    models/bus_toc
+    models/converter_toc
+    models/sourceload_toc
+    models/storage_toc
+    models/operationconstraint_toc
+
+.. toctree::
+    :maxdepth: 3
+    :caption: Cairn solus components description
+    
+    privateDoc/models/models
+    privateDoc/models/bus_toc
+    privateDoc/models/converter_toc
+    privateDoc/models/sourceload_toc
+    privateDoc/models/storage_toc
+    privateDoc/models/operationconstraint_toc
+    
+
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Guidelines and examples
+
+    guidelines_examples/converter_advanced_use
+	
+
 
 .. toctree::
    :maxdepth: 2

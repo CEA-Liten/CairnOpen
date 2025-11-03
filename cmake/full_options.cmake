@@ -41,13 +41,13 @@ set(MIPMODELER_HOME ${CMAKE_SOURCE_DIR}/lib/MIPModeler CACHE INTERNAL "MIPModele
 set(COINOR_ROOT ${MIPMODELER_HOME}/external/CoinOR CACHE INTERNAL "Cbc, Clp installation path")
 option(WITH_HIGHS_INSTALL "Highs install" ON) 
 option(WITH_EIGEN_INSTALL "Eigen install" ON) 
-#option(WITH_SPDLOG_INSTALL "Eigen install" ON) 
+option(WITH_SPDLOG_INSTALL "spdlog install" ON) 
 
 # Compilation of Cairn
 option(BUILD_CAIRN "build Cairn if ON" ON)
 set(CAIRN_HOME ${CMAKE_SOURCE_DIR}/src CACHE INTERNAL "Cairn installation path")
 set(CAIRNTESTS_HOME ${CMAKE_SOURCE_DIR}/tests CACHE INTERNAL "Cairn tests path")
-set(CAIRNMODELINTERFACE_HOME ${CAIRN_HOME}/ModelInterface CACHE INTERNAL "Cairn Model interface installation path")
+set(CAIRNMODELINTERFACE_HOME ${CAIRN_HOME}/modelInterface CACHE INTERNAL "Cairn Model interface installation path")
 set(CAIRN_DEFAULTSOLVER Cplex CACHE STRING "Cairn default solver")
 
 # Compilation of module for Pegase (needs to install Pegase in lib/PegaseInstall)

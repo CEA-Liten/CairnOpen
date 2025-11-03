@@ -105,21 +105,20 @@ def write_compo(problem):
     ely_pem.set_setting_value("AuxConso", ely_pem_df.at["AuxConso","paramValue"])
     assert ely_pem.get_setting_value("AuxConso") == 0.01
     #timeseries
-    ely_pem.set_setting_value("UseProfileConverterUse", "Availability")
-    assert ely_pem.get_setting_value("UseProfileConverterUse") == "Availability"
+    ely_pem.set_setting_value("ComponentAvailability", "Availability")
+    assert ely_pem.get_setting_value("ComponentAvailability") == "Availability"
 
 def add_grid(problem):
     my_GFSP = problem.create_component("Grid_Surplus", "GridFree")
-    my_GFSP.set_setting_value("Direction",'InjectToGrid')
     h2_bus = problem.get_bus("H2_Bus")
     port_GFSP = my_GFSP.get_port("PortR0")
     h2_carrier = problem.get_energy_carrier("H2")
     port_GFSP.set_carrier(h2_carrier)
     print(port_GFSP.settings)  
-    port_GFSP.set_setting_value("Direction", "INPUT") #Idéalement, il ne faudrait pas avoir besoin de cette ligne
+    port_GFSP.set_setting_value("Direction", "INPUT") 
     problem.add_link(port_GFSP, h2_bus)
     assert port_GFSP.get_setting_value("Direction") == "INPUT"
-    
+    assert my_GFSP.direction == "InjectToGrid"
     
 
 def read_energy_carriers(problem):
@@ -155,15 +154,6 @@ def write_energy_carrier(problem):
 
 def add_component(problem):
     my_pv_field = problem.create_component("PV", "SourceLoad")
-    my_pv_field.setting_values = {
-		"Direction": "Source" ,
-		"Weight": 1,
-		"Opex": 0 ,
-        "Capex":1000,
-		"MaxFlow": -10,
-		"EcoInvestModel": 1,
-        "UseProfileLoadFlux":"PVProduction"
-	    }
     elec_bus = problem.get_energy_carrier("ElectricityDistrib")
     defaultPorts = my_pv_field.default_ports
     assert len(defaultPorts) == 1
@@ -173,6 +163,14 @@ def add_component(problem):
     				"Direction": "OUTPUT",
     				"Variable": "SourceLoadFlow"
     		}
+    my_pv_field.setting_values = {
+	"Weight": 1,
+	"Opex": 0 ,
+    "Capex":1000,
+	"MaxFlow": -10,
+	"EcoInvestModel": 1,
+    "UseProfileLoadFlux":"PVProduction"
+	}
     assert my_pv_field.get_setting_value("UseProfileLoadFlux") == "PVProduction"
     my_pv_field.set_setting_value("UseProfileLoadFlux","WindFarmProduction")
     assert my_pv_field.get_setting_value("UseProfileLoadFlux") == "WindFarmProduction"
@@ -201,6 +199,24 @@ def initialize(problem):
 def run(problem, folder):
     return problem.run(folder)
 
+def add_label(problem):
+    problem.add_label("country")
+    problem.add_label("year")
+    problem.add_label("site")
+    problem.remove_label("year")
+    print(problem.labels)
+    # problem.labels = {"country", "year"}
+    # print(problem.labels)
+
+    assert len(problem.labels) == 2 and 'country' in problem.labels and 'site' in problem.labels
+
+    ely_pem = problem.get_component("ELY_PEM")
+    ely_pem.label_values = {"country": "France", "site": "Grenoble"}
+    print(ely_pem.label_values)
+
+    wind_farm = problem.get_component("Wind_farm")
+    wind_farm.set_label_value("country", "France")
+    wind_farm.set_label_value("site", "Noyarey")
 
 def get_plan_results(problem):
     ely_pem = problem.get_component("ELY_PEM")
@@ -217,6 +233,8 @@ def get_ts_results(problem):
     print(outputs)
     assert len(ely_pem.get_var_value("UsedPower")) > 0
     assert ely_pem.get_var_value("UsedPower")[0] > 0
+
+
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
@@ -276,8 +294,22 @@ def test_get_energy_carrier(problem):
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
+def test_add_udl(problem):
+    add_label(problem)
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
 def test_add_grid(problem):    
     add_grid(problem)
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+def test_add_port(problem):
+    ely_pem = problem.get_component("ELY_PEM")
+    carrier = problem.get_energy_carrier("ElectricityDistrib")
+    port_new = Port(ely_pem,"test_port",carrier)
+    assert port_new.carrier_name == "ElectricityDistrib"
+    ely_pem.remove_port(port_new, True)
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
@@ -359,15 +391,25 @@ def test_loop_on_all_models_twice():
                 print(f)
                 read_and_lauch_study_twice(f.replace(".json",""), app_home = root)
 
+
+
 if __name__ == '__main__':
     app_home = path.dirname(path.realpath(__file__))
     simu_full =  path.join(app_home, './data/cairn_training.json')    
     timeseries =  path.join(app_home, './data/cairn_training_dataseries.csv')    
     cairn_instance = CairnAPI(True)
     problem = cairn_instance.read_study(simu_full)
+
     #test_sequence_run_compare(problem)
-    add_grid(problem)
-    save(problem, "./cairn_training_new_grid.json")
+    #add_grid(problem)
+    #save(problem, "./cairn_training_new_grid.json")
+    add_label(problem)
+
+    save(problem, "./cairn_training_labels.json")
+
+    load_timeseries(problem, timeseries)
+    solution = problem.run("testDir")
+
     """
     #set_get_SimulationControl(problem)
     set_get_TecEcoAnalysis(problem)

@@ -265,7 +265,7 @@
 				"paramListJson": [
 					{
 						"key": "LHV",
-						"value": 1.
+						"value": 1.0
 					},
 					{
 						"key": "RHO",

@@ -3,13 +3,11 @@
 
 class GridCompo ;
 
-#include <QVector>
-#include <QDataStream>
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
 #include "MilpComponent.h"
 
-#include "SubModel.h"
+#include "GridSubModel.h"
 #include "CairnCore_global.h"
 #include "ModelFactory.h"
 
@@ -20,10 +18,8 @@ class GridCompo ;
  * \indent MILP Optimization on the weight of this component makes no sense and yield non linearity !\\
  * \indent Weight parameter can still be set by outside optimization of the design
  */
-/** Use specific createZEVariablesList         for interface definition with PEGASE GUI        */
 /** Use specific setParameters                 for interface with User Data                    */
 /** Use specific prepareOptim                  for variable initialization from PEGASE coupling*/
-/** Use specific initProblem                   for MIP problem init, model creation & checkings*/
 /** Use generic MilpComponent::buildProblem()  for optimal problem building                    */
 /** - Build Model component behaviour : refer to model/buildModel()                            */
 /** - define behaviour model and associated Variables                                          */
@@ -38,7 +34,7 @@ class GridCompo ;
 class CAIRNCORESHARED_EXPORT GridCompo : public MilpComponent
 {
 public:
-    GridCompo(QObject* aParent, const QMap<QString, QString>& aComponent, const QMap<QString, QMap<QString, QString>>& aPorts,
+    GridCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map<std::string, std::map<std::string, std::string>>& aPorts,
         MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
 
     virtual ~GridCompo();
@@ -47,17 +43,14 @@ public:
     void readTSVariablesFromModel();
 
     void declareCompoInputParam();
-    void setCompoInputParam(const QMap<QString, QString> aComponent);
+    void setCompoInputParam(const std::map<std::string, std::string> aComponent);
 
-    int initProblem(const bool& readParams=true);
     int setParameters();
     
-    void setCompoSens(const QString& direction);
-
 protected:
     // Model interface
-    QString mEnergyPriceProfileName ;  /** Grid energy price profile name */
-    QString mEnergyPriceProfileNameSeasonal ;  /** Grid energy price profile name */
+    std::string mEnergyPriceProfileName ;  /** Grid energy price profile name */
+    std::string mEnergyPriceProfileNameSeasonal ;  /** Grid energy price profile name */
 };
 
 #endif // GridCompo_H

@@ -1,30 +1,30 @@
 #include "GridSubModel.h"
 
-GridSubModel::GridSubModel(QObject* aParent) :
+GridSubModel::GridSubModel(CairnObject* aParent) :
 TechnicalSubModel(aParent) ,
 mAddVariableMaxFlow(false),
 mMaxFlux(1.e4),
 mMinFlux(0.)
 { 
-    mSens = 1.;
 }
 
 GridSubModel::~GridSubModel() { }
 
 void GridSubModel::setTimeData()
 {
-    SubModel::setTimeData();
+    TechnicalSubModel::setTimeData();
     mEnergyPrice.resize(mHorizon);
     mSellPrice.resize(mHorizon);
     mBuyPrice.resize(mHorizon);
     mBuyPriceSeasonal.resize(mHorizon);
-    mGridUse.resize(mHorizon);
     mGridVariableMaxFlow.resize(mHorizon);
 }
 
 void GridSubModel::computeInitialData() {
     setMaxValue(mMaxFlux);
     setMinValue(mMinSize); 
+
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 void GridSubModel::computeAllIndicators(const double* optSol)
@@ -40,34 +40,30 @@ void GridSubModel::computeAllIndicators(const double* optSol)
     if (mOptimalSize.size() > 0)
         mOptimalSizeAllCycles.push_back(mOptimalSize.at(0));
 
-    MilpPort* port;
-    QListIterator<MilpPort*> iport(mListPort);
     bool firstPort = true;
-    while (iport.hasNext())
-    {
-        port = iport.next();
-        QString portName = port->Name();
-        QString varName = port->Variable();
-        QString storageName = port->ptrEnergyVector()->StorageName();
-        QString storageUnit = port->ptrEnergyVector()->StorageUnit();
-        QString fluxUnit = port->ptrEnergyVector()->FluxUnit();
-        QString fluxName = port->ptrEnergyVector()->FluxName();
+    for (auto &port :mListPort) {    
+        std::string portName = port->Name();
+        std::string varName = port->Variable();
+        std::string storageName = port->getCarrier()->StorageName();
+        std::string storageUnit = port->getCarrier()->StorageUnit();
+        std::string fluxUnit = port->getCarrier()->FluxUnit();
+        std::string fluxName = port->getCarrier()->FluxName();
         bool isHeatCarrier = false;
-        if (port->ptrEnergyVector()) {
-            isHeatCarrier = port->ptrEnergyVector()->isHeatCarrier();
+        if (port->getCarrier()) {
+            isHeatCarrier = port->getCarrier()->isHeatCarrier();
         }
 
         if (isHeatCarrier)
         {
-            fluxName = fluxName + " at " + QString::number(port->ptrEnergyVector()->Potential()) + " degC";
-            storageName = storageName + " at " + QString::number(port->ptrEnergyVector()->Potential()) + " degC";
+            fluxName = fluxName + " at " + std::to_string(port->getCarrier()->Potential()) + " degC";
+            storageName = storageName + " at " + std::to_string(port->getCarrier()->Potential()) + " degC";
         }
 
         double aPort = port->VarCoeff();
         double bPort = port->VarOffset();
 
-        QString sens;
-        if (mParentCompo->Sens() > 0) sens = "extraction";
+        std::string sens;
+        if (Sens() > 0) sens = "extraction";
         else sens = "injection";
 
         if (port->VarType() == "vector")
@@ -108,35 +104,20 @@ void GridSubModel::computeAllIndicators(const double* optSol)
     }
 }
 
-int GridSubModel::checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange, QString& varUseCheck)
+double GridSubModel::Sens()
 {
-    QString varName = port->Variable();
-    QString varUse = port->Direction();
-    MilpComponent* pParent = (MilpComponent*)parent();
-    mSens = pParent->Sens();
-    // Uncomplete description -> use default definitions functions of models
-    if (varName == "") {
-        if (mSens > 0) port->setDirection(KPROD()); //producer for balance bus - no sign change
-        else if (mSens < 0) port->setDirection(KCONS()); //consumer for balance bus - negative sign change required
-        port->setVariable("GridFlow");
-        qInfo() << "Use default Variable name to send from Component to BusFlowBalance bus " << (port->Variable());
+    std::string defaultPortDirection = (mPortGridFlow->Direction());
+    if (CairnUtils::upperCase(defaultPortDirection) == KCONS())
+    {
+        return -1.0; //"InjectToGrid" 
     }
-    if (varUse == "") {
-        if (mSens > 0) port->setDirection(KPROD()); //producer for balance bus - no sign change
-        else if (mSens < 0) port->setDirection(KCONS()); //consumer for balance bus - negative sign change required
-        qInfo() << "Use default Use to send from Component to BusFlowBalance bus " << (port->Direction());
+    else //if (CairnUtils::upperCase(defaultPortDirection) == KPROD().toStdString())
+    {
+        return +1.0; //"ExtractFromGrid" (includes port "DATAEXCHANGE")
     }
-    // user defined varname and varuse, check consistency against sink/source attribute !
-    if (mSens > 0 && varUse != KPROD() && PortList().size() == 1) { 
-        port->setDirection(KPROD()); qWarning() << "Variable Use reset to PRODUCER for consistency with Source attribute "; 
-    }
-    if (mSens < 0 && varUse != KCONS() && PortList().size() == 1) { 
-        port->setDirection(KCONS()); qWarning() << "Variable Use reset to CONSUMER for consistency with Source attribute ";
-    }
-    if (varUse == "") {
-        if (mSens > 0) port->setDirection(KPROD()); //producer for balance bus - no sign change
-        else if (mSens < 0) port->setDirection(KCONS()); //consumer for balance bus - negative sign change required
-        qInfo() << "Use default Use to send from Component to BusFlowBalance bus " << (port->Direction());    
-    }    
-    return 0;
+    //else {
+    //    //return 0.0;
+    //    Cairn_Exception error("Invalid direction " + defaultPortDirection + " of the default port of component " + Name().toStdString() + ". INPUT (InjectToGrid) or OUTPUT (ExtractFromGrid) is expected.", -1);
+    //    throw& error;
+    //}
 }

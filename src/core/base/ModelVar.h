@@ -17,42 +17,41 @@ typedef std::variant< MIPModeler::MIPExpression*, MIPModeler::MIPExpression1D*> 
 
 class ModelVar {
 public:
-    ModelVar(const QString& a_Name = "", const QString& a_Unit = "", const QString& a_Currency = "");
-    ModelVar(const QString& a_Name = "", const QString* pa_Unit = nullptr, const QString& a_Currency = "");
+    ModelVar(const std::string& a_Name = "", t_unit a_Unit = "");
+    ~ModelVar();
 
-    const QString& getName() const { return m_Name; };
-    QString getUnit() const;
-    const QString* getPtrUnit() const { return p_Unit; };
-    void setPtrUnit(const QString* p_Unit) { p_Unit = p_Unit; }
+    const std::string& getName() const { return m_Name; };
 
-private:
-    QString m_Unit;
-    const QString* p_Unit;
+    std::string getUnit() const;
+    void setUnit(t_unit a_Unit);
+
+    const UnitParam* pUnitParam() const { return &m_Unit; }; /* Used to dynamically pass the unit e.g. from ModelIO to the corresponding ZEVariables */
 
 protected:
-    QString m_Name;
-    QString m_Currency; //TODO: make currency dynamic!
+    std::string m_Name;
+    UnitParam m_Unit;
 };
 
+/*****************************************************************************************************/
 // RH, MPC 
 class ControlVar : public ModelVar
 {
 public:
-    ControlVar(const QString& aName,
+    ControlVar(const std::string& aName,
         double* ap_Value,
         double* ap_DefaultValue = nullptr,
         bool a_isMPC = true
     );
-    ControlVar(const QString& aName,
+    ControlVar(const std::string& aName,
         std::vector<double>* ap_Hist,
         double* ap_DefaultValue = nullptr,
         bool a_isMPC = true
     );
     ~ControlVar();
 
-    void subscribeMPC(const QString& a_CompName, t_mapExchange& a_Import);
+    void subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Import);
   
-    void set_Values(const QString& a_ControlMode,
+    void set_Values(const std::string& a_ControlMode,
         const InputParam::t_mapParams& a_Params,
         const class MilpData& a_MilpData,
         bool a_FirstInit
@@ -75,36 +74,20 @@ protected:
 
     // Spécifique MPC
     bool m_IsMPC{ true };
-    QString m_Prefix{ "MPC" }; // MPC par défaut   
+    std::string m_Prefix{ "MPC" }; // MPC par défaut   
     class ZEVariables* p_ZEVariable{ nullptr };
 };
+
+/*****************************************************************************************************/
 
 class ModelIO : public ModelVar
 {
 public:
-    ModelIO(const QString& aName = "", t_flag a_IsUsed = true, 
-        const QString& a_Unit = "", const QString& aCurrency = ""
-    );
-    ModelIO(const QString& aName,
-        MIPModeler::MIPExpression* aPtr, t_flag a_IsUsed = true,
-        const QString& a_Unit = "", const QString& aCurrency = ""
-    );
-    ModelIO(const QString& aName,
-        MIPModeler::MIPExpression1D* aPtr, t_flag a_IsUsed = true,
-        const QString& a_Unit = "", const QString& aCurrency = ""
-    );
-
-    ModelIO(const QString& aName = "", t_flag a_IsUsed = true,
-        const QString* a_Unit = nullptr, const QString& aCurrency = ""
-    );
-    ModelIO(const QString& aName,
-        MIPModeler::MIPExpression* aPtr, t_flag a_IsUsed = true,
-        const QString* a_Unit = nullptr, const QString& aCurrency = ""
-    );
-    ModelIO(const QString& aName,
-        MIPModeler::MIPExpression1D* aPtr, t_flag a_IsUsed = true,
-        const QString* a_Unit = nullptr, const QString& aCurrency = ""
-    );
+    ModelIO(const std::string& aName = "", t_flag a_IsUsed = true, t_unit a_Unit = "");
+    ModelIO(const std::string& aName, MIPModeler::MIPExpression* aPtr, 
+        t_flag a_IsUsed = true, t_unit a_Unit = "");
+    ModelIO(const std::string& aName, MIPModeler::MIPExpression1D* aPtr, 
+        t_flag a_IsUsed = true, t_unit a_Unit = "");
 
     const EIOModelType& getType() const { return m_Type; };
     bool IsUsed() { return m_IsUsed.get_Value(); };

@@ -355,7 +355,7 @@ def reOrderBasedOnList(list_report, all_filenames, list_order):
     #Order matched file in the same order as appears in list_order
     for element in list_order: 
         for report in list_report:
-            if report == "Report_s"+element or report == element:
+            if report == "Report_s"+str(element) or report == str(element):
                 ordered_reports.append(report)
                 i_report = list_report.index(report)
                 ordered_filenames.append(all_filenames[i_report])

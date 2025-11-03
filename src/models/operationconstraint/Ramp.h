@@ -38,7 +38,7 @@ class MODELS_DECLSPEC Ramp : public OperationSubModel
 {
 public:
 //----------------------------------------------------------------------------------------------------
-    Ramp(QObject* aParent);
+    Ramp(CairnObject* aParent);
     ~Ramp();
 //----------------------------------------------------------------------------------------------------
     void setTimeData();
@@ -50,7 +50,7 @@ public:
         OperationSubModel::declareDefaultModelConfigurationParameters();
         //bool
         addParameter("ConstantRamp", &mConstantRamp, true, false, true, "If true: the ramps are definied as a parameter else by dataseries","bool");
-        addParameter("AllowShutDown", &mAllowShutDown,false, false, true, "If true: the variable can break the ramp to jump from MinValue to 0. Else it is not possible.","bool");
+        addParameter("AllowShutDown", &mAddStartUpShutDownVariable,false, false, true, "If true: the variable can break the ramp to jump from MinValue to 0. Else it is not possible.","bool");
         addParameter("AddRampUpConstraint", &mAddRampUp, true, false, true, "If true: add a constraint on ramp up", "");
         addParameter("AddRampDownConstraint", &mAddRampDown, true, false, true, "If true: add a constraint on ramp down", "");
         addParameter("AddRampCost", &mAddRampCost, false, false, true, "If true: add ramp cost", "");
@@ -60,20 +60,19 @@ public:
     {
         OperationSubModel::declareDefaultModelParameters();
         //double
-        addParameter("MaxVariable", &mMaxWeight, 1., true, true, "Default 1: Maximum of connected variable. If negative optimized between 0 and absolute value and Component Size has to be connected.","Flux");
-        addParameter("MinInput", &mMinInput, 0., &mAllowShutDown, &mAllowShutDown,"Min abolute when weight is 1 relative else associated to the variable connected ", " * ComponentSize * MaxInput");
+        addParameter("MaxVariable", &mMaxWeight, 1., true, true, "Default 1: Maximum of connected variable. If negative optimized between 0 and absolute value and Component Size has to be connected.", mMainCarrier->pFluxUnit());
+        addParameter("MinInput", &mMinInput, 0., &mAddStartUpShutDownVariable, &mAddStartUpShutDownVariable,"Min abolute when weight is 1 relative else associated to the variable connected ", "ComponentSize * MaxInput");
        
         addParameter("ConstantRampUpLimit", &mConstantRampUpLimit, 0., SFunctionFlag({ eFTypeNotAnd, {},  { &mConstantRamp, &mAddRampUp} }), SFunctionFlag({ eFTypeNotAnd, {},  { &mConstantRamp, &mAddRampUp} }), "Constant ramp up value (rate of MaxComponentSize)", "-/hour");
         addParameter("ConstantRampDownLimit", &mConstantRampDownLimit, 0., SFunctionFlag({ eFTypeNotAnd, {},  { &mConstantRamp, &mAddRampDown} }), SFunctionFlag({ eFTypeNotAnd, {},  { &mConstantRamp, &mAddRampDown} }), "Constant ramp down value (rate of MaxComponentSize)", "-/hour");
 
-        addParameter("RampCost", &mRampCost, 0., &mAddRampCost, &mAddRampCost, "", "Currency/Flux");
-        addParameter("MinSize", &mMinSize, 0., false, 1, "Minimal size of the component", "StorageUnit", "EcoInvestModel"); /** Minimum capacity  */
+        addParameter("RampCost", &mRampCost, 0., &mAddRampCost, &mAddRampCost, "", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pFluxUnit()} }));
+        addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", mMainCarrier->pStorageUnit(), "EcoInvestModel"); /** Minimum capacity  */
 
 
         //vector
         addTimeSeries("RampUpLimit", &mRampUpLimit, false, SFunctionFlag({ eFTypeNotAnd, {&mConstantRamp},  {&mAddRampUp} }), "Ramp up limit compared to MaxComponentSize per hour.", "-/hour");
         addTimeSeries("RampDownLimit", &mRampDownLimit, false, SFunctionFlag({ eFTypeNotAnd, {&mConstantRamp},  {&mAddRampDown} }), "Ramp down limit compared to MaxComponentSize per hour.", "-/hour");
-        addTimeSeries("UseProfileConverterUse", &mConverterUse, false, true, "Time series of 0-1 when equal to 0 the ramp constraint is desactivated", "-");
     }
 //----------------------------------------------------------------------------------------------------
 
@@ -82,13 +81,8 @@ public:
         OperationSubModel::declareDefaultModelInterface();
         
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("ComponentSize", &mExpSizeMax, true, mEnergyVector->pFluxUnit()); // multiplier of the size of the ramp
-        addControlIO("ConnectRamp", &mExpInput, true, mEnergyVector->pFluxUnit(), &mHistInput, &mInitialValue);
-
-        //AllowShutDown
-        addIO("State", &mExpState, &mAllowShutDown, "bool");  /** ON OFF state of the element connected to ramp */
-        addIO("StartUp", &mExpStartUp, &mAllowShutDown, "bool");
-        addIO("ShutDown", &mExpShutDown, &mAllowShutDown, "bool");
+        addSizeMaxIO("ComponentSize", &mExpSizeMax, true, mMainCarrier->pFluxUnit()); // multiplier of the size of the ramp
+        addControlIO("ConnectRamp", &mExpInput, true, mMainCarrier->pFluxUnit(), &mHistInput, &mInitialValue);
 
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         addExp(&mExpWeight);
@@ -113,13 +107,13 @@ public:
     void initDefaultPorts() {
         mDefaultPorts.clear();
         //PortConnectRamp - bottom
-        QMap<QString, QString> portConnectRamp;
+        std::map<std::string, std::string> portConnectRamp;
         portConnectRamp["Name"] = "PortB0";
         portConnectRamp["Position"] = "bottom";
         portConnectRamp["CarrierType"] = ANY_TYPE(); //Should be "Electrical" ?!
         portConnectRamp["Direction"] = KDATA();
         portConnectRamp["Variable"] = "ConnectRamp";
-        mDefaultPorts.insert("PortConnectRamp", portConnectRamp);
+        mDefaultPorts["PortConnectRamp"] = portConnectRamp;
     }
 
     //void setPortPointers() {
@@ -147,10 +141,8 @@ protected:
 
     std::vector<double> mRampUpLimit;
     std::vector<double> mRampDownLimit;
-    std::vector<double> mConverterUse;      /** time series for converter use availability */
 
     bool mConstantRamp;
-    bool mAllowShutDown;
     bool mAddRampCost;
     bool mAddRampUp;
     bool mAddRampDown;

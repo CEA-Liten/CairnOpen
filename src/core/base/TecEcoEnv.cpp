@@ -1,18 +1,16 @@
 #include "GlobalSettings.h"
 #include "base/TecEcoEnv.h"
-#include <QFile>
-#include <QDebug>
 
 using namespace GS ;
 
-TecEcoEnv::TecEcoEnv(QObject* aParent, QString aName,
+TecEcoEnv::TecEcoEnv(CairnObject* aParent, std::string aName,
     const double aDiscountRate,
     const double aImpactDiscountRate,
     const unsigned int aNbYear,
     const unsigned int aNbYearInput,
     const unsigned int aLeapYearPos,
     const double aExtrapolationFactor,
-    QString aRange) : QObject(aParent),
+    std::string aRange) : CairnObject(aParent),
     mCurrency("EUR"),
     mObjectiveUnit("EUR"),
     mNbYear(aNbYear),
@@ -23,7 +21,6 @@ TecEcoEnv::TecEcoEnv(QObject* aParent, QString aName,
     mImpactDiscountRate(aImpactDiscountRate),
     mExtrapolationFactor(aExtrapolationFactor),
     mInternalRateOfReturn(-1.),
-    mRateOfReturnDiscountFactor(1.),
     mEnvImpactsList()
 {
     this->setObjectName(aName);
@@ -75,16 +72,15 @@ TecEcoEnv::TecEcoEnv(QObject* aParent, QString aName,
 }
 TecEcoEnv::~TecEcoEnv()
 {
-    if (mGUIData) delete mGUIData;
 } // ~TecEcoEnv()
 
-void TecEcoEnv::setCurrency (QString aCurrency)
+void TecEcoEnv::setCurrency (std::string aCurrency)
 {
     if (aCurrency != "") {
        mCurrency = aCurrency ;
     }
 }
-void TecEcoEnv::setRange (const QString aRange)
+void TecEcoEnv::setRange (const std::string aRange)
 {
     if (aRange != "") {
        mRange = aRange ;
@@ -119,15 +115,15 @@ void TecEcoEnv::setImpactDiscountRate(const double aImpactDiscountRate)
     mImpactDiscountRate = aImpactDiscountRate;
 }
 
-void TecEcoEnv::setEnvImpactsList(const QStringList aEnvImpactsList)
+void TecEcoEnv::setEnvImpactsList(const std::vector<std::string> aEnvImpactsList)
 {
     mEnvImpactsList = aEnvImpactsList;
 }
-void TecEcoEnv::setEnvImpactsShortNamesList(const QStringList aEnvImpactsShortNamesList)
+void TecEcoEnv::setEnvImpactsShortNamesList(const std::vector<std::string> aEnvImpactsShortNamesList)
 {
     mEnvImpactsShortNamesList = aEnvImpactsShortNamesList;
 }
-void TecEcoEnv::setEnvImpactUnitsList(const QStringList aEnvImpactUnitsList)
+void TecEcoEnv::setEnvImpactUnitsList(const std::vector<std::string> aEnvImpactUnitsList)
 {
     mEnvImpactUnitsList = aEnvImpactUnitsList;
 }
@@ -137,10 +133,10 @@ void TecEcoEnv::setEnvImpactCosts(const std::vector<double> aEnvImpactCosts)
 }
 
 
-void TecEcoEnv::setInternalRateOfReturn (const QString aInternalRateOfReturn)
+void TecEcoEnv::setInternalRateOfReturn (const std::string aInternalRateOfReturn)
 {
     if (aInternalRateOfReturn != "") {
-        mInternalRateOfReturn = aInternalRateOfReturn.toDouble() ;
+        mInternalRateOfReturn = std::stod(aInternalRateOfReturn) ;
     }
 }
 void TecEcoEnv::setInternalRateOfReturn (const double aInternalRateOfReturn)

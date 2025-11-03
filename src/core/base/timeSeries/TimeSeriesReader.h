@@ -1,6 +1,6 @@
 #ifndef  TIMESERIESREADER_H
 #define TIMESERIESREADER_H
-#include <QString>
+
 
 #include "ZEVariables.h"
 

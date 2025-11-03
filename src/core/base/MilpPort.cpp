@@ -1,21 +1,17 @@
 #include "Cairn_Exception.h"
-#include "base/MilpPort.h"
+#include "MilpPort.h"
 #include "GlobalSettings.h"
 
 using namespace GS;
 
-MilpPort::MilpPort(QObject *aParent, QString aID, QString aName, const QMap<QString, QString> aPort): QObject(aParent),
+MilpPort::MilpPort(CairnObject *aParent, std::string aID, std::string aName, const std::map<std::string, std::string> aPort): CairnObject(aParent),
     mID(aID),
-    mName(aName),
-    mPosition(aPort["Position"]),
-    mCarrierName(aPort["Carrier"]),
-    mCarrierType(aPort["CarrierType"]),
+    mPosition(CairnUtils::getParam(aPort,"Position")),
+    mCarrierType(CairnUtils::getParam(aPort,"CarrierType")),
     mIsDefaultPort(false), 
-    mIsEnabled(aPort["Enabled"]),
-    mCompoName(aPort["CompoName"]),
-    mLinkedComponent(aPort["LinkedComponent"]), //Linked Bus name
+    mIsEnabled(CairnUtils::getParam(aPort,"Enabled")),
     mBusType(""), //BusFlowBalance, BusSameValue, or MultiObjCompo 
-    mBusPortName(aPort["BusPortName"]), //The name of the linked Bus port  
+    mBusPortName(CairnUtils::getParam(aPort,"BusPortName")), //The name of the linked Bus port  
     mBusPortPosition(""), //The position of the linked Bus port  
     mFluxUnit(nullptr),
     mStorageUnit(nullptr),
@@ -23,17 +19,18 @@ MilpPort::MilpPort(QObject *aParent, QString aID, QString aName, const QMap<QStr
     mMassUnit(nullptr),
     mPotentialUnit(nullptr)
 {
-      this->setObjectName(aName);
-
-      mInputParam = new InputParam(this, "InputParam" + mName);
-      declareParameters();
-      setParameters(aPort);
+    setName(aName);
+    setObjectType("MilpPort");
+    setCompoName(CairnUtils::getParam(aPort, "CompoName"));
+    mInputParam = new InputParam(this, "InputParam" + Name());
+    declareParameters();
+    setParameters(aPort);
 }
 
 MilpPort::~MilpPort()
 {
-    mptrLinkedComponent = nullptr;
-    mEnergyVector = nullptr;
+    mLinkedBus = nullptr;
+    mCarrier = nullptr;
     mFluxUnit = nullptr;
     mStorageUnit = nullptr;
     mPowerUnit = nullptr;
@@ -43,6 +40,24 @@ MilpPort::~MilpPort()
     mPotential.clear();
     if (mInputParam) delete mInputParam;
 }
+
+std::string MilpPort::CarrierName()
+{
+    if (mCarrier) {
+        return mCarrier->Name();
+    }
+    return "";
+}
+
+
+std::string MilpPort::LinkedBusName() 
+{
+    if (mLinkedBus) {
+        return mLinkedBus->Name();
+    }
+    return "";
+}
+
 
 int MilpPort::initProblem(const uint aNpdtTot)
 {
@@ -56,25 +71,20 @@ int MilpPort::initProblem(const uint aNpdtTot)
 }
 
 void MilpPort::declareParameters() {
-    //QString
-    mInputParam->addParameter("Name", &mName, "", false, "Port name");
-    mInputParam->addParameter("Direction", &mDirection, "", false, "Port direction");
-    mInputParam->addParameter("Variable", &mVariable, "", true, "Port variable");
-    mInputParam->addParameter("CheckUnit", &mVarCheckUnit, "Yes", false, "Port checkUnit");
+    //std::string
+    mInputParam->addParameter("Direction", &mDirection, "", false, true, "Port direction");
+    mInputParam->addParameter("Variable", &mVariable, "", true, true, "Port variable");
+    mInputParam->addParameter("CheckUnit", &mVarCheckUnit, "Yes", false, true, "Port checkUnit");
     //double
-    mInputParam->addParameter("Coeff", &mVarCoeff, 1., false, "Port coeff");
-    mInputParam->addParameter("Offset", &mVarOffset, 0., false, "Port offset");
+    mInputParam->addParameter("Coeff", &mVarCoeff, 1., false, true, "Port coeff");
+    mInputParam->addParameter("Offset", &mVarOffset, 0., false, true, "Port offset");
 }
 
-void MilpPort::setParameters(const QMap<QString, QString>& portParams) 
+void MilpPort::setParameters(const std::map<std::string, std::string>& portParams) 
 {
-    QString previousName = mName;
     mInputParam->readParameters(portParams);
-    if (mName == "") {
-        mName = previousName;
-    }
 
-    if (portParams["IsDefaultPort"] == "Yes") {
+    if (CairnUtils::getParam(portParams, "IsDefaultPort") == "Yes") {
         mIsDefaultPort = true;
     }
     
@@ -97,13 +107,12 @@ void MilpPort::setParameters(const QMap<QString, QString>& portParams)
     setPosition();
 }
 
-void MilpPort::completePortInfo(QMap<QString, QString>& portParams) {
+void MilpPort::completePortInfo(std::map<std::string, std::string>& portParams) {
     //portParams.remove("Direction");
     //portParams.remove("Variable");
     mInputParam->readParameters(portParams);
-    mCarrierName = portParams["Carrier"];
-    mCompoName = portParams["CompoName"];
-    mLinkedComponent = portParams["LinkedComponent"];
+    setName(portParams["Name"]);
+    setCompoName(portParams["CompoName"]);
     mBusPortName = portParams["BusPortName"];
     mPosition = portParams["Position"];
     setPosition();
@@ -127,37 +136,36 @@ void MilpPort::setPosition()
     }
 }
 
-void MilpPort::setPortType(QString aBusType)
+void MilpPort::setPortType(std::string aBusType)
 {
     mBusType=aBusType;
 }
 
-QString MilpPort::getFluxUnit() const 
+std::string MilpPort::FluxUnit() const 
 {
     if (mFluxUnit) return *mFluxUnit;
     return "";
 }
-QString MilpPort::getStorageUnit() const 
+std::string MilpPort::StorageUnit() const 
 {
     if (mStorageUnit) return *mStorageUnit;
     return "";
 }
-QString MilpPort::getPotentialUnit() const 
+std::string MilpPort::PotentialUnit() const 
 {
     if (mPotentialUnit) return *mPotentialUnit;
     return "";
 }
 
-void MilpPort::setEnergyVector(EnergyVector* aptrEnergyVector) 
+void MilpPort::setCarrier(EnergyVector* aptrEnergyVector)
 { 
-    mEnergyVector = aptrEnergyVector; 
-    if (mEnergyVector) {
-        mCarrierName = mEnergyVector->Name();
-        mFluxUnit = mEnergyVector->pFluxUnit();
-        mStorageUnit = mEnergyVector->pStorageUnit();
-        mPowerUnit = mEnergyVector->pPowerUnit();
-        mMassUnit = mEnergyVector->pMassUnit();
-        mPotentialUnit = mEnergyVector->pPotentialUnit();
+    mCarrier = aptrEnergyVector; 
+    if (mCarrier) {
+        mFluxUnit = mCarrier->pFluxUnit(); 
+        mStorageUnit = mCarrier->pStorageUnit();
+        mPowerUnit = mCarrier->pPowerUnit();
+        mMassUnit = mCarrier->pMassUnit();
+        mPotentialUnit = mCarrier->pPotentialUnit();
         //if (mIsDefaultPort) { //What about old studies?!
         //    MilpComponent* lptrCompo = (MilpComponent*)this->parent();
         //    if (lptrCompo) {
@@ -167,18 +175,14 @@ void MilpPort::setEnergyVector(EnergyVector* aptrEnergyVector)
     }
 }
 
-void MilpPort::setptrLinkedComponent(MilpComponent* aptrLinkedComponent) {
-    mptrLinkedComponent = aptrLinkedComponent;
-    if (mptrLinkedComponent) {
-        mLinkedComponent = mptrLinkedComponent->Name();
-    }
+void MilpPort::setLinkedBus(MilpComponent* aLinkedBus) {
+    mLinkedBus = aLinkedBus;
 }
 
-void MilpPort::DeleteptrLinkedComponent()
+void MilpPort::DeleteLinkedBus()
 {    
-    if (mptrLinkedComponent) {
-        mptrLinkedComponent = nullptr;
-        mLinkedComponent = QString("");
+    if (mLinkedBus) {
+        mLinkedBus = nullptr;
     }
 }
 
@@ -198,13 +202,12 @@ void MilpPort::setPotential(const unsigned int &aTime, MIPModeler::MIPExpression
     mPotential[aTime] = mVarCoeff * aFluxExpression + mVarOffset ;
 }
 
-void MilpPort::jsonSaveGUIPortsData(QJsonArray &nodePortArray, const bool& isBusPort)
-{
-    QJsonObject nodePort;
-    QString portId = mID;
-    QString portName = mName;
-    QString position = mPosition;
-    QString defaultport = No();
+void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusPort)
+{  
+    std::string portId = mID;
+    std::string portName = Name();
+    std::string position = mPosition;
+    std::string defaultport = No();
     if (mIsDefaultPort) defaultport = Yes();
     if (isBusPort) {
         /**
@@ -212,29 +215,31 @@ void MilpPort::jsonSaveGUIPortsData(QJsonArray &nodePortArray, const bool& isBus
         * Only change the port ID and port Name, 
         * and always define it as a non-default port
         */
-        portId = "port" + QString::number(nodePortArray.count() + 1);
+        portId = "port" + std::to_string(nodePortArray.size() + 1);
         portName = mBusPortName;
         position = mBusPortPosition;
         defaultport = No();
     }
-    nodePort.insert("id", portId);
-    nodePort.insert("name", portName);
-    nodePort.insert("position", position);
-    nodePort.insert("carrier", mCarrierName); 
-    nodePort.insert("carrierType", mCarrierType);
-    nodePort.insert("direction", mDirection);
-    nodePort.insert("variable", mVariable);
-    nodePort.insert("coeff", mVarCoeff);
-    nodePort.insert("offset",mVarOffset) ;
-    nodePort.insert("checkunit",mVarCheckUnit);
-    nodePort.insert("defaultport", defaultport);
-    nodePort.insert("enabled", mIsEnabled);
+    ojson nodePort = ojson{
+            {"id", portId},
+            {"name", portName},
+            {"position", position},
+            {"carrier", CarrierName()},
+            {"carrierType", mCarrierType},
+            {"direction", mDirection},
+            {"variable", mVariable},
+            {"coeff", mVarCoeff},
+            {"offset",mVarOffset},
+            {"checkunit",mVarCheckUnit},
+            {"defaultport", defaultport},
+            {"enabled", mIsEnabled}
+    };
     nodePortArray.push_back(nodePort);
 }
 
 
 std::string MilpPort::GAMSVarName()
 {
-    QString aGAMSVarName = mCompoName + "_v_" + mVariable;
-    return aGAMSVarName.toStdString ();
+    std::string aGAMSVarName = CompoName() + "_v_" + mVariable;
+    return aGAMSVarName;
 }

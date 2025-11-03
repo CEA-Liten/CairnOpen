@@ -7,18 +7,17 @@
 */
 
 #include "SourceLoad.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new SourceLoad(aParent);
 }
 
-SourceLoad::SourceLoad(QObject* aParent) : 
+SourceLoad::SourceLoad(CairnObject* aParent) :
     SourceLoadSubModel(aParent),
     mTemperature_in1(0.),
     mTemperature_out1(0.),
     mHorizonTimeSpanRatio(1)
 {
-    mSens = -1.;
 }
 
 SourceLoad::~SourceLoad()
@@ -32,30 +31,7 @@ void SourceLoad::setTimeData()
     mImposedFluxSeasonal.resize(mHorizon);
     mEnergyPrice.resize(mHorizon);
     mMaxSheddingTS.resize(mHorizon);
-    mCostSheddingTS.resize(mHorizon);  
-}
-
-int SourceLoad::checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange, QString& varUseCheck)
-{
-    int ierr = SourceLoadSubModel::checkBusFlowBalanceVarName(port, inumberchange, varUseCheck);  
-    QString varUse = port->Direction();
-    MilpComponent* pParent = (MilpComponent*)parent();
-    mSens = pParent->Sens();
-    // Uncomplete description -> use default definitions functions of models
-    if (varUse == "") {
-        if (mSens > 0) port->setDirection(KPROD()); //producer for balance bus - no sign change
-        else if (mSens < 0) port->setDirection(KCONS()); //consumer for balance bus - negative sign change required
-        qInfo() << "Use default Use to send from Component to BusFlowBalance bus " << (port->Direction());
-    }
-    // user defined varname and varuse, check consistency against sink/source attribute !
-    if (mSens > 0 && varUse != KPROD() && PortList().size() == 1) { port->setDirection(KPROD()); qWarning() << "Variable Use reset to PRODUCER for consistency with Source attribute "; }
-    if (mSens < 0 && varUse != KCONS() && PortList().size() == 1) { port->setDirection(KCONS()); qWarning() << "Variable Use reset to CONSUMER for consistency with Source attribute "; }
-    if (varUse == "") {
-        if (mSens > 0) port->setDirection(KPROD()); //producer for balance bus - no sign change
-        else if (mSens < 0) port->setDirection(KCONS()); //consumer for balance bus - negative sign change required
-        qInfo() << "Use default Use to send from Component to BusFlowBalance bus " << (port->Direction());      
-    }
-    return ierr;
+    mCostSheddingTS.resize(mHorizon);
 }
 
 int SourceLoad::checkConsistency()
@@ -63,69 +39,65 @@ int SourceLoad::checkConsistency()
     //int ier = TechnicalSubModel::checkConsistency();
     if (mWeight < 0 && (mUseControlledFlux == true || mUseWeightedFlux == true))
     {
-        qCritical() << " For linearity purpose, optimization of SourceLoad Weight " << mWeight << " requires mUseControlledFlux = false and mUseWeightedFlux = false ! " << mUseControlledFlux << mUseWeightedFlux;
+        cCritical() << " For linearity purpose, optimization of SourceLoad Weight " << mWeight << " requires mUseControlledFlux = false and mUseWeightedFlux = false ! " << mUseControlledFlux << mUseWeightedFlux;
         return -1;
     }
     if (mWeight < 0 && mComputeOptimalPrice)
     {
-        qCritical() << " For linearity purpose, optimization of SourceLoad Weight " << mWeight << " requires mComputeOptimalPrice = false ! " << mComputeOptimalPrice;
+        cCritical() << " For linearity purpose, optimization of SourceLoad Weight " << mWeight << " requires mComputeOptimalPrice = false ! " << mComputeOptimalPrice;
         return -1;
     }
 
-    if (mAddSheddingDetailed && mSens > 0.) {
-        qCritical() << "Load shedding cannot be used for sources (only loads)";
+    if (mAddSheddingDetailed && Sens() > 0.) {
+        cCritical() << "Load shedding cannot be used for sources (only loads)";
         return -1;
     }
     if (mAddSheddingDetailed && mLPModelOnly) {
-        qCritical() << "Load shedding is not compatible with LPModelOnly option";
+        cCritical() << "Load shedding is not compatible with LPModelOnly option";
         return -1;
     }
     if (mAddSheddingDetailed && mControl != "" && mNpdtPast < mMaxTimeShedding) {
-        qCritical() << "Load shedding max activation time (" << mMaxTimeShedding << ") must be less or equal to past size (" << mNpdtPast << ")";
+        cCritical() << "Load shedding max activation time (" << mMaxTimeShedding << ") must be less or equal to past size (" << mNpdtPast << ")";
         return -1;
     }
     if (mAddSheddingDetailed && mControl != "" && mNpdtPast < mMinSheddingStandBy) {
-        qCritical() << "Load shedding min deactivation time (" << mMinSheddingStandBy << ") must be less or equal to past size (" << mNpdtPast << ")";
+        cCritical() << "Load shedding min deactivation time (" << mMinSheddingStandBy << ") must be less or equal to past size (" << mNpdtPast << ")";
         return -1;
     }
     return 0;
 }
 
-double SourceLoad::getTemperature(const QString& direction)
+double SourceLoad::getTemperature(const std::string& direction)
 {
-    foreach(MilpPort* lptrport, mListPort)
+    for (MilpPort* lptrport : mListPort)
     {
-        if (lptrport->Direction() == direction && lptrport->PotentialName() == "Temperature" && lptrport->ptrEnergyVector() != nullptr)
+        if (lptrport->Direction() == direction && lptrport->PotentialName() == "Temperature" && lptrport->getCarrier() != nullptr)
         {
-            return lptrport->ptrEnergyVector()->Potential();
+            return lptrport->getCarrier()->Potential();
         }
     }
     return 0.;
 }
 
-void SourceLoad::buildModel() 
+void SourceLoad::computeInitialData()
 {
     mHorizonTimeSpanRatio = mHorizon / mTimeSpan + 1;
 
-    if (mAllocate) {
-        allocateExpressions();
-    }
-    else {
-        closeExpressions();
-    }
+    setMinValue(mMinSize);
 
     if (mComputeOptimalPrice) {
-        setExpSizeMax(mMinSize, mMaxOptimalPrice, "MaxPrice");
+        setMaxValue(mMaxOptimalPrice);
     }
     else {
-        setExpSizeMax(mMinSize, 1, "MWeight");
-        
+        setMaxValue(1);
     }
+}
 
+void SourceLoad::computeModelContribution()
+{
     if (mUseControlledFlux)
     {
         // Imposed flux is set by external expression via node equality constraint
-
         addVariable(mVarControlledFlux, "SoCtrlFlux", 0., fabs(mMaxFlux));
 
         for (uint64_t t = 0; t < mHorizon; ++t)
@@ -170,7 +142,7 @@ void SourceLoad::buildModel()
             {
                 if (t >= mTimeStepBeginForecast && mSeasonalPrevisions)
                 {
-                    qInfo() << "SourceLoad, mTimeStepBeginForecast =" << mTimeStepBeginForecast;
+                    cInfo() << "SourceLoad, mTimeStepBeginForecast =" << mTimeStepBeginForecast;
                     // Imposed flux is imposed by Seasonnal flux time series, possibly weighted by optimal Size
                     mExpImposedFlux[t] += mExpSizeMax * mImposedFluxSeasonal[t];
                 }
@@ -196,7 +168,7 @@ void SourceLoad::buildModel()
 
         coeffout = coeffin - 1.;   // Pout = Pin - ImposedFlux
     }
-    
+
     for (uint64_t t = 0; t < mHorizon; ++t)
     {
         mExpPowerOut[t] += coeffout * mExpImposedFlux[t];
@@ -206,7 +178,7 @@ void SourceLoad::buildModel()
     for (uint64_t t = 0; t < mHorizon; ++t)
     {
         if (mComputeOptimalPrice) {
-            mExpCost[t] += mSens * mExpImposedFlux[t];
+            mExpCost[t] += Sens() * mExpImposedFlux[t];
         }
         else {
             mExpCost[t] += mEnergyPrice[t] * mExpImposedFlux[t];
@@ -241,11 +213,6 @@ void SourceLoad::buildModel()
             mExpFlux[t] += mExpPowerPeakShaving[t];
         }
     }
-
-    /** Compute all expressions*/
-    computeAllContribution();
-
-    mAllocate = false;
 }
 
 void SourceLoad::computeEconomicalContribution()
@@ -257,7 +224,7 @@ void SourceLoad::computeEconomicalContribution()
         // To be put on for the shedding model
     {
         for (uint64_t t = 0; t < mHorizon; ++t) {
-            mExpVariableCosts[t] += mSens * TimeStep(t) * mExpCost[t];
+            mExpVariableCosts[t] += Sens() * TimeStep(t) * mExpCost[t];
         }
     }
 
@@ -307,7 +274,7 @@ bool SourceLoad::isPriceOptimized()
     return mComputeOptimalPrice;
 }
 
-void SourceLoad::addLoadShedding() 
+void SourceLoad::addLoadShedding()
 {
     addVariable(mVarPowerShedding, "PowerShedding", 0., fabs(mMaxShedding));
 
@@ -325,7 +292,7 @@ void SourceLoad::addLoadShedding()
     }
 
     // Constraints to link binaries ShedOn and ShedOff with binary State    
-    qInfo() << "Initial shedding state: " << mShedStateIni;
+    cInfo() << "Initial shedding state: " << mShedStateIni;
 
     for (uint64_t t = 0; t < mHorizon; t++) {
         if (t > 0) {
@@ -365,7 +332,7 @@ void SourceLoad::addLoadShedding()
 
         addConstraint(sumExp >= mExpShedState[t], "MaxShedTime", t);
 
-        sumExp.close(); 
+        sumExp.close();
     }
 
     // Enabling Rolling Horizon option
@@ -407,23 +374,23 @@ void SourceLoad::addLoadShedding()
     // Enabling Rolling Horizon option
     if (mNpdtPast > 0 && mControl == "RollingHorizon")
     {
-      for (uint64_t t = 0; t < mMinSheddingStandBy - 2; t++)
-      {
-         MIPModeler::MIPExpression sumExp;
+        for (uint64_t t = 0; t < mMinSheddingStandBy - 2; t++)
+        {
+            MIPModeler::MIPExpression sumExp;
 
-         for (uint64_t i = t - mMinSheddingStandBy + 1; i <= t; i++)
-         {
+            for (uint64_t i = t - mMinSheddingStandBy + 1; i <= t; i++)
+            {
 
-            if (i < 0) sumExp += mExpShedOff[i + mNpdtPast];
-            else {
-              sumExp += mExpShedOff[i];
+                if (i < 0) sumExp += mExpShedOff[i + mNpdtPast];
+                else {
+                    sumExp += mExpShedOff[i];
+                }
             }
-         }
 
-         addConstraint(sumExp <= 1 - mExpShedState[t], "MinShedStdBy", t);
+            addConstraint(sumExp <= 1 - mExpShedState[t], "MinShedStdBy", t);
 
-         sumExp.close();
-      }
+            sumExp.close();
+        }
     }
 }
 
@@ -448,7 +415,7 @@ void SourceLoad::addPeakShaving()
     for (uint64_t t = 0; t < mHorizon; ++t) {
         addConstraint(mExpPowerPeakShaving[t] - mVarMaxEffect <= 0, "FluxGridBound");
         addConstraint(mExpPowerPeakShaving[t] + mVarMaxEffect >= 0, "FluxGridBound2");
-        addConstraint(mExpImposedFlux[t] + mExpPowerPeakShaving[t] - ( mMaxImposedFlux + fabs(mMaxEffect)) <= 0, "FluxGridMaxBound");
+        addConstraint(mExpImposedFlux[t] + mExpPowerPeakShaving[t] - (mMaxImposedFlux + fabs(mMaxEffect)) <= 0, "FluxGridMaxBound");
     }
 
     for (uint64_t p = 0; p < mHorizon / mTimeSpan + 1; ++p) {

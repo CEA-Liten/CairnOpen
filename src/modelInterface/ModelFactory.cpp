@@ -4,18 +4,17 @@
 #include <dlfcn.h>
 #endif
 
-#include <QCoreApplication>
-#include <QDebug>
-#include <QDir>
-
 #include "ModelFactory.h"
 #include <filesystem>
 namespace fs = std::filesystem;
 
 std::string ModelFactory::sModuleName = "createModel";
 std::map<std::string, ModelFactory::ModelDescriptor> ModelFactory::m_PlugIns;
+std::shared_ptr<spdlog::logger> ModelFactory::m_logger;
 
-ModelFactory::ModelFactory() { }
+ModelFactory::ModelFactory(std::shared_ptr<spdlog::logger> default_logger) {
+    spdlog::set_default_logger(default_logger); 
+}
 
 std::vector<std::string> ModelFactory::getModelList()
 {
@@ -27,14 +26,14 @@ std::vector<std::string> ModelFactory::getModelList()
 	return aModelList;
 }
 
-QObject* ModelFactory::createModel(QObject* aParent, const std::string& modelName, const std::string& instanceName)
+CairnObject* ModelFactory::createModel(CairnObject* aParent, const std::string& modelName, const std::string& instanceName)
 {
     t_mapPlugIns::iterator vIter = m_PlugIns.find(modelName);
     if (vIter != m_PlugIns.end()) {
         return vIter->second.createModel(aParent, instanceName);
     }
-    else {
-        qWarning() << "Cannot find private model " << QString(modelName.c_str()) << ", " << QString(instanceName.c_str());
+    else {        
+        spdlog::warn("Cannot find model " + modelName + ", " + instanceName);
     }
     return nullptr;
 }
@@ -46,43 +45,60 @@ void ModelFactory::deleteModel(const std::string& modelName, const std::string& 
         return vIter->second.deleteModel(instanceName);
     }
     else {
-        qWarning() << "Cannot find private model " << QString(modelName.c_str()) << ", " << QString(instanceName.c_str());
+        spdlog::warn("Cannot find model " + modelName + ", " + instanceName);
     }
 }
 
 void ModelFactory::findModels(){
 	// Search for models
     if (!lookupModels(fs::current_path().string())) {
-        lookupModels(std::getenv("CAIRN_BIN"));
+        if (const char* env_p = std::getenv("CAIRN_BIN"))
+            lookupModels(env_p);
+        else {
+            spdlog::critical("environment variable CAIRN_BIN does not exist!");
+        }
     }
+}
+
+static bool ends_with(std::string_view str, std::string_view suffix)
+{
+    return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+static bool starts_with(std::string_view str, std::string_view prefix)
+{
+    return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
 }
 
 bool ModelFactory::lookupModels(const std::string& a_Path)
 {
     bool vRet = false;
-    std::string filterExt, filterEnd = "CairnModel";
+    std::string filterExt, filterStart = "", filterEnd = "CairnModel";
 #if (defined (_WIN32) || defined (_WIN64))
     filterExt = ".dll";    
 #else
     filterExt = ".so";    
+    filterStart = "lib";
 #endif
-    qDebug() << "Search models in: " << QString(a_Path.c_str());
+    spdlog::debug("Search models in: " + a_Path);
     fs::path vPath(a_Path);
     for (auto const& dir_entry : fs::directory_iterator{ vPath }) {
         if (!dir_entry.is_directory()) {
             const fs::path& vFile = dir_entry.path();
             if (vFile.extension() == filterExt) {
                 std::string vModelName = vFile.stem().string();
-                size_t vPos = vModelName.rfind(filterEnd);
-                if (vPos != std::string::npos) {
+                if (starts_with(vModelName, filterStart) && ends_with(vModelName, filterEnd) ) {                
+                    size_t vPos = vModelName.rfind(filterEnd);                    
+                        
                     ModelDescriptor modelDesc;
                     modelDesc.setDllPath(fs::absolute(vFile).string());
                     vModelName.replace(vPos, vPos + filterEnd.size(), "");
+                    vModelName.replace(0, filterStart.size(), "");
                     modelDesc.setModelName(vModelName);
                     m_PlugIns[vModelName] = modelDesc;
-                    qInfo() << "Found model " << QString(vModelName.c_str()) << "(" << QString(fs::absolute(vFile).string().c_str()) << ")";
-                    vRet = true;
-                }
+                    spdlog::info("Found model "  + vModelName + "(" + fs::absolute(vFile).string() + ")");
+                    vRet = true;                    
+                }               
             }
         }   
     }
@@ -109,10 +125,10 @@ void ModelFactory::ModelDescriptor::setDllPath(const std::string& a_Path)
     mDLLAbsoluteName = a_Path;
 }
 
-QObject* ModelFactory::ModelDescriptor::loadModel(QObject* aParent)
+CairnObject* ModelFactory::ModelDescriptor::loadModel(CairnObject* aParent)
 {
-    QObject* vRet = nullptr;
-    qDebug() << "Load Model" << QString(mDLLAbsoluteName.c_str());
+    CairnObject* vRet = nullptr;
+    spdlog::debug("Load Model" + mDLLAbsoluteName);
          
 #if defined(WIN32) || defined(_WIN32)   
     HINSTANCE hGetProcIDDLL = LoadLibraryEx(mDLLAbsoluteName.c_str(), 0, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
@@ -123,12 +139,11 @@ QObject* ModelFactory::ModelDescriptor::loadModel(QObject* aParent)
 #else   
     void* hGetProcIDDLL = dlopen((const char*)mDLLAbsoluteName.c_str(), RTLD_NOW);
 #endif
-    if (!hGetProcIDDLL) {
-        DWORD dError = GetLastError();
-        qCritical() << "could not load the dynamic library " << QString(mDLLAbsoluteName.c_str()) << ", error: " << dError;
+    if (!hGetProcIDDLL) {        
+        spdlog::critical("could not load the dynamic library " + mDLLAbsoluteName);
         throw(std::exception_ptr());
     }
-    typedef QObject* (*f_privateModel)(QObject* aParent);
+    typedef CairnObject* (*f_privateModel)(CairnObject* aParent);
     f_privateModel vFunct;
 
     // resolve function address here
@@ -138,23 +153,22 @@ QObject* ModelFactory::ModelDescriptor::loadModel(QObject* aParent)
     vFunct = (f_privateModel)dlsym(hGetProcIDDLL, sModuleName.c_str());
 #endif
 
-    if (!vFunct) {
-        DWORD dError = GetLastError();
-        qCritical() << "could not locate the function createModel" << ", error: " << dError;
+    if (!vFunct) {        
+        spdlog::critical("could not locate the function createModel");
         throw(std::exception_ptr());
     }
     vRet = (*vFunct)(aParent);
 
     if (!vRet) {
-        qCritical() << "could not create the Model";
+        spdlog::critical("could not create the Model");
         throw(std::exception_ptr());
     }
     return vRet;
 }
 
-QObject* ModelFactory::ModelDescriptor::createModel(QObject* aParent, const std::string& instanceName)
+CairnObject* ModelFactory::ModelDescriptor::createModel(CairnObject* aParent, const std::string& instanceName)
 {
-    QObject* vRet = nullptr;
+    CairnObject* vRet = nullptr;
     t_mapModels::iterator vIter = mModels.find(instanceName);
     if (vIter != mModels.end()) {
         vRet = vIter->second;

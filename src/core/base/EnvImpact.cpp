@@ -1,10 +1,9 @@
 
-#include <QDebug>
 #include "Cairn_Exception.h"
 #include "SubModel.h"
 
-EnvImpact::EnvImpact(QObject* aParent, QString aName, QString aShortName) :
-mException(Cairn_Exception()),
+/* TODO: pass SubModel by pointer */
+EnvImpact::EnvImpact(CairnObject* aParent, std::string aName, std::string aShortName) :
 mName(aName),
 mShortName(aShortName),
 mCapex(0.),
@@ -29,26 +28,6 @@ mReplacementEnvImpact(2, 0.)
     if (mShortName == "") mShortName = mName;
 }
 
-EnvImpact::EnvImpact(const QString &aName, const QString &aShortName, const QString& aUnit) :
-    
-mException(Cairn_Exception()),
-mName(aName),
-mShortName(aShortName),
-mImpactUnit(aUnit),
-mCapex(0.),
-mEnvImpactCost(0.),
-mLifeTime(1.),
-mEnvImpactPart(2, 0.),
-mEnvImpactMass(2, 0.),
-mEnvImpactPartDiscounted(2, 0.),
-mEnvImpactMassDiscounted(2, 0.),
-mEmbodiedEnvImpactCost(2, 0.),
-mEmbodiedEnvImpact(2, 0.),
-mReplacementEnvImpact(2, 0.)
-{  
-    if (mShortName == "") mShortName = mName;
-}
-
 EnvImpact::~EnvImpact()
 {
 }
@@ -62,7 +41,8 @@ void EnvImpact::computeReplacementEnvImpactContribution(MIPModeler::MIPExpressio
 {
     for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
     {
-        mExpReplacementEnvImpact[t] = (mEnvGreyReplacement * aExpSizeMax + mEnvGreyReplacementConstant) / (mLifeTime * 8760.);
+        if (mLifeTime>0)
+            mExpReplacementEnvImpact[t] = (mEnvGreyReplacement * aExpSizeMax + mEnvGreyReplacementConstant) / (mLifeTime * 8760.);
     }
 }
 
@@ -92,15 +72,15 @@ void EnvImpact::computeEnvImpactContributionCost()
 void EnvImpact::addIOs(SubModel* aSubModel, t_flag aIsUsed)
 {
     aSubModel->
-        addIO(mName + " Env impact mass", &mExpOpEnvImpact, aIsUsed, mImpactUnit); /** "mName Env impact mass" */
+        addIO(mName + " Env impact mass", &mExpOpEnvImpact, aIsUsed, &mImpactUnit); /** "mName Env impact mass" */
     aSubModel->
-        addIO(mName + " Env impact flow", &mExpFlowEnvImpact, aIsUsed, mImpactUnit + "/h"); /** "mName Env impact flow" */
+        addIO(mName + " Env impact flow", &mExpFlowEnvImpact, aIsUsed, SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "h" })); /** "mName Env impact flow" */
     aSubModel->
-        addIO(mName + " Env impact cost", &mExpOpEnvImpactCost, aIsUsed, aSubModel->Currency()); /** "mName Env impact cost" */
+        addIO(mName + " Env impact cost", &mExpOpEnvImpactCost, aIsUsed, aSubModel->pCurrency()); /** "mName Env impact cost" */
     aSubModel->
-        addIO(mName + " Env grey impact mass", &mExpEmbodiedEnvImpact, aIsUsed, mImpactUnit); /** "mName Env grey impact mass" */
+        addIO(mName + " Env grey impact mass", &mExpEmbodiedEnvImpact, aIsUsed, &mImpactUnit); /** "mName Env grey impact mass" */
     aSubModel->
-        addIO(mName + " Env grey impact cost", &mExpEmbodiedEnvImpactCost, aIsUsed, aSubModel->Currency()); /** "mName Env grey impact cost" */
+        addIO(mName + " Env grey impact cost", &mExpEmbodiedEnvImpactCost, aIsUsed, aSubModel->pCurrency()); /** "mName Env grey impact cost" */
     aSubModel->
-        addIO(mName + " Env impact replacement", &mExpReplacementEnvImpact, aIsUsed, mImpactUnit);
+        addIO(mName + " Env impact replacement", &mExpReplacementEnvImpact, aIsUsed, &mImpactUnit);
 }

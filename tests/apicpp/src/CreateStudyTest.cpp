@@ -32,7 +32,6 @@ int main()
 	int liRet = 0;
 
 	CairnAPI m_Cairn;
-	// création d'une nouvelle étude:
 	cout << "Creation of a new study" << endl;
 	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.create_Study(StudyRoot + StudyName);
 
@@ -50,49 +49,48 @@ int main()
 		)
 	)
 
-		// création du SimulationControl	
-		TESTAPI("create_simulationcontrol",
-			m_Problem.set_SimulationControlSettings(
-				{
-					{"ExportJson", 1},
-					{"ExportResults", 1},
-					{"FutureSize", 48},
-					{"FutureVariableTimestep", 8760}
-				}
-			)
+	// création du SimulationControl	
+	TESTAPI("create_simulationcontrol",
+		m_Problem.set_SimulationControlSettings(
+			{
+				{"ExportJson", 1},
+				{"ExportResults", 1},
+				{"FutureSize", 48},
+				{"FutureVariableTimestep", 8760}
+			}
 		)
+	)
 
-		// création du Solver
-		TESTAPI("create_MIPSolver",
-			m_Problem.set_MIPSolverSettings(
-				{
-					{"Solver", "Cplex"},
-					{"WriteLp", "YES"},
-					{"Gap", 0.001},
-					{"TimeLimit", 0}
-				})
-		)
+	// création du Solver
+	TESTAPI("create_MIPSolver",
+		m_Problem.set_MIPSolverSettings(
+			{
+				{"Solver", "Cplex"},
+				{"WriteLp", "YES"},
+				{"Gap", 0.001},
+				{"TimeLimit", 0}
+			})
+	)
 
-		//Create EnergyVectors
-		CairnAPI::EnergyVectorAPI vElec(m_Problem, "ElectricityDistrib", "Electrical");
-	TESTAPI("set Potential of ElectricityDistrib", vElec.set_SettingValue("Potential", 100))
-		TESTAPI("reset Potential ElectricityDistrib", vElec.set_SettingValue("Potential", 220))
-		TESTAPI("set UseProfileBuyPrice of ElectricityDistrib",
+	//Create EnergyVectors
+	CairnAPI::EnergyVectorAPI vElec(m_Problem, "ElectricityDistrib", "Electrical");
+	TESTAPI("reset Potential ElectricityDistrib", vElec.set_SettingValue("Potential", 220))
+	TESTAPI("set UseProfileBuyPrice of ElectricityDistrib",
 			vElec.set_SettingValue("UseProfileBuyPrice", "Elec_Grid.ElectricityPrice"))
 
 
-		CairnAPI::EnergyVectorAPI vH2;
+	CairnAPI::EnergyVectorAPI vH2;
 	TESTAPI("create EnergyVector H2", vH2 = m_Problem.create_EnergyCarrier("H2", "FluidH2"))
-		TESTAPI("set parameters of EnergyVector H2",
-			vH2.set_SettingValues(
-				{
-					{"Potential", 30},
-					{"LHV", 0.03332},
-					{"RHO", 0.0899},
-					{"IsMassCarrier", true},
-					{"IsFuelCarrier", true}
-				})
-		)
+	TESTAPI("set parameters of EnergyVector H2",
+		vH2.set_SettingValues(
+			{
+				{"Potential", 30},
+				{"LHV", 0.03332},
+				{"RHO", 0.0899},
+				{"IsMassCarrier", true},
+				{"IsFuelCarrier", true}
+			})
+	)
 
 	t_list vEVs = m_Problem.get_EnergyCarriers();
 	t_list vRef = { "H2","ElectricityDistrib" };
@@ -103,27 +101,6 @@ int main()
 	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { }))
 
 	CairnAPI::MilpComponentAPI vELY_PEM(m_Problem, "ELY_PEM", "Electrolyzer");
-	vELY_PEM.set_SettingValues({
-		{ "Capex", 480000 },
-		{ "Opex", "0.04" },
-		{ "Efficiency", "0.6667" },
-		{ "MaxPower", "-30" },
-		{ "MinPower", "0" },
-		{"EnvironmentModel", true},  
-		{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 100},
-		{"Climate change#Global Warming Potential 100 EnvGreyContentOffset_B", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacement", 10}, 
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacementConstant", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentOffset_B", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacement", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacementConstant", 0},
-		{"PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 0},  
-		{"PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
-	    {"PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0},        
-		{"PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0}
-		}
-	);
 
 	t_list vELY_PEM_Ports = vELY_PEM.get_Ports();
 	t_list vELY_PEM_DefaultPorts = vELY_PEM.get_DefaultPorts();
@@ -149,14 +126,30 @@ int main()
 		{"Variable", "UsedPower"}
 		});
 
-	//Set port EnvImpacts
-	vELY_PEM.set_SettingValues(
-			{
-			{"PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 0},
-			{"PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
-			{"PortR0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0},
-			{"PortR0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0}
-			}
+	vELY_PEM.set_SettingValues({
+		{ "Capex", 480000 },
+		{ "Opex", "0.04" },
+		{ "Efficiency", "0.6667" },
+		{ "MaxPower", "-30" },
+		{ "MinPower", "0" },
+		{"EnvironmentModel", true},  
+		{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 100},
+		{"Climate change#Global Warming Potential 100 EnvGreyContentOffset_B", 0},
+		{"Climate change#Global Warming Potential 100 EnvGreyReplacement", 10}, 
+		{"Climate change#Global Warming Potential 100 EnvGreyReplacementConstant", 0},
+		{"Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A", 0},
+		{"Acidification#Accumulated Exceedance EnvGreyContentOffset_B", 0},
+		{"Acidification#Accumulated Exceedance EnvGreyReplacement", 0},
+		{"Acidification#Accumulated Exceedance EnvGreyReplacementConstant", 0},
+		{"PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 0},  
+		{"PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
+	    {"PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0},        
+		{"PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0},
+		{"PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 0},
+		{"PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
+		{"PortR0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0},
+		{"PortR0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0}
+		}
 	);
 
 	TESTAPI("Change EnergyVector of vELY_PEM", vELY_PEM_L0.set_EnergyCarrier(vElec))
@@ -181,7 +174,6 @@ int main()
 
 	vELY_PEM.set_SettingValue("Capex", 480000.0);
 
-
 	vELY_PEM_R0.set_SettingValue("Coeff", 2.0);
 
 	TESTAPI2("Verify the value of ELY_PEM.PortR0.Coeff",
@@ -197,6 +189,14 @@ int main()
 	// ajout d'un composant
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vElecGrid(m_Problem, "Elec_Grid", "GridFree");
+
+	CairnAPI::MilpPortAPI vElecGrid_R0 = vElecGrid.get_Port("PortR0");
+	vElecGrid_R0.set_EnergyCarrier(vElec);
+	vElecGrid_R0.set_SettingValues({
+		{"Direction", "OUTPUT"},
+		{"Variable", "GridFlow"}
+		});
+
 	vElecGrid.set_SettingValues({
 		{"MaxFlow","400"},
 		{"Direction", "ExtractFromGrid"},
@@ -216,22 +216,9 @@ int main()
 		}
 	);
 
-	CairnAPI::MilpPortAPI vElecGrid_R0 = vElecGrid.get_Port("PortR0");
-	vElecGrid_R0.set_EnergyCarrier(vElec);
-	vElecGrid_R0.set_SettingValues({
-		{"Direction", "OUTPUT"},
-		{"Variable", "GridFlow"}
-	});
-
 	// ajout d'un composant
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vElecGridInject = m_Problem.create_Component("Elec_Grid_Inject", "GridFree");
-	vElecGridInject.set_SettingValues({
-		{"Direction", "InjectToGrid"} ,
-		  {"MaxFlow", "1500000"}
-		}
-	);
-
 
 	CairnAPI::MilpPortAPI vElecGridInject_R0 = vElecGridInject.get_Port("PortR0");
 	vElecGridInject_R0.set_EnergyCarrier(vElec);
@@ -240,10 +227,23 @@ int main()
 		{"Variable", "GridFlow"}
 	});
 
+	vElecGridInject.set_SettingValues({
+		{"Direction", "InjectToGrid"} ,
+		  {"MaxFlow", "1500000"}
+		}
+	);
 
 	// ajout d'un composant
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vH2_Load = m_Problem.create_Component("H2_Load", "SourceLoad");
+
+	CairnAPI::MilpPortAPI vH2_Load_L0 = vH2_Load.get_Port("PortL0");
+	vH2_Load_L0.set_EnergyCarrier(vH2);
+	vH2_Load_L0.set_SettingValues({
+		{"Direction", "INPUT"},
+		{"Variable", "SourceLoadFlow"}
+	});
+
 	vH2_Load.set_SettingValues({
 		{"Direction", "Sink" },
 		{"LPModelONLY", false},
@@ -256,24 +256,26 @@ int main()
 		}
 	);
 
-	CairnAPI::MilpPortAPI vH2_Load_L0 = vH2_Load.get_Port("PortL0");
-	vH2_Load_L0.set_EnergyCarrier(vH2);
-	vH2_Load_L0.set_SettingValues({
-		{"Direction", "INPUT"},
+	// ajout d'un composant
+	// -------------------------------------------------------------------
+	CairnAPI::MilpComponentAPI vWind_farm(m_Problem, "Wind_farm", "SourceLoad");
+
+
+	CairnAPI::MilpPortAPI vWind_farm_L0 = vWind_farm.get_Port("PortL0");
+	vWind_farm_L0.set_EnergyCarrier(vElec);
+	vWind_farm_L0.set_SettingValues({
+		{"Direction", "OUTPUT"},
 		{"Variable", "SourceLoadFlow"}
 	});
 
 
-	// ajout d'un composant
-	// -------------------------------------------------------------------
-	CairnAPI::MilpComponentAPI vWind_farm(m_Problem, "Wind_farm", "SourceLoad");
 	vWind_farm.set_SettingValues({
 		{"Direction", "Source"},
 		{"LPModelONLY", false},
 		{"MaxFlow", "1e+06"},
 		{"Weight", "-1"},
 		{"UseProfileLoadFlux","WindFarmProduction"},
-		{"EnvironmentModel", true},  
+		{"EnvironmentModel", true},
 		{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 250},
 		{"Climate change#Global Warming Potential 100 EnvGreyContentOffset_B", 0},
 		{"Climate change#Global Warming Potential 100 EnvGreyReplacement", 0},
@@ -288,18 +290,17 @@ int main()
 		{"PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0}
 		}
 	);
-
-	CairnAPI::MilpPortAPI vWind_farm_L0 = vWind_farm.get_Port("PortL0");
-	vWind_farm_L0.set_EnergyCarrier(vElec);
-	vWind_farm_L0.set_SettingValues({
-		{"Direction", "OUTPUT"},
-		{"Variable", "SourceLoadFlow"}
-		});
-
-
 	// ajout d'un composant
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vH2_Tank(m_Problem, "H2_Tank", "StorageGen");
+
+	CairnAPI::MilpPortAPI vH2_Tank_L0 = vH2_Tank.get_Port("PortL0");
+	vH2_Tank_L0.set_EnergyCarrier(vH2);
+	vH2_Tank_L0.set_SettingValues({
+		{"Direction", "OUTPUT"},
+		{"Variable", "Flow"}
+	});
+
 	vH2_Tank.set_SettingValues({
 		  {"Capex", "50"},
 		  {"Opex", "0"},
@@ -317,13 +318,6 @@ int main()
 		  {"FinalSOC", "0"}
 		}
 	);
-
-	CairnAPI::MilpPortAPI vH2_Tank_L0 = vH2_Tank.get_Port("PortL0");
-	vH2_Tank_L0.set_EnergyCarrier(vH2);
-	vH2_Tank_L0.set_SettingValues({
-		{"Direction", "OUTPUT"},
-		{"Variable", "Flow"}
-	});
 
 	// Bus creation
 	CairnAPI::BusAPI vElec_Bus(m_Problem, "Elec_Bus", "NodeLaw", vElec);
@@ -377,6 +371,7 @@ int main()
 
 	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
 
+	m_Cairn.close_Study();
 	//Re-load the created study (after saving it) and then test again
 	CairnAPI m_Cairn2;
 

@@ -9,12 +9,12 @@
  */
 
 #include "ManualObjective.h"
-extern "C" MODELS_DECLSPEC QObject * createModel(QObject * aParent)
+extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new ManualObjective(aParent);
 }
 
-ManualObjective::ManualObjective(QObject* aParent)
+ManualObjective::ManualObjective(CairnObject* aParent)
     : TechnicalSubModel(aParent),
     mBusEnergyBalance(2, 0.) 
 {
@@ -73,11 +73,7 @@ void ManualObjective::buildModel()
     mExpCommonMinVariable = mCommonMinVariable;
 
     if (mUseCommonMaxVariable) {
-        MilpPort* port;
-        QListIterator<MilpPort*> iport(mListPort);
-        while (iport.hasNext())
-        {
-            port = iport.next();
+        for (auto& port : mListPort) {        
             if (port->FluxDim() == 1.) {
                 for (unsigned int t = 0; t < mHorizon; ++t)
                 {
@@ -92,11 +88,7 @@ void ManualObjective::buildModel()
     }
 
     else if (mUseCommonMinVariable) {
-        MilpPort* port;
-        QListIterator<MilpPort*> iport(mListPort);
-        while (iport.hasNext())
-        {
-            port = iport.next();
+        for (auto& port : mListPort) {        
             if (port->FluxDim() == 1.) {
                 for (unsigned int t = 0; t < mHorizon; ++t)
                 {
@@ -111,11 +103,7 @@ void ManualObjective::buildModel()
     }
     else {
         /** Constraint linked to mListPort connected ports */
-        MilpPort* port;
-        QListIterator<MilpPort*> iport(mListPort);
-        while (iport.hasNext())
-        {
-            port = iport.next();
+        for (auto& port : mListPort) {        
             if (port->FluxDim() == 1.) {
                 addExpressionToBalance(port->Flux());
             }
@@ -153,7 +141,7 @@ void ManualObjective::finalizeModelData() {
 //------------------------------------------------------------------------------
 void ManualObjective::computeEconomicalContribution()
 {
-    qInfo()<<"model type"<<mObjectiveType;
+    cInfo()<<"model type"<<mObjectiveType;
 
     if (mObjectiveType == "Blended") {
         mEcoInvestModel = true;
@@ -169,8 +157,8 @@ void ManualObjective::computeEconomicalContribution()
         }
     }
     else if (mObjectiveType == "Lexicographic"){
-        qInfo()<<"ajout de l'objectif "<<parent()->objectName();
-        std::string name = parent()->objectName().toStdString();
+        cInfo()<<"ajout de l'objectif "<<parent()->objectName();
+        std::string name = parent()->objectName();
         MIPModeler::MIPSubobjective subObjective(name);
         subObjective.setSubObjective(mSubObjective,1,mObjectiveLevel,mAbsTol,mRelTol);
         mModel->addSubobjective(subObjective);

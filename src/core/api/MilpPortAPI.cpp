@@ -28,7 +28,7 @@ void CairnAPI::MilpPortAPI::set_MilpPort(MilpPort* ap_Port)
 std::string CairnAPI::MilpPortAPI::get_ID() const
 {
 	if (m_Port) {
-		return m_Port->ID().toStdString();
+		return m_Port->ID();
 	}
 	return "";
 }
@@ -36,28 +36,54 @@ std::string CairnAPI::MilpPortAPI::get_ID() const
 std::string CairnAPI::MilpPortAPI::get_Name() const
 {
 	if (m_Port) {
-		return m_Port->Name().toStdString();
+		return m_Port->Name();
 	}
 	return "";
 }
 
+
+void CairnAPI::MilpPortAPI::rename(const std::string& name)
+{
+	if (m_Port) {
+		m_Port->setName(name);
+	}
+}
+
 std::string CairnAPI::MilpPortAPI::get_CarrierName() const
 {
-	if (m_Port && m_Port->ptrEnergyVector()) {
-		return m_Port->ptrEnergyVector()->Name().toStdString();
+	if (m_Port && m_Port->getCarrier()) {
+		return m_Port->getCarrier()->Name();
 	}
-	return "";	
+	return "";
+}
+
+CairnAPI::EnergyVectorAPI CairnAPI::MilpPortAPI::get_EnergyCarrier()
+{
+	CairnAPI::EnergyVectorAPI vEnergyCarrier;
+	if (m_Port && m_Port->getCarrier()) {
+		vEnergyCarrier.set_EnergyVector(m_Port->getCarrier());
+	}
+	return vEnergyCarrier;
 }
 
 void CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector)
 {
 	if (m_Port) {
-		m_Port->setEnergyVector(a_EnergyVector.get_EnergyVector());
+		m_Port->setCarrier(a_EnergyVector.get_EnergyVector());
 		if (m_Port->IsDefaultPort()) {
 			MilpComponent* lptrCompo = (MilpComponent*)m_Port->parent();
-			if (lptrCompo) {
-				//Declare IOs only after EnergyVectors of all default ports are set
-				lptrCompo->declareIOVariables();
+			if (lptrCompo && lptrCompo->allDefaultPortsHaveCarriers()
+				&& lptrCompo->compoModel() 
+				&& lptrCompo->compoModel()->getInputParam()->getMapParams().size() == 0 //only once. TODO: use a more robust condition
+				&& !lptrCompo->getMainCarrier())
+			{
+				/*
+				* Declare parametersand IOs only after EnergyVectors of all default ports are set
+				* Should be called only once (first EnergyVector set). 
+				* Should not be called if the EnergyVector is changed later on.
+				* Otherwise, parameter values should be saved.
+				*/
+				lptrCompo->initSubModelConfiguration(false);
 			}
 		}
 	}

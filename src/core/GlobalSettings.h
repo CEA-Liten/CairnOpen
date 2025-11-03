@@ -7,15 +7,9 @@
 #include <Windows.h>
 #endif
 
-#include <QtCore>
-#include <QtCore/qglobal.h>
-#include <QDebug>
-#include <QFile>
-#include <QVector>
-#include <QDir>
-
 #include "CairnVersion.h"
 #include "Cairn_Exception.h"
+#include "CairnUtils.h"
 
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
@@ -29,33 +23,33 @@ using Eigen::Map;
 
 namespace GS
 {
-    static QString Cairn_Release(PERSEE_VERSION) ;
+    static std::string Cairn_Release(PERSEE_VERSION) ;
     static uint IDCount ;
     static uint iVerbose ;
 
-    static inline const QString GAMS() {return "GAMS";}              //keyword for GAMS modeler type
-    static inline const QString MIPMODELER() {return "MIPModeler";}  //keyword for MIPModeler modeler type
-    static inline const QString KDATA() {return "DATAEXCHANGE";}  //keyword for DATAEXCHANGE port type
-    static inline const QString KPROD() {return "OUTPUT";}  //keyword for PRODuced matter
-    static inline const QString KCONS() {return "INPUT";}   //keyword for CONSumed matter
-    static inline const QString Left() { return "left"; }  
-    static inline const QString Right() { return "right"; }   
-    static inline const QString Bottom() { return "bottom"; }    
-    static inline const QString Top() { return "top"; }
-    static inline const QString Yes() { return "Yes"; }
-    static inline const QString No() { return "No"; }
+    static inline const std::string GAMS() {return "GAMS";}              //keyword for GAMS modeler type
+    static inline const std::string MIPMODELER() {return "MIPModeler";}  //keyword for MIPModeler modeler type
+    static inline const std::string KDATA() {return "DATAEXCHANGE";}  //keyword for DATAEXCHANGE port type
+    static inline const std::string KPROD() {return "OUTPUT";}  //keyword for PRODuced matter
+    static inline const std::string KCONS() {return "INPUT";}   //keyword for CONSumed matter
+    static inline const std::string Left() { return "left"; }  
+    static inline const std::string Right() { return "right"; }   
+    static inline const std::string Bottom() { return "bottom"; }    
+    static inline const std::string Top() { return "top"; }
+    static inline const std::string Yes() { return "Yes"; }
+    static inline const std::string No() { return "No"; }
 
-    static inline const QString ANY_TYPE() { return "ANY_TYPE"; }
-    static inline const QString ANY_Fluid() { return "ANY_Fluid"; }
-    static inline const QString Fluid() { return "Fluid"; }
-    static inline const QString FluidH2() { return "FluidH2"; }
-    static inline const QString FluidCH4() { return "FluidCH4"; }
-    static inline const QString Thermal() { return "Thermal"; }
-    static inline const QString Electrical() { return "Electrical"; }
-    static inline const QString ThermalOrElectrical() { return "ThermalOrElectrical"; }
-    static inline const QString Material() { return "Material"; }
+    static inline const std::string ANY_TYPE() { return "ANY_TYPE"; }
+    static inline const std::string ANY_Fluid() { return "ANY_Fluid"; }
+    static inline const std::string Fluid() { return "Fluid"; }
+    static inline const std::string FluidH2() { return "FluidH2"; }
+    static inline const std::string FluidCH4() { return "FluidCH4"; }
+    static inline const std::string Thermal() { return "Thermal"; }
+    static inline const std::string Electrical() { return "Electrical"; }
+    static inline const std::string ThermalOrElectrical() { return "ThermalOrElectrical"; }
+    static inline const std::string Material() { return "Material"; }
 
-    inline Eigen::VectorXf uAverageQVector2Vecxf(QVector<float> vFineIn, double aTimeStepIn, std::vector<double> aTimeStepsOut, uint aNpdtPast)
+    inline Eigen::VectorXf uAverageQVector2Vecxf(std::vector<double> vFineIn, double aTimeStepIn, std::vector<double> aTimeStepsOut, uint aNpdtPast)
     {
       const uint64_t aSizeFine = vFineIn.size() ; //pastSize+futurSize
       const uint64_t aSizeCoarse = aTimeStepsOut.size() + aNpdtPast ; //pastSize+ComputationfuturSize
@@ -67,15 +61,15 @@ namespace GS
 
       if (aSizeFine < aSizeCoarse)
       {
-          qCritical() << "aSizeFine = " << aSizeFine ;
-          qCritical() << "aSizeCoarse = " << aSizeCoarse ;
-          qCritical() << "ANOMALIE ! " << aTimeStepIn << aNpdtPast ;
+          cCritical() << "aSizeFine = " << aSizeFine ;
+          cCritical() << "aSizeCoarse = " << aSizeCoarse ;
+          cCritical() << "ANOMALIE ! " << aTimeStepIn << aNpdtPast ;
       }
 
       Eigen::VectorXf vCoarseOut (Eigen::VectorXf::Constant(aSizeCoarse,0.)) ;
       if (aSizeFine == 0)
       {
-          qCritical() << "Abnormal missing allocation aSizeFine = " << aSizeFine ;
+          cCritical() << "Abnormal missing allocation aSizeFine = " << aSizeFine ;
           return vCoarseOut ;
       }
       TimeStepsIn.assign(aSizeFine,aTimeStepIn) ;
@@ -98,12 +92,12 @@ namespace GS
               vCoarseOut[icoarse] += vFineIn[ifine] * TimeStepsIn[ifine] ;
               localIn[ifine] =  vFineIn[ifine] ;
               tmpFine += TimeStepsIn[ifine] ;
-              //qDebug() << "vFineIn ifine " << ifine << aSizeFine << vFineIn[ifine];
+              //cDebug() << "vFineIn ifine " << ifine << aSizeFine << vFineIn[ifine];
           }
           if (dt >= aTimeStepsOut[icoarse-aNpdtPast] )
           {
               vCoarseOut[icoarse] = vCoarseOut[icoarse] / dt ;
-              //qDebug() << "vCoarseOut icoarse " << icoarse << aSizeCoarse << vCoarseOut[icoarse];
+              //cDebug() << "vCoarseOut icoarse " << icoarse << aSizeCoarse << vCoarseOut[icoarse];
               tmpCoarse += aTimeStepsOut[icoarse-aNpdtPast] ;
               dt = 0. ;
               icoarse++ ;
@@ -111,16 +105,16 @@ namespace GS
       }
       if (tmpFine != tmpCoarse || icoarse != aSizeCoarse)
       {
-          qCritical() << "Bad timesteps definition : the sum of coarse timesteps "<< tmpCoarse <<" must be equal to the sum of constant fine timestep " << tmpFine ;
-          qCritical() << "Bad timesteps definition : icoarse "<< icoarse <<" must be equal to aSizeCoarse " << aSizeCoarse ;
+          cCritical() << "Bad timesteps definition : the sum of coarse timesteps "<< tmpCoarse <<" must be equal to the sum of constant fine timestep " << tmpFine ;
+          cCritical() << "Bad timesteps definition : icoarse "<< icoarse <<" must be equal to aSizeCoarse " << aSizeCoarse ;
 
           vCoarseOut[aSizeCoarse-1] = vCoarseOut[aSizeCoarse-1] / aTimeStepsOut[aTimeStepsOut.size()-1] ;
-          qCritical() << "Final value of coarse timeseries will be biased : " << aSizeCoarse << vCoarseOut[aSizeCoarse-1] ;
+          cCritical() << "Final value of coarse timeseries will be biased : " << aSizeCoarse << vCoarseOut[aSizeCoarse-1] ;
       }
       return vCoarseOut ;
     }
 
-    inline void uExpandVecxf2QVector(QVector<float>* vFineOut, const uint64_t aSizeFineOut,
+    inline void uExpandVecxf2QVector(std::vector<double>* vFineOut, const uint64_t aSizeFineOut,
                                      Eigen::VectorXf vCoarseIn, double aTimeStepOut,
                                      std::vector<double> aTimeStepsIn,
                                      uint aNpdtPast, double aCoeff)
@@ -128,7 +122,7 @@ namespace GS
       const uint64_t aSizeFine = aSizeFineOut ; //pastSize+futurSize
       const uint64_t aSizeCoarse = vCoarseIn.size() ; //pastSize+computationFuturSize
 
-      Q_ASSERT ( aSizeFine >= aSizeCoarse );
+      assert ( aSizeFine >= aSizeCoarse );
 
       std::vector<double> localOut(aSizeFine);
 
@@ -150,7 +144,7 @@ namespace GS
               (*vFineOut)[ifine] = aCoeff * vCoarseIn[icoarse] ;
               localOut[ifine] = (*vFineOut)[ifine] ;
               dt +=aTimeStepOut ;
-              //qDebug() << "vFineOut ifine " << ifine << vCoarseIn[icoarse];
+              //cDebug() << "vFineOut ifine " << ifine << vCoarseIn[icoarse];
           }
           if (dt >= aTimeStepsIn[icoarse-aNpdtPast])
           {
@@ -160,24 +154,24 @@ namespace GS
       }
     }
 
-    inline std::vector<std::vector<double>> getDataMatrix(QList<QStringList> data_Inputs, int iskipHead)
+    inline std::vector<std::vector<double>> getDataMatrix(const std::vector<std::vector<std::string>> &data_Inputs, int iskipHead)
     {
         /**
-         * @brief Cette fonction renvoie une matrice de nombres en virgule flottante à partir d'une liste de chaînes de caractères,
-         * en ignorant un certain nombre de lignes au début.
+         * @brief Cette fonction renvoie une matrice de nombres en virgule flottante ? partir d'une liste de cha?nes de caract?res,
+         * en ignorant un certain nombre de lignes au d?but.
          *
-         * @param data_Inputs : une liste de chaînes de caractères (QList<QStringList>) où chaque élément de la liste est une
-         * autre liste de chaînes de caractères, représentant une ligne dans un fichier de données.
+         * @param data_Inputs : une liste de cha?nes de caract?res (std::vector<std::vector<std::string>>) o? chaque ?l?ment de la liste est une
+         * autre liste de cha?nes de caract?res, repr?sentant une ligne dans un fichier de donn?es.
          *
-         * @param iskipHead : un entier (int) représentant le nombre de lignes à ignorer au début du fichier de données.
+         * @param iskipHead : un entier (int) repr?sentant le nombre de lignes ? ignorer au d?but du fichier de donn?es.
          *
          * @return std::vector<std::vector<double>> : une matrice de nombres en virgule flottante (std::vector<std::vector<double>>)
-         * contenant les données de toutes les colonnes et de toutes les lignes (à l'exception des iskipHead premières lignes).
-         * Si une chaîne vide est rencontrée dans une ligne, la lecture de cette ligne est arrêtée et la ligne suivante est traitée.
-         * Si aucune donnée n'est trouvée, la fonction renvoie une matrice vide.
+         * contenant les donn?es de toutes les colonnes et de toutes les lignes (? l'exception des iskipHead premi?res lignes).
+         * Si une cha?ne vide est rencontr?e dans une ligne, la lecture de cette ligne est arr?t?e et la ligne suivante est trait?e.
+         * Si aucune donn?e n'est trouv?e, la fonction renvoie une matrice vide.
          */
         std::vector<std::vector<double>> lu;
-        QString value;
+        std::string value;
 
         for (int i = iskipHead; i < data_Inputs.size(); ++i)
         {
@@ -189,13 +183,13 @@ namespace GS
 
                 if (value == "")
                 {
-                    //qDebug() << " End of vector found ";
+                    //cDebug() << " End of vector found ";
                     break;
                 }
                 else
                 {
-                    //qDebug() << "Read value " << i << value;
-                    row.push_back(value.toDouble());
+                    //cDebug() << "Read value " << i << value;
+                    row.push_back(std::stod(value));
                 }
             }
 
@@ -205,14 +199,14 @@ namespace GS
             }
         }
 
-        //qDebug() << "Return matrix of size " << lu.size() << "x" << lu[0].size();
+        //cDebug() << "Return matrix of size " << lu.size() << "x" << lu[0].size();
         return lu;
     }
 
-    inline std::vector<double> getDataArray(QList<QStringList> data_Inputs, int aCol, int iskipHead)
+    inline std::vector<double> getDataArray(const std::vector<std::vector<std::string>> &data_Inputs, int aCol, int iskipHead)
     {
         std::vector<double> lu ;
-        QString value ;
+        std::string value ;
 
         for ( int i = iskipHead; i < data_Inputs.size(); ++i )
         {
@@ -220,27 +214,27 @@ namespace GS
 
             if (value == "")
             {
-                //qDebug() << " End of vector found " ;
+                //cDebug() << " End of vector found " ;
                 break ;
             }
             else
             {
-                //qDebug() << "Read value " << i << value;
-                lu.push_back(value.toDouble());
+                //cDebug() << "Read value " << i << value;
+                lu.push_back(std::stod(value));
             }
 
         }
 
-        //qDebug() << "Return vector of size " << lu.size() ;
+        //cDebug() << "Return vector of size " << lu.size() ;
         return lu ;
     }
 
 
 
-    inline std::vector<int> getIntDataArray(QList<QStringList> data_Inputs, int aCol, int iskipHead)
+    inline std::vector<int> getIntDataArray(const std::vector<std::vector<std::string>> &data_Inputs, int aCol, int iskipHead)
     {
         std::vector<int> lu ;
-        QString value ;
+        std::string value ;
 
         for ( int i = iskipHead; i < data_Inputs.size(); ++i )
         {
@@ -248,142 +242,26 @@ namespace GS
 
             if (value == "")
             {
-                //qDebug() << " End of vector found " ;
+                //cDebug() << " End of vector found " ;
                 break ;
             }
             else
             {
-                //qDebug() << "Read value " << i << value;
-                lu.push_back(value.toInt());
+                //cDebug() << "Read value " << i << value;
+                lu.push_back(std::stoi(value));
             }
 
         }
 
-        //qDebug() << "Return vector of size " << lu.size() ;
+        //cDebug() << "Return vector of size " << lu.size() ;
         return lu ;
     }
 
-    inline QVector<double> getQVArray(QList<QStringList> data_Inputs, int aCol, int iskipHead)
-    {
-        QVector<double> lu;
-        QString value;
 
-        for (int i = iskipHead; i < data_Inputs.size(); ++i)
-        {
-            value = (data_Inputs.at(i)).at(aCol);
-
-            if (value == "")
-            {
-                //qDebug() << " End of vector found " ;
-                break;
-            }
-            else if(std::isnan(value.toDouble())) {
-                qDebug() << "A NAN value is found at row" << i+1 << ", column" << aCol << "while reading the input time series.";
-                break;
-            }
-            else
-            {
-                //qDebug() << "Read value " << i << value;
-                lu.push_back(value.toDouble());
-            }
-
-        }
-
-        //qDebug() << "Return vector of size " << lu.size() ;
-        return lu;
-    }
-    static inline bool NotExist(QString filename)
-    {
-        //check that file exists and is readable
-        QFile FileIn (filename);
-        if (!FileIn.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                FileIn.close();
-                return true ;
-         }
-        //close first and read using Qtcsv (Qtcsv will open it by itself)
-        FileIn.close();
-        return false ;
-    }
-    static inline QString BuildFileName (QString aFileName)
-    {
-      QString filename  = (aFileName) ;
-      if ( !filename.contains(":/") && !filename.contains(":\\") && !filename.startsWith("//") )
-      {
-            filename=QDir::currentPath()+"/"+filename ;
-      }
-      return filename;
-    }
-
-    inline QList<QStringList> readToList(QString Full_File_Name, QString Separator)
-    {
-        QList<QStringList> data_input ;
-        QStringList fields ;
-        QFile File (Full_File_Name) ;
-        QTextStream FileStream_In (&File);
-
-        if(!File.open(QIODevice::ReadOnly))
-        {
-            //qInfo() << "Error CSV File could not be opened for reading " ;
-            //return {{"ERROR"}};
-            Cairn_Exception error("Error CSV File could not be opened for reading: " + Full_File_Name, -1);
-            throw error;
-        }
-
-        int k = 1;
-        while ( ! FileStream_In.atEnd())
-        {
-            QString line = FileStream_In.readLine();
-            fields = line.split(Separator);
-
-            if ( fields.contains(QString("Error\n")) )
-            {
-              qInfo() << "Error reading line " << line ;
-            }
-            if (k > 4) {//data lines 
-                //Verify if the used separator is correct and that comma is not used for decimals.
-                for (int i = 0; i < fields.size(); i++) {
-                    if (fields[i].contains(",") || fields[i].contains(";")) {
-                        QString errorMessage = QString("Error while importing input time series: " + Full_File_Name + "\nPlease, verify that the correct separator(" + Separator + ") is used and that comma is not used for decimal values.");
-                        if (i == 0) {
-                            errorMessage += " Line: " + fields[0];
-                        }
-                        else {
-                            errorMessage += " Value: " + fields[i];
-                        }
-                        Cairn_Exception error(errorMessage, -1);
-                        throw error;
-                    }
-                }
-            }
-            data_input.append(fields) ;
-            k++;
-        }
-        return data_input ;
-    }
-
-
-    inline QList<QStringList> readFromCsvFile(QString aFileName, QString sep)
-    {
-        QList<QStringList>  data_Inputs ;
-
-        QString filename = BuildFileName(aFileName) ;
-
-        if (NotExist(filename))
-        {
-                return data_Inputs;
-        }
-        else
-        {
-           qInfo() << " Reading csv file " << filename ;
-        }
-        data_Inputs = readToList(filename, ";");
-        return data_Inputs ;
-    }
-    
     inline std::vector <double> uVecxf2Double(Eigen::VectorXf vIn, uint aSizeOut, const uint aOffset)
     {
       std::vector <double> vOut (aSizeOut) ;
-      Q_ASSERT(aSizeOut+aOffset == vIn.size()) ;
+      assert(aSizeOut+aOffset == vIn.size()) ;
       for (uint i=0; i<aSizeOut; i++) {
           vOut[i] = double(vIn[i+aOffset]) ;
       }
@@ -409,17 +287,7 @@ namespace GS
 #endif
 
 
-    template <class T>
-    inline void extendMap1WithMap2(QMap<QString, T*> &aListDest, QMap<QString, T*> aListSource)
-    {
-        QMapIterator<QString, T*> ivar(aListSource) ;
-        while (ivar.hasNext())
-        {
-            ivar.next() ;
-            aListDest[ivar.key()] = ivar.value() ;
-        }
-        return ;
-    }
+   
 
     static inline uint GenerateID()
     {

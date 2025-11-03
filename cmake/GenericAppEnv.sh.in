@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Coloring OUPTUT
+export RESET='\e[1;0m'
+export BLACK='\e[1;30m'
+export RED='\e[1;31m'
+export GREEN='\e[1;32m'
+export YELLOW='\e[1;33m'
+export BLUE='\e[1;34m'
+export MAGENTA='\e[1;35m'
+export CYAN='\e[1;36m'
+export WHITE='\e[1;37m'
+
+export OPTION=$1
+if [ "$OPTION" = "" ]; then 
+    export OPTION=release
+fi; 
+echo -e "\n$GREEN➡  Run mode : ${OPTION} $RESET"
+
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo Path for Cairn
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+export CAIRN_APP=@CAIRN_APP@
+export WORKSPACE=$CAIRN_APP
+export USER_DOC_HOME=https://cea-liten.github.io/CairnOpen/
+export IMPORT_HOME=$CAIRN_APP/lib
+export EXPORT_HOME=$CAIRN_APP/lib
+
+export SENSITIVITY_SCRIPT=$CAIRN_APP/tests/scripts
+export REPORT_SCRIPT=$CAIRN_APP/scripts/automaticReport
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo Path for Python
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+export PYTHONPATH=$CAIRN_APP/tests/scripts
+export PYTHON_HOME=@PYTHON_HOME@
+
+
+export PYTHON_VENV=%2
+if [ "$PYTHON_VENV" = "" ]; then 
+	export PYTHON_VENV=@PYTHON_VENV_PROJECT@
+fi
+
+echo -e "$CYAN \t☸  Activating Python environnement $RESET"
+source ${PYTHON_VENV}/bin/activate
+export PATH=$PYTHON_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$PYTHON_HOME/lib:$LD_LIBRARY_PATH
+echo -e "$GREEN \t✅ Python is: $(which python3) $RESET"
+
+
+echo - PYTHON_HOME = $PYTHON_HOME
+echo - PYTHON_VENV = $PYTHON_VENV
+
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo Path for Cairn
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+export CAIRN_BIN=$CAIRN_APP/bin/$OPTION/bin
+export PATH=$CAIRN_BIN;$PATH
+
+echo Path for MIPModeler
+echo MIPMODELER_HOME=$EXPORT_HOME/MIPModeler
+echo COINOR_HOME=$EXPORT_HOME/MIPModeler/external/CoinOR
+
+echo Path for Cplex
+export CPLEX_HOME=@CPLEX_ROOT@
+export CPLEX_HOME_BIN=
+
+if [ "$OPTION" != "fulldebug" ]; then
+	CPLEX_HOME_BIN=$CPLEX_HOME/bin/x86-64_linux
+fi
+
+export PATH=$PATH;$CPLEX_HOME_BIN
+
+
+echo - CAIRN_BIN = $CAIRN_BIN
+echo - CAIRN_APP = $CAIRN_APP
+echo - CPLEX_HOME = $CPLEX_HOME
+

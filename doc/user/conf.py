@@ -51,15 +51,15 @@ else:
 print("cea_content="+str(cea_content))
 print("open_source="+str(open_source))
 
-extensions = ["breathe", 
-			"sphinx.ext.mathjax",
+extensions = ["sphinx.ext.mathjax",
 			"sphinx.ext.autosectionlabel",
 			"sphinx.ext.ifconfig",
 			'sphinx.ext.autodoc',
 			'sphinx.ext.napoleon',
-			'sphinx.ext.todo'
+			'sphinx.ext.todo',
+            'sphinxcontrib.bibtex'
 			]
-
+bibtex_bibfiles = ['Cairn.bib']
 autodoc_default_options = {
     'members': None,
     'imported-members': True,
@@ -137,5 +137,6 @@ rst_prolog = """
 .. |ancillary|   replace:: :term:`Ancillary services`
 .. |lhv|   replace:: :term:`LHV`
 .. |phase of investment| replace:: :term:`phase of investment`
+.. |uranie| replace:: :term:`Uranie`
 
 """

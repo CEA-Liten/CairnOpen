@@ -5,13 +5,23 @@
 
 extern bool CAIRNCORESHARED_EXPORT isBlended(class SubModel* ap_Model);
 
+struct SEnvImpact {
+    std::string Name;
+    std::string ShortName = "";
+    std::string Unit = "";  
+};
+
 class CAIRNCORESHARED_EXPORT TechnicalSubModel : public SubModel
 {
 public:
-    TechnicalSubModel(QObject* aParent=nullptr);
+    TechnicalSubModel(CairnObject* aParent=nullptr);
     ~TechnicalSubModel();
+
+    virtual void setTimeData();
+
     /** -------------------------------------------------------------------------------------------------------------- */
     void buildModel() override;
+    void setExpInstalled();
     virtual void computeGeometricContribution();   /** MILP Model description : geometric expressions */
     virtual void computeEnvContribution();        /** MILP Model description : environment expressions */
     virtual void computeEconomicalContribution(); /** MILP Model description : economical expressions */
@@ -47,19 +57,15 @@ public:
             mNbOutputFlux = mNbOutputPorts;
         }
 
-        //QString
+        //std::string
         mEnvImpacts.resize(mEnvImpactsList.size());
         for (int i = 0; i < mEnvImpactsList.size(); i++)
         {
             mEnvImpacts[i] = new EnvImpact(this, mEnvImpactsList.at(i), mEnvImpactsShortNamesList.at(i));
-
-            MilpPort* port;
-            QListIterator<MilpPort*> iport(mListPort);
+            
             int j = 0;
             mEnvImpacts[i]->resizeCoeffs(mListPort.size());
-            while (iport.hasNext())
-            {
-                port = iport.next();
+            for (MilpPort* port : mListPort) {            
                 mEnvImpacts[i]->addModelConfigParameters(mInputEnvImpacts, mInputPortImpacts, &mEnvironmentModel, port->Name(), j);
                 j++;
             }
@@ -72,15 +78,15 @@ public:
         addParameter("LPWeightOptimization", &mLPWeightOptimization, false, false, true, "Use integer Weight if false ", ""); /** Use sizing based on Weight if true - default is false*/
         //double 
         addParameter("Weight", &mWeight, 1., &mUseWeightOptimization, true);	/** Weight of identical component, use negative value for optimization */
-        addParameter("LifeTime", &mLifeTime, 1., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");              /** LifeTime in years */
-        addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", mCurrency+"/OptimalSizeUnit", "EcoInvestModel");                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
+        addParameter("LifeTime", &mLifeTime, 1., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");              /** LifeTime in years */ 
+        addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", SFunctionUnit({ eFTypeDivision, { pCurrency(), pOptimalSizeUnit() }}), "EcoInvestModel");                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
         addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., false, &mEcoInvestModel, "Multiplicative coefficient on elementary Capex", "-", "EcoInvestModel");  /** Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
-        addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", mCurrency, "EcoInvestModel");  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
+        addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", pCurrency(), "EcoInvestModel");  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
         addParameter("Opex", &mOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Opex in proportion of Elementary Capex", "-", "EcoInvestModel");					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
-        addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", mCurrency+"/OptimalSizeUnit", "EcoInvestModel");   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
+        addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", "%CAPEX", "EcoInvestModel");   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
         addParameter("OpexConstant", &mOpexConstant, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", "EcoInvestModel");					/** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant */
-        addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", mCurrency, "EcoInvestModel");   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
-        addParameter("MinSize", &mMinSize, 0., false, 1, "Minimal size of the component", "StorageUnit", "EcoInvestModel"); /** Minimum capacity  */
+        addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", pCurrency(), "EcoInvestModel");   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
+        addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", mMainCarrier->StorageUnit(), "EcoInvestModel"); /** Minimum capacity  */
 
         //bool
         addParameter("TryRelaxationCapex", &mTryRelaxationCapex, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "If the CAPEX is a convex function of size the linearization variables will be continuous", "bool", "EcoInvestModel");
@@ -89,11 +95,12 @@ public:
         addParameter("TryRelaxationMass", &mTryRelaxationMass, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "If the Mass is a convex function of size the linearization variables will be continuous", "bool", "GeometryModel");
 
         //double
-        addParameter("Area", &mArea, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "m2/OptimalSizeUnit", "GeometryModel");
-        addParameter("Volume", &mVolume, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseVolume}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "m3/OptimalSizeUnit", "GeometryModel");
-        addParameter("Mass", &mMass, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseMass}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight", "kg/OptimalSizeUnit", "GeometryModel");
-
+        addParameter("Area", &mArea, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight - m2/OptimalSizeUnit", SFunctionUnit({ eFTypeDivision, {pOptimalSizeUnit()}, "", "m2"}), "GeometryModel");
+        addParameter("Volume", &mVolume, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseVolume}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight - m3/OptimalSizeUnit", SFunctionUnit({ eFTypeDivision, {pOptimalSizeUnit()}, "", "m3" }), "GeometryModel");
+        addParameter("Mass", &mMass, 0., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseMass}, { &mGeometryModel} }), SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseArea}, { &mGeometryModel} }), "footprint occupied by component per installed unit or weight - kg/OptimalSizeUnit", SFunctionUnit({ eFTypeDivision, {pOptimalSizeUnit()}, "", "kg" }), "GeometryModel");
         //vector
+        addTimeSeries("ComponentAvailability", &mComponentAvailabilityTS, false, true, "Timeseries used to simulate unavailability during failures and maintenance: available if 1 and unavailable if 0", "", "Base", 1, 0, 1);
+
         addPerfParam("CapexCapacitySetPoint", &mCapexCapacitySetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "name of vector capacity that will be defined from DataFile specification by the User", ""); /** length of vectors of capacity that will be defined from DataFile specification by the User */
         addPerfParam("CapexSetPoint", &mCapexSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "name of vector cost that will be defined from DataFile specification by the User", ""); /** length of vectors of cost that will be defined from DataFile specification by the User */
 
@@ -107,7 +114,7 @@ public:
         addPerfParam("MassSetPoint", &mMassSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "name of vector mass SetPoint that will be defined from DataFile specification by the User", "");
         
         //EnvImpacts
-        mEnvImpacts.resize(mEnvImpactsList.size(), new EnvImpact());
+        //mEnvImpacts.resize(mEnvImpactsList.size(), new EnvImpact());
         mEnvImpactCosts.resize(mEnvImpactsList.size(), 0.0);
         //
         for (int i = 0; i < mEnvImpactsList.size(); i++)
@@ -120,16 +127,11 @@ public:
             else {
                 mEnvImpacts[i]->setEnvImpactUnit("-");
             }
-
-            MilpPort* port;
-            QListIterator<MilpPort*> iport(mListPort);
             int j = 0;
             mEnvImpacts[i]->resizeCoeffs(mListPort.size());
-            while (iport.hasNext())
-            {
-                port = iport.next();
-                QString aPortName = port->Name();
-                mEnvImpacts[i]->addParameters(mInputPortImpacts, mTSInputPortImpacts, &mEnvironmentModel, port->Name(), j);
+            for (auto &port : mListPort) {            
+                std::string aPortName = port->Name();
+                mEnvImpacts[i]->addParameters(mInputPortImpacts, mTSInputPortImpacts, &mEnvironmentModel, port->Name(), j, mMainCarrier);
                 j++;
             }
             mEnvImpacts[i]->addGreyParameters(mInputEnvImpacts, &mEnvironmentModel);
@@ -145,14 +147,16 @@ public:
         SubModel::declareDefaultModelInterface();
 
         //General
-        addIO("VariableCosts", &mExpVariableCosts, true, "Currency");    /** Computed variable costs resulting from material/fuel consumption */
+        addIO("isInstalled", &mExpInstalled, true, "bool");  /** Binary equals 1 if installed */
+
+        addIO("VariableCosts", &mExpVariableCosts, true, mCurrency);    /** Computed variable costs resulting from material/fuel consumption */
         setVariableCostsExpression("VariableCosts");  // defines default expression to be used for VariableCosts computation and use in Economic analysis
 
         //EcoInvestModel
-        addIO("Capex", &mExpCapex, &mEcoInvestModel, mEnergyVector->pFluxUnit()); /** Computed initial investment costs Capex */
-        addIO("Opex", &mExpOpex, &mEcoInvestModel, mEnergyVector->pStorageUnit());      /** Computed operational cost Net Opex */
-        addIO("PureOpex", &mExpPureOpex, &mEcoInvestModel, mEnergyVector->pStorageUnit());      /** Computed operational cost Pure Opex */
-        addIO("Replacement", &mExpReplacement, &mEcoInvestModel, mEnergyVector->pFluxUnit());      /** Computed variable replacement cost */
+        addIO("Capex", &mExpCapex, &mEcoInvestModel, mMainCarrier->pFluxUnit()); /** Computed initial investment costs Capex */
+        addIO("Opex", &mExpOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Net Opex */
+        addIO("PureOpex", &mExpPureOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Pure Opex */
+        addIO("Replacement", &mExpReplacement, &mEcoInvestModel, mMainCarrier->pFluxUnit());      /** Computed variable replacement cost */
 
         setCapexExpression("Capex");        // defines default expression to be used for OptimalSize computation and use in Economic analysis
         setOpexExpression("Opex");          // defines default expression to be used for OptimalSize computation and use in Economic analysis
@@ -181,17 +185,18 @@ public:
 
         //State
         addControlIO("State", &mExpState, &mAddStateVariable, "bool", &mHistState); /* state of the component : 1 if on 0 if off */
+        /* Note: ProductionUC uses ControlIO for StartUp and ShutDown */
+        addIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool");
+        addIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool");
     }
 
     virtual void declareDefaultModelIndicators()
     {
-        QString currency = mParentCompo->Currency();
-        mInputIndicators->addIndicator("Total Cost Function", &mTotalCostFunction, &mExportIndicators, "Total contribution of the component", currency, "TotCosts"); /** Contribution of the component to objective function */
-        mInputIndicators->addIndicator("Capex part", &mCapexContribution, &mEcoInvestModel, "CAPEX part", currency, "CAPEX");  /**  */
+        mInputIndicators->addIndicator("CAPEX", &mCapexContribution, &mEcoInvestModel, "Investment cost", pCurrency(), "CAPEX");  /**  */
         mInputIndicators->addIndicator("is installed", &mExistence, &mExportIndicators, "Component installed", "-", "IsInstalled");
-        mInputIndicators->addIndicator("Opex part (including energy cost)", &mOpexContribution, &mExportIndicators, "Opex part including energy costs", currency, "OPEX");  /**  */
-        mInputIndicators->addIndicator("Pure Opex part", &mPureOpexContribution, &mEcoInvestModel, "Opex part excluding energy costs", currency, "PureOPEX");					/**  */
-        mInputIndicators->addIndicator("Replacement part", &mReplacementPart, &mEcoInvestModel, "Replacement part", currency, "Replacement");              /**  */
+        mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "OPEX + replacement + buying cost + other cost - income", pCurrency(), "OPEX");  /**  */
+        mInputIndicators->addIndicator("Annual OPEX", &mPureOpexContribution, &mEcoInvestModel, "Annual OPEX", pCurrency(), "PureOPEX");					/**  */
+        mInputIndicators->addIndicator("Annual replacement costs", &mReplacementPart, &mEcoInvestModel, "Replacement part", pCurrency(), "Replacement");              /**  */
 
         mInputIndicators->addIndicator("Mass", &mMassContribution, &mGeometryModel, "Mass", "kg", "Mass");
         mInputIndicators->addIndicator("Area", &mAreaContribution, &mGeometryModel, "Area", "m2", "Area");
@@ -199,7 +204,7 @@ public:
 
         for (int i = 0; i < mEnvImpacts.size(); i++)
         {
-            mEnvImpacts[i]->addIndicators(mInputIndicators, &mEnvironmentModel, currency);
+            mEnvImpacts[i]->addIndicators(mInputIndicators, &mEnvironmentModel, mCurrency);
         }
     }
 
@@ -215,9 +220,9 @@ public:
     bool EnvironmentModel() { return mEnvironmentModel; }
     bool EcoInvestModel() { return mEcoInvestModel; }
 
-    int getNbPorts(const QString& direction) {
+    int getNbPorts(const std::string& direction) {
         int nbPorts = 0;
-        foreach(MilpPort * lptrport, mListPort)
+        for(MilpPort * lptrport: mListPort)
         {
             if (lptrport->Direction() == direction)
             {
@@ -227,7 +232,7 @@ public:
         return nbPorts;
     }
 
-    QString ObjectiveType() { return mObjectiveType; };
+    std::string ObjectiveType() { return mObjectiveType; };
 
 protected:
     /** Flags */
@@ -235,8 +240,13 @@ protected:
     bool mEnvironmentModel;             /** bool indicating use of Environment Model if = true - default to true*/
     bool mGeometryModel;                /** bool indicating use of Geometric Model if = true - default to false*/
 
+    MIPModeler::MIPVariable0D mVarInstalled;
+    MIPModeler::MIPExpression mExpInstalled;
+
     /** if another temporal profile is forecasted over the long-term */
     bool mSeasonalPrevisions;
+
+    std::vector<double> mComponentAvailabilityTS;      /** time series for component use availability */
 
     /** Economic model*/
     MIPModeler::MIPVariable0D mInvest;      /** MILP 0D Variable on component Optimal capacity (power or storage) */
@@ -282,23 +292,23 @@ protected:
     std::vector<double> mChargingTime;
     std::vector<double> mDischargingTime;
     std::vector<double> mEfficiency_Ageing;
-    QMap<QString, std::vector<double>> mExpEchData;
-    QMap<QString, std::vector<double>> mConsumptionMap;
-    QMap<QString, std::vector<double>> mConsLvlTotMap;
-    QMap<QString, std::vector<double>> mConsPFMap;
-    QMap<QString, std::vector<double>> mRateOfUse;
-    QMap<QString, std::vector<double>> mConsMeanMap;
-    QMap<QString, std::vector<double>> mProductionMap;
-    QMap<QString, std::vector<double>> mProdLvlTotMap;
-    QMap<QString, std::vector<double>> mProdMeanMap;
-    QMap<QString, std::vector<double>> mProdContributionMap;
-    QMap<QString, std::vector<double>> mChargedEnergyMap;
-    QMap<QString, std::vector<double>> mDischargedEnergyMap;
-    QMap<QString, std::vector<double>> mNLevChargedEnergyMap;
-    QMap<QString, std::vector<double>> mNLevDischargedEnergyMap;
-    QMap<QString, std::vector<double>> mChargedMeanMap;
-    QMap<QString, std::vector<double>> mDischargedMeanMap;
-    QMap<QString, std::vector<double>> mNbCylesMap;
+    std::map<std::string, std::vector<double>> mExpEchData;
+    std::map<std::string, std::vector<double>> mConsumptionMap;
+    std::map<std::string, std::vector<double>> mConsLvlTotMap;
+    std::map<std::string, std::vector<double>> mConsPFMap;
+    std::map<std::string, std::vector<double>> mRateOfUse;
+    std::map<std::string, std::vector<double>> mConsMeanMap;
+    std::map<std::string, std::vector<double>> mProductionMap;
+    std::map<std::string, std::vector<double>> mProdLvlTotMap;
+    std::map<std::string, std::vector<double>> mProdMeanMap;
+    std::map<std::string, std::vector<double>> mProdContributionMap;
+    std::map<std::string, std::vector<double>> mChargedEnergyMap;
+    std::map<std::string, std::vector<double>> mDischargedEnergyMap;
+    std::map<std::string, std::vector<double>> mNLevChargedEnergyMap;
+    std::map<std::string, std::vector<double>> mNLevDischargedEnergyMap;
+    std::map<std::string, std::vector<double>> mChargedMeanMap;
+    std::map<std::string, std::vector<double>> mDischargedMeanMap;
+    std::map<std::string, std::vector<double>> mNbCylesMap;
 
     /** footprint optional attributes (geometry Model) */
     double mArea;
@@ -336,7 +346,7 @@ protected:
     double mOpexConstant;                       /** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant **/
     double mReplacementConstant;                /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant**/
 
-    QString mObjectiveType;
+    std::string mObjectiveType;
 };
 
 #endif // TechnicalSubModel_H

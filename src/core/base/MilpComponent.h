@@ -1,14 +1,8 @@
 #ifndef MilpComponent_H
 #define MilpComponent_H
-class MilpComponent ;
+class MilpComponent;
 class SubModel;
 
-#include <QtCore>
-#include <QFile>
-#include <QVector>
-#include <QMap>
-#include <QDebug>
-#include <QString>
 #include <Eigen/Dense>
 #include <map>
 
@@ -40,28 +34,26 @@ using namespace std;
  * Ports are used for flux and potential value exchanges between elements through bus connectors of types FluxBalance and BusSameValue
  * Ports will be build at constructor step on the basis of \<Port1\> \<Port2\>... fields
  */
-typedef SubModel* (*f_submodel)(QObject* aParent);
+typedef SubModel* (*f_submodel)(CairnObject* aParent);
 
 class CAIRNCORESHARED_EXPORT MilpComponent : public TecEcoEnv
 {
 public:
-    MilpComponent(QObject* aParent, QString aName, MilpData *aMilpData, TecEcoEnv &aTecEcoEnv,  
-                  const QMap<QString, QString> &aComponent, const QMap < QString, QMap<QString, QString> > &aPorts={}, class ModelFactory* aModelFactory=nullptr);
+    MilpComponent(CairnObject* aParent, std::string aName, MilpData *aMilpData, TecEcoEnv &aTecEcoEnv,  
+                  const std::map<std::string, std::string> &aComponent, const std::map < std::string, std::map<std::string, std::string> > &aPorts={}, class ModelFactory* aModelFactory=nullptr);
 
     virtual ~MilpComponent();
     virtual void initMilpComponent();
 
-    QString Name() const {return mName ;}  
-    QString Type() const { return mType; } 
+    std::string Name() const {return std::string(this->objectName().c_str()); }
+    void setName(const std::string& name) { this->setObjectName(name); }
 
-    virtual double Sens() const {return mSens ;}                                             /** get component Sink/Source direction */
+    std::string Type() const { return mType; } 
 
     // Component IO with PEGASE
 
     //Published variables
-    virtual void createZEVariablesList();
-    void createZEUserVariablesList(QString Full_File_Name, t_mapExchange& a_Exchange) ;  // common function to publish other variables
-    void createExchangeListVars(t_mapExchange &a_Import, t_mapExchange &a_Export);
+    void createZEUserVariablesList(std::string Full_File_Name, t_mapExchange& a_Exchange) ;  // common function to publish other variables
     //Subscribed variables : hist persistent timeseries
     void exportRHVariableInModel(); /** function to export the list of the data saved for rolling horizon into models */
     int  createHistFXLists();
@@ -72,7 +64,7 @@ public:
     virtual void setDefaultsResults();                                                        /** define default values in case optimization fails */
 
     // Utility functions for PEGASE IO management
-    virtual bool findFirstCoeff(QString aVarName, t_mapExchange aList , float &coeff, float &offset) ;
+    virtual bool findFirstCoeff(std::string aVarName, t_mapExchange aList , float &coeff, float &offset) ;
 
     // MILP functions
     virtual void initSubModelTopology() ; /**Send topology data to submodel : list of ports*/
@@ -82,7 +74,7 @@ public:
     virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
 
     virtual int setParameters();
-    virtual int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
+    int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
     void createCompoModel();                              
     void deleteCompoModel();
 
@@ -102,39 +94,40 @@ public:
     virtual void setBusSameValuePortExpression() ;                                           /** Fill in expression at BusSameValue port connexion */
 
     /* Methods that calls a SubModel function */
-    MIPModeler::MIPExpression* getMIPExpression(QString aExpressionName);
-    MIPModeler::MIPExpression1D* getMIPExpression1D(QString aExpressionName);
-    MIPModeler::MIPExpression& getMIPExpression1D(uint i, QString aExpressionName);
-    QString ObjectiveType(); 
+    MIPModeler::MIPExpression* getMIPExpression(std::string aExpressionName);
+    MIPModeler::MIPExpression1D* getMIPExpression1D(std::string aExpressionName);
+    MIPModeler::MIPExpression& getMIPExpression1D(uint i, std::string aExpressionName);
+    std::string ObjectiveType(); 
     /* ------------------------------------- */
     virtual void setMIPModel (MIPModeler::MIPModel* aModel) ;                        /** Set pointer to global Optimization Problem Model */
 
     virtual int defineDefaultVarNames();
-    void createOnePort(const QString& portId, const QMap<QString, QString>& portParams);
-    QString getUniquePortID();
-    QList<MilpPort*> PortList();
+    void createOnePort(const std::string& portId, const std::map<std::string, std::string>& portParams);
+    std::string getUniquePortID();
+    const std::vector<MilpPort*> &PortList();
     virtual void addPort(MilpPort* lptrport);
     void removePort(MilpPort* lptrport);
-    MilpPort* getPort(const QString& portId);
-    MilpPort* getPortByName(const QString& aPortName);
+    MilpPort* getPort(const std::string& portId);
+    MilpPort* getPortByName(const std::string& aPortName);
 
     virtual void declareCompoInputParam();
-    virtual void setCompoInputParam(const QMap<QString, QString> aComponent);
-    virtual void initGuiData();
+    virtual void setCompoInputParam(const std::map<std::string, std::string> aComponent);
+    void initGuiData(const std::map<std::string, std::string>& paramMap);
 
-    virtual void declareIOVariables();
+    bool allDefaultPortsHaveCarriers(); 
+    void declareIOVariables();
 
-    virtual void setCompoSens(const QString& direction) { };
+    virtual void jsonSaveGuiComponent(ojson &componentsArray, const std::string& componentCarrier, 
+        const std::vector<std::string>& refLabelList) ;
+    void jsonSaveGUINodePortsData(ojson &nodePortsArray, const std::string & aSide);
+    virtual void jsonSaveGUIlistPortsData(ojson &nodePortArray, const std::string& aSide);
+    void jsonSaveGUITimeSeries(ojson& paramArray, const InputParam* const inputParam);// = nullptr);
+    void jsonSaveGUICompoNodePortsData(ojson& nodePortsArray, ojson& nodePortsData);
+    virtual std::vector<MilpPort*> listSidePorts(const std::string& aside);
 
-    virtual void jsonSaveGuiComponent(QJsonArray &componentsArray, const QString& componentCarrier) ;
-    void jsonSaveGUINodePortsData(QJsonArray &nodePortsArray, const QString & aSide);
-    virtual void jsonSaveGUIlistPortsData(QJsonArray &nodePortArray, const QString& aSide);
-    void jsonSaveGUITimeSeries(QJsonArray& paramArray, const InputParam* const inputParam);// = nullptr);
-    virtual QList<MilpPort*> listSidePorts(const QString& aside);
-
-    QString ModelName() {return mCompoModelName;}
-    QString ModelClassName() { return mCompoModelClassName; }
-    void setModelClassName(const QString& modelClass) { mCompoModelClassName = modelClass; }
+    std::string ModelName() {return mCompoModelName;}
+    std::string ModelClassName() { return mCompoModelClassName; }
+    void setModelClassName(const std::string& modelClass) { mCompoModelClassName = modelClass; }
     GUIData* getGUIData() {return mGUIData;}
 
     InputParam* getPlugSubmodelIO() {return mPlugSubmodelIO;}
@@ -147,38 +140,38 @@ public:
     double TimeStep(int i) const {return mMilpData->TimeStep(i);}    //TimeStep in HOUR
     std::vector<double> TimeSteps() const {return mMilpData->TimeSteps();}    //TimeStep list in HOUR
 
-    float pdt() const {return mMilpData->pdt() ;}              /** Pas de temps en secondes */
-    double pdtHeure() const {return mMilpData->pdtHeure() ;}    /** La meme grandeur mais en heures */
-    uint npdtPast() const {return mMilpData->npdtPast() ;}     /** Nombre de pas de temps passe */
-    uint npdt() const {return mMilpData->npdt() ;}             /** Nombre de pas de temps (futur) */
-    uint npdtTot() const {return mMilpData->npdtTot() ;}       /** Nombre total de pas de temps (passe + futur) */
-    uint timeshift() const {return mMilpData->timeshift() ;}    /** Time shifting */
-    uint iHMFuturSize () const {return mMilpData->iHMFuturSize() ;}
-    uint startingAbsoluteTimeStep () const {return mMilpData->startingAbsoluteTimeStep() ;} /** Starting absolute timestep number for the current optimization */
+    float pdt() const { return mMilpData->pdt(); }              /** Pas de temps en secondes */
+    double pdtHeure() const { return mMilpData->pdtHeure(); }   /** La meme grandeur mais en heures */
+    uint npdtPast() const { return mMilpData->npdtPast(); }     /** Nombre de pas de temps passe */
+    uint npdt() const { return mMilpData->npdt(); }             /** Nombre de pas de temps (futur) */
+    uint npdtTot() const { return mMilpData->npdtTot(); }       /** Nombre total de pas de temps (passe + futur) */
+    uint timeshift() const { return mMilpData->timeshift(); }   /** Time shifting */
+    uint iHMFuturSize() const { return mMilpData->iHMFuturSize(); }
+    uint startingAbsoluteTimeStep() const { return mMilpData->startingAbsoluteTimeStep(); } /** Starting absolute timestep number for the current optimization */
 
-    virtual void defineMainEnergyVector(); /** set the main carrier of the component **/
-    void setEnergyVector(EnergyVector* aptrEnergyVector);    /** Set a pointer to the main carrier of the component */
-    EnergyVector* getEnergyVector(); /** Pointer to the main carrier of the component */
+    virtual void defineMainCarrier(); /** set the main carrier of the component **/
+    void setMainCarrier(EnergyVector* aptrEnergyVector);  /** Set a pointer to the main carrier of the component */
+    EnergyVector* getMainCarrier(); /** Pointer to the main carrier of the component */
 
-    Cairn_Exception  getException () const {return mException;}
-    void  setException (const Cairn_Exception &aException) {mException = aException;}
+    Cairn_Exception getException() const {return mException;}
+    void setException (const Cairn_Exception &aException) {mException = aException;}
     
     virtual void readTSVariablesFromModel();
-    void setTimeSeriesName(const QString& ts_paramName, const QString& ts_name);
-    QString getTimeSeriesName(const QString& ts_paramName);
-    QMap<QString, QString> getTimeSeriesNames();
+    void setTimeSeriesName(const std::string& ts_paramName, const std::string& ts_name);
+    std::string getTimeSeriesName(const std::string& ts_paramName);
+    std::map<std::string, std::string> getTimeSeriesNames();
 
     void computeHistNbHours();
  
     virtual std::vector<std::string> get_ModelClassList();
-    std::map<QString, InputParam::ModelParam*> getParameters(); //get all the parameters of the componenet
+    std::map<std::string, InputParam::ModelParam*> getParameters(); //get all the parameters of the componenet
 
     bool EnvironmentModel();
     bool EcoInvestModel();
     bool isBus();
 
-    int getXpos() const { return mXpos; }
-    int getYpos() const { return mYpos; }
+    int getXpos() const { return mGUIData->getXpos(); }
+    int getYpos() const { return mGUIData->getYpos();; }
 
     void setXpos(const int& aXpos);
     void setYpos(const int& aYpos);
@@ -187,17 +180,24 @@ public:
     void updateCompoParamMap(const std::string& a_SettingName, const t_value& a_SettingValue);
     void updateCompoParamMap(const t_dict& a_SettingValues);
 
-    MilpPort* mapDefaultPort(const QString& portId, const QMap<QString, QString>& portParams);
+    MilpPort* mapDefaultPort(const std::string& portId, const std::map<std::string, std::string>& portParams);
 
     std::string getAbsoluteFileName(const std::string& filename);
+
+    void createImportListVars(t_mapExchange& a_Import);
+    void createExportListVars(t_mapExchange& a_Export);
+
+    std::map<std::string, std::string> portDataFromInputFile(const std::string& portId, const std::string& portName);
 
 protected:
     Cairn_Exception mException ;
     MIPModeler::MIPModel* mModel ;                      /** Pointer to global Optimization Problem Model */
 
+    GUIData* mGUIData{ nullptr };     /** Pointer to GUI Data */
+
     // Component settings
-    QMap<QString, QString> mComponent ;         /** Map of Topological data from .json */
-    QMap < QString, QMap<QString, QString> > mPorts;  /** Map of port data from .json, portName: QMap<QString, QString> */
+    std::map<std::string, std::string> mComponent ;         /** Map of Topological data from .json */
+    std::map < std::string, std::map<std::string, std::string> > mPorts;  /** Map of port data from .json, portName: std::map<std::string, std::string> */
 
     SubModel* mCompoModel{ nullptr };                             /** Pointer to global component SubModel of name mCompoModelName*/
     InputParam* mCompoInputParam{ nullptr };      /** COMPONENT Input parameter List from XML File -> Options */
@@ -216,36 +216,30 @@ protected:
     MilpData* mMilpData{ nullptr };                          /** Pointer to Milp Time Data */
 
     //topology
-    QString mName ;                                 /** Component Name */
-    QString mCompoModelName ;                       /** Component Model Name to be used eg an Electrolyzer */ 
-    QString mCompoTechnoType;                       /** Component TechnoType Name to be used only by GUI for image eg an PVSource */
-    QString mCompoModelClassName ;                  /** Component Model Class Name to be used eg a Basic Electrolyzer or SOEC Electrolyzer */
+    std::string mCompoModelName ;                       /** Component Model Name to be used eg an Electrolyzer */ 
+    std::string mCompoTechnoType;                       /** Component TechnoType Name to be used only by GUI for image eg an PVSource */
+    std::string mCompoModelClassName ;                  /** Component Model Class Name to be used eg a Basic Electrolyzer or SOEC Electrolyzer */
     int mNports ;                                       /** Component number of ports */
     int mNbInputPorts ;                                       /** Component number of Input ports */
     int mNbOutputPorts ;                                       /** Component number of Output ports */
     int mNbDataPorts ;                                       /** Component number of Data exchange ports */
 
     //technical input
-    double mSens ;                                       /** Component flux direction : = 1 if outgoing direction with respect to component, -1 if incoming */
     bool  mIsImposedWeight ;                            /** if true: add constraint setting component weight to imposed value - if false, weight of component - useful to relax on load flux profiles */
  
     int mFirstInit ; /** 0 if firstInit, else */
     int mFirstInitTS ; /** 0 if firstInit, else */
     
-    int mXpos;
-    int mYpos;
-    QString mDirection;
-    QString mType;  
-    QString mControl;
-    QString mDataFile;
-    QString mPublishUserVariable;
-    QString mSubmodelFile; //Do we still need this?!
+    std::string mDirection;
+    std::string mType;  
+    std::string mControl;
+    std::string mDataFile;
+    std::string mPublishUserVariable;
+    std::string mSubmodelFile; //Do we still need this?!
 
     // Time Series
-    typedef std::map<QString, ModelTS> t_mapTS;
+    typedef std::map<std::string, ModelTS> t_mapTS;
     t_mapTS m_timeSeries = {};
-    void createImportListVars(t_mapExchange& a_Import);
-    void createExportListVars(t_mapExchange& a_Export);
     virtual void createPortsExportListVars(t_mapExchange& a_Exchange);
     void readTSVariables(InputParam* aMapParamTS);
 

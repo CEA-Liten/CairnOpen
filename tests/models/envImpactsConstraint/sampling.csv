@@ -1,0 +1,5 @@
+;TecEcoAnalysis;TecEcoAnalysis
+;Climate change#Global Warming Potential 100 MaxConstraint;Model
+optimNPV;false;OptimNPV
+constraint;true;OptimNPV
+optimGWP;false;OptimEnvImpact-GWP

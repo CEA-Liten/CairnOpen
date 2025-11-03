@@ -5,23 +5,23 @@ class MilpData ;
 #include "InputParam.h"
 
 #include "CairnCore_global.h"
-#include <QObject>
 
-class CAIRNCORESHARED_EXPORT MilpData : public QObject
+
+class CAIRNCORESHARED_EXPORT MilpData : public CairnObject
 {
-    Q_OBJECT
+    
 public:
 
-    MilpData(QObject* aParent, const QString& aName, const double& aPdt, const uint& aNpdtPast, const uint& aNpdtFuture, const uint& aTimeshift, const uint& aIHMFuturSize, const QString& aGlobalTimeStepFile, const QString& aGlobalTypicalPeriodFile);
-    MilpData(QObject* aParent, const QString& aName, const QString& aGlobalTimeStepFile, const QString& aGlobalTypicalPeriodFile);
+    MilpData(CairnObject* aParent, const std::string& aName, const double& aPdt, const uint& aNpdtPast, const uint& aNpdtFuture, const uint& aTimeshift, const uint& aIHMFuturSize, const std::string& aGlobalTimeStepFile, const std::string& aGlobalTypicalPeriodFile);
+    MilpData(CairnObject* aParent, const std::string& aName, const std::string& aGlobalTimeStepFile, const std::string& aGlobalTypicalPeriodFile);
 
     virtual ~MilpData();
 
-    bool setMilpDataFromSettings(const std::map<QString, InputParam::ModelParam*>& paramMap = {}, const bool& isStdAloneMode = true);
+    bool setMilpDataFromSettings(const std::map<std::string, InputParam::ModelParam*>& paramMap = {}, const bool& isStdAloneMode = true);
 
     virtual void prepareOptim() ;
 
-    void setTimeSteps (QString aCsvTimeStepFileName);
+    void setTimeSteps (std::string aCsvTimeStepFileName);
     double TimeStep(uint i) const {return mTimeSteps[i];}    //TimeStep in HOUR
     std::vector<double> TimeSteps() const {return mTimeSteps;}    //TimeStep list in HOUR
 
@@ -30,7 +30,7 @@ public:
     uint64_t DecreaseOptimizationHorizon() const {return mDecreaseOptimizationHorizon ;}
     bool useVariableTimeSteps() const { return mUseVariableTimeSteps; }
 
-    void setTypicalPeriods (QString aCsvTimeStepFileName);
+    void setTypicalPeriods (std::string aCsvTimeStepFileName);
     std::vector<int> VectTypicalPeriods() const {return mVectTypicalPeriods;}    //TimeStep list in HOUR
     uint TypicalPeriods() const {return mTypicalPeriods ;}
     uint NDtTypicalPeriods() const {return mNDtTypicalPeriods ;}
@@ -44,10 +44,11 @@ public:
     uint timeshift() const {return mTimeshift ;}    /** Time shifting */
     uint iHMFuturSize() const {return mIHMFuturSize ;}
     uint nbcycle() const {return mNbCycle ;}       /** Nombre cycle rolling horizon */
-    QString rollingMode() const { return mRollingMode; }
-    QString readingMode() const { return mReadingMode; }
+    std::string rollingMode() const { return mRollingMode; }
+    std::string readingMode() const { return mReadingMode; }
     bool runUntilEnd() const { return mRunUntilSimulationEnd; }
     bool ExportResultsEveryCycle() const { return mExportResultsEveryCycle; }
+    bool ShowIndicatorDescription() const { return mShowIndicatorDescription; }
     bool UseExtrapolationFactor() const { return mUseExtrapolationFactor; }
 
     uint startingAbsoluteTimeStep () const {return mStartingAbsoluteTimeStep ;} /** Starting absolute timestep number for the current optimization */
@@ -57,11 +58,11 @@ public:
 
     void setStartingAbsoluteTimeStep (const uint val) {mStartingAbsoluteTimeStep = val;}
 
-    const QString getVariableTimeStepsFile() const { return  mGlobalTimeStepFile; }
-    const QString getTypicalPeriodsFile() const { return  mGlobalTypicalPeriodFile; }
+    const std::string getVariableTimeStepsFile() const { return  mGlobalTimeStepFile; }
+    const std::string getTypicalPeriodsFile() const { return  mGlobalTypicalPeriodFile; }
 
-    void setVariableTimeStepsFile(const QString& a_FileName) { mGlobalTimeStepFile = a_FileName; }
-    void setTypicalPeriodsFile(const QString& a_FileName) { mGlobalTypicalPeriodFile = a_FileName; }
+    void setVariableTimeStepsFile(const std::string& a_FileName) { mGlobalTimeStepFile = a_FileName; }
+    void setTypicalPeriodsFile(const std::string& a_FileName) { mGlobalTypicalPeriodFile = a_FileName; }
 protected:
     double mPdt;         /** Pas de temps en secondes */
     double mPdtHeure;    /** La meme grandeur mais en heures */
@@ -71,13 +72,14 @@ protected:
     uint mTimeshift;    /** Time shifting */
     uint mIHMFuturSize ; /** == mFutureVariableTimestep */
     uint mNbCycle ; /** number of cycling rolling horizon */
-    QString mRollingMode; /** mode used to read time series data when end of the file reached*/
-    QString mReadingMode; /** mode used to read time series data when TimeStep is large (e.g. take average of all values in between)*/
+    std::string mRollingMode; /** mode used to read time series data when end of the file reached*/
+    std::string mReadingMode; /** mode used to read time series data when TimeStep is large (e.g. take average of all values in between)*/
     bool mRunUntilSimulationEnd; //if true run until the end of all cycles; if false stop at cycle where there is a problem (no solution)
     bool mExportResultsEveryCycle; //if true generate PLAN/HIST every cycle
+    bool mShowIndicatorDescription; //if true add a column for indicators Description in PLAN/HIST
     bool mUseExtrapolationFactor;
-    QString mGlobalTimeStepFile ; /** Timestep file name */
-    QString mGlobalTypicalPeriodFile ; /** Typical Period file name */
+    std::string mGlobalTimeStepFile ; /** Timestep file name */
+    std::string mGlobalTypicalPeriodFile ; /** Typical Period file name */
 
     uint mStartingAbsoluteTimeStep ; /** Starting absolute timestep number for the current optimization */
 
