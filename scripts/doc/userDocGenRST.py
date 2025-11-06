@@ -426,4 +426,7 @@ if __name__ == '__main__':
         redact_files(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
         redact_files(cairn_path, "//src//models", "//doc//user//")
-        redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//")
+        try:
+            redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//")
+        except:
+            print("PrivateDoc not built")
