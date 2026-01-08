@@ -1,0 +1,20 @@
+name: cairn Workflow
+on:
+  push:
+    branches:
+      - ci-cd #TBR
+
+jobs:
+  cairn-build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: buildALL
+        run: ./buildAll.bat fullrelease all wheel deps
+      - name: TNR Tests
+        run: ./GenericAppEnv.bat fullrelease && ./tests/scripts/startPytest_gitlab.bat fullrelease Cairn 0 ./tests/reports/Cairn-TNR.xml tests
+
+      #TODO TNR 
