@@ -1,7 +1,7 @@
 @ECHO off
 SET STARTTIME=%TIME%
 
-set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin
+set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
 if exist "cmakepath.bat" (	
 	call cmakepath.bat
 )
@@ -31,13 +31,13 @@ mkdir "%BUILD_PATH%"
 
 rem Generate config
 if "%OPTION%"=="all" ( 
-	"%CMAKEPATH%\cmake.exe" --preset=%CONFIGURATION% -S . 
+	"%CMAKEPATH%" --preset=%CONFIGURATION% -S . 
 ) else (
-    "%CMAKEPATH%\cmake.exe" --preset=%CONFIGURATION% -DWITH_PRIVATEMODELS=OFF -DWITH_LICENCE=OFF -DCAIRN_DEFAULTSOLVER:STRING=Highs -S . 
+    "%CMAKEPATH%" --preset=%CONFIGURATION% -DWITH_PRIVATEMODELS=OFF -DWITH_LICENCE=OFF -DCAIRN_DEFAULTSOLVER:STRING=Highs -S . 
 )
 
 rem build  -j %NUMBER_OF_PROCESSORS%
-"%CMAKEPATH%\cmake.exe" --build --preset %CONFIGURATION%  
+"%CMAKEPATH%" --build --preset %CONFIGURATION%  
 
 
 rem remove previous install directory
@@ -47,5 +47,5 @@ if exist %BIN_PATH% (
 )
 	
 rem Install
-"%CMAKEPATH%\cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+"%CMAKEPATH%" --install %BUILD_PATH% --prefix %BIN_PATH%
 
