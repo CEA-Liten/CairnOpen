@@ -30,7 +30,8 @@ set(MIPMODELER_HOME ${CMAKE_SOURCE_DIR}/lib/MIPModeler CACHE INTERNAL "MIPModele
 set(COINOR_ROOT ${MIPMODELER_HOME}/external/CoinOR CACHE INTERNAL "Cbc, Clp installation path")
 option(WITH_HIGHS_INSTALL "Highs install" ON) 
 option(WITH_EIGEN_INSTALL "Eigen install" ON) 
-option(WITH_SPDLOG_INSTALL "spdlog install" ON) 
+option(WITH_SPDLOG_INSTALL "spdlog install" ON)
+option(USE_CPLEX "Enable CPLEX support" ON) 
 
 # Compilation of Cairn
 option(BUILD_CAIRN "build Cairn if ON" ON)
