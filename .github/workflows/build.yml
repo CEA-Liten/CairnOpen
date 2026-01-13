@@ -17,7 +17,7 @@ jobs:
         run: git submodule update --init --recursive --remote
       
       - name: buildALL
-        run: ./buildAll.bat release open
+        run: ./buildAll.bat debug open
       - name: TNR Tests
         run: ./GenericAppEnv.bat release && ./tests/scripts/startPytest.bat release Cairn 0 ./tests/reports/Cairn-TNR.xml tests
 
