@@ -19,6 +19,7 @@ class OptimProblem;
 #include "ZEVariables.h"
 #include "JsonDescription.h"
 
+#include "TecEcoCompo.h"
 #include "GridCompo.h"
 #include "SourceLoadCompo.h"
 #include "BusCompo.h"
@@ -133,20 +134,21 @@ static inline GradDescResult GradientDescent(double (*Y_func)(MatrixXf*,MatrixXf
 typedef MilpComponent* (*f_MilpComponent)(CairnObject* aParent, std::string aName, MilpData* aMilpData, TecEcoEnv &aTecEcoEnv,
                                           const std::map<std::string, std::string> &aComponent, const std::map < std::string, std::map<std::string, std::string> >& aPorts);
 
-class CAIRNCORESHARED_EXPORT OptimProblem : public MilpComponent
+class CAIRNCORESHARED_EXPORT OptimProblem : public CairnObject
 {
     
 public:
-    OptimProblem(CairnObject* aParent, std::string aName, MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, 
-        const bool& aStdAloneMode = true, const std::map<std::string, std::string>& aComponent = {});
+    OptimProblem(CairnObject* aParent, std::string aName, MilpData* aMilpData, const bool& aStdAloneMode = true);
     ~OptimProblem();
 
     TecEcoEnv* getTecEcoEnv() { return mTecEcoEnv; }
-    TecEcoAnalysis* getTecEcoAnalysis() { return mTecEcoAnalysis; };// mTecEcoAnalysis == mCompoModel
+    TecEcoAnalysis* getTecEcoAnalysis() { return mTecEcoAnalysis; }; 
+    void createTecEcoAnalysisFromParamMap();
+    bool createTecEcoAnalysis();
 
     SimulationControl* getSimulationControl() { return mSimulationControl; };
     void createSimulationControlFromParamMap();
-    bool createSimulationControl(const std::string& mSimulationControlName = "SimulationControl", const std::map<std::string, std::string>& paramMap = {});
+    bool createSimulationControl(const std::string& mSimulationControlName = "Cairn", const std::map<std::string, std::string>& paramMap = {});
 
     Solver* getSolver() { return mSolver; }
     bool createSolver(const std::string& aName = "Solver", const std::map<std::string, std::string>& paramMap = {});
@@ -157,7 +159,6 @@ public:
     std::vector<BusCompo*> BusComponents();
     std::vector<MilpComponent*> NonBusMilpComponents();
     std::map<std::string, MilpComponent*> MilpComponents(); //all MilpComponents including Buses
-
     std::vector<EnergyVector*> EnergyVectors();
 
     void doInit(const StudyPathManager& aStudy, bool aLoad);
@@ -168,6 +169,7 @@ public:
     std::string getOptimDirection() ;
 
     int initProblem();
+    void redeclareEnvImpactParameters();
     int initSubModelInput();
     int setParameters();
     int getNumberOfSolutions();
@@ -184,19 +186,18 @@ public:
     void exportEnvImpactMassIndicators(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
     void exportEnvImpactParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
     void exportPortEnvImpactParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
-    void exportParameters(const std::string& aFileName = "", const std::string& encoding = "UTF-8");
-    void exportParameters_all_files(std::string aFileName, const std::string& encoding = "UTF-8");
+    void exportParameters(const std::string& aFileName = "", const std::map<std::string, bool>& optionsMap = {}, const std::string& encoding = "UTF-8");
+    void exportParameters_all_files(std::string aFileName, const std::map<std::string, bool>& optionsMap = {}, const std::string& encoding = "UTF-8");
     void exportParameters(std::fstream& out, const std::string& name, const std::map<std::string, InputParam::ModelParam*>& paramMap,
-        const std::map<std::string, std::string>& aTimeSeriesNames = {}, const std::map<std::string, std::string>& labelMap = {});
+        const std::map<std::string, bool>& optionsMap = {}, const std::map<std::string, std::string>&aTimeSeriesNames = {}, const std::map<std::string, std::string>&labelMap = {});
 
-    void initSubModelTopology();
     void setStopSignal(int* stopSignal);
     void solveProblem(std::string& optimLogFileName, const int cycle, const std::map<std::string, bool> paramMap = std::map<std::string, bool>(), const bool aExportResultsEveryCycle = false);
 
     void prepareOptim();
     void exportResults();
     void setDefaultsResults();
-    void computeTecEcoEnvAnalysis(const int& aNsol, const int& istat);
+    void computeTecEcoEnvAnalysis(const int& aNsol);
     void exportMultiObjFile(std::fstream& out, int aNsol, const bool showDescription);
     void exportAllTecEcoEnvAnalysis(const std::string &aResultFile, const std::string& range, const bool showDescription = false, const std::string& encoding = "UTF-8", const bool isRollingHorizon=false, const int aNsol=0);
     void exportResultsPLAN(std::string aResultFile, const int& aNsol = 0);
@@ -207,16 +208,16 @@ public:
     double getSolverRunningTime() { return mSolver->getSolverRunningTime();  }
 
     void buildComponentConstraints();
-    void buildManualObjectiveConstraints();
     void buildBusConstraints();
 
-    void createTecEcoAnalysis();
     void createMilpComponentsFromParamMap();
     void createLinksToBus();
     void createDynamicIndicators();
     void computeDynamicIndicators(const int& aNsol); //should be called after the end of the simulation
 
-    bool createComponent(const std::map<std::string, std::string> &component, const std::map < std::string, std::map<std::string, std::string> >& ports={});
+    bool createComponent(const std::string& componentType, const std::map<std::string, std::string> &paramsMap = {},
+        const std::map < std::string, std::map<std::string, std::string> >& portsMap={});
+    void configureBusCarrier(MilpComponent* lptrBus, const std::string& carrierName);
     void createLinksToBus(MilpComponent* lptrComponent);
     void deleteComponent(MilpComponent* lptrComponent);
 
@@ -250,13 +251,19 @@ public:
     void resetFlags();
 
     std::string projectDir() const { return mStudyFile->projectDir().c_str(); }
+    std::string getAbsoluteFileName(const std::string& filename);
+
+    MilpData* getMilpData() { return mMilpData; }
 
 private:    
+    MilpData* mMilpData{ nullptr };  /** Pointer to Milp Time Data */
+    MIPModeler::MIPModel* mModel;    /** Pointer to global Optimization Problem Model */
+
     TecEcoEnv* mTecEcoEnv ;
     ModelFactory* mModelFactory;
     JsonDescription* mJsonDescription ;
-    Solver* mSolver;
-    TecEcoAnalysis* mTecEcoAnalysis; //== mCompoModel
+    Solver* mSolver{ nullptr };
+    TecEcoAnalysis* mTecEcoAnalysis;  
     SimulationControl* mSimulationControl;
     
     const StudyPathManager* mStudyFile{ nullptr };   // the architecture of study file
@@ -269,16 +276,14 @@ private:
 
     std::vector< t_mapParams > mMilpComponents ;      // Listes cle / valeur de description des composants MILPs a partir du fichier de description
 
-    t_mapExchange mListPublishedVars;  // export
-    t_mapExchange mListSubscribedVars; // import
+    t_mapExchange mListPublishedVars{};  // export
+    t_mapExchange mListSubscribedVars{}; // import
 
     //------------------------------ Dynamic Indicators ----------------------------------------------------------------- 
     std::vector< t_mapParams > mDynamicIndicatorsData{}; // List of dynamic indicators data in the form "key: value"  
     std::vector<DynamicIndicator*> mDynamicIndicators{}; // List of pointers to DynamicIndicator objects  
 
     bool mExportIndicators;
-
-    bool newCompoModel();    
 
     void jsonSaveDocument(ojson& jsonOutputFile);
     void jsonSaveGuiComponents(ojson& componentsArray);

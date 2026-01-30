@@ -346,6 +346,11 @@ if __name__ == '__main__':
         tab_echantillonnage_file = sys.argv[6]
         #if tab_echantillonnage_file == "":
         #    tab_echantillonnage_file = "tab_echantillonnage.csv"
+
+        openHTMLReport = False
+        if len(sys.argv) > 7:
+            openHTMLReport = int(sys.argv[7])
+
     else:
         app_home = r"D:\Users\PP265749\git\PerseeGui\Test_Persee\formation_persee"
         testcase = "formation_persee" 
@@ -362,7 +367,7 @@ if __name__ == '__main__':
         colorfile = "config_Colors.csv"
 
     print("Module sys searching Path is ", sys.path)
-    config_file = app_home + ut.getOSsep() + configFileName
+    config_file = os.path.join(app_home, configFileName) 
     if os.path.isfile(config_file):
         print("Read: ", config_file)
     else:
@@ -388,4 +393,5 @@ if __name__ == '__main__':
         htmlFile = GenerateHTMLReport(app_home, testcase, prefix, scenarioList=scenarioList, config_file_name=config_file, historplan="PLAN", tab_echantillonnage=tab_echantillonnage_file)
         #open the html file using cmd windows
         #os.system("start " + htmlFile)
-        os.system('start "" "'+ htmlFile+'"')
+        if openHTMLReport:
+            os.system('start "" "'+ htmlFile+'"')

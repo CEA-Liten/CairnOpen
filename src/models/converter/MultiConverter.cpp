@@ -179,13 +179,13 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
     * then use a vector N*[k] where N = mNbOutputFlux + mNbInputFlux
     */
 
-    std:string vectorName = "MatrixB"; // parameter name is MatrixB 
-    if (isVectorD) vectorName = "MatrixD";
+    std:string matrixName = "MatrixB"; // parameter name is MatrixB 
+    if (isVectorD) matrixName = "MatrixD";
 
     std::string absoluteFileName = getAbsoluteFileName(filename);
 
     //if (!fs::exists(absoluteFileName)) {
-    //    Cairn_Exception cairn_error(Name() + " - The file of matrix \"" + vectorName + "\" doesn't exist:"
+    //    Cairn_Exception cairn_error(Name() + " - The file of matrix \"" + matrixName + "\" doesn't exist:"
     //        + absoluteFileName, -1);
     //    throw cairn_error;
     //}
@@ -198,7 +198,7 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
         }
     }
     else {
-        cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + vectorName + "\" has not been found. " 
+        cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + matrixName + "\" has not been found. "
             + "A matrix of Zeros will be used.";
     }
 
@@ -208,11 +208,11 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
             //resize the vector using equal values
             double k = vector[0];
             vector.resize(mNbOutputFlux + mNbInputFlux, k);
-            cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + vectorName + "\" contains only one value: " + std::to_string(k)
+            cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + matrixName + "\" contains only one value: " + std::to_string(k)
                 + ". All the values of the matrix will be set to " + std::to_string(k);
         }
         else {
-            Cairn_Exception cairn_error(Name() + ": please check the dimensions of matrix \"" + vectorName
+            Cairn_Exception cairn_error(Name() + ": please check the dimensions of matrix \"" + matrixName
                 + "\". The dimensions should be NbInputFlux + NbOutputFlux (" + std::to_string(mNbInputFlux + mNbOutputFlux)
                 + ") rows and 1 column. File: " + absoluteFileName, -1);
             throw cairn_error;
@@ -220,6 +220,15 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
     }
 }
 
+void MultiConverter::computeEconomicalContribution()
+{
+    TechnicalSubModel::computeEconomicalContribution();
+
+    //Variable OPEX
+    for (uint64_t t = 0; t < mHorizon; t++) {
+        mExpVariableOpex[t] += mExpOutput[0][t] * mVariableOpex * TimeStep(t);
+    }
+}
 
 int MultiConverter::checkConsistency()
 {

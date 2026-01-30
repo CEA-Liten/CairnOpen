@@ -1,6 +1,7 @@
 #ifndef EnvImpact_H
 #define EnvImpact_H
 class EnvImpact;
+class TechnicalSubModel;
 
 #include "CairnCore_global.h"
 #include "InputParam.h"
@@ -14,76 +15,37 @@ class CAIRNCORESHARED_EXPORT EnvImpact
 {    
 public:
 
-    EnvImpact(CairnObject* aParent = nullptr, std::string aName = "", std::string aShortName = "");
+    EnvImpact(TechnicalSubModel* aParent, std::string aName, std::string aUnit = "-", std::string aShortName = "");
     ~EnvImpact();
+
+    void addConfigParameters(std::string aPortName, int j);
+    void addGreyParameters();
+    void addPortParameters(std::string aPortName, int j, EnergyVector* aCarrier);
+    void addPerfParameters();
+    void addIOExpressions();
+    void addIndicators();
 
     void computeEmbodiedEnvImpactContribution(MIPModeler::MIPExpression aExpSizeMax);
     void computeReplacementEnvImpactContribution(MIPModeler::MIPExpression aExpSizeMax);
     void computeEnvImpactContribution(const int j, const MIPModeler::MIPExpression1D* aFlux);
     void computeEnvImpactContributionCost();
-    
-    void setTimesteps(std::vector<double> aTimesteps) { mTimeSteps = aTimesteps; }
-    void setCapex(double aCapex) { mCapex = aCapex; }
-    void setLifeTime(double aLifeTime) { mLifeTime = aLifeTime; }
-    void setOptimalSizeUnit(std::string aOptimalSizeUnit) { mOptimalSizeUnit = aOptimalSizeUnit; }
-    
+    void evaluateEnvGreyImpact(const double* optSol);
+
     void setEnvImpactCost(double aEnvImpactCost) { mEnvImpactCost = aEnvImpactCost; }
-    void setEnvImpactUnit(std::string aEnvImpactUnit) { mImpactUnit = aEnvImpactUnit; }
     
     const std::string &Unit() const { return mImpactUnit; }
     const std::string &Name() const { return mName; }
     const std::string& ShortName() const { return mShortName; }
-    std::string getOptimalSizeUnit() { return mOptimalSizeUnit; }
 
-    void addModelConfigParameters(InputParam* aInputEnvImpacts, InputParam* aInputPortImpacts, bool* aEnvModelAddr, std::string aPortName, int j)
-    {
-        //bool
-        aInputEnvImpacts->addParameter(mName + " PiecewiseEnvGreyContentCoeff_A", &mPiecewiseEnvGreyContentCoeff, false, false, aEnvModelAddr, "If true use piecewise linear functionality for Grey environmental impacts", "", "EnvironmentModel");
-        aInputPortImpacts->addParameter(aPortName + "." + mName + " UseEnvContentTS_A", &mUseTSEnvContentCoeff[j], false, false, aEnvModelAddr, "Comment", "", "EnvironmentModel");
-    }
+    InputParam* InputEnvImpacts();
+    InputParam* InputPortImpacts();
+    InputParam* InputPortImpactsTS();
+    InputParam* InputIndicators();
+    InputParam* InputPerfParam();
 
-    void addGreyParameters(InputParam* aInputEnvImpacts, bool* aEnvModelAddr)
-    {  
-        //bool
-        aInputEnvImpacts->addParameter(mName + " TryRelaxationEnvGreyContentCoeff_A", &mTryRelaxationEnvGreyContentCoeff, true, &mPiecewiseEnvGreyContentCoeff, &mPiecewiseEnvGreyContentCoeff, "If the EnvGreyContentCoefficient is a convex function of size the linearization variables will be continuous", "", "EnvironmentModel");
-        //double
-        aInputEnvImpacts->addParameter(mName + " EnvGreyContentCoefficient_A", &mEnvGreyContentCoefficient, 0., false, aEnvModelAddr, "Environmental impact linked to manufacturing - Coefficient A. Grey impact calculation: A*X+B with X the size and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "Unit"}), "EnvironmentModel");  /** Always optional : Grey Environmental Emission Mass in kg per unit of input flux (power, flowrate) - Default value is 0 */
-        aInputEnvImpacts->addParameter(mName + " EnvGreyContentOffset_B", &mEnvGreyContentOffset, 0., false, aEnvModelAddr, "Environmental impact linked to manufacturing - Offset B. Grey impact calculation: A*X+B with X the size and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", &mImpactUnit, "EnvironmentModel");  /** Always optional : Grey Environmental Emission Mass in kg per unit of input flux (power, flowrate) - Default value is 0 */
-        aInputEnvImpacts->addParameter(mName + " EnvGreyReplacement", &mEnvGreyReplacement, 0., false, aEnvModelAddr, "Environmental impact linked to future manufacturing for replacement - Replacement env impact contribution ", SFunctionUnit({ eFTypeDivision, { &mImpactUnit }, "OptimalSizeUnit/Replacement" }), "EnvironmentModel");
-        aInputEnvImpacts->addParameter(mName + " EnvGreyReplacementConstant", &mEnvGreyReplacementConstant, 0., false, aEnvModelAddr, "The constant part of replacement env impact contribution ", SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "Replacement"}), "EnvironmentModel");
-    }
-
-    void addParameters(InputParam* aInputPortImpacts, InputParam* aInputPortImpactsTS, bool* aEnvModelAddr, std::string aPortName, int j, EnergyVector* aCarrier)
-    {   
-        //vector (time series)
-        aInputPortImpactsTS->addTimeSeries(aPortName + "." + mName + " EnvContentTS_A", &mTSEnvContentCoeff[j], 1.0, SFunctionFlag({ eFTypeNotAnd, {}, { aEnvModelAddr , (bool*) & mUseTSEnvContentCoeff[j]}}), SFunctionFlag({eFTypeNotAnd, {}, {aEnvModelAddr ,  (bool*)&mUseTSEnvContentCoeff[j]}}), "Environmental impact linked to usage - Time profile of coefficient A. Impact calculation: A*x+B with x the flow and A = Multiplying coefficient", SFunctionUnit({ eFTypeDivision, { &mImpactUnit, aCarrier->pStorageUnit()} }), "EnvironmentModel");
-        //double
-        aInputPortImpacts->addParameter(aPortName + "." + mName + " EnvContentCoefficient_A", &mEnvContentCoefficients[j], 0., false, SFunctionFlag({ eFTypeNotAnd, { (bool*)&mUseTSEnvContentCoeff[j]}, { aEnvModelAddr } }), "Environmental impact linked to usage - Coefficient A. Impact calculation: A*x+B with x the flow and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", SFunctionUnit({ eFTypeDivision, { &mImpactUnit, aCarrier->pStorageUnit()} }), "EnvironmentModel");
-        aInputPortImpacts->addParameter(aPortName + "." + mName + " EnvContentOffset_B", &mEnvContentOffsets[j], 0., false, aEnvModelAddr, "Environmental impact linked to usage - Offset B. Impact calculation: A*x+B with x the flow and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", &mImpactUnit, "EnvironmentModel");
-    }
-
-    void addPerfParam(InputParam* aInputPerfParam) {
-        //vector
-        aInputPerfParam->addPerfParam(mName + " CapacitySetPoint", &mImpactCapacitySetPoint, &mPiecewiseEnvGreyContentCoeff, &mPiecewiseEnvGreyContentCoeff, "name of vector impact capacity that will be defined from DataFile specification by the User");
-        aInputPerfParam->addPerfParam(mName + " SetPoint", &mImpactSetPoint, &mPiecewiseEnvGreyContentCoeff, &mPiecewiseEnvGreyContentCoeff, "name of vector impact SetPoint that will be defined from DataFile specification by the User");
-    }
-
-   void addIndicators(InputParam* aInputIndicators, bool* aBoolPtr, std::string aCurrency)
-    {
-        aInputIndicators->addIndicator(mName + " Env impact penalty part", &mEnvImpactPart, aBoolPtr, "Penalty contribution due to direct environmental impact linked to usage ", aCurrency, mShortName + "DirectCost");  /**  */
-        aInputIndicators->addIndicator(mName + " Env impact mass", &mEnvImpactMass, aBoolPtr, "Mass of the direct environmental impact linked to usage ", &mImpactUnit, mShortName + "DirectMass");  /**  */
-        aInputIndicators->addIndicator(mName + " EnvGrey impact cost", &mEmbodiedEnvImpactCost, aBoolPtr, "Contribution due to the grey emissions linked to manufacturing ", aCurrency, mShortName + "GreyCost");					/**  */
-        aInputIndicators->addIndicator(mName + " EnvGrey impact mass", &mEmbodiedEnvImpact, aBoolPtr, "Mass of the grey emissions linked to manufacturing", &mImpactUnit, mShortName + "GreyMass");              /**  */
-        aInputIndicators->addIndicator(mName + " Env impact replacement", &mReplacementEnvImpact, aBoolPtr, "Env impact of replacement linked to future manufacturing for replacement", &mImpactUnit, mShortName + "Replacement");              /**  */
-    }
-
-   void addIOs(class SubModel* aSubModel, t_flag aIsUsed);
-
-    void evaluateEnvGreyImpact(const double* optSol)
-    {
-        mEmbodiedEnvImpact.at(0) = mEmbodiedEnvImpact.at(1) = mExpEmbodiedEnvImpact.evaluate(optSol);
-        mEmbodiedEnvImpactCost.at(0) = mEmbodiedEnvImpactCost.at(1) = mExpEmbodiedEnvImpactCost.evaluate(optSol);
-    }
+    int Horizon() { return TimeSteps().size(); }
+    std::vector<double>& TimeSteps();
+    double LifeTime();
 
     MIPModeler::MIPExpression1D* getExpEnvOpCost() {return &mExpOpEnvImpactCost;}
     MIPModeler::MIPExpression1D* getExpEnvOp() { return &mExpOpEnvImpact; }
@@ -135,12 +97,12 @@ public:
     void resizeCoeffs(const int aSize)
     {
         mEnvContentCoefficients.resize(aSize);
+        mEnvContentOffsets.resize(aSize);
         mUseTSEnvContentCoeff.resize(aSize);
         mTSEnvContentCoeff.resize(aSize);
         for (int i = 0; i < aSize; i++) {
-            mTSEnvContentCoeff[i].resize(mTimeSteps.size());
+            mTSEnvContentCoeff[i].resize(Horizon());
         }
-        mEnvContentOffsets.resize(aSize);
     }
 
     bool PiecewiseEnvGreyContentCoeff() const { return mPiecewiseEnvGreyContentCoeff; }
@@ -151,14 +113,17 @@ public:
 
     double EnvGreyContentOffset() const { return mEnvGreyContentOffset; }
 
+    bool isNewlySelected() const { return mNewlySelected; }
+    void markAsOld() { mNewlySelected = false; }
+
 protected:
+    bool mNewlySelected; // A flag to mark if the impact is selected after the first initialization of mParentModel
+
     std::string mName; //Impact name
     std::string mShortName; //Impact short name
     std::string mImpactUnit;
-    std::vector<double> mTimeSteps;
-    double mCapex;                        
-    double mLifeTime;   
-    std::string mOptimalSizeUnit;
+
+    TechnicalSubModel* mParentModel;
 
     bool mPiecewiseEnvGreyContentCoeff;
     bool mTryRelaxationEnvGreyContentCoeff;
@@ -170,7 +135,7 @@ protected:
     double mEnvGreyReplacement;
     double mEnvGreyReplacementConstant;
 
-    std::vector<double> mEnvContentCoefficients;                /** Environmental Emission in kg per input flow unit : vector as there can be several ports **/
+    std::vector<double> mEnvContentCoefficients;           /** Environmental Emission in kg per input flow unit : vector as there can be several ports **/
     std::vector<double> mEnvContentOffsets;                /** Environmental Emission in kg per time **/
     std::vector<int> mUseTSEnvContentCoeff;
     MIPModeler::MIPData2D mTSEnvContentCoeff;              /** Environmental Emission in kg per input flow unit per timestep */

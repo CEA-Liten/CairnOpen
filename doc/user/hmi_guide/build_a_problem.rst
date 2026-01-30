@@ -145,6 +145,18 @@ Removing a page deletes all the components except the energy vectors used in oth
 
    A page can be renamed by right-clicking on an empty space on the page and clicking the Rename page function.
 
+Components (and groups) can be moved between pages in two ways:
+
+* Using the context menu: select the components to be moved, right-click on an empty space, choose "Move selection to page", and then select the target page.
+* Using keyboard shortcuts: select the components, press Ctrl+X to cut them, navigate to the target page, and press Ctrl+V to paste.
+
+.. figure:: images/moveSelection.PNG
+   :name: moveSelection
+   :width: 600
+   :align: center
+   
+   Move components to another page
+   
 How to use groups?
 ==================
 

@@ -1,4 +1,10 @@
-
+/*
+* \file		DynamicIndicator.cpp
+* \brief	A class to compute user-defined indicators from existing indicators
+* \version	1.0
+* \author	Ali KASSEM
+* \date		24/06/2024
+*/
 
 #include "DynamicIndicator.h"
 #include "CairnUtils.h"

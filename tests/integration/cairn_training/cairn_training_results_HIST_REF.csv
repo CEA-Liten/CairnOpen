@@ -24,9 +24,9 @@ TecEco;Total project cost of env impact of Acidification#Accumulated Exceedance;
 TecEco;Total Project env impact of Acidification#Accumulated Exceedance;50;mol H+ eq;APDiscountedEnvImpactMass
 TecEco;Total Project Embodied env impact of Climate change#Global Warming Potential 100;498.392;kg CO2 eq;GWPGreyEnvImpactMass
 TecEco;Total Project Embodied env impact of Acidification#Accumulated Exceedance;50;mol H+ eq;APGreyEnvImpactMass
-TecEco;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWP
+TecEco;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedFlowEnvImpactCost
 TecEco;Total Project Operational impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
-TecEco;Total Project Operational impact cost of Acidification#Accumulated Exceedance;0;EUR;AP
+TecEco;Total Project Operational impact cost of Acidification#Accumulated Exceedance;0;EUR;APDiscountedFlowEnvImpactCost
 TecEco;Total Project Operational impact of Acidification#Accumulated Exceedance;0;mol H+ eq;APDiscountedFlowEnvImpactMass
 TecEco;Annual operation cost;5.44421;EUR;NetOPEX
 TecEco;Annual OPEX;5.44421;EUR;PureOPEX
@@ -40,7 +40,8 @@ TecEco;Total Undiscounted FlowEnvImpact Mass Acidification#Accumulated Exceedanc
 ELY_PEM;CAPEX;1.19228e+06;EUR;CAPEX
 ELY_PEM;is installed;1;-;IsInstalled
 ELY_PEM;Annual operation cost;5.44421;EUR;OPEX
-ELY_PEM;Annual OPEX;5.44421;EUR;PureOPEX
+ELY_PEM;Annual fixed OPEX;5.44421;EUR;PureOPEX
+ELY_PEM;Annual variable OPEX;0;EUR;VariableOPEX
 ELY_PEM;Annual replacement costs;0;EUR;Replacement
 ELY_PEM;Mass;0;kg;Mass
 ELY_PEM;Area;0;m2;Area
@@ -67,7 +68,8 @@ Elec_Bus;Integrated bus balance;0;MWh;BusBalance
 Elec_Grid;CAPEX;0;EUR;CAPEX
 Elec_Grid;is installed;1;-;IsInstalled
 Elec_Grid;Annual operation cost;0;EUR;OPEX
-Elec_Grid;Annual OPEX;0;EUR;PureOPEX
+Elec_Grid;Annual fixed OPEX;0;EUR;PureOPEX
+Elec_Grid;Annual variable OPEX;0;EUR;VariableOPEX
 Elec_Grid;Annual replacement costs;0;EUR;Replacement
 Elec_Grid;Mass;0;kg;Mass
 Elec_Grid;Area;0;m2;Area
@@ -82,14 +84,15 @@ Elec_Grid;Acidification#Accumulated Exceedance Env impact mass;0;mol H+ eq;APDir
 Elec_Grid;Acidification#Accumulated Exceedance EnvGrey impact cost;0;EUR;APGreyCost
 Elec_Grid;Acidification#Accumulated Exceedance EnvGrey impact mass;0;mol H+ eq;APGreyMass
 Elec_Grid;Acidification#Accumulated Exceedance Env impact replacement;0;mol H+ eq;APReplacement
-Elec_Grid;Grid extraction time;0;h;extraction Time
+Elec_Grid;Grid extraction time;0;h;extractionTime
 Elec_Grid;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
 Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
 Elec_Grid;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
 Elec_Grid_Inject;CAPEX;0;EUR;CAPEX
 Elec_Grid_Inject;is installed;1;-;IsInstalled
 Elec_Grid_Inject;Annual operation cost;0;EUR;OPEX
-Elec_Grid_Inject;Annual OPEX;0;EUR;PureOPEX
+Elec_Grid_Inject;Annual fixed OPEX;0;EUR;PureOPEX
+Elec_Grid_Inject;Annual variable OPEX;0;EUR;VariableOPEX
 Elec_Grid_Inject;Annual replacement costs;0;EUR;Replacement
 Elec_Grid_Inject;Mass;0;kg;Mass
 Elec_Grid_Inject;Area;0;m2;Area
@@ -104,7 +107,7 @@ Elec_Grid_Inject;Acidification#Accumulated Exceedance Env impact mass;0;mol H+ e
 Elec_Grid_Inject;Acidification#Accumulated Exceedance EnvGrey impact cost;0;EUR;APGreyCost
 Elec_Grid_Inject;Acidification#Accumulated Exceedance EnvGrey impact mass;0;mol H+ eq;APGreyMass
 Elec_Grid_Inject;Acidification#Accumulated Exceedance Env impact replacement;0;mol H+ eq;APReplacement
-Elec_Grid_Inject;Grid injection time;0;h;injection Time
+Elec_Grid_Inject;Grid injection time;0;h;injectionTime
 Elec_Grid_Inject;Grid injection ElectricalEnergy GridFlow;0;MWh;TotGridFlow
 Elec_Grid_Inject;Levelized Grid injection ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
 Elec_Grid_Inject;Mean injection ElectricalPower GridFlow;0;MW;MeanGridFlow
@@ -112,7 +115,8 @@ H2_Bus;Integrated bus balance;0;kg;BusBalance
 H2_Load;CAPEX;0;EUR;CAPEX
 H2_Load;is installed;1;-;IsInstalled
 H2_Load;Annual operation cost;0;EUR;OPEX
-H2_Load;Annual OPEX;0;EUR;PureOPEX
+H2_Load;Annual fixed OPEX;0;EUR;PureOPEX
+H2_Load;Annual variable OPEX;0;EUR;VariableOPEX
 H2_Load;Annual replacement costs;0;EUR;Replacement
 H2_Load;Mass;0;kg;Mass
 H2_Load;Area;0;m2;Area
@@ -135,7 +139,8 @@ H2_Load;Mean FluidH2Flowrate SourceLoadFlow;0;kg/h;MeanImposedProfileSourceLoadF
 H2_Tank;CAPEX;25269.6;EUR;CAPEX
 H2_Tank;is installed;1;-;IsInstalled
 H2_Tank;Annual operation cost;0;EUR;OPEX
-H2_Tank;Annual OPEX;0;EUR;PureOPEX
+H2_Tank;Annual fixed OPEX;0;EUR;PureOPEX
+H2_Tank;Annual variable OPEX;0;EUR;VariableOPEX
 H2_Tank;Annual replacement costs;0;EUR;Replacement
 H2_Tank;Mass;0;kg;Mass
 H2_Tank;Area;0;m2;Area
@@ -153,9 +158,9 @@ H2_Tank;Acidification#Accumulated Exceedance Env impact replacement;0;mol H+ eq;
 H2_Tank;Storage Optimal Capacity;505.392;kg;Capacity
 H2_Tank;Charging time;1;h;ChargingTime
 H2_Tank;Discharging time;0;h;DischargingTime
-H2_Tank;Charged  FluidH2Mass Flow;-36.933;kg;TotChargedFlow
+H2_Tank;Charged FluidH2Mass Flow;-36.933;kg;TotChargedFlow
 H2_Tank;Discharged FluidH2Mass Flow;0;kg;TotDischargedFlow
-H2_Tank;Levelized Charged  FluidH2Mass Flow;-418.658;kg;LvlzdTotChargedFlow
+H2_Tank;Levelized Charged FluidH2Mass Flow;-418.658;kg;LvlzdTotChargedFlow
 H2_Tank;Levelized Discharged FluidH2Mass Flow;0;kg;LvlzdDischargedFlow
 H2_Tank;Mean Charged FluidH2Flowrate Flow;-36.933;kg/h;MeanChargedFlow
 H2_Tank;Mean Discharged FluidH2Flowrate Flow;0;kg/h;MeanDischargedFlow
@@ -164,7 +169,8 @@ H2_Tank;Cumulated losses;0;kg;CumulatedLosses
 Wind_farm;CAPEX;0;EUR;CAPEX
 Wind_farm;is installed;1;-;IsInstalled
 Wind_farm;Annual operation cost;0;EUR;OPEX
-Wind_farm;Annual OPEX;0;EUR;PureOPEX
+Wind_farm;Annual fixed OPEX;0;EUR;PureOPEX
+Wind_farm;Annual variable OPEX;0;EUR;VariableOPEX
 Wind_farm;Annual replacement costs;0;EUR;Replacement
 Wind_farm;Mass;0;kg;Mass
 Wind_farm;Area;0;m2;Area

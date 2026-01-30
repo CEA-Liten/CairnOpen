@@ -14,7 +14,7 @@
 #include "globalModel.h"
 
 #include "MIPModeler.h"
-#include "TechnicalSubModel.h"
+#include "BusSubModel.h"
 
 /**
 * \details
@@ -22,11 +22,10 @@
  * that takes all the contributions of the components and write a net present value function.
  * ManualObjectives allows several options (see Options->ObjectiveType):
  * - add simply add all the connected variables and add it to the objective function
- * - blended operates the same levelization as tecEcoAnalysis to all time-dependant connected variables and add it to the objective function
  * - lexicographic have to be used with several ManualObjective and optimizes iteratively depending on the objective level the different objectives.
  * Common variables creates a variable and writes each of all connected variables is smaller/greater than this variable, that replaces the sum.
 */
-class MODELS_DECLSPEC ManualObjective : public TechnicalSubModel
+class MODELS_DECLSPEC ManualObjective : public BusSubModel
 {
 public:
 //----------------------------------------------------------------------------------------------------
@@ -40,20 +39,7 @@ public:
 //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
     {
-        TechnicalSubModel::declareDefaultModelConfigurationParameters() ;
-
-        //bool
-        
-        //re-declare and set EcoInvestModel to false
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "Base");
-       
-        /* ------ Hide -----*/
-        addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel - ie Use EnvEmissionCost if true", "", "DONOTSHOW"); /** Hide EnvironmentModel */
-        addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "DONOTSHOW");    /** Hide GeometryModel */
-        addParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", "DONOTSHOW");
-        addParameter("PiecewiseVolume", &mPiecewiseVolume, false, false, true, "Provide a map of volumes and sizes - see performances maps in doc", "", "DONOTSHOW");
-        addParameter("PiecewiseMass", &mPiecewiseMass, false, false, true, "Provide a map of masses and sizes - see performances maps in doc", "", "DONOTSHOW");
-        /* -------------- */
+        BusSubModel::declareDefaultModelConfigurationParameters() ;
 
         addParameter("TimeIntegration", &mTimeIntegration, false, false, true);  /** If True then uses time integration for Add and Lexicographic objective types otherwise uses simple summation - default = false */
         addParameter("StrictConstraint",&mStrictConstraint, false, false, true, "Strictconstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true","", "Constraints");
@@ -62,7 +48,7 @@ public:
         addParameter("CommonMinVariable", &mUseCommonMinVariable, false, false, true, "Creates a variable CommonBound which is smaller than all connected variables.", "", "CommonVariables");
         addParameter("CommonMaxVariable", &mUseCommonMaxVariable, false, false, true, "Creates a variable CommonBound which is greater than all connected variables.", "", "CommonVariables");
         //std::string
-        addParameter("ObjectiveType", &mObjectiveType, "Add", false, true, "Add or Blended or Lexicographic", "", "Base");
+        addParameter("ObjectiveType", &mObjectiveType, "Add", false, true, "Add or Lexicographic", "", "Base");
     }
 
 //----------------------------------------------------------------------------------------------------
@@ -77,7 +63,7 @@ public:
         addParameter("StrictConstraintBusValue", &mStrictConstraintBusValue, 0., false, &mStrictConstraint, "if Strictconstraint = true at each time sum of connected flows should be equal to this value - default is 0 - use for flow balance for example", "", "Constraints");
         addParameter("MinConstraintBusValue", &mMinConstraintBusValue, 0., &mMinConstraint, &mMinConstraint, "if MinConstraint = true at each time sum of connected flows should be >= this value", "", "Constraints");
         addParameter("MaxConstraintBusValue", &mMaxConstraintBusValue, INFINITY_VAL, &mMaxConstraint, &mMaxConstraint);/** if MaxConstraint=true at each time sum of connected flows should be <= this value */
-        addParameter("ObjectiveCoefficient", &mObjectiveCoefficient, 1., false, true, "In case of blended objective the coefficient of objective in the linear combinaison. The default value is 1");
+        addParameter("ObjectiveCoefficient", &mObjectiveCoefficient, 1., false, true, "Coefficient of objective. The default value is 1");
         addParameter("AbsTol", &mAbsTol, 0., false, true, "Absolute tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
         addParameter("RelTol", &mRelTol, 0., false, true, "Relative tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
         //vector
@@ -94,18 +80,11 @@ public:
         addIO("MinVar", &mExpCommonMinVariable, true, mMainCarrier->pFluxUnit());
         addIO("MaxVar", &mExpCommonMaxVariable, true, mMainCarrier->pFluxUnit());
 
-        //ObjectiveType == "Blended"
-        addIO("Capex", &mExpCapex, SExtFunctionFlag({ &isBlended, this }), mMainCarrier->pFluxUnit()); /** Computed initial investment costs Capex */
-        addIO("Opex", &mExpOpex, SExtFunctionFlag({ &isBlended, this }), mMainCarrier->pStorageUnit());      /** Computed operational cost Net Opex */
-        addIO("PureOpex", &mExpPureOpex, SExtFunctionFlag({ &isBlended, this }), mMainCarrier->pStorageUnit());      /** Computed operational cost Pure Opex */
-        addIO("Replacement", &mExpReplacement, SExtFunctionFlag({ &isBlended, this }), mMainCarrier->pFluxUnit());      /** Computed variable replacement cost */
-        
         setSubobjectiveExpression("SubObjectiveExpression");
     }
 
     void declareModelIndicators() {
-        // Supported types are: double
-        TechnicalSubModel::declareDefaultModelIndicators();
+        BusSubModel::declareDefaultModelIndicators();
         mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", mMainCarrier->pStorageUnit(), "BusBalance");
     }
 //----------------------------------------------------------------------------------------------------
@@ -129,7 +108,7 @@ public:
 protected:
 
     int mObjectiveLevel;                        /** In case of lexicographic optimization, gives the rank (default 0) */
-    double mObjectiveCoefficient;                /** In case of blended objective, the coefficient of objective in the linear combinaison (default 1)*/
+    double mObjectiveCoefficient;            
     
     bool mTimeIntegration ;                     /** Use timestep weighting of each time variable at ports if true or simply add them if false - Default to false */
     bool mUseExtrapolationFactor;               /** When true the values of *BusValue are assumed over one year instead of optimization horizon*/

@@ -4,74 +4,125 @@
 using namespace CairnAPIUtils;
 
 CairnAPI::MilpPortAPI::MilpPortAPI(MilpPort* ap_Port)
-{
-	set_MilpPort(ap_Port);
+	: CairnAPI::ObjectAPI(ap_Port)
+{	
 }
-
 
 MilpPort* CairnAPI::MilpPortAPI::get_MilpPort() const
 {
-	return m_Port;
+	return (MilpPort*)get_Object();
 }
 
 CairnAPI::MilpPortAPI::MilpPortAPI(MilpComponentAPI& a_Component, const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
 	const std::string& a_Direction, const std::string& a_Variable)
+	: CairnAPI::ObjectAPI()
 {
 	*this = a_Component.add_Port(a_Name, a_EnergyVector, a_Direction, a_Variable);
 }
 
 void CairnAPI::MilpPortAPI::set_MilpPort(MilpPort* ap_Port)
 {
-	m_Port = ap_Port;
+	set_Object(ap_Port);
 }
 
 std::string CairnAPI::MilpPortAPI::get_ID() const
 {
-	if (m_Port) {
-		return m_Port->ID();
+	MilpPort* pPort = get_MilpPort();
+	if (pPort) {
+		return pPort->ID();
 	}
 	return "";
-}
-
-std::string CairnAPI::MilpPortAPI::get_Name() const
-{
-	if (m_Port) {
-		return m_Port->Name();
-	}
-	return "";
-}
-
-
-void CairnAPI::MilpPortAPI::rename(const std::string& name)
-{
-	if (m_Port) {
-		m_Port->setName(name);
-	}
 }
 
 std::string CairnAPI::MilpPortAPI::get_CarrierName() const
 {
-	if (m_Port && m_Port->getCarrier()) {
-		return m_Port->getCarrier()->Name();
+	MilpPort* pPort = get_MilpPort();
+	if (pPort && pPort->getCarrier()) {
+		return pPort->getCarrier()->Name();
 	}
 	return "";
+}
+
+std::string CairnAPI::MilpPortAPI::get_Variable() const
+{
+	MilpPort* pPort = get_MilpPort();
+	if (pPort) {
+		return pPort->Variable();
+	}
+	return "";
+}
+
+// Set the value of a parameter
+void CairnAPI::MilpPortAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance)
+{
+	MilpPort* pPort = get_MilpPort(); 
+	if (!pPort) { 
+		CairnAPIUtils::setError(errParam, "Invalid port"); 
+		return; 
+	}
+
+	// Check carrier requirement for default ports 
+	if (pPort->IsDefaultPort() && !pPort->getCarrier()) { 
+		CairnAPIUtils::setError(errDefault, "Please, configure port carrier first!"); 
+		return; 
+	}
+
+	const bool vOk = CairnAPIUtils::setParameter( { pPort->getInputParam() }, a_SettingName, a_SettingValue);
+	if(!vOk && checkExistance) {
+		CairnAPIUtils::setError(errParam); 
+		return;
+	}
+
+	// Handle special case for "Variable"
+	if (a_SettingName == "Variable") { 
+		/* 
+		* Always declare although the variables are dynamic ?
+		* Yes! because :
+		* 1- if variable changed from 1D to 0D, the indicator should be removed
+		* 2- how to check if the indicator already declared for non-default ports?
+		* Improve ?!
+		*/
+		auto* pComponent = dynamic_cast<MilpComponent*>(pPort->parent());
+		if (pComponent && pComponent->allDefaultPortsHaveVariables()) {
+			if (auto* pModel = pComponent->compoModel()) {
+				if (pModel->getMIPExpression1D(pPort->Variable())) { //only declare for 1D Expressions
+					pComponent->declareIndicators();
+				} 
+			} 
+		} 
+	}
+
+	CairnAPIUtils::setError(noError);
+}
+
+// Set the value of several parameter
+void CairnAPI::MilpPortAPI::set_SettingValues(const t_dict& a_SettingValues)
+{
+	MilpPort* pPort = get_MilpPort();
+	if (pPort) {
+		for (auto& [vAttrName, vAttrValue] : a_SettingValues) {
+			set_SettingValue(vAttrName, vAttrValue);
+		}
+	}
 }
 
 CairnAPI::EnergyVectorAPI CairnAPI::MilpPortAPI::get_EnergyCarrier()
 {
 	CairnAPI::EnergyVectorAPI vEnergyCarrier;
-	if (m_Port && m_Port->getCarrier()) {
-		vEnergyCarrier.set_EnergyVector(m_Port->getCarrier());
+	MilpPort* pPort = get_MilpPort();
+	if (pPort && pPort->getCarrier()) {
+		vEnergyCarrier.set_EnergyVector(pPort->getCarrier());
 	}
 	return vEnergyCarrier;
 }
 
 void CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector)
 {
-	if (m_Port) {
-		m_Port->setCarrier(a_EnergyVector.get_EnergyVector());
-		if (m_Port->IsDefaultPort()) {
-			MilpComponent* lptrCompo = (MilpComponent*)m_Port->parent();
+	MilpPort* pPort = get_MilpPort();
+	if (pPort) {
+		pPort->setCarrier(a_EnergyVector.get_EnergyVector());
+		if (pPort->IsDefaultPort()) {
+			MilpComponent* lptrCompo = (MilpComponent*)pPort->parent();
 			if (lptrCompo && lptrCompo->allDefaultPortsHaveCarriers()
 				&& lptrCompo->compoModel() 
 				&& lptrCompo->compoModel()->getInputParam()->getMapParams().size() == 0 //only once. TODO: use a more robust condition
@@ -87,78 +138,4 @@ void CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVec
 			}
 		}
 	}
-}
-
-// ------------------ Parameters ------------------
-// Returns the list of parameter names 
-
-t_list CairnAPI::MilpPortAPI::get_SettingsList()
-{
- /*
-  * property in CairnBind.cpp
- */
-	return get_SettingsListByType(ESettingsLimited::all);
-}
-
-t_list CairnAPI::MilpPortAPI::get_SettingsListByType(ESettingsLimited a_setLimited)
-{
-	t_list vRet = {};
-	if (m_Port) {
-		vRet = CairnAPIUtils::getParametersName({
-			m_Port->getInputParam() }
-		, a_setLimited);
-	}
-	return vRet;
-}
-
-// Returns the value of a parameter
-t_value CairnAPI::MilpPortAPI::get_SettingValue(const std::string& a_SettingName)
-{
-	t_value vRet = "";
-	if (m_Port) {		
-		vRet = CairnAPIUtils::getParameter({
-			m_Port->getInputParam() }
-		, a_SettingName);
-	}
-	return vRet;
-}
-
-// Returns the value of all parameters
-t_dict CairnAPI::MilpPortAPI::get_SettingValues()
-{
-	t_dict vRet = {};
-	if (m_Port) {
-		t_list vAttrNames = get_SettingsList();
-		for (auto& vAttrName : vAttrNames) {
-			vRet[vAttrName] = get_SettingValue(vAttrName);
-		}
-	}
-	return vRet;
-}
-
-
-// Set the value of a parameter
-void CairnAPI::MilpPortAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue)
-{
-	ECodeError vRet = noError;
-	if (m_Port) {
-		bool vOk = CairnAPIUtils::setParameter({
-			m_Port->getInputParam() }
-		, a_SettingName, a_SettingValue);
-
-		vRet = (vOk) ? noError : errParam;
-	}
-	CairnAPIUtils::setError(vRet);
-}
-
-// Set the value of several parameter
-void CairnAPI::MilpPortAPI::set_SettingValues(const t_dict& a_SettingValues)
-{
-	ECodeError vRet = noError;
-	if (m_Port) {
-		for (auto& [vAttrName, vAttrValue] : a_SettingValues) {
-			set_SettingValue(vAttrName, vAttrValue);
-		}
-	}
-	CairnAPIUtils::setError(vRet);
 }

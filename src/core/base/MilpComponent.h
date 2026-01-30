@@ -67,11 +67,12 @@ public:
     virtual bool findFirstCoeff(std::string aVarName, t_mapExchange aList , float &coeff, float &offset) ;
 
     // MILP functions
-    virtual void initSubModelTopology() ; /**Send topology data to submodel : list of ports*/
     virtual int initSubModelConfiguration(const bool& readParams = true) ;      /** Read model Input parameters from SettingsFile and Input timeseries from Pegase Exchange Zone */
+    virtual void redeclareEnvImpactParameters(); /** when selected impacts get modified */
     virtual int initSubModelInput() ;              /** Read model Input parameters from SettingsFile and Input timeseries from simulation environment */
     virtual int initPorts();                                                                        /** port Milp flux expression init (allocation) */
     virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
+    void setSubModelEnvImpacts();
 
     virtual int setParameters();
     int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
@@ -88,16 +89,14 @@ public:
     void exportSubmodelIO(Solver* aSolver, int aNsol);  /** Output Data (for link with PEGASE or OUTSIDE) */
     void removeIOs();
     
-    virtual void setBusFluxPortExpression();                                              /** Fill in expression at BusSameValue port connexion */
-    virtual void setBusFluxPortExpression(const double &aSignedCoefficient);                                              /** Fill in expression at BusSameValue port connexion */
+    virtual void setBusFluxPortExpression(); /** Fill in expression at BusSameValue port connexion */
     virtual void setBusFluxPortExpression(MilpPort *port, const double &aSignedCoefficient);                                              /** Fill in expression at BusSameValue port connexion */
-    virtual void setBusSameValuePortExpression() ;                                           /** Fill in expression at BusSameValue port connexion */
+    virtual void setBusSameValuePortExpression();  /** Fill in expression at BusSameValue port connexion */
 
     /* Methods that calls a SubModel function */
     MIPModeler::MIPExpression* getMIPExpression(std::string aExpressionName);
     MIPModeler::MIPExpression1D* getMIPExpression1D(std::string aExpressionName);
     MIPModeler::MIPExpression& getMIPExpression1D(uint i, std::string aExpressionName);
-    std::string ObjectiveType(); 
     /* ------------------------------------- */
     virtual void setMIPModel (MIPModeler::MIPModel* aModel) ;                        /** Set pointer to global Optimization Problem Model */
 
@@ -114,7 +113,10 @@ public:
     virtual void setCompoInputParam(const std::map<std::string, std::string> aComponent);
     void initGuiData(const std::map<std::string, std::string>& paramMap);
 
-    bool allDefaultPortsHaveCarriers(); 
+    bool allDefaultPortsHaveVariables();
+    void declareIndicators();
+
+    bool allDefaultPortsHaveCarriers();
     void declareIOVariables();
 
     virtual void jsonSaveGuiComponent(ojson &componentsArray, const std::string& componentCarrier, 
@@ -133,8 +135,8 @@ public:
     InputParam* getPlugSubmodelIO() {return mPlugSubmodelIO;}
     InputParam* getCompoInputParam(){return mCompoInputParam;}
 
-    SubModel* compoModel() { return mCompoModel; }
-    MilpData* getMilpData() {  return mMilpData ; }
+    SubModel* compoModel() const { return mCompoModel; }
+    MilpData* getMilpData() const {  return mMilpData ; }
 
     // shortcut access to time data
     double TimeStep(int i) const {return mMilpData->TimeStep(i);}    //TimeStep in HOUR
@@ -151,7 +153,7 @@ public:
 
     virtual void defineMainCarrier(); /** set the main carrier of the component **/
     void setMainCarrier(EnergyVector* aptrEnergyVector);  /** Set a pointer to the main carrier of the component */
-    EnergyVector* getMainCarrier(); /** Pointer to the main carrier of the component */
+    EnergyVector* getMainCarrier() const; /** Pointer to the main carrier of the component */
 
     Cairn_Exception getException() const {return mException;}
     void setException (const Cairn_Exception &aException) {mException = aException;}
@@ -164,7 +166,7 @@ public:
     void computeHistNbHours();
  
     virtual std::vector<std::string> get_ModelClassList();
-    std::map<std::string, InputParam::ModelParam*> getParameters(); //get all the parameters of the componenet
+    std::map<std::string, InputParam::ModelParam*> getParameters(const bool includePortParams=false); //get all the parameters of the componenet
 
     bool EnvironmentModel();
     bool EcoInvestModel();
@@ -186,8 +188,11 @@ public:
 
     void createImportListVars(t_mapExchange& a_Import);
     void createExportListVars(t_mapExchange& a_Export);
+    virtual void createPortsExportListVars(t_mapExchange& a_Exchange);
 
     std::map<std::string, std::string> portDataFromInputFile(const std::string& portId, const std::string& portName);
+
+    virtual std::vector<class InputParam*> get_InputParams();
 
 protected:
     Cairn_Exception mException ;
@@ -230,7 +235,6 @@ protected:
     int mFirstInit ; /** 0 if firstInit, else */
     int mFirstInitTS ; /** 0 if firstInit, else */
     
-    std::string mDirection;
     std::string mType;  
     std::string mControl;
     std::string mDataFile;
@@ -240,7 +244,6 @@ protected:
     // Time Series
     typedef std::map<std::string, ModelTS> t_mapTS;
     t_mapTS m_timeSeries = {};
-    virtual void createPortsExportListVars(t_mapExchange& a_Exchange);
     void readTSVariables(InputParam* aMapParamTS);
 
     // compo model    

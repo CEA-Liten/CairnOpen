@@ -65,6 +65,13 @@ std::vector<std::string> OrUnitsConverter::get_Quantities(const OrDefUnit& a_Uni
 
 bool OrUnitsConverter::CheckUnits(const OrDefUnit& a_SrcUnit, const OrDefUnit& a_DestUnit, OrCheckUnits* a_CheckUnits)
 {
+	if (a_CheckUnits) {
+		a_CheckUnits->isSame = false;
+		a_CheckUnits->isConsistency = false;
+		a_CheckUnits->keyUnit1 = -1;
+		a_CheckUnits->keyUnit2 = -1;
+	}
+
 	bool vRet = true;
 	std::vector<std::string> vSrcQs = p_Units->get_Quantities(a_SrcUnit);
 	if (!vSrcQs.size()) {
@@ -82,8 +89,9 @@ bool OrUnitsConverter::CheckUnits(const OrDefUnit& a_SrcUnit, const OrDefUnit& a
 		for (auto& vSrc : vSrcQs) {
 			if (std::find(vDestQs.begin(), vDestQs.end(), vSrc) == vDestQs.end()) {
 				// not find!
-				if (a_CheckUnits)
+				if (a_CheckUnits) {
 					a_CheckUnits->isConsistency = false;
+				}
 				return false;
 			}
 		}

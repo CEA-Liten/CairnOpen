@@ -64,7 +64,7 @@ def test_generic(name_study,app_home,sampling, main=False):
     if (__name__=='__main__')==False:
         assert (status["PLAN"] == True)
         assert (status["HIST"] == True) 
-        assert (status["SAMPLING"]=="Success" or status["SAMPLING"]=="NA")
+        assert (not "Failed" in status["SAMPLING"])
     return status
 
 

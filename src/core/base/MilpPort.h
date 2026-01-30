@@ -9,6 +9,7 @@ using namespace std ;
 
 #include "CairnCore_global.h"
 #include "MilpComponent.h"
+#include "SubModel.h"
 #include "EnergyVector.h"
 
 /**
@@ -29,7 +30,7 @@ public:
     void completePortInfo(std::map<std::string, std::string>& portParams);
 
     std::string ID() const { return mID; }
-    std::string Name() const { return std::string(this->objectName().c_str()); }
+    std::string Name() const { return this->objectName(); }
     std::string Position() const { return mPosition; }
     std::string CarrierName();
     std::string CarrierType() const { return mCarrierType; }
@@ -37,7 +38,6 @@ public:
     void setIsDefaultPort(const bool& isDefault) { mIsDefaultPort = isDefault; }
 
     std::string Variable() const { return mVariable; }
-    std::string VarType() const { return mVarType; }
     std::string Direction() const { return mDirection; }
     std::string VarCheckUnit() const { return mVarCheckUnit; }
     double  VarCoeff() const { return mVarCoeff; }
@@ -63,8 +63,7 @@ public:
     void setName(const std::string& name) { this->setObjectName(name); }
     void setCompoName(const std::string& name) { this->parent()->setObjectName(name); }
     void setPortType(std::string aPortType);
-    void setVarType(std::string aVarType) {mVarType = aVarType;}
-    void setVariable(std::string aVariable) { mVariable = aVariable;}
+    void setVariable(std::string aVariable);
     void setDirection(std::string aDirection) { mDirection = aDirection;}
     void setVarCheckUnit(std::string aVarCheckUnit) {mVarCheckUnit = aVarCheckUnit;}
 
@@ -109,6 +108,8 @@ public:
 
     void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusPort=false);
 
+    std::vector<InputParam*> get_InputParams();
+
 private:
     InputParam* mInputParam{ nullptr };
 
@@ -141,7 +142,6 @@ private:
     std::string mBusPortName;       /** The port name of the linked Bus - it is used to maintain the same name of Bus ports on the GUI*/
     std::string mBusPortPosition;  /** The port position of the linked Bus - it is used to maintain the same position of Bus ports on the GUI*/
 
-    std::string mVarType;           /** Expression Type Scalar or Vector to be carried */
     MIPModeler::MIPExpression1D mFlux;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression mFlux0D;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression1D mPotential;  /** MIP expression of potential based on Variable mPotentialVarName */

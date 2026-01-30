@@ -46,17 +46,11 @@ CairnCore::CairnCore(
     GS::IDCount=0 ;
     GS::iVerbose=0 ;
 
-      
     mMilpData = new MilpData (this, "MilpData", aPdt, aNpdtPast, aNpdtFuture, aTimeshift, aIHMFuturSize, aGlobalTimeStepFile, aGlobalTypicalPeriodsFile) ;
     setStudyName(aStudyFile, aResultFile);
     setScenarioName(aScenarioName);
 
-    // Create master optim problem with MilpData, void TecEcoEnv and list of objects.
-    TecEcoEnv aTecEcoEnv ;
-    std::map<std::string,std::string> aMilpComponents ;
-    aMilpComponents["id"]=std::string("SYSTEM") ;
-
-    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, aTecEcoEnv, mStdAloneMode, aMilpComponents) ;
+    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, mStdAloneMode) ;
 
     mTimeSeriesManager = new TimeSeriesManager(*mMilpData, "pegase");
 }
@@ -86,20 +80,21 @@ CairnCore::CairnCore(
     setStudyName(aStudyName, aResultFile);
     setScenarioName(aScenarioName);
 
-    TecEcoEnv aTecEcoEnv ;
-    std::map<std::string,std::string> aMilpComponents ;
-    aMilpComponents["id"]=std::string("SYSTEM") ;
-
-    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, aTecEcoEnv, mStdAloneMode, aMilpComponents) ;
+    mProblem = new OptimProblem(this, "OptimProblem", mMilpData, mStdAloneMode) ;
 
     mTimeSeriesManager = new TimeSeriesManager(*mMilpData);
 }
 
 CairnCore::~CairnCore()
 {
-    if (mMilpData) delete mMilpData;
-    if (mProblem) delete mProblem;
-    if (mTimeSeriesManager) delete mTimeSeriesManager;
+    delete mProblem;
+    delete mMilpData;
+    delete mTimeSeriesManager;
+
+    // Avoid dangling pointer
+    mProblem = nullptr;
+    mMilpData = nullptr;
+    mTimeSeriesManager = nullptr;
 }
 
 void CairnCore::setStudyName(const std::string& aStudyName, const std::string& aResultFile)
@@ -182,7 +177,12 @@ void CairnCore::setStopSignal(int* stopSignal){
 
 void CairnCore::importTS(const t_list& aTSfileList, const int& iShift = 0)
 {
-    mTimeSeriesManager->importTS(aTSfileList, mProblem->ListSubscribedVariables(), iShift, mProblem->getSimulationControl()->isCheckTimeSeriesUnits());
+    try {
+        mTimeSeriesManager->importTS(aTSfileList, mProblem->ListSubscribedVariables(), iShift, mProblem->getSimulationControl()->isCheckTimeSeriesUnits());
+    }
+    catch (Cairn_Exception& error) {
+        throw error;
+    }
 }
 
 OrCheckUnits CairnCore::CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check)
@@ -272,7 +272,14 @@ int CairnCore::doStep(const std::string& encoding, const std::map<std::string, b
     bool isRollingHorizon = false;
     if (nbcycle() > 1 || !mStdAloneMode) isRollingHorizon = true; //RollingHorizon (in case of Pegase "!mStdAloneMode" always set)
 
-    if (!mStdAloneMode) mTimeSeriesManager->importTS(mProblem->ListSubscribedVariables());
+    if (!mStdAloneMode) {
+        try{
+            mTimeSeriesManager->importTS(mProblem->ListSubscribedVariables());
+        }
+        catch (Cairn_Exception& error) {
+            throw error;
+        }
+    }
 
     cInfo() << "...DoStep CairnCore "  ;
     CairnLogger::Flush();
@@ -281,14 +288,8 @@ int CairnCore::doStep(const std::string& encoding, const std::map<std::string, b
     mMilpData->prepareOptim() ;
     try {
         mProblem->prepareOptim();
-        //no catch because of QWidget error in FBSF
-        if (mProblem->getException().error() != 0) {
-            Cairn_Exception cairn_error("Fatal Error in prepareOptim Optim Problem: " + mProblem->getException().message(), -1);
-            throw cairn_error;
-        }
     } catch (...) {
-        Cairn_Exception cairn_error((std::string)"Fatal Error in prepareOptim Optim Problem", -1);
-        throw cairn_error;
+        throw Cairn_Exception("Fatal Error in prepareOptim Optim Problem", -1);
     }
 
     /** Build optimization problem */
@@ -302,32 +303,30 @@ int CairnCore::doStep(const std::string& encoding, const std::map<std::string, b
     ModelerInterface* pExternalModeler = mipModel.getExternalModeler();
     if (pExternalModeler) {
         ModelerParams vParams;
-        vParams.addParam("nbYears", (double)mProblem->NbYear());
-        vParams.addParam("nbTimeSteps", (double)mMilpData->npdt());
-        vParams.addParam("TimeSteps", mMilpData->TimeSteps());
-        vParams.addParam("DiscountRate", mProblem->DiscountRate());
+        if (mMilpData) {
+            vParams.addParam("nbTimeSteps", (double)mMilpData->npdt());
+            vParams.addParam("TimeSteps", mMilpData->TimeSteps());
+        }
+        TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*> (mProblem->getTecEcoAnalysis());
+        if (pTecEco) {
+            vParams.addParam("nbYears", (double)pTecEco->NbYear());
+            vParams.addParam("DiscountRate", pTecEco->DiscountRate());
+        }
+        else {
+            /* default values ? */
+        }
         pExternalModeler->init(vParams);
     }
 
     try {
         mProblem->buildProblem();
-        //no catch because of QWidget error in FBSF
-        if (mProblem->getException().error() != 0) {
-            cCritical() << "Fatal Error in building Optim Problem";
-            throw mProblem->getException();
-        }
     }
     catch (std::exception std_exp) {
         Cairn_Exception cairn_error((std::string)std_exp.what(), -1);
         throw cairn_error;
     }
     catch (...) {
-        if (mProblem->getException().error() != 0)
-            throw mProblem->getException();//TODO: why checked twice? and unify the exception handling 
-        else {
-            Cairn_Exception cairn_error((std::string)"Fatal Error in building Optim Problem", -1);
-            throw cairn_error;
-        }
+        throw Cairn_Exception("Fatal Error in building Optim Problem", -1);
     }
 
     /** fill in objective function and build matrix */
@@ -385,31 +384,37 @@ int CairnCore::doStep(const std::string& encoding, const std::map<std::string, b
     bool isExportParameters = mProblem->getSimulationControl()->isExportParameters();
     if (mIter == 0 && isExportParameters) {
         /* No need to export parameters every iteration */
-        mProblem->exportParameters_all_files(mStudy.getScenarioFile("_Parameters.csv", 0, false), encoding);
+        mProblem->exportParameters_all_files(mStudy.getScenarioFile("_Parameters.csv", 0, false));
     }
 
     bool isExportResults = mProblem->getSimulationControl()->isExportResults();
     if (istat == 2) {
         cWarning() << "CairnCore default solution due to no solution with status =" << status;
         mProblem->setDefaultsResults();
-        if (isExportResults)        
+        if (isExportResults) {
             istat = exportResults(0, isRollingHorizon, istat);
+        }
     }
     else {
-        for (int i = nbSol - 1;i >= 0;i--) {            
-            mProblem->readSolution(i);            
+        for (int i = nbSol - 1; i >= 0; i--) 
+        {            
+            mProblem->readSolution(i);    
+
             if (istat == 0) {
                 cInfo() << "CairnCore solution optimale " << status << ", solution: " << i;                
             }
             else {
                 cWarning() << "CairnCore non optimal solution obtained by status =" << status << ", solution: " << i;                
             }
+
             if (i > 0 && isExportResults) {
                 std::map<std::string, std::vector<double>> vResults;
                 mProblem->writeSolution(i, vResults);
                 exportTS(mStudy.getScenarioFile(".csv", i), vResults);
             }
+
             /** Export results */
+            mProblem->computeTecEcoEnvAnalysis(i);
             if (isExportResults) {
                 istat = exportResults(i, isRollingHorizon, istat);
             }
@@ -465,8 +470,7 @@ int CairnCore::exportResults(const int& aNsol, const bool& isRollingHorizon, con
     }
 
     /** Perform TecEcoEnv analysis */
-    if (mProblem->getTecEcoEnv() != nullptr) {
-        mProblem->computeTecEcoEnvAnalysis(aNsol, istat);
+    if (mProblem->getTecEcoEnv()) {
         try {
             if (istat < 2) exportAnalysis(aNsol, isRollingHorizon, encoding);
         }
@@ -475,8 +479,9 @@ int CairnCore::exportResults(const int& aNsol, const bool& isRollingHorizon, con
         }
     }
 
-    /** Save Hist State */
-    mProblem->computeHistNbHours();
+    /** Save Hist State */ //Why here and not in OptimProblem::exportResults() ??
+    TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*>(mProblem->getTecEcoAnalysis()->parent());
+    pTecEco->computeHistNbHours();
 
     cInfo() << " - Export results done ";
 

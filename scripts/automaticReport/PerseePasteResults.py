@@ -46,7 +46,7 @@ def PasteSortieFromGraphProperties(projectsPath: str, TestCase: str, scenarioLis
     variables = set()
     for file in graphProperties:
         if file != "":
-            tree = etree.parse(projectsPath+ut.getOSsep()+file)
+            tree = etree.parse(os.path.join(projectsPath, file))
             variables = variables.union(set([b.text.strip() for b in tree.findall('.//variable')]) \
                 .union(set([e.strip() for b in tree.findall('.//plotted_variables') for e in b.text.split(',')]))
             )
@@ -266,7 +266,7 @@ def PasteResultsMonoLoc(projectsPath, prefix, hist_plan, scenarioList=[], lines_
         try: 
             sumup = tab[0]
             for i in range(1,len(tab)):
-                sumup=sumup.join(tab[i], how='outer')
+                sumup = sumup.join(tab[i], how='inner') 
             return(sumup)
         except IndexError:
             print("Issue in sumup file, no run produced results")
@@ -289,8 +289,11 @@ def checkParamInJson(filename: str,study_name:str):
         for p in parametres:
             if p in compo:
                 for k in compo[p]:
-                    if k["value"]!="":
-                        dico[compo["nodeName"]+"."+p+"."+k["key"]] = [k["value"]]
+                    try:
+                        if k["value"]!="":
+                            dico[compo["nodeName"]+"."+p+"."+k["key"]] = [k["value"]]
+                    except KeyError:
+                        print("Skip ...")
         if "nodePortsData" in compo:
             for k in compo["nodePortsData"]:
                 for i in k["ports"]:

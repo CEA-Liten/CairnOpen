@@ -1,0 +1,1252 @@
+{
+	"Saved with Cairn version": "5.2.31",
+	"numberPages": 1,
+	"studyComment": "",
+	"mapParameters": {
+		"latitude": 45.06964,
+		"longitude": 6.0108203,
+		"zoomlevel": 13.5
+	},
+	"DynamicIndicators": [],
+	"Page1": {
+		"PageId": "Page1",
+		"Components": [
+			{
+				"nodeId": "2124249684",
+				"nodeName": "TecEcoAnalysis#1",
+				"nodeType": "TecEcoAnalysis",
+				"nodeTechnoType": "TecEcoAnalysis",
+				"componentPERSEEType": "TecEcoAnalysis",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 50,
+				"y": 2,
+				"componentCarrier": "Heat",
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "MaxConstraintValue",
+						"value": 1000000000000
+					},
+					{
+						"key": "ConsideredEnvironmentalImpacts",
+						"value": [
+							"Climate change#Global Warming Potential 100"
+						]
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "Model",
+						"value": "OptimNPV"
+					},
+					{
+						"key": "Currency",
+						"value": "EUR"
+					},
+					{
+						"key": "DiscountRate",
+						"value": 0.07
+					},
+					{
+						"key": "InternalRateOfReturn",
+						"value": -1
+					}
+				],
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "Total Capex",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelList": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeId": "2124249685",
+				"nodeName": "Cairn",
+				"nodeType": "SimulationControl",
+				"nodeTechnoType": "SimulationControl",
+				"componentPERSEEType": "SimulationControl",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 330,
+				"y": 2,
+				"paramListJson": [
+					{
+						"key": "TimeStep",
+						"value": 3600
+					},
+					{
+						"key": "FutureSize",
+						"value": 24
+					},
+					{
+						"key": "NbCycle",
+						"value": 1
+					},
+					{
+						"key": "TimeShift",
+						"value": 6
+					},
+					{
+						"key": "PastSize",
+						"value": 6
+					},
+					{
+						"key": "FutureVariableTimestep",
+						"value": 8760
+					},
+					{
+						"key": "ModeObjective",
+						"value": "Mono"
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"Global_Optim",
+					"RH_MPC_Optim"
+				]
+			},
+			{
+				"nodeId": "2124249683",
+				"nodeName": "Solver#1",
+				"nodeType": "Solver",
+				"nodeTechnoType": "Solver",
+				"componentPERSEEType": "Solver",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 190,
+				"y": 2,
+				"paramListJson": [
+					{
+						"key": "Gap",
+						"value": 0
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "Model",
+						"value": "MIPModeler"
+					},
+					{
+						"key": "Solver",
+						"value": "Cplex"
+					},
+					{
+						"key": "Category",
+						"value": "MIP"
+					}
+				],
+				"filterConfigListJson": [
+					"Base"
+				]
+			},
+			{
+				"nodeId": "2124264186",
+				"nodeName": "Electricity",
+				"nodeType": "Electricity",
+				"nodeTechnoType": "Electricity",
+				"componentPERSEEType": "EnergyVector",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 610,
+				"y": 2,
+				"energyTypeColor": "#E8A317",
+				"paramListJson": [
+					{
+						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "Electrical"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "MW"
+					},
+					{
+						"key": "MassUnit",
+						"value": "kg"
+					},
+					{
+						"key": "EnergyUnit",
+						"value": "MWh"
+					},
+					{
+						"key": "PowerUnit",
+						"value": "MW"
+					},
+					{
+						"key": "SurfaceUnit",
+						"value": "m2"
+					},
+					{
+						"key": "PeakUnit",
+						"value": "MWc"
+					}
+				]
+			},
+			{
+				"nodeId": "2124261877",
+				"nodeName": "Heat",
+				"nodeType": "Heat",
+				"nodeTechnoType": "Heat",
+				"componentPERSEEType": "EnergyVector",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 470,
+				"y": 2,
+				"energyTypeColor": "red",
+				"paramListJson": [
+					{
+						"key": "Potential",
+						"value": 50
+					},
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "Thermal"
+					},
+					{
+						"key": "MassUnit",
+						"value": "kg"
+					},
+					{
+						"key": "EnergyUnit",
+						"value": "MWh"
+					},
+					{
+						"key": "PowerUnit",
+						"value": "MW"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "kg/h"
+					},
+					{
+						"key": "SurfaceUnit",
+						"value": "m2"
+					},
+					{
+						"key": "PeakUnit",
+						"value": "MWc"
+					}
+				]
+			},
+			{
+				"nodeId": "2124290497",
+				"nodeName": "Elec_Bus",
+				"nodeType": "NodeLaw",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"componentWidth": 20,
+				"x": 550,
+				"y": 298,
+				"componentCarrier": "Electricity",
+				"paramListJson": [
+					{
+						"key": "ControlType",
+						"value": ""
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1,
+					"top": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "PowerOut",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "top",
+						"ports": [
+							{
+								"id": "port3",
+								"name": "PortT0",
+								"position": "top",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "Flow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "2124278858",
+				"nodeName": "Heat_Bus",
+				"nodeType": "NodeLaw",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"componentWidth": 20,
+				"x": 288,
+				"y": 298,
+				"componentCarrier": "Heat",
+				"paramListJson": [
+					{
+						"key": "ControlType",
+						"value": ""
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1,
+					"bottom": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "PowerIn",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"id": "port3",
+								"name": "PortB0",
+								"position": "bottom",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "2886778087",
+				"nodeName": "NodeEquality#1",
+				"nodeType": "NodeEquality",
+				"nodeTechnoType": "NodeEquality",
+				"componentPERSEEType": "BusSameValue",
+				"nodeComment": "",
+				"componentWidth": 20,
+				"x": 248,
+				"y": 112,
+				"componentCarrier": "Heat",
+				"paramListJson": [
+					{
+						"key": "MinBusValue",
+						"value": 0
+					},
+					{
+						"key": "MaxBusValue",
+						"value": 200000
+					},
+					{
+						"key": "ExportIndicators",
+						"value": true
+					},
+					{
+						"key": "WeightUnit",
+						"value": ""
+					},
+					{
+						"key": "ImposedBusValue",
+						"value": false
+					},
+					{
+						"key": "BusValue",
+						"value": -1e+33
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeEquality"
+					},
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					},
+					{
+						"key": "submodelfile",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "Total Capex",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base"
+				]
+			},
+			{
+				"nodeId": "2124282169",
+				"nodeName": "Heat_Grid",
+				"nodeType": "GridFree",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 144,
+				"y": 250,
+				"componentCarrier": "Heat",
+				"paramListJson": [
+					{
+						"key": "ControlType",
+						"value": ""
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "UseConstantPrice",
+						"value": true
+					},
+					{
+						"key": "ConstantBuyPrice",
+						"value": 100
+					},
+					{
+						"key": "ConstantSellPrice",
+						"value": 0
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "PortGridFlow",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EnvironmentModel",
+					"GeometryModel"
+				]
+			},
+			{
+				"nodeId": "2124284730",
+				"nodeName": "Elec_Load",
+				"nodeType": "SourceLoad",
+				"nodeTechnoType": "SourceLoad",
+				"componentPERSEEType": "SourceLoad",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 718,
+				"y": 288,
+				"componentCarrier": "Electricity",
+				"paramListJson": [
+					{
+						"key": "ControlType",
+						"value": ""
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "Weight",
+						"value": 1
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "StaticCompensationValue",
+						"value": 0
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "Direction",
+						"value": "Load"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileLoadFlux",
+						"value": "Elec_Load"
+					}
+				],
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "PortSourceLoadFlow",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeId": "2886964638",
+				"nodeName": "SourceLoad#1",
+				"nodeType": "SourceLoad",
+				"nodeTechnoType": "SourceLoad",
+				"componentPERSEEType": "SourceLoad",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 106,
+				"y": 382,
+				"componentCarrier": "Heat",
+				"paramListJson": [
+					{
+						"key": "Weight",
+						"value": -1000
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "Capex",
+						"value": 100
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "FixedOpex",
+						"value": 0
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "Direction",
+						"value": "Source"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileLoadFlux",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "PortSourceLoadFlow",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			},
+			{
+				"nodeId": "2124274009",
+				"nodeName": "Converter",
+				"nodeType": "Converter",
+				"nodeTechnoType": "Converter",
+				"componentPERSEEType": "Converter",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 392,
+				"y": 288,
+				"componentCarrier": "Heat",
+				"paramListJson": [
+					{
+						"key": "ControlType",
+						"value": ""
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "Capex",
+						"value": 300
+					},
+					{
+						"key": "FixedOpex",
+						"value": 0.02
+					},
+					{
+						"key": "Efficiency",
+						"value": 0.8
+					},
+					{
+						"key": "MaxPower",
+						"value": -2000
+					},
+					{
+						"key": "MinSize",
+						"value": 0
+					},
+					{
+						"key": "MinPower",
+						"value": 0.2
+					},
+					{
+						"key": "GeometricalSequence",
+						"value": true
+					},
+					{
+						"key": "EfficiencyAgeingCoeff",
+						"value": 0
+					},
+					{
+						"key": "EfficiencyMaxHours",
+						"value": 40000
+					},
+					{
+						"key": "CapacityAgeingCoeff",
+						"value": 0
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "Converter"
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "PortPowerIn",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Heat",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "PowerIn",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "PortPowerOut",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "PowerOut",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel",
+					"GeometryModel",
+					"TimeSeriesForecast",
+					"StorageOperationConstraints",
+					"Ageing",
+					"AddOperationConstraints",
+					"PiecewiseEfficiency"
+				]
+			},
+			{
+				"nodeId": "2886948655",
+				"nodeName": "StorageGen#1",
+				"nodeType": "StorageGen",
+				"nodeTechnoType": "StorageGen",
+				"componentPERSEEType": "Storage",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 578,
+				"y": 148,
+				"componentCarrier": "Electricity",
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": true
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "Capex",
+						"value": 0
+					},
+					{
+						"key": "FixedOpex",
+						"value": 0
+					},
+					{
+						"key": "InitSOC",
+						"value": 0.5
+					},
+					{
+						"key": "MinEsto",
+						"value": 0
+					},
+					{
+						"key": "MaxEsto",
+						"value": -100000000
+					},
+					{
+						"key": "MaxFlowCharge",
+						"value": 100000000
+					},
+					{
+						"key": "MinFlowCharge",
+						"value": 0
+					},
+					{
+						"key": "MaxFlowDischarge",
+						"value": 100000000
+					},
+					{
+						"key": "MinFlowDischarge",
+						"value": 0
+					},
+					{
+						"key": "FinalSOC",
+						"value": 1
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "StorageGen"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileCapacityMultiplier",
+						"value": ""
+					},
+					{
+						"key": "UseProfileAllowCharge",
+						"value": ""
+					},
+					{
+						"key": "UseProfileAllowDischarge",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "PortFlow",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "Flow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": []
+			}
+		],
+		"DuplicateComponents": [],
+		"Links": [
+			{
+				"linkType": "straight",
+				"tailNodeName": "Converter",
+				"tailSocketName": "PortR0",
+				"headNodeName": "Elec_Bus",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 490,
+						"y": 308
+					},
+					{
+						"x": 490,
+						"y": 308
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Bus",
+				"tailSocketName": "PortT0",
+				"headNodeName": "StorageGen#1",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 560,
+						"y": 168
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Elec_Load",
+				"tailSocketName": "PortL0",
+				"headNodeName": "Elec_Bus",
+				"headSocketName": "PortR0",
+				"listPoint": [
+					{
+						"x": 656,
+						"y": 308
+					},
+					{
+						"x": 656,
+						"y": 308
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Heat_Bus",
+				"tailSocketName": "PortR0",
+				"headNodeName": "Converter",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 350,
+						"y": 308
+					},
+					{
+						"x": 350,
+						"y": 308
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Heat_Bus",
+				"tailSocketName": "PortB0",
+				"headNodeName": "SourceLoad#1",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 298,
+						"y": 402
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "Heat_Grid",
+				"tailSocketName": "PortR0",
+				"headNodeName": "Heat_Bus",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 220,
+						"y": 270
+					},
+					{
+						"x": 220,
+						"y": 308
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "TecEcoAnalysis#1",
+				"tailSocketName": "PortR0",
+				"headNodeName": "NodeEquality#1",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 168,
+						"y": 22
+					},
+					{
+						"x": 168,
+						"y": 122
+					}
+				]
+			}
+		],
+		"Groups": []
+	}
+}

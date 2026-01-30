@@ -36,6 +36,9 @@ public:
     uint NDtTypicalPeriods() const {return mNDtTypicalPeriods ;}
     bool useTypicalPeriods() const {return mUseTypicalPeriods ;}
 
+    int startTime() const { return mStartTime; }
+    int endTime() const { return mEndTime; }
+
     double pdt() const {return mPdt ;}         /** Pas de temps en secondes */
     double pdtHeure() const {return mPdtHeure ;}   /** La meme grandeur mais en heures */
     uint npdtPast() const {return mNpdtPast ;}     /** Nombre de pas de temps passe */
@@ -64,12 +67,14 @@ public:
     void setVariableTimeStepsFile(const std::string& a_FileName) { mGlobalTimeStepFile = a_FileName; }
     void setTypicalPeriodsFile(const std::string& a_FileName) { mGlobalTypicalPeriodFile = a_FileName; }
 protected:
+    int mStartTime{ 0 }; /** Temps initial en pdt (Indice de l'initial pas de temps) */
+    int mEndTime{ -1 };  /** Dernière Temps en pdt */
     double mPdt;         /** Pas de temps en secondes */
     double mPdtHeure;    /** La meme grandeur mais en heures */
-    uint mNpdtPast;     /** Nombre de pas de temps passe */
-    uint mNpdt;         /** Nombre de pas de temps (futur) */
+    uint mNpdtPast;      /** Nombre de pas de temps passe */
+    uint mNpdt;          /** Nombre de pas de temps (futur) */
     uint mNpdtTot;       /** Nombre total de pas de temps (passe + futur) */
-    uint mTimeshift;    /** Time shifting */
+    uint mTimeshift;     /** Time shifting */
     uint mIHMFuturSize ; /** == mFutureVariableTimestep */
     uint mNbCycle ; /** number of cycling rolling horizon */
     std::string mRollingMode; /** mode used to read time series data when end of the file reached*/

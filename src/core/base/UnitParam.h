@@ -1,3 +1,11 @@
+/*
+* \file		UnitParam.h
+* \brief	A class for a descriptive unit
+* \version	1.0
+* \author	Ali KASSEM
+* \date		15/10/2025
+*/
+
 #ifndef UnitParam_H
 #define UnitParam_H
 

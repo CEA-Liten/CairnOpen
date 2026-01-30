@@ -13,9 +13,10 @@ class InputParam;
 #include "CairnAPI.h"
 #include "FlagParam.h"
 #include "UnitParam.h"
+#include "IndicatorName.h"
 #include <cmath>
 
-const double INFINITY_VAL = 1.e12;
+inline constexpr double INFINITY_VAL = 1.e12;
 
 enum TriState {
     False = 0,
@@ -50,6 +51,12 @@ public:
 
     void removeParameter(const std::string& aParamName);
     void removeParameters();
+    void removeImpactParameters(const std::string& impactName);
+    void removePortImpactParameters(const std::string& portName);
+
+    void removeIndicator(const std::string& indicatorName);
+    void removeIndicators();
+    void removeImpactIndicators(const std::string& impactName);
 
     /** @brief
     @param aParamName std::string: param name
@@ -114,8 +121,8 @@ public:
     @param aUnit std::string&: unit of the parameter
     @param aShortName std::string: indicator short name (alias)
     */
-    void addIndicator(const std::string& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported, const std::string& aDescription = "",
-        const t_unit& aUnit = "", const std::string& aShortName = "");
+    void addIndicator(const t_Name& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported, const std::string& aDescription = "",
+        const t_unit& aUnit = "", const t_Name& aShortName = "");
     
    
     /* ------------------------------------------------------------------------------------------------------------------------------- */
@@ -227,15 +234,16 @@ public:
     };
     class ModelIndicator {
     public:
-        ModelIndicator(const std::string& aIndicatorName = "", 
+        ModelIndicator(CairnObject* aParent = nullptr,
+            const t_Name& aIndicatorName = "",
             std::vector<double>* aDblePtr = nullptr, 
             bool* aBoolPtr = nullptr, 
             const std::string& aDesc = "", 
             const t_unit& aUnit = "",
-            const std::string& aShortName = "");
+            const t_Name& aShortName = "");
 
-        const std::string& getName() const { return m_Name; };
-        const std::string& getShortName() const { return m_ShortName; };
+        std::string getName() const;
+        std::string getShortName() const;
         std::string getUnit() const;
         bool IsExported();
         void Export(std::fstream& out, const std::string& aComponentName, const std::string&range, bool aForceExport, 
@@ -246,8 +254,9 @@ public:
         double getValue(size_t aIndex=0);
         void resetValue(); //reset indicator value to 0
     protected:
-        std::string m_Name;
-        std::string m_ShortName;
+        SubModel* pModel;
+        IndicatorName m_Name;
+        IndicatorName m_ShortName;
         std::string m_Comment;
         UnitParam m_Unit;
         bool *p_IsExported;

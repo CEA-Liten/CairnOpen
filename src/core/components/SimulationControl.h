@@ -20,6 +20,8 @@ public:
 
     void jsonSaveGuiComponent(ojson &componentsArray) ;
 
+    int getStartTime() const { return mStartTime; }
+    int getEndTime() const { return mEndTime; }
     int getTimeStep() const {return mTimeStep;}
     int getPastSize() const {return mPastSize;}
     int getFutureSize() const {return mFutureSize;}
@@ -41,6 +43,7 @@ public:
 
     std::map<std::string, InputParam::ModelParam*> getParameters();
     GUIData* getGUIData() { return mGUIData; }
+    std::vector<InputParam*> get_InputParams();
 
 private:
     void declareCompoInputParam();
@@ -51,6 +54,8 @@ private:
     InputParam* mCompoInputParam;      /** COMPONENT Input parameter List from XML File -> Options */
     InputParam* mCompoInputSettings;   /** COMPONENT Input parameter List from Settings File -> Params */
     
+    int mStartTime; // First time in TimeSetp to consider from the input timeseries
+    int mEndTime;   // Last time in TimeSetp to consider from the input timeseries
     double mTimeStep; /** TimeStep is double, not int */
     int mPastSize;
     int mFutureSize;

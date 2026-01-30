@@ -36,7 +36,7 @@ create_component(${COMPONENT})
 target_compile_definitions(${COMPONENT} PRIVATE -DMODELINTERFACE_LIBRARY)
 
 include(SpdlogSetup)
-target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
+target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
 
 # ---- Installation ----
 # Call component_install_setup(<COMPONENT>)

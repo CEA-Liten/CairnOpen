@@ -47,6 +47,23 @@ namespace CairnUtils {
         }
     }
 
+    std::string parseIndicatorName(const std::string& indicatorName, const bool isSizeOptimized)
+    {
+        static const std::unordered_map<std::string, std::string> optimizedNames = {
+            {"Installed Size",     "Installed Optimal Size"},
+            {"Component Weight",   "Component Optimal Weight"},
+            {"Storage Capacity",   "Storage Optimal Capacity"}
+        };
+
+        std::string name = indicatorName;
+        auto it = optimizedNames.find(name);
+        if (it != optimizedNames.end() && isSizeOptimized) {
+            name = it->second;
+        }
+
+        return trim(name);
+    }
+
     void outputIndicator(std::fstream& out, const std::string compoName, const std::string indicatorName, const double value, 
         const std::string unit, const std::string alias, const std::string Description, const std::vector<std::string>& labels)
     {
@@ -66,36 +83,61 @@ namespace CairnUtils {
         out << "\n";
     }
 
-
-    bool contains(const std::vector< std::string>& a_List, const std::string &a_Find)
-    {
-        std::vector<std::string>::const_iterator vIter = find(a_List.begin(), a_List.end(), a_Find);
-        return (vIter != a_List.end());
+    std::string toUpper(const std::string& a_string) {
+        std::string vTmp(a_string);
+        std::transform(a_string.begin(), a_string.end(), vTmp.begin(), ::toupper);
+        return vTmp;
     }
 
-    bool contains(const std::string& a_string, const std::string& a_Find, bool a_toUpper)
-    {
+    std::string toLower(const std::string& a_string) {
+        std::string vTmp(a_string);
+        std::transform(a_string.begin(), a_string.end(), vTmp.begin(), ::tolower);
+        return vTmp;
+    }
+
+    std::string remove_spaces(const std::string& a_string) {
+        std::string vRet(a_string);
+        vRet.erase(std::remove(vRet.begin(), vRet.end(), ' '), vRet.end());
+        return vRet;
+    }
+
+    std::string trim(const std::string& a_string) {
+        std::string vRet = a_string;
+        ltrim(vRet);
+        rtrim(vRet);
+        return vRet;
+    }
+
+    std::string simplified(const std::string& a_string) {
+        std::string vRet = a_string;
+        ltrim(vRet);
+        rtrim(vRet);
+        vRet = CairnUtils::replace(vRet, "  ", " ");
+        vRet = CairnUtils::replace(vRet, "\t", "");
+        vRet = CairnUtils::replace(vRet, "\r", "");
+        vRet = CairnUtils::replace(vRet, "\n", "");
+        return vRet;
+    }
+
+    std::string to_string_trim(const double& num, int sig) {
+        char buf[64];
+        auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf),
+            num, std::chars_format::general, sig);
+        if (ec != std::errc{}) return {}; // handle error if needed
+        return std::string(buf, ptr);
+    }
+
+    std::string replace(std::string& a_string, const std::string& a_find, const std::string& a_replace, bool a_toUpper) {
         if (a_toUpper) {
-            std::string vTmp(a_string);
-            std::transform(a_string.begin(), a_string.end(), vTmp.begin(), ::toupper);
-            return vTmp.find(a_Find) != std::string::npos;
+            std::transform(a_string.begin(), a_string.end(), a_string.begin(), ::toupper);
         }
-        else
-            return a_string.find(a_Find) != std::string::npos;
+        if (!a_find.empty())
+            for (size_t pos = 0; (pos = a_string.find(a_find, pos)) != std::string::npos; pos += a_replace.size())
+                a_string.replace(pos, a_find.size(), a_replace);
+        return a_string;
     }
 
-    bool contains(const std::string& a_string, const std::vector<std::string>& a_FindOneInList, bool a_toUpper)
-    {
-        for (auto& vFind : a_FindOneInList) {
-            if (contains(a_string, vFind, a_toUpper))
-                return true;
-        }
-        return false;
-    }
-
-
-    std::string join(const std::vector< std::string> & a_List) 
-    {
+    std::string join(const std::vector< std::string>& a_List) {
         if (a_List.size()) {
             std::string vRet = "";
             std::string vSep = "[";
@@ -110,43 +152,42 @@ namespace CairnUtils {
             return "[]";
     }
 
-    std::string replace(std::string& a_string , const std::string& a_find, const std::string& a_replace, bool a_toUpper)
-    {       
-        if (a_toUpper) {            
-            std::transform(a_string.begin(), a_string.end(), a_string.begin(), ::toupper);            
+    bool contains(const std::vector< std::string>& a_List, const std::string &a_Find) {
+        std::vector<std::string>::const_iterator vIter = find(a_List.begin(), a_List.end(), a_Find);
+        return (vIter != a_List.end());
+    }
+
+    bool contains(const std::string& a_string, const std::string& a_Find, bool a_toUpper) {
+        if (a_toUpper) {
+            std::string vTmp(a_string);
+            std::transform(a_string.begin(), a_string.end(), vTmp.begin(), ::toupper);
+            return vTmp.find(a_Find) != std::string::npos;
         }
-        if (!a_find.empty())
-            for (size_t pos = 0; (pos = a_string.find(a_find, pos)) != std::string::npos; pos += a_replace.size())
-                a_string.replace(pos, a_find.size(), a_replace);
-        return a_string;
+        else
+            return a_string.find(a_Find) != std::string::npos;
     }
 
-    std::string simplified(const std::string& a_string)
-    {
-        std::string vRet = a_string;
-        ltrim(vRet);
-        rtrim(vRet);
-        vRet = CairnUtils::replace(vRet, "  ", " ");
-        vRet = CairnUtils::replace(vRet, "\t", "");
-        vRet = CairnUtils::replace(vRet, "\r", "");
-        vRet = CairnUtils::replace(vRet, "\n", "");
-        return vRet;
+    bool contains(const std::string& a_string, const std::vector<std::string>& a_FindOneInList, bool a_toUpper) {
+        for (auto& vFind : a_FindOneInList) {
+            if (contains(a_string, vFind, a_toUpper))
+                return true;
+        }
+        return false;
+    }
+
+    void removeMatchingSubstring(std::vector<std::string>& list, const std::string& substring) {
+        list.erase(
+            std::remove_if(list.begin(), list.end(), [&](std::string s) { return contains(s, substring); }),
+            list.end()
+        );
     }
 
 
-    std::string toUpper(const std::string& a_string)
-    {
-        std::string vTmp(a_string);
-        std::transform(a_string.begin(), a_string.end(), vTmp.begin(), ::toupper);
-        return vTmp;
-    }
-    std::vector<std::string> split(const std::string& a_string, const char& a_separator)
-    {        
+    std::vector<std::string> split(const std::string& a_string, const char& a_separator) {        
         return split(a_string, std::string{ a_separator });
     }
 
-    std::vector<std::string> split(const std::string& a_string, const std::string& a_separator)
-    {
+    std::vector<std::string> split(const std::string& a_string, const std::string& a_separator) {
         size_t pos_start = 0, pos_end, delim_len = a_separator.length();
         std::string token;
         std::vector<std::string> res;
@@ -161,8 +202,7 @@ namespace CairnUtils {
         return res;
     }
 
-    std::string BuildFileName(const std::string &aFileName)
-    {
+    std::string BuildFileName(const std::string &aFileName) {
         if (aFileName == "") return aFileName;
 
         fs::path filename(aFileName);
@@ -176,8 +216,8 @@ namespace CairnUtils {
         else
             return "";
     }
-    std::vector<std::vector<std::string>> readFromCsvFile(const std::string& aFileName, const std::string& sep)
-    {
+
+    std::vector<std::vector<std::string>> readFromCsvFile(const std::string& aFileName, const std::string& sep) {
         std::vector<std::vector<std::string>>  data_Inputs;
         std::string filename = BuildFileName(aFileName);
         if (filename == "") return data_Inputs;
@@ -194,8 +234,8 @@ namespace CairnUtils {
         data_Inputs = readToList(filename, sep);
         return data_Inputs;
     }
-    std::vector<std::vector<std::string>> readToList(const std::string& Full_File_Name, const std::string& Separator)
-    {
+
+    std::vector<std::vector<std::string>> readToList(const std::string& Full_File_Name, const std::string& Separator)  {
         std::vector<std::vector<std::string>> data_input;        
         std::vector<std::string> fields;
         std::fstream File(Full_File_Name, std::ios_base::in);
@@ -239,8 +279,7 @@ namespace CairnUtils {
         return data_input;
     }
 
-    std::vector<double> getDataArray(const std::vector<std::vector<std::string>>& data_Inputs, int aCol, int iskipHead)
-    {
+    std::vector<double> getDataArray(const std::vector<std::vector<std::string>>& data_Inputs, int aCol, int iskipHead) {
         std::vector<double> lu;
         std::string value;
 
@@ -260,17 +299,5 @@ namespace CairnUtils {
         }
         return lu;
     }
-
-    std::string upperCase(const std::string& str)
-    {
-        std::string upper_case_str = "";
-        for (int i = 0; i < str.length(); i++) {
-            upper_case_str += std::toupper(str[i]);
-        }
-        return upper_case_str;
-    }
-
-  
-
 }
 

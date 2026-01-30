@@ -1,6 +1,9 @@
 #include "GlobalSettings.h"
 #include "InputParam.h"
 #include "CairnUtils.h"
+#include "SubModel.h"
+
+#include <unordered_set>
 
 //#include "base/OptimProblem.h"
 using namespace GS ;
@@ -13,32 +16,95 @@ InputParam::InputParam (CairnObject *aParent, std::string aName): CairnObject(aP
 InputParam::~InputParam()
 {
     removeParameters();
+    removeIndicators();
+}
 
-    for (auto& val : mIndicators) {
-        if (val) {
-            delete val;
-            val = nullptr;
+void InputParam::removeIndicator(const std::string& indicatorName)
+{
+    auto it = std::remove_if(mIndicators.begin(), mIndicators.end(),
+        [&](ModelIndicator* indicator) {
+        if (indicator && indicator->getName() == indicatorName)
+        {
+            delete indicator;  // Free memory
+            return true;      // Remove this element
+        }
+        return false;
+    });
+
+    mIndicators.erase(it, mIndicators.end());
+}
+
+void InputParam::removeIndicators()
+{
+    // Delete all indicators
+    for (auto* indicator : mIndicators) {
+        delete indicator;  
+    }
+    // Clear vector
+    mIndicators.clear(); // Removes all elements
+}
+
+void InputParam::removeImpactIndicators(const std::string& impactName)
+{
+    for (auto it = mIndicators.begin(); it != mIndicators.end();)
+    {
+        ModelIndicator* indicator = *it;
+        if (CairnUtils::contains(indicator->getName(), impactName)) {
+            delete indicator;            // Free memory if you own it
+            it = mIndicators.erase(it);  // Erase and move to next valid iterator
+        }
+        else {
+            ++it;
         }
     }
-    mIndicators.clear();
 }
 
 //Model InputParameter Interface
-void InputParam::removeParameter(const std::string& aParamName) {
-    if (mMapParams.find(aParamName) != mMapParams.end()) {
-        if(mMapParams[aParamName]) delete mMapParams[aParamName];
-        mMapParams.erase(aParamName);
+void InputParam::removeParameter(const std::string& aParamName)
+{
+    auto it = mMapParams.find(aParamName);
+    if (it != mMapParams.end()) {
+        delete it->second;     // Free memory
+        mMapParams.erase(it); // Erase safely
     }
 }
 
-void InputParam::removeParameters() {
-    for (auto& [iParName, val] : mMapParams) {
-        if (val) {
-            delete val;
-            val = nullptr;
+void InputParam::removeParameters()
+{
+    // Delete all params
+    for (auto& [name, param] : mMapParams) {
+        delete param;  
+    }
+    // Clear map
+    mMapParams.clear();
+}
+
+void InputParam::removeImpactParameters(const std::string& impactName)
+{
+    for (auto it = mMapParams.begin(); it != mMapParams.end();)
+    {
+        if (CairnUtils::contains(it->first, impactName))  {
+            delete it->second;          // Free memory
+            it = mMapParams.erase(it);  // Erase and move to next valid iterator
+        }
+        else {
+            ++it;
         }
     }
-    mMapParams.clear();
+}
+
+void InputParam::removePortImpactParameters(const std::string& portName)
+{
+    for (auto it = mMapParams.begin(); it != mMapParams.end();)
+    {
+        if (CairnUtils::contains(it->first, portName)) {
+            delete it->second;          // Free memory
+            it = mMapParams.erase(it);  // Erase and move to next valid iterator
+        }
+        else {
+            ++it;
+        }
+    }
 }
 
 void InputParam::addParameter(const std::string& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, 
@@ -49,6 +115,9 @@ void InputParam::addParameter(const std::string& aParamName, const t_pvalue &aPt
     * or a string vector (which is concatenated into a string at the end) 
     */
     addToShowConfigList(aShowConfig);
+    if (mMapParams.find(aParamName) != mMapParams.end()) {
+        delete mMapParams[aParamName];
+    }
     mMapParams[aParamName] = new ModelParam(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
 }
 
@@ -62,6 +131,9 @@ void InputParam::addTimeSeries(const std::string& aParamName, std::vector<double
     * The names of the columns in the input timeseries file should be the names provided by the user (not aParamName), e.g. "MyFluxTimeSeries".
     */
     addToShowConfigList(aShowConfig);
+    if (mMapParams.find(aParamName) != mMapParams.end()) {
+        delete mMapParams[aParamName];
+    }
     mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr, a_default, a_min, a_max, aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
 }
 
@@ -73,20 +145,26 @@ void InputParam::addPerfParam(const std::string& aParamName, std::vector<double>
     * The user has to provide the name of the corresponding input .csv file using parameter "DataFile" (MilpComponent::mDataFile)
     * The names of the columns in the input file should be the hard-coded names (i.e. aParamName).
     */
+    if (mMapParams.find(aParamName) != mMapParams.end()) {
+        delete mMapParams[aParamName];
+    }
     mMapParams[aParamName] = new ModelParam(aParamName, aDblePtr, 1.0, std::nan("1"), std::nan("1"), aIsBlocking, aIsUsed, aDescription, aUnit);
 }
 
 void InputParam::publishData(const std::string& aVarName, int aSize, double aDefault)
 {
     /* used to publish/export IO variables */
+    if (mMapParams.find(aVarName) != mMapParams.end()) {
+        delete mMapParams[aVarName];
+    }
     mMapParams[aVarName] = new ModelParam(aVarName, aSize, aDefault);
 }
 
-void InputParam::addIndicator(const std::string& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported, 
-    const std::string& aDesc, const t_unit& aUnit, const std::string& aShortName)
+void InputParam::addIndicator(const t_Name& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported,
+    const std::string& aDesc, const t_unit& aUnit, const t_Name& aShortName)
 {
     /* add indicator */
-    mIndicators.push_back(new ModelIndicator(aIndicatorName, aDblePtr, aIsExported, aDesc, aUnit, aShortName));
+    mIndicators.push_back(new ModelIndicator(this->parent(), aIndicatorName, aDblePtr, aIsExported, aDesc, aUnit, aShortName));
 }
 
 void InputParam::addToShowConfigList(const std::string& aConfig)
@@ -829,14 +907,17 @@ bool InputParam::ModelParam::setValue(const std::string& a_Value)
         break;
     }
     case eStringList:
-    {//assumes that a_Value is a string with list elements sperated with comma
-        std::vector<std::string>* pValue = std::get<eStringList>(p_Value);
-        std::string value = a_Value;
-        if (CairnUtils::simplified(value) != "") {
-            *pValue = CairnUtils::split(value);
+    {   //assumes that a_Value is a string with list elements sperated with comma
+        auto* pValue = std::get<eStringList>(p_Value);
+        const std::string value = CairnUtils::simplified(a_Value);
+        if (!value.empty()) {
+            pValue->clear(); 
+            for (const auto& s : CairnUtils::split(value)) {
+                pValue->push_back(CairnUtils::trim(s));
+            }
         }
         else {
-            *pValue = std::vector<std::string>();
+            pValue->clear();
         }
         vRet = true;
         break;
@@ -1007,12 +1088,13 @@ t_value InputParam::ModelParam::operator[](size_t i)
     return vRet;
 }
 
-InputParam::ModelIndicator::ModelIndicator(const std::string& aIndicatorName, 
-    std::vector<double>* aDblePtr, bool* aIsExported,
-    const std::string& aDesc, const t_unit& aUnit, const std::string& aShortName)
+InputParam::ModelIndicator::ModelIndicator(CairnObject* aParent, 
+    const t_Name& aIndicatorName, std::vector<double>* aDblePtr, bool* aIsExported,
+    const std::string& aDesc, const t_unit& aUnit, const t_Name& aShortName)
 {
-    m_Name = aIndicatorName;
-    m_ShortName = aShortName;
+    pModel = dynamic_cast<SubModel*> (aParent);
+    m_Name.set_Value(aIndicatorName);
+    m_ShortName.set_Value(aShortName); 
     m_Unit.set_Value(aUnit);
     m_Comment = aDesc;
 
@@ -1048,6 +1130,17 @@ void InputParam::ModelIndicator::resetValue()
     }
 }
 
+std::string InputParam::ModelIndicator::getName() const 
+{
+    bool isSizeOptimized = pModel ? pModel->isSizeOptimized() : false;
+    return CairnUtils::parseIndicatorName(m_Name.get_Value(), isSizeOptimized);
+}
+
+std::string InputParam::ModelIndicator::getShortName() const
+{
+    return CairnUtils::remove_spaces(m_ShortName.get_Value());
+}
+
 std::string InputParam::ModelIndicator::getUnit() const
 {
     return m_Unit.get_Value();
@@ -1061,15 +1154,15 @@ void InputParam::ModelIndicator::Export(std::fstream& out, const std::string &aC
         //Published (declared) indicators        
         if (range == "PLAN") {     
             if(showDescription)
-                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[0], getUnit(), m_ShortName, m_Comment, labels);
+                CairnUtils::outputIndicator(out, aComponentName, getName(), (*p_Value)[0], getUnit(), getShortName(), m_Comment, labels);
             else 
-                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[0], getUnit(), m_ShortName, "N/A", labels);
+                CairnUtils::outputIndicator(out, aComponentName, getName(), (*p_Value)[0], getUnit(), getShortName(), "N/A", labels);
         }
         else if (range == "HIST") {  
             if (showDescription)
-                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[1], getUnit(), m_ShortName, m_Comment, labels);
+                CairnUtils::outputIndicator(out, aComponentName, getName(), (*p_Value)[1], getUnit(), getShortName(), m_Comment, labels);
             else 
-                CairnUtils::outputIndicator(out, aComponentName, m_Name, (*p_Value)[1], getUnit(), m_ShortName, "N/A", labels);
+                CairnUtils::outputIndicator(out, aComponentName, getName(), (*p_Value)[1], getUnit(), getShortName(), "N/A", labels);
         }        
     }
 }
@@ -1081,23 +1174,23 @@ void InputParam::ModelIndicator::Export(std::fstream& out, const std::string& aC
     if (p_Value && (IsExported() || aForceExport))    
     {
         bool isOptimalSize = false;
-        std::string varName = m_Name;
-        //Manage optim/fixed sizing        
-        if (m_Name == "Installed Size") {
-            if (aIsSizeOptimized) varName = "Installed Optimal Size";
-            isOptimalSize = true;
-        }
-        if (m_Name == "Component Weight") {
-            if (aIsSizeOptimized) varName = "Component Optimal Weight";
-            isOptimalSize = true;
-        }
-        if (m_Name == "Storage Capacity") {
-            if (aIsSizeOptimized) varName = "Storage Optimal Capacity";
-            isOptimalSize = true;
-        }
-        if (aIsPriceOptimized && m_Name == "Component Optimal Price")
-            isOptimalSize = true;
+        const std::string indicatorName = getName();
 
+        //Manage optim/fixed sizing  
+        static const std::unordered_set<std::string> optimizedNames = {
+            "Installed Size",     "Installed Optimal Size",
+            "Component Weight",   "Component Optimal Weight",
+            "Storage Capacity",   "Storage Optimal Capacity"
+        };
+
+        auto it = optimizedNames.find(indicatorName);
+        if (it != optimizedNames.end()) {
+            isOptimalSize = true;
+        }
+
+        if (aIsPriceOptimized && indicatorName == "Component Optimal Price") {
+            isOptimalSize = true;
+        }
 
         //0 -> _PLAN, 1 -> _HIST
         if (range == "PLAN") {
@@ -1108,25 +1201,25 @@ void InputParam::ModelIndicator::Export(std::fstream& out, const std::string& aC
                 auto it_maxValue = std::max_element(aOptimalSizeAllCycles.begin(), aOptimalSizeAllCycles.end());
                 if (it_maxValue != aOptimalSizeAllCycles.end()) {
                     if(showDescription)
-                        CairnUtils::outputIndicator(out, aComponentName, varName, *it_maxValue, getUnit(), m_ShortName, m_Comment, labels);
+                        CairnUtils::outputIndicator(out, aComponentName, indicatorName, *it_maxValue, getUnit(), getShortName(), m_Comment, labels);
                     else
-                        CairnUtils::outputIndicator(out, aComponentName, varName, *it_maxValue, getUnit(), m_ShortName, "N/A", labels);
+                        CairnUtils::outputIndicator(out, aComponentName, indicatorName, *it_maxValue, getUnit(), getShortName(), "N/A", labels);
                 }
                 isOptimalSize = false;
             }
             else {
                 if (showDescription)
-                    CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[0], getUnit(), m_ShortName, m_Comment, labels);
+                    CairnUtils::outputIndicator(out, aComponentName, indicatorName, (*p_Value)[0], getUnit(), getShortName(), m_Comment, labels);
                 else
-                    CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[0], getUnit(), m_ShortName, "N/A", labels);
+                    CairnUtils::outputIndicator(out, aComponentName, indicatorName, (*p_Value)[0], getUnit(), getShortName(), "N/A", labels);
 
             }
         }
         else if (range == "HIST") {
             if (showDescription)
-                CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[1], getUnit(), m_ShortName, m_Comment, labels);
+                CairnUtils::outputIndicator(out, aComponentName, indicatorName, (*p_Value)[1], getUnit(), getShortName(), m_Comment, labels);
             else 
-                CairnUtils::outputIndicator(out, aComponentName, varName, (*p_Value)[1], getUnit(), m_ShortName, "N/A", labels);
+                CairnUtils::outputIndicator(out, aComponentName, indicatorName, (*p_Value)[1], getUnit(), getShortName(), "N/A", labels);
         }
     }
 }

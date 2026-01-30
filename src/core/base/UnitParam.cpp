@@ -1,3 +1,10 @@
+/*
+* \file		UnitParam.cpp
+* \brief	A class for a descriptive unit
+* \version	1.0
+* \author	Ali KASSEM
+* \date		15/10/2025
+*/
 
 #include "UnitParam.h"
 

@@ -67,9 +67,10 @@ if(MSVC)
   target_compile_options(${COMPONENT} PRIVATE "/bigobj")
 endif()
 
-find_package(MIPModeler REQUIRED)
+find_package(MIPModeler REQUIRED ModelerInterface MIPSolver)
 find_package(Cairn REQUIRED CairnModelInterface)
 
+target_link_libraries(${COMPONENT} PRIVATE CAIRN::CAIRN)
 target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPModeler)
 target_link_libraries(${COMPONENT} PRIVATE mipmodeler::ModelerInterface)
 target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPSolver)
@@ -79,7 +80,7 @@ include(EigenSetup)
 target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
 
 include(SpdlogSetup)
-target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
+target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
 
 # ---- Installation ----
 # Call component_install_setup(<COMPONENT>)
@@ -96,6 +97,13 @@ set(${COMPONENT}_INSTALL_INTERFACE_INCLUDE_DIRECTORIES
 
 # List header files (in dir above) that must not be installed 
 #set(${COMPONENT}_HDRS_EXCLUDE)
+if (DEPS_INSTALL AND EXISTS ${DEPS_ROOT})	
+	if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")	
+		set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlogd${CMAKE_SHARED_LIBRARY_SUFFIX})
+	else()
+		set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlog${CMAKE_SHARED_LIBRARY_SUFFIX})
+	endif()		
+endif()
 component_install_setup(${COMPONENT})
 
 if(WITH_TESTING)	
@@ -103,7 +111,7 @@ if(WITH_TESTING)
 	add_tests(${CAIRNTESTS_HOME}/apicpp/src 
 	DATA ${CAIRNTESTS_HOME}/apicpp/data 
 	RESULTS ${CAIRNTESTS_HOME}/apicpp/results 
-	DEPS CairnCore
+	DEPS CairnCore CairnModelInterface spdlog::spdlog
 	EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils)	
 endif()
 
@@ -123,15 +131,23 @@ if (WITH_PYBIND)
 	set(${COMPONENT}_INTERFACE_INCLUDE_DIRECTORIES
 	 ${${COMPONENT}_DIRS}	
 	)
-	# find python package
+	# find python 
+	message("Python_ROOT_DIR: ${Python_ROOT_DIR}")
+	set(Python_DIR ${Python_ROOT_DIR})
 	find_package(Python REQUIRED COMPONENTS Interpreter Development)
-	set(PYBIND11_FINDPYTHON ${Python_FOUND})
-	find_package(pybind11 CONFIG REQUIRED)
-
 	message(STATUS "Python: ${Python_EXECUTABLE}")
     message(STATUS "Python_INCLUDE_DIR: ${Python_INCLUDE_DIRS}")
-    message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 
+    message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 		
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
+
+	# virtual environment with pybind11
+	if (NOT EXISTS ${PYTHON_VENV})
+		python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+	endif()
+
+	set(PYBIND11_FINDPYTHON ${Python_FOUND})
+	find_package(pybind11 CONFIG REQUIRED)
+	
 	create_component(${COMPONENT})
 
 	target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
@@ -152,8 +168,16 @@ if (WITH_PYBIND)
 	# -- Eigen to Cairn
 	target_compile_definitions(${COMPONENT} PRIVATE -DEIGEN_MPL2_ONLY)
 	target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
-	target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog_header_only)
+	target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
 
-	component_install_setup(${COMPONENT} DESTINATION ..)
+	if (DEPS_INSTALL AND EXISTS ${DEPS_ROOT})
+		set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/highs${CMAKE_SHARED_LIBRARY_SUFFIX})
+		if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")	
+			set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlogd${CMAKE_SHARED_LIBRARY_SUFFIX})
+		else()
+			set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlog${CMAKE_SHARED_LIBRARY_SUFFIX})
+		endif()		
+	endif()
+	component_install_setup(${COMPONENT})
 	
 endif()

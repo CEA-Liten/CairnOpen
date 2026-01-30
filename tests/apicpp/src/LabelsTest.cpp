@@ -13,6 +13,8 @@ int main()
 	std::string vFileName = StudyRoot + (std::string)"/formation_cairn.json";
 	string const TimeseriesFileName = StudyRoot + (std::string)"/formation_cairn_dataseries.csv";
 
+	std::string vFileName_saved = StudyRoot + (std::string)"/formation_cairn_saved.json";
+
 	if (fs::exists(StudyRoot)) {
 		fs::remove_all(StudyRoot);
 	}
@@ -47,6 +49,20 @@ int main()
 	TESTAPI("Read the Timeseries: " + TimeseriesFileName, m_Problem.add_TimeSeries(TimeseriesFileName))
 
 	TESTAPI("Run: ", m_Problem.run())
+
+	TESTAPI("Save Study: ", m_Problem.save_Study(vFileName_saved))
+	
+	TESTAPI("Close Study: ", m_Cairn.close_Study())
+
+	// ----- Read the saved file and verify that label values are correct ----
+	TESTAPI("read saved file: " + vFileName_saved, m_Problem = m_Cairn.read_Study(vFileName_saved))
+	TESTAPI2("check list of labels 3", TestUtils::compare_lists(m_Problem.get_Labels(), { "country", "year", "site" }))
+
+	vELY_PEM = m_Problem.get_Component("ELY_PEM");
+	TESTAPI2("check ELY_PEM labels 2", TestUtils::compare_dict(vELY_PEM.get_LabelValues(), { {"country", "France"}, {"year", "2000"}, {"site", ""} }))
+
+	vElec_Bus = m_Problem.get_Bus("Elec_Bus");
+	TESTAPI2("check Elec_Bus labels 2", TestUtils::compare_dict(vElec_Bus.get_LabelValues(), { {"country", "UK"}, {"year", "1995"}, {"site", "London"} }))
 
 	return noError;
 }

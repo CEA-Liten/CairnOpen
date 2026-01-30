@@ -10,7 +10,8 @@ public:
     ~SourceLoadSubModel();
     virtual void setTimeData();
 
-    double Sens();
+    double Sens() override;
+    std::string Direction();
 
     void declareDefaultModelConfigurationParameters()
     {
@@ -38,57 +39,82 @@ public:
     {
         TechnicalSubModel::declareDefaultModelIndicators();
 
-        //Indicators specific for SourceLoads
+        // ----------- Indicators specific for SourceLoads -----------
+
         mInputIndicators->addIndicator("Component Weight", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Weight");
+        if (isPriceOptimized()) {
+            mInputIndicators->addIndicator("Component Optimal Price", &mOptimalSize, exp, "Component Optimal Price", pOptimalSizeUnit(), "OptPrice");
+        }
+        mInputIndicators->addIndicator("ImposedProfile " + Direction() + " time", &mRunningTime, exp, "Running time", "h", "ImposedProfileTime");
 
-        if (isPriceOptimized()) mInputIndicators->addIndicator("Component Optimal Price", &mOptimalSize, exp, "Component Optimal Price", pOptimalSizeUnit(), "OptPrice");
+        for (const auto& port : mListPort) {
+            const std::string portId = port->ID();
+            const std::string varName = port->Variable();
+            const std::string storageName = port->getCarrier()->StorageName();
+            const std::string fluxName = port->getCarrier()->FluxName();
 
-        std::string sens;
-        if (Sens() > 0) sens = "source";
-        else sens = "load";
+            // Why "sens" is not included in the indicator's name like in the case of Grid ?
 
-        mInputIndicators->addIndicator("ImposedProfile " + sens + " time", &mRunningTime, exp, "Running time", "h", "ImposedProfileTime");
+            const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
+            if (ptrExp1D) {
+                /* Note, Sens() is that of the default port not that of $port */
+                if (port->Direction() == GS::KPROD() && Sens() > 0) 
+                { 
+                    mProductionMap.try_emplace(portId, 2, 0.0);
+                    mProdLvlTotMap.try_emplace(portId, 2, 0.0);
+                    mProdMeanMap.try_emplace(portId, 2, 0.0);
 
-        for (auto& port : mListPort) {        
-            std::string portName = port->Name();
-            std::string varName = port->Variable();
-            std::string storageName = port->getCarrier()->StorageName();
-            std::string fluxName = port->getCarrier()->FluxName();
-            bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "ImposedProfile", STORAGE_NAME, VARIABLE } }),
+                        &mProductionMap[portId], exp, "ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "TotImposedProfile", VARIABLE } })
+                    );
+                   
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Levelized ImposedProfile", STORAGE_NAME, VARIABLE } }),
+                        &mProdLvlTotMap[portId], exp, "Levelized ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "LvlzdTotImposedProfile", VARIABLE } })
+                    );
 
-            if (port->VarType() == "vector")
-            {
-                std::string identifier = "";
-
-                // Why "sens" is not included in the indicator's name like in the case of Grid ?
-
-                if (port->Direction() == GS::KPROD() && sens == "source")  
-                {
-                    mProductionMap[portName] = std::vector<double>(2, 0.);
-                    mProdLvlTotMap[portName] = std::vector<double>(2, 0.);
-                    mProdMeanMap[portName] = std::vector<double>(2, 0.);
-                    if (!isIndicatorNameUnique(port, "StorageName")) identifier = "(" + port->Name() + ")";
-                    mInputIndicators->addIndicator("ImposedProfile " + storageName + " " + varName + " " + identifier, &mProductionMap[portName], exp, "ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), "TotImposedProfile" + varName);
-                    mInputIndicators->addIndicator("Levelized ImposedProfile " + storageName + " " + varName + " " + identifier, &mProdLvlTotMap[portName], exp, "Levelized ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), "LvlzdTotImposedProfile" + varName);
-                    if (isIndicatorNameUnique(port, "FluxName")) identifier = ""; //put back to empty if name is unique w.r.t fluxName (rarely  happens!)
-                    mInputIndicators->addIndicator("Mean " + fluxName + " " + varName + " " + identifier, &mProdMeanMap[portName], exp, "Mean " + fluxName + " " + varName, port->pFluxUnit(), "MeanImposedProfile" + varName);
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Mean", FLUX_NAME, VARIABLE } }),
+                        &mProdMeanMap[portId], exp, "Mean " + fluxName + " " + varName, port->pFluxUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "MeanImposedProfile", VARIABLE } })
+                    );
                 }
-                else if (port->Direction() == GS::KCONS() && sens == "load")
+                else if (port->Direction() == GS::KCONS() && Sens() <= 0)  
                 {
-                    mConsumptionMap[portName] = std::vector<double>(2, 0.);
-                    mConsLvlTotMap[portName] = std::vector<double>(2, 0.);
-                    mConsMeanMap[portName] = std::vector<double>(2, 0.);
-                    if (!isIndicatorNameUnique(port, "StorageName")) identifier = "(" + port->Name() + ")";
-                    mInputIndicators->addIndicator("ImposedProfile " + storageName + " " + varName + " " + identifier, &mConsumptionMap[portName], exp, "ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), "TotImposedProfile" + varName);
-                    mInputIndicators->addIndicator("Levelized ImposedProfile " + storageName + " " + varName + " " + identifier, &mConsLvlTotMap[portName], exp, "Levelized ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), "LvlzdTotImposedProfile" + varName);
-                    if (isIndicatorNameUnique(port, "FluxName")) identifier = ""; //put back to empty if name is unique w.r.t fluxName (rarely  happens!)
-                    mInputIndicators->addIndicator("Mean " + fluxName + " " + varName + " " + identifier, &mConsMeanMap[portName], exp, "Mean " + fluxName + " " + varName, port->pFluxUnit(), "MeanImposedProfile" + varName);
+                    mConsumptionMap.try_emplace(portId, 2, 0.0);
+                    mConsLvlTotMap.try_emplace(portId, 2, 0.0);
+                    mConsMeanMap.try_emplace(portId, 2, 0.0);
+
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "ImposedProfile", STORAGE_NAME, VARIABLE } }),
+                        &mConsumptionMap[portId], exp, "ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "TotImposedProfile", VARIABLE } })
+                        );
+
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Levelized ImposedProfile", STORAGE_NAME, VARIABLE } }),
+                        &mConsLvlTotMap[portId], exp, "Levelized ImposedProfile " + storageName + " " + varName, port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "LvlzdTotImposedProfile", VARIABLE } })
+                        );
+                   
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Mean", FLUX_NAME, VARIABLE } }),
+                        &mConsMeanMap[portId], exp, "Mean " + fluxName + " " + varName, port->pFluxUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "MeanImposedProfile", VARIABLE } })
+                        );
                 }
-                else if (port->Direction() == GS::KDATA())
+                else if (port->Direction() == GS::KDATA())  
                 {
-                    if (!isIndicatorNameUnique(port)) identifier = "(" + port->Name() + ")";
-                    mExpEchData[portName] = std::vector<double>(2, 0.);
-                    mInputIndicators->addIndicator("Data Port published " + varName + " - data computed " + identifier, &mExpEchData[portName], exp, "Data port", port->pStorageUnit(), "DataPort" + varName);
+                    mExpEchData.try_emplace(portId, 2, 0.0);
+
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Data Port published", VARIABLE, "- data computed" } }),
+                        &mExpEchData[portId], exp, "Data port", port->pStorageUnit(),
+                        SExtFunctionName({ this, port, &indicatorName, { "DataPort", VARIABLE } })
+                    );
                 }
             }
         }
@@ -98,30 +124,52 @@ public:
     {
         TechnicalSubModel::declareDefaultModelIndicators();
 
-        std::string InstalledSizeUnit = OptimalSizeUnit(); // default in case no output port found which would be strange !!
-        mInputIndicators->addIndicator("Component Weight", &mOptimalSize, exp, "Component size", InstalledSizeUnit, "Weight");
+        // OptimalSizeUnit is the default in case no output port found which would be strange !!
+        mInputIndicators->addIndicator("Component Weight", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Weight");
 
         for (auto& port : mListPort) {
-            std::string varName = port->Variable();
-            std::string storageName = port->getCarrier()->StorageName();
-            std::string fluxName = port->getCarrier()->FluxName();
-
-            if (port->VarType() == "vector")
-            {
+            const std::string portId = port->ID();
+            const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
+            if (ptrExp1D) {
                 if (port->Direction() == GS::KPROD())
                 {
-                    mProductionMap[varName] = std::vector<double>(2, 0.);
-                    mProdLvlTotMap[varName] = std::vector<double>(2, 0.);
-                    mProdMeanMap[varName] = std::vector<double>(2, 0.);
-                    mInputIndicators->addIndicator("ENR injection time", &mRunningTime, exp, "Running time", "h", "ENRInjectionTime");
-                    mInputIndicators->addIndicator("ENR injection " + storageName + " " + varName, &mProductionMap[varName], exp, "", port->pStorageUnit(), "Tot" + varName);
-                    mInputIndicators->addIndicator("Levelized ENR injection " + storageName + " " + varName, &mProdLvlTotMap[varName], exp, "", port->pStorageUnit(), "LvlzdTot" + varName);
-                    mInputIndicators->addIndicator("Mean " + fluxName + " " + varName, &mProdMeanMap[varName], exp, "Mean", port->pFluxUnit(), "Mean" + varName);
+                    mProductionMap.try_emplace(portId, 2, 0.0);
+                    mProdLvlTotMap.try_emplace(portId, 2, 0.0);
+                    mProdMeanMap.try_emplace(portId, 2, 0.0);
+
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "ENR injection time"} }),
+                        &mRunningTime, exp, "Running time", "h", 
+                        SExtFunctionName({ this, port, &indicatorName, { "ENRInjectionTime"} })
+                    );
+                  
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "ENR injection", STORAGE_NAME, VARIABLE } }),
+                        &mProductionMap[portId], exp, "", port->pStorageUnit(),
+                        SExtFunctionName({ this, port, &indicatorName, { "Tot", VARIABLE } })
+                    );
+                   
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Levelized ENR injection", STORAGE_NAME, VARIABLE } }),
+                        &mProdLvlTotMap[portId], exp, "", port->pStorageUnit(),
+                        SExtFunctionName({ this, port, &indicatorName, { "LvlzdTot", VARIABLE } })
+                    );
+                   
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Mean", FLUX_NAME, VARIABLE } }),
+                        &mProdMeanMap[portId], exp, "Mean", port->pFluxUnit(),
+                        SExtFunctionName({ this, port, &indicatorName, { "Mean", VARIABLE } })
+                    );
                 }
                 else if (port->Direction() == GS::KDATA())
                 {
-                    mExpEchData[varName] = std::vector<double>(2, 0.);
-                    mInputIndicators->addIndicator("Data Port published " + varName + " - data computed ", &mExpEchData[varName], exp, "Data port", port->pStorageUnit(), "DataPort" + varName);
+                    mExpEchData.try_emplace(portId, 2, 0.0);
+
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Data Port published", VARIABLE, "- data computed"} }),
+                        &mExpEchData[portId], exp, "Data port", port->pStorageUnit(),
+                        SExtFunctionName({ this, port, &indicatorName, { "DataPort", VARIABLE } })
+                    );
                 }
             }
         }

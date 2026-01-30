@@ -1,6 +1,8 @@
 #ifndef TechnicalSubModel_H
 #define TechnicalSubModel_H
 
+class TechnicalSubModel;
+
 #include "SubModel.h"
 
 extern bool CAIRNCORESHARED_EXPORT isBlended(class SubModel* ap_Model);
@@ -30,6 +32,12 @@ public:
     virtual void computeAllContribution();       /** MILP Model description : all expressions */
     virtual void computeDefaultIndicators(const double* optSol);
     void resetHistStoredVaues();
+    /** -------------------------------------------------------------------------------------------------------------- */
+
+    void removeImpactSettings(const std::string& impactName);
+    void cleanNonSelectedEnvImpacts();
+    virtual void createEnvImpacts();
+
     // ------------------------- Defaul Parameters ----------------------------------------
     virtual void declareDefaultModelConfigurationParameters() 
     {
@@ -57,17 +65,21 @@ public:
             mNbOutputFlux = mNbOutputPorts;
         }
 
-        //std::string
-        mEnvImpacts.resize(mEnvImpactsList.size());
-        for (int i = 0; i < mEnvImpactsList.size(); i++)
-        {
-            mEnvImpacts[i] = new EnvImpact(this, mEnvImpactsList.at(i), mEnvImpactsShortNamesList.at(i));
-            
-            int j = 0;
-            mEnvImpacts[i]->resizeCoeffs(mListPort.size());
-            for (MilpPort* port : mListPort) {            
-                mEnvImpacts[i]->addModelConfigParameters(mInputEnvImpacts, mInputPortImpacts, &mEnvironmentModel, port->Name(), j);
-                j++;
+        /* Env Impacts are created here because config params are declared first. 
+        Otherwise, they should be created in MilpComponent::initSubModelConfiguration. 
+        Note, TecEcoAnalysis should be execluded ! 
+        */
+        createEnvImpacts();
+        declareEnvImpactConfigurationParameters();
+    }
+
+    void declareEnvImpactConfigurationParameters()
+    {
+        for (const auto& impact: mEnvImpacts) {
+            if (!impact->isNewlySelected()) continue;
+            std::size_t j = 0;
+            for (const auto& port : mListPort) {
+                impact->addConfigParameters(port->Name(), j++);
             }
         }
     }
@@ -82,9 +94,10 @@ public:
         addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", SFunctionUnit({ eFTypeDivision, { pCurrency(), pOptimalSizeUnit() }}), "EcoInvestModel");                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
         addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., false, &mEcoInvestModel, "Multiplicative coefficient on elementary Capex", "-", "EcoInvestModel");  /** Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
         addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", pCurrency(), "EcoInvestModel");  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
-        addParameter("Opex", &mOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Opex in proportion of Elementary Capex", "-", "EcoInvestModel");					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
+        addParameter("FixedOpex", &mFixedOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Fixed Opex in proportion of Elementary Capex", "%CAPEX/year", "EcoInvestModel");					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
+        addParameter("FixedOpexConstant", &mFixedOpexConstant, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", "EcoInvestModel");					/** The constant part of the yearly Opex : Opex = mFixedOpex * mCapex + mFixedOpexConstant */
+        addParameter("VariableOpex", &mVariableOpex, 0., false, true, "Variable Opex", "Currency/EnergyUnit", "EcoInvestModel");
         addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", "%CAPEX", "EcoInvestModel");   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
-        addParameter("OpexConstant", &mOpexConstant, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", "EcoInvestModel");					/** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant */
         addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", pCurrency(), "EcoInvestModel");   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
         addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", mMainCarrier->StorageUnit(), "EcoInvestModel"); /** Minimum capacity  */
 
@@ -114,28 +127,19 @@ public:
         addPerfParam("MassSetPoint", &mMassSetPoint, SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mGeometryModel, &mPiecewiseMass} }), "name of vector mass SetPoint that will be defined from DataFile specification by the User", "");
         
         //EnvImpacts
-        //mEnvImpacts.resize(mEnvImpactsList.size(), new EnvImpact());
-        mEnvImpactCosts.resize(mEnvImpactsList.size(), 0.0);
-        //
-        for (int i = 0; i < mEnvImpactsList.size(); i++)
-        {
-            mEnvImpacts[i]->setTimesteps(mTimeSteps);
-            mEnvImpacts[i]->setEnvImpactCost(mEnvImpactCosts[i]);
-            if (mEnvImpactUnitsList.size() > i) {
-                mEnvImpacts[i]->setEnvImpactUnit(mEnvImpactUnitsList[i]);
+        declareEnvImpactParameters();
+    }
+
+    void declareEnvImpactParameters()
+    {
+        for (const auto& impact : mEnvImpacts) {
+            if (!impact->isNewlySelected()) continue;
+            impact->addGreyParameters();
+            impact->addPerfParameters();
+            std::size_t j = 0;
+            for (const auto& port : mListPort) {
+                impact->addPortParameters(port->Name(), j++, mMainCarrier);
             }
-            else {
-                mEnvImpacts[i]->setEnvImpactUnit("-");
-            }
-            int j = 0;
-            mEnvImpacts[i]->resizeCoeffs(mListPort.size());
-            for (auto &port : mListPort) {            
-                std::string aPortName = port->Name();
-                mEnvImpacts[i]->addParameters(mInputPortImpacts, mTSInputPortImpacts, &mEnvironmentModel, port->Name(), j, mMainCarrier);
-                j++;
-            }
-            mEnvImpacts[i]->addGreyParameters(mInputEnvImpacts, &mEnvironmentModel);
-            mEnvImpacts[i]->addPerfParam(mInputPerfParam);
         }
     }
 
@@ -155,7 +159,7 @@ public:
         //EcoInvestModel
         addIO("Capex", &mExpCapex, &mEcoInvestModel, mMainCarrier->pFluxUnit()); /** Computed initial investment costs Capex */
         addIO("Opex", &mExpOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Net Opex */
-        addIO("PureOpex", &mExpPureOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Pure Opex */
+        addIO("FixedOpex", &mExpFixedOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Pure Opex */
         addIO("Replacement", &mExpReplacement, &mEcoInvestModel, mMainCarrier->pFluxUnit());      /** Computed variable replacement cost */
 
         setCapexExpression("Capex");        // defines default expression to be used for OptimalSize computation and use in Economic analysis
@@ -163,20 +167,8 @@ public:
         setPureOpexExpression("PureOpex");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
         setReplacementExpression("Replacement");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
 
-        //EnvironmentModel
-        for (EnvImpact* impact : mEnvImpacts)
-        {
-            impact->addIOs(this, &mEnvironmentModel);
-        }
-
-        clearEnvImpactExpressionLists();
-        for (int i = 0; i < mEnvImpactsList.size(); i++)
-        {
-            setEnvImpactCostExpression(mEnvImpactsList[i] + " Env impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
-            setEnvImpactMassExpression(mEnvImpactsList[i] + " Env impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
-            setEnvGreyImpactCostExpression(mEnvImpactsList[i] + " Env grey impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
-            setEnvGreyImpactMassExpression(mEnvImpactsList[i] + " Env grey impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
-        }
+        //EnvironmentModel -- EnvImpact
+        declareEnvImpactInterface();
 
         //GeometryModel
         addIO("Area", &mExpArea, &mGeometryModel, "m2");
@@ -188,23 +180,47 @@ public:
         /* Note: ProductionUC uses ControlIO for StartUp and ShutDown */
         addIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool");
         addIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool");
+
+        /* Register non-IO 1D-expressions in order to automatically allocate and close them */
+        addExp(&mExpVariableOpex, &mHorizon);
+
     }
 
-    virtual void declareDefaultModelIndicators()
+    void declareEnvImpactInterface() {
+        for (EnvImpact* impact : mEnvImpacts)
+        {
+            //Declare for all impacts because all IOs are removed in MilpComponent::declareIOVariables()
+            //if (!impact->isNewlySelected()) continue;
+            impact->addIOExpressions();
+            setEnvImpactCostExpression(impact->Name() + " Env impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
+            setEnvImpactMassExpression(impact->Name() + " Env impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
+            setEnvGreyImpactCostExpression(impact->Name() + " Env grey impact cost");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
+            setEnvGreyImpactMassExpression(impact->Name() + " Env grey impact mass");  // defines default expression to be used for OptimalSize computation and use in Environmental analysis
+        }
+    }
+
+    virtual void declareDefaultModelIndicators() 
     {
-        mInputIndicators->addIndicator("CAPEX", &mCapexContribution, &mEcoInvestModel, "Investment cost", pCurrency(), "CAPEX");  /**  */
+        mInputIndicators->addIndicator("CAPEX", &mCapexContribution, &mEcoInvestModel, "Investment cost", pCurrency(), "CAPEX"); 
         mInputIndicators->addIndicator("is installed", &mExistence, &mExportIndicators, "Component installed", "-", "IsInstalled");
-        mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "OPEX + replacement + buying cost + other cost - income", pCurrency(), "OPEX");  /**  */
-        mInputIndicators->addIndicator("Annual OPEX", &mPureOpexContribution, &mEcoInvestModel, "Annual OPEX", pCurrency(), "PureOPEX");					/**  */
-        mInputIndicators->addIndicator("Annual replacement costs", &mReplacementPart, &mEcoInvestModel, "Replacement part", pCurrency(), "Replacement");              /**  */
+        mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "OPEX + replacement + buying cost + other cost - income", pCurrency(), "OPEX"); 
+        mInputIndicators->addIndicator("Annual fixed OPEX", &mFixedOpexContribution, &mEcoInvestModel, "Opex part excluding energy costs", pCurrency(), "PureOPEX");
+        mInputIndicators->addIndicator("Annual variable OPEX", &mVariableOpexContribution, &mExportIndicators, "Opex part linked to Variable OPEX parameter", pCurrency(), "VariableOPEX");
+        mInputIndicators->addIndicator("Annual replacement costs", &mReplacementPart, &mEcoInvestModel, "Replacement part", pCurrency(), "Replacement"); 
 
         mInputIndicators->addIndicator("Mass", &mMassContribution, &mGeometryModel, "Mass", "kg", "Mass");
         mInputIndicators->addIndicator("Area", &mAreaContribution, &mGeometryModel, "Area", "m2", "Area");
         mInputIndicators->addIndicator("Volume", &mVolumeContribution, &mGeometryModel, "Volume", "m3", "Volume");
 
-        for (int i = 0; i < mEnvImpacts.size(); i++)
-        {
-            mEnvImpacts[i]->addIndicators(mInputIndicators, &mEnvironmentModel, mCurrency);
+        //EnvImpact
+        declareEnvImpactIndicators();
+    }
+
+    void declareEnvImpactIndicators() {
+        //Declare for all impacts for now because all indicators are removed in MilpComponent::declareIOVariables()
+        for (EnvImpact* impact : mEnvImpacts) {
+            //if (!impact->isNewlySelected()) continue;
+            impact->addIndicators();
         }
     }
 
@@ -217,8 +233,10 @@ public:
     void computePiecewiseContribution(const MIPModeler::MIPData1D& aCapacitySetPoint, const MIPModeler::MIPData1D& aCostSetPoint, 
         const bool& aTryRelaxation, const double& aOffset, MIPModeler::MIPExpression& aExp);
 
-    bool EnvironmentModel() { return mEnvironmentModel; }
-    bool EcoInvestModel() { return mEcoInvestModel; }
+    bool* pEnvironmentModel() { return &mEnvironmentModel; }
+    bool* pEcoInvestModel() { return &mEcoInvestModel; }
+
+    double LifeTime() const { return mLifeTime; }
 
     int getNbPorts(const std::string& direction) {
         int nbPorts = 0;
@@ -231,8 +249,6 @@ public:
         }
         return nbPorts;
     }
-
-    std::string ObjectiveType() { return mObjectiveType; };
 
 protected:
     /** Flags */
@@ -260,7 +276,9 @@ protected:
     /** Expressions */
     MIPModeler::MIPExpression mExpCapex;                        /** Capex contribution expression */
     MIPModeler::MIPExpression1D mExpOpex;                       /** Net Opex contribution expression, pureOpex + replacement + varcost */
-    MIPModeler::MIPExpression1D mExpPureOpex;                   /** Pure Opex contribution expression, in fraction of Capex */
+    MIPModeler::MIPExpression1D mExpFixedOpex;                  /** Pure Opex contribution expression, in fraction of Capex */
+    MIPModeler::MIPExpression1D mExpVariableOpex;               /** Variable Opex contribution expression, relative to a ref IO */
+
     MIPModeler::MIPExpression1D mExpReplacement;                /** Variable Replacement contribution expression, in Capex/h    */
     MIPModeler::MIPExpression1D mExpVariableCosts;    /** Variable costs contribution expression   */
 
@@ -275,7 +293,8 @@ protected:
     std::vector<double> mCapexContribution;
     std::vector<double> mExistence;
     std::vector<double> mOpexContribution;
-    std::vector<double> mPureOpexContribution;
+    std::vector<double> mFixedOpexContribution;
+    std::vector<double> mVariableOpexContribution;
     std::vector<double> mReplacementPart;
     std::vector<double> mVariableCosts;
     std::vector<double> mEnvImpactPart;
@@ -339,14 +358,13 @@ protected:
     double mTotalCapexCoefficient;             /** Capex multiplicative factor on Elementary Capex to account for fees, infrastructures, ... */
     double mTotalCapexOffset;                  /** Capex constant on Elementary Capex to account for fees, infrastructures, ... */
 
-    //Opex = mOpex * mCapex + mOpexConstant and Replacement = mReplacement * mCapex + mReplacementConstant
-    double mOpex;                              /** Opex yearly Opex of component, per unit Capex **/
+    //Opex = mFixedOpex * mCapex + mFixedOpexConstant and Replacement = mReplacement * mCapex + mReplacementConstant
+    double mFixedOpex;                              /** Opex yearly Opex of component, per unit Capex **/
+    double mVariableOpex;
     double mReplacement;                       /** Replacement cost, in proportion of Capex **/
     double mLifeTime;                           /** Component LifeTime in years **/
-    double mOpexConstant;                       /** The constant part of the yearly Opex : Opex = mOpex * mCapex + mOpexConstant **/
+    double mFixedOpexConstant;                       /** The constant part of the yearly Opex : Opex = mFixedOpex * mCapex + mFixedOpexConstant **/
     double mReplacementConstant;                /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant**/
-
-    std::string mObjectiveType;
 };
 
 #endif // TechnicalSubModel_H

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <optional>
 
 #include "CairnAPI.h"
 class InputParam;
@@ -79,6 +80,46 @@ namespace CairnAPIUtils {
 	std::string getParamUnit(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 
 	void setError(ECodeError a_Err, const std::string& a_msg = "");	
+
+	/* 
+	 * Utilities that perform type-checked access to a t_value variant, 
+	 * returning the stored value only if it matches the requested type T 
+	*/
+	template<typename T>
+	inline const T* get_tvaluePtr(const t_value& v) noexcept
+	{
+		return std::get_if<T>(&v);
+	}
+
+	template<typename T>
+	inline T get_tvalueOr(const t_value& v, const T& defaultValue)
+	{
+		if (const T* ptr = std::get_if<T>(&v))
+			return *ptr;
+		return defaultValue;
+	}
+
+	template<typename T>
+	inline std::optional<T> tryGet_tvalue(const t_value& v)
+	{
+		if (const T* ptr = std::get_if<T>(&v))
+			return *ptr;
+		return std::nullopt;
+	}
+
+	template<typename T>
+	inline bool hasValue(const t_value& v) noexcept
+	{
+		return std::holds_alternative<T>(v);
+	}
+
+	template<typename T>
+	inline T requireValue(const t_value& v)
+	{
+		return std::get<T>(v); // throws std::bad_variant_access if wrong type
+	}
+	/* ---------------------------------------------------------------------- */
+
 }
 
 

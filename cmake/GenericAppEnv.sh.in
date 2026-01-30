@@ -35,17 +35,17 @@ export PYTHONPATH=$CAIRN_APP/tests/scripts
 export PYTHON_HOME=@PYTHON_HOME@
 
 
-export PYTHON_VENV=%2
+export PYTHON_VENV=$2
 if [ "$PYTHON_VENV" = "" ]; then 
 	export PYTHON_VENV=@PYTHON_VENV_PROJECT@
 fi
+export PATH="$PYTHON_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$PYTHON_HOME/lib:$LD_LIBRARY_PATH"
 
 echo -e "$CYAN \t☸  Activating Python environnement $RESET"
 source ${PYTHON_VENV}/bin/activate
-export PATH=$PYTHON_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$PYTHON_HOME/lib:$LD_LIBRARY_PATH
-echo -e "$GREEN \t✅ Python is: $(which python3) $RESET"
 
+echo -e "$GREEN \t✅ Python is: $(which python3) $RESET"
 
 echo - PYTHON_HOME = $PYTHON_HOME
 echo - PYTHON_VENV = $PYTHON_VENV
@@ -53,8 +53,9 @@ echo - PYTHON_VENV = $PYTHON_VENV
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo Path for Cairn
 echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-export CAIRN_BIN=$CAIRN_APP/bin/$OPTION/bin
-export PATH=$CAIRN_BIN;$PATH
+export CAIRN_BIN=$CAIRN_APP/bin/$OPTION/lib
+export PATH="$CAIRN_BIN:$PATH"
+export LD_LIBRARY_PATH="$CAIRN_BIN:$LD_LIBRARY_PATH"
 
 echo Path for MIPModeler
 echo MIPMODELER_HOME=$EXPORT_HOME/MIPModeler
@@ -68,10 +69,11 @@ if [ "$OPTION" != "fulldebug" ]; then
 	CPLEX_HOME_BIN=$CPLEX_HOME/bin/x86-64_linux
 fi
 
-export PATH=$PATH;$CPLEX_HOME_BIN
+export PATH="$CPLEX_HOME_BIN:$PATH"
 
 
-echo - CAIRN_BIN = $CAIRN_BIN
-echo - CAIRN_APP = $CAIRN_APP
-echo - CPLEX_HOME = $CPLEX_HOME
-
+echo - CAIRN_BIN 		= $CAIRN_BIN
+echo - CAIRN_APP 		= $CAIRN_APP
+echo - CPLEX_HOME 		= $CPLEX_HOME
+echo - PATH 			= $PATH
+echo - LD_LIBRARY_PATH 	= $LD_LIBRARY_PATH

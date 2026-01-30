@@ -26,17 +26,18 @@ public:
     void DeleteBusPort(MilpPort* lptrport);
     void RemoveLinkComponent(MilpComponent* lptr);/* Remove Component connected */
     virtual void addComponent(MilpComponent* lptr) ;  /** Add Component connected */
-    virtual void initSubModelTopology() ; /**Send topology data to submodel : list of ports*/
-    virtual void setBusFluxPortExpression(const double &aSignedCoefficient) ;/** Only deal with ports defined from .xml, not all Bus ports*/
-    virtual void setBusSameValuePortExpression() ;
+    void setBusFluxPortExpression() override;/** Only deal with ports defined from .xml, not all Bus ports*/
+    void setBusSameValuePortExpression() ;
     void defineMainCarrier() {
         /*
-        * Do nothing. The main carrier of a Bus component is set from its VectorName in OptimProblem::createPortsAndLinksToBus
+        * Do nothing. The main carrier of a Bus component is set in OptimProblem::createPortsAndLinksToBus
         */
     }
 
     void declareCompoInputParam();
     void setCompoInputParam(const std::map<std::string, std::string> aComponent);
+
+    std::string ObjectiveType() const; /* case of MultiObjective */
 
     void exportPortResults(t_mapExchange& a_Export, uint modinitTS);
 
@@ -44,11 +45,13 @@ public:
     std::vector<MilpPort*> listSidePorts(const std::string& aside);
     int NbPorts(const std::string& aDirection="");
 
-    const std::string VectorName() {return mVectorName ;}
+    std::string CarrierName() const;
+
     const std::vector<MilpComponent*> &ListComponent() {return mListComponent ;}        /** get component List of Ports */
 
+    std::vector<InputParam*> get_InputParams();
+
 protected:  
-    std::string mVectorName ;
     std::vector<MilpComponent*> mListComponent ;      /** List of connected MilpComponent onto Bus */
 
     void createPortsExportListVars(t_mapExchange& a_Exchange);

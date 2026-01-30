@@ -30,9 +30,9 @@ protected:
 
     protected:        
         CairnObject* loadModel(CairnObject* aParent);
-
-        typedef std::map<std::string, CairnObject*> t_mapModels;
-        t_mapModels mModels;
+        CairnObject* findModel(const std::string& instanceName);
+        
+        std::vector<CairnObject*> mModels;
         std::string mDLLAbsoluteName;
         std::string mModelName;
     };

@@ -46,6 +46,7 @@ public:
 //----------------------------------------------------------------------------------------------------
     void computeInitialData() override;
     void computeModelContribution() override;
+    void computeEconomicalContribution();
 //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
@@ -77,7 +78,6 @@ public:
         ConverterSubModel::declareDefaultModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // addParameter to InputParam instance for input data coming from User File : maximum power, performance maps...
-        // addParameter to mInputData instance for input data coming from Persee/PEGASE memory : time series (coming from PEGASE), state variables...
         
         //bool
         addParameter("UseLOG", &mUseLOG, true, false, mUseVariablePOut || mUseVariableTIn, "Choose the model of linearization : if true: use MIP_LOG variables (more rapid to reach the optimal). If false: use MIP_SOS variables (more rapid to find first solution) - default true", "", "VariablePout");

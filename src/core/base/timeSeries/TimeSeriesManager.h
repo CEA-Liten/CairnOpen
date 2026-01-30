@@ -14,6 +14,7 @@ public:
 	void importTS(const std::vector<std::string>& aTSfileList, const t_mapExchange& aListSubscribedVariables, const int& iShift = 0, bool isCheckTimeSeriesUnits = false);
 	void importTS(const t_mapExchange& aListSubscribedVariables);
 
+	class OrCheckUnits CheckUnitConsistency(const std::string& a_FileUnit, const std::string& a_Unit, bool a_Check = true);
 	class OrCheckUnits CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check = true);
 
 protected:

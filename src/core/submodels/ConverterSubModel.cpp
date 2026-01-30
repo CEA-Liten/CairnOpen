@@ -15,7 +15,7 @@ ConverterSubModel::~ConverterSubModel()
 void ConverterSubModel::declareInputParams(const std::string& name)
 {
     SubModel::declareInputParams(name);
-    mAgeingModel = new AgeingRunningHours(mInputParam, mInputData);
+    mAgeingModel = new AgeingRunningHours(mInputParam);
 }
 
 void ConverterSubModel::setTimeData()
@@ -74,7 +74,6 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     TechnicalSubModel::computeDefaultIndicators(optSol);
 
     mRunningTime.at(0) = 0.;
-
     mSumUp.at(0) = mSumUp.at(1) = mParentCompo->startingAbsoluteTimeStep();
 
     std::vector<double> meanValue = std::vector<double>(2, 0.);
@@ -87,73 +86,65 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     }
 
     //Save optimal size from the current cycle
-    if (mOptimalSize.size() > 0)
+    if (mOptimalSize.size() > 0) {
         mOptimalSizeAllCycles.push_back(mOptimalSize.at(0));
+    }
 
-        
+    // Caluculate running time
     bool firstPort = true;
     double memRunningTime = 0.;
-    // Calcul running time
-
-    for (auto& port : mListPort) {
-        std::string varName = port->Variable();
-        
-
-        if (port->VarType() == "vector")
-        {
-            MIPModeler::MIPExpression1D variable = *getMIPExpression1D(varName);
-            if (firstPort && port->Direction() == GS::KPROD()) {
+    for (const  auto& port : mListPort) {
+        const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
+        if (ptrExp1D) {
+            if (firstPort && port->Direction() == GS::KPROD()) 
+            {
                 memRunningTime = mRunningTime.at(0);
-                computeTime(true, mHorizon, mNpdtPast, variable, optSol, mRunningTime.at(0));
-                computeTime(false, *mptrTimeshift, mNpdtPast, variable, optSol, mRunningTime.at(1));
+                computeTime(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, mRunningTime.at(0));
+                computeTime(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, mRunningTime.at(1));
                 if (mRunningTime.at(0) > memRunningTime) {
                     firstPort = false;
                 }
             }
         }
     }
+
     // set running to Ageing
     if (mUseAgeing && mAgeingModel) {
         mAgeingModel->setHistRunningTime(mRunningTime.at(1));
     }
 
-    for (auto &port : mListPort) {    
-        std::string portName = port->Name();
-        std::string varName = port->Variable();
-        std::string storageName = port->getCarrier()->StorageName();
-        std::string storageUnit = port->getCarrier()->StorageUnit();
-        std::string fluxUnit = port->getCarrier()->FluxUnit();
-        std::string fluxName = port->getCarrier()->FluxName();
-        bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
+    for (const auto &port : mListPort) {
+        const std::string portId = port->ID();
+        const double aPort = port->VarCoeff();
+        const double bPort = port->VarOffset();
 
-        double aPort = port->VarCoeff();
-        double bPort = port->VarOffset();
-
-        if (port->VarType() == "vector")
-        {
-            MIPModeler::MIPExpression1D variable = *getMIPExpression1D(varName);
-            if (port->Direction() == GS::KPROD()) {
-                computeProduction(true, mHorizon, mNpdtPast, variable, optSol, aPort, bPort, mProductionMap[portName].at(0));
-                computeProduction(false, *mptrTimeshift, mNpdtPast, variable, optSol, aPort, bPort, mProductionMap[portName].at(1));
-                computeLvlProduction(true, mHorizon, mNpdtPast, variable, optSol, aPort, bPort, mProdLvlTotMap[portName].at(0));
-                computeLvlProduction(false, *mptrTimeshift, mNpdtPast, variable, optSol, aPort, bPort, mProdLvlTotMap[portName].at(1));
+        const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
+        if (ptrExp1D) {
+            if (port->Direction() == GS::KPROD()) 
+            {
+                computeProduction(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProductionMap[portId].at(0));
+                computeProduction(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProductionMap[portId].at(1));
+                computeLvlProduction(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProdLvlTotMap[portId].at(0));
+                computeLvlProduction(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProdLvlTotMap[portId].at(1));
 
                 for (int i = 0; i < 2; ++i) mRunningTimeAvlblt.at(i) = mRunningTime.at(i) / mMaxRunningTime.at(i); // non
-                for (int i = 0; i < 2; ++i) if (mRunningTime.at(i) > 1.e-20) mProdMeanMap[portName].at(i) = mProductionMap[portName].at(i) / mRunningTime.at(i);
+                for (int i = 0; i < 2; ++i) if (mRunningTime.at(i) > 1.e-20) mProdMeanMap[portId].at(i) = mProductionMap[portId].at(i) / mRunningTime.at(i);
             }
-            else if (port->Direction() == GS::KCONS()) {
-                computeConsumption(true, mHorizon, mNpdtPast, variable, optSol, aPort, bPort, mConsumptionMap[portName].at(0)); // plan
-                computeConsumption(false, *mptrTimeshift, mNpdtPast, variable, optSol, aPort, bPort, mConsumptionMap[portName].at(1));
-                computeLvlConsumption(true, mHorizon, mNpdtPast, variable, optSol, aPort, bPort, mConsLvlTotMap[portName].at(0));
-                computeLvlConsumption(false, *mptrTimeshift, mNpdtPast, variable, optSol, aPort, bPort, mConsLvlTotMap[portName].at(1));
+            else if (port->Direction() == GS::KCONS()) 
+            {
+                computeConsumption(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsumptionMap[portId].at(0)); // plan
+                computeConsumption(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsumptionMap[portId].at(1));
+                computeLvlConsumption(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsLvlTotMap[portId].at(0));
+                computeLvlConsumption(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsLvlTotMap[portId].at(1));
 
-                for (int i = 0; i < 2; ++i) if (mRunningTime.at(i) > 1.e-20) mConsMeanMap[portName].at(i) = mConsumptionMap[portName].at(i) / mRunningTime.at(i);
-                for (int i = 0; i < 2; ++i) if (mOptimalSize.at(i) > 1.e-20) mConsPFMap[portName].at(i) = -mConsMeanMap[portName].at(i) / mOptimalSize.at(i);
-                for (int i = 0; i < 2; ++i) if (mOptimalSize.at(i) > 1.e-20) mRateOfUse[portName].at(i) = -mConsumptionMap[portName].at(i) / (mOptimalSize.at(i)*mMaxRunningTime.at(i));
+                for (int i = 0; i < 2; ++i) if (mRunningTime.at(i) > 1.e-20) mConsMeanMap[portId].at(i) = mConsumptionMap[portId].at(i) / mRunningTime.at(i);
+                for (int i = 0; i < 2; ++i) if (mOptimalSize.at(i) > 1.e-20) mConsPFMap[portId].at(i) = -mConsMeanMap[portId].at(i) / mOptimalSize.at(i);
+                for (int i = 0; i < 2; ++i) if (mOptimalSize.at(i) > 1.e-20) mRateOfUse[portId].at(i) = -mConsumptionMap[portId].at(i) / (mOptimalSize.at(i)*mMaxRunningTime.at(i));
             }
-            else if (port->Direction() == GS::KDATA()) {
-                computeConsumption(true, mHorizon, mNpdtPast, variable, optSol, aPort, bPort, mExpEchData[portName].at(0));
-                computeConsumption(false, *mptrTimeshift, mNpdtPast, variable, optSol, aPort, bPort, mExpEchData[portName].at(1));
+            else if (port->Direction() == GS::KDATA()) 
+            {
+                computeConsumption(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mExpEchData[portId].at(0));
+                computeConsumption(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mExpEchData[portId].at(1));
             }
         }
     } 

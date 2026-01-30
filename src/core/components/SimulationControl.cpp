@@ -11,6 +11,7 @@ SimulationControl::SimulationControl(CairnObject* ap_Parent, const std::string& 
     mGUIData(nullptr)
     //TODO: create mException
 {
+    this->setObjectType("SimulationControl");
     setName(aSimulationControlName);
     doInit(aComponent);
 }
@@ -42,6 +43,8 @@ void SimulationControl::declareCompoInputParam()
     //double 
     mCompoInputSettings->addParameter("TimeStep", &mTimeStep, 3600., true, true, "constant TimeStep of optimization - overwritten by studyName_ListeOfTimeSteps.csv file ", "s", "Global_Optim");
     //int
+    mCompoInputSettings->addParameter("StartTime", &mStartTime, 0, false, true, "Starting time in number of timesteps", "TimeStep", "Global_Optim");
+    mCompoInputSettings->addParameter("EndTime", &mEndTime, -1, false, true, "End time in number of timesteps - negative value means until the end of the dataseries file", "TimeStep", "Global_Optim");
     mCompoInputSettings->addParameter("FutureSize", &mFutureSize, 8760, true, true, "Planning horizon in number of timesteps of constant value TimeStep ", "TimeStep", "Global_Optim");
     mCompoInputSettings->addParameter("NbCycle", &mNbCycle, 1, true, true, "Number of cycles ie rolling horizons to be computed", "-", "Global_Optim");
     mCompoInputSettings->addParameter("TimeShift", &mTimeShift, 1, true, true, "Rolling horizon shifting in number of timesteps", "TimeStep", "Global_Optim");
@@ -66,6 +69,11 @@ void SimulationControl::setCompoInputParam(const std::map<std::string, std::stri
 
 void SimulationControl::doInit(const std::map<std::string, std::string>& aComponent)
 {
+    if (mGUIData) delete mGUIData;
+    mGUIData = new GUIData(this);
+    mGUIData->doInit("SimulationControl", "SimulationControl", "SimulationControl",
+        { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
+
     declareCompoInputParam();
     setCompoInputParam(aComponent);
 
@@ -73,10 +81,6 @@ void SimulationControl::doInit(const std::map<std::string, std::string>& aCompon
         mTimeStep = 3600;
         cInfo() << "Abnormal NULL timestep, use default 3600s timeStep instead " << mTimeStep;
     }
-
-    if (mGUIData) delete mGUIData;
-    mGUIData = new GUIData(this);
-    mGUIData->doInit("SimulationControl", "SimulationControl", "SimulationControl", { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
 }
 
 bool SimulationControl::isExportResults()
@@ -126,4 +130,21 @@ std::map<std::string, InputParam::ModelParam*> SimulationControl::getParameters(
     paramMap.insert(getCompoInputSettings()->getMapParams().begin(), getCompoInputSettings()->getMapParams().end());
 
     return paramMap;
+}
+
+std::vector<InputParam*> SimulationControl::get_InputParams()
+{
+    std::vector<InputParam*> result;
+    result.reserve(3);   // avoid reallocations
+
+    // Always available
+    result.push_back(getCompoInputParam());
+    result.push_back(getCompoInputSettings());
+
+    // Add GUI parameters if available
+    if (auto* gui = getGUIData()) {
+        result.push_back(gui->getGuiInputParam());
+    }
+
+    return result;
 }

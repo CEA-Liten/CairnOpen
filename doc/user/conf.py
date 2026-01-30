@@ -18,6 +18,9 @@ release = '4.5.0'
 
 import os
 import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import custom_roles
+
 
 def readConfig(param):
     with open("./config.ini", 'r', encoding='utf-8') as infile:
@@ -57,7 +60,8 @@ extensions = ["sphinx.ext.mathjax",
 			'sphinx.ext.autodoc',
 			'sphinx.ext.napoleon',
 			'sphinx.ext.todo',
-            'sphinxcontrib.bibtex'
+            'sphinxcontrib.bibtex',
+            'custom_roles'
 			]
 bibtex_bibfiles = ['Cairn.bib']
 autodoc_default_options = {
@@ -139,4 +143,8 @@ rst_prolog = """
 .. |phase of investment| replace:: :term:`phase of investment`
 .. |uranie| replace:: :term:`Uranie`
 
+"""
+
+rst_epilog = """
+.. role:: rc
 """

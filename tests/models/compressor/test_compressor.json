@@ -1932,11 +1932,11 @@
 						"value": 2
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0.01
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{

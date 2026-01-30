@@ -25,12 +25,6 @@ NodeEquality::~NodeEquality()
 
 }
 
-void NodeEquality::setParameters(double aBusValue, double aMaxBusValue)
-{
-	mBusValue = aBusValue;
-	mMaxBusValue = aMaxBusValue;
-}
-
 void NodeEquality::setTimeData()
 {
     SubModel::setTimeData();

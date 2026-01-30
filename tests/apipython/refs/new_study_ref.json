@@ -781,11 +781,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0.04
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {
@@ -1357,11 +1357,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {
@@ -1697,11 +1697,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {
@@ -2281,11 +2281,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {
@@ -2677,11 +2677,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {
@@ -3009,11 +3009,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {
@@ -3393,11 +3393,11 @@
                     "value": 0
                 },
                 {
-                    "key": "Opex",
+                    "key": "FixedOpex",
                     "value": 0
                 },
                 {
-                    "key": "OpexConstant",
+                    "key": "FixedOpexConstant",
                     "value": 0
                 },
                 {

@@ -1,5 +1,5 @@
 {
-	"Saved with Cairn version": "5.1.41",
+	"Saved with Cairn version": "5.2.11",
 	"numberPages": 1,
 	"studyComment": "",
 	"mapParameters": {
@@ -9,11 +9,11 @@
 	},
 	"DynamicIndicators": [
 		{
-			"formula": "( \"ELY_PEM.CAPEX\"  + \"Wind_farm.CAPEX\"  ) / ( \"Elec_Grid.Levelized Grid extraction ElectricalEnergy GridFlow\"  + \"Wind_farm.Levelized ImposedProfile ElectricalEnergy SourceLoadFlow\"  + \"Elec_Grid_Inject.Levelized Grid injection ElectricalEnergy GridFlow\" )",
+			"formula": "( \"ELY_PEM.CAPEX\"  + \"Wind_farm.CAPEX\"  ) / ( \"Elec_Grid.LvlzdTotGridFlow\"  + \"Wind_farm.LvlzdTotImposedProfileSourceLoadFlow\"  + \"Elec_Grid_Inject.LvlzdTotGridFlow\" )",
 			"name": "Elec_cost"
 		},
 		{
-			"formula": "(\"ELY_PEM.CAPEX\"  - \"ELY_PEM.Annual consumption of ElectricalEnergy UsedPower\"  * \"Elec_cost\" + \"H2_Tank.CAPEX\" ) / \"ELY_PEM.Annual production of FluidH2Mass H2MassFlowRate\"",
+			"formula": "(\"ELY_PEM.CAPEX\"  - \"ELY_PEM.TotConsUsedPower\"  * \"Elec_cost\" + \"H2_Tank.CAPEX\" ) / \"ELY_PEM.TotProdH2MassFlowRate\"",
 			"name": "LCOH"
 		}
 	],
@@ -1057,7 +1057,7 @@
 				"componentCarrier": "ElectricityDistrib",
 				"nodeComment": "",
 				"componentWidth": 40,
-				"x": 136,
+				"x": 138,
 				"y": 244,
 				"paramListJson": [
 					{
@@ -1133,11 +1133,11 @@
 						"value": 0
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{
@@ -1488,11 +1488,11 @@
 						"value": 0
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{
@@ -1875,11 +1875,11 @@
 						"value": 0
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{
@@ -2266,11 +2266,11 @@
 						"value": 0
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{
@@ -2400,7 +2400,8 @@
 						"value": "SourceLoad"
 					},
 					{
-						"key": "Direction"
+						"key": "Direction",
+						"value": "Source"
 					}
 				],
 				"timeSeriesListJson": [
@@ -2531,7 +2532,7 @@
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
-								"defaultport": "No",
+								"defaultport": "Yes",
 								"enabled": "true"
 							}
 						]
@@ -2648,11 +2649,11 @@
 						"value": -30
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0.04
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{
@@ -3091,11 +3092,11 @@
 						"value": 0
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
-						"key": "OpexConstant",
+						"key": "FixedOpexConstant",
 						"value": 0
 					},
 					{

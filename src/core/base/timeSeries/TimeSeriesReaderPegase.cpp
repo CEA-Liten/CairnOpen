@@ -18,7 +18,8 @@ void TimeSeriesReaderPegase::readHeader(const t_mapExchange& aListSubscribedVari
     }    
 }
 
-bool TimeSeriesReaderPegase::readTimes(std::vector<double>& aTimes)
+bool TimeSeriesReaderPegase::readTimes(std::vector<double>& aTimes, const double& aStartTime, 
+    const double& aEndTime, const double& aTimeStep)
 { 
     return false; // no times
 }

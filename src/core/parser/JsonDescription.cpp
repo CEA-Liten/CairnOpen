@@ -301,11 +301,10 @@ void JsonDescription::extractComponentData(const json &comp)
     t_mapParams compoLabels;
 
     component["type"] = read(comp, "componentPERSEEType");
-    component["id"] = comp["nodeName"];
     component["nodeId"] = comp["nodeId"];
     component["Model"] = comp["nodeType"]; // TecEcoAnalysis and Solver has an option named "Model" which will overwrite the value
     component["ModelTechnoType"] = comp["nodeTechnoType"];   
-    component["componentCarrier"] = read(comp, "componentCarrier");
+    component["componentCarrier"] = read(comp, "componentCarrier"); //only needed for Bus components
 
     component["Xpos"] = read(comp, "x");
     component["Ypos"] = read(comp, "y");
@@ -329,13 +328,14 @@ void JsonDescription::extractComponentData(const json &comp)
         component["EnergyColor"] = comp["energyTypeColor"];
     }
 
-    component["VectorName"] = read(comp, "componentCarrier"); //only needed for Bus components
-
     extractParamData(comp, "optionListJson", component, {"Xpos", "Ypos"});
     extractParamData(comp, "paramListJson", component);
     extractParamData(comp, "envImpactsListJson", component);
     extractParamData(comp, "portImpactsListJson", component);
     extractParamData(comp, "timeSeriesListJson", component);
+
+    /* set name after extract options to override option "id" */
+    component["id"] = comp["nodeName"];
 
     upwardCompatibility(component);
 

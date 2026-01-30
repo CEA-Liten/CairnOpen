@@ -1,0 +1,12 @@
+numpy==2.1.0
+matplotlib==3.9.2
+deap
+psutil
+pandas==2.3.3
+lxml
+plotly
+spyder-kernels==3.0.*
+ipykernel==6.29.5
+PyQt5==5.15.11
+pytest==7.2.0
+pytest-xdist==3.8.0

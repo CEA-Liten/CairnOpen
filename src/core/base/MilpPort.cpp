@@ -118,7 +118,7 @@ void MilpPort::completePortInfo(std::map<std::string, std::string>& portParams) 
     setPosition();
 }
 
-void MilpPort::setPosition() 
+void MilpPort::setPosition()
 {
     if (mPosition == "") {
         if (mDirection == KCONS()) {
@@ -134,6 +134,10 @@ void MilpPort::setPosition()
             mPosition = Top();
         }
     }
+}
+
+void MilpPort::setVariable(std::string aVariable) {
+    mVariable = aVariable; 
 }
 
 void MilpPort::setPortType(std::string aBusType)
@@ -242,4 +246,10 @@ std::string MilpPort::GAMSVarName()
 {
     std::string aGAMSVarName = CompoName() + "_v_" + mVariable;
     return aGAMSVarName;
+}
+
+
+std::vector<InputParam*> MilpPort::get_InputParams()
+{
+   return { getInputParam() };    
 }

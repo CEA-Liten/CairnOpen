@@ -9,7 +9,8 @@
 
 int main()
 { 
-	UnitsConverter::UnitsConverter(TEST_DATA + (std::string)"/../../../resources/DefUnits.json");
+	std::string unitsFile = (std::string)TEST_DATA + (std::string)"/../../../resources/DefUnits.json";
+	UnitsConverter::Load(unitsFile);
 	
 	OrUnitsConverter::OrResUnit vRes;
 	// L'unité destination n'est pas définie, c'est l'unité SI qui est prise

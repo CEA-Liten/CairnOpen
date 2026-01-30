@@ -1,9 +1,7 @@
 #include "TechnicalSubModel.h"
 
-
 TechnicalSubModel::TechnicalSubModel(CairnObject* aParent) :
 SubModel(aParent),
-mObjectiveType(""),
 mHistPureOpexContributionDiscounted(0.),
 mHistReplacementPartDiscounted(0.),
 mOptimalSize(2, 0.),
@@ -11,7 +9,8 @@ mTotalCostFunction(2, 0.),
 mCapexContribution(2, 0.),
 mExistence(2,0.),
 mOpexContribution(2, 0.),
-mPureOpexContribution(2, 0.),
+mFixedOpexContribution(2, 0.),
+mVariableOpexContribution(2, 0.),
 mReplacementPart(2, 0.),
 mEnvImpactPart(2, 0.),
 mEnvGreyImpactCost(2, 0.),
@@ -33,6 +32,66 @@ mVariableCosts(2, 0.)
 TechnicalSubModel::~TechnicalSubModel()
 {
 }
+
+void TechnicalSubModel::removeImpactSettings(const std::string& impactName)
+{
+    /* remove all related parameters, IOs, and indicators */
+
+    mInputEnvImpacts->removeImpactParameters(impactName);
+    mInputPortImpacts->removeImpactParameters(impactName);
+    mTSInputPortImpacts->removeImpactParameters(impactName);
+    mInputPerfParam->removeImpactParameters(impactName);
+
+    removeEnvImpactIOs(impactName);
+
+    mInputIndicators->removeImpactIndicators(impactName);
+}
+
+void TechnicalSubModel::cleanNonSelectedEnvImpacts() {
+    /*
+    * This method might be dynamically called while using the api for example when a port is add/removed.
+    * mEnvImpactsList : is a list of the selected Env Impact names
+    * mEnvImpacts : is a list of existing Env Impacts (some impacts might be got unselected and new impacts might be got selected)
+    */
+
+    for (auto it = mEnvImpacts.begin(); it != mEnvImpacts.end(); ) {
+        EnvImpact* impact = *it;
+        bool selected = std::any_of(mEnvImpactsList.begin(), mEnvImpactsList.end(),
+            [&](std::string impactName) {
+                return (impact->Name() == impactName);
+            });
+
+        if (!selected) {
+            removeImpactExpressionName(impact->Name());   // Remove related expressions from Exp Name Lists
+            removeImpactSettings(impact->Name()); // Remove parameters, IOs and indicators of the impacts that are no longer selected
+            delete* it;                     // Delete impact
+            it = mEnvImpacts.erase(it);    // Remove impcat entry from mEnvImpacts and get next iterator
+        }
+        else {
+            impact->markAsOld();
+            ++it;
+        }
+    }
+}
+
+void TechnicalSubModel::createEnvImpacts() {
+    // Create missing Env Impacts
+    for (size_t i = 0; i < mEnvImpactsList.size(); i++)
+    {
+        bool exist = std::any_of(mEnvImpacts.begin(), mEnvImpacts.end(),
+            [&](EnvImpact* impact) {
+                return impact->Name() == mEnvImpactsList[i];
+            });
+
+        if (exist) continue; // Already exists
+
+        // Create new EnvImpact 
+        auto newImpact = new EnvImpact(this, mEnvImpactsList[i], mEnvImpactUnitsList[i], mEnvImpactsShortNamesList[i]);
+        newImpact->setEnvImpactCost(mEnvImpactCosts[i]);
+        mEnvImpacts.push_back(newImpact);
+    }
+}
+
 
 void TechnicalSubModel::setTimeData()
 {
@@ -212,16 +271,11 @@ void TechnicalSubModel::computeEnvContribution()
         //Environmental impacts
         //Direct emissions
         for (EnvImpact* impact : mEnvImpacts) {
-            impact->setCapex(mCapex);
-            impact->setLifeTime(mLifeTime);
-            impact->setOptimalSizeUnit(OptimalSizeUnit());
             int j = 0;
             for (auto& port : mListPort) {            
-                if (port->VarType() == "vector")
-                {
-                    if (port->Variable() != "") {
-                        impact->computeEnvImpactContribution(j, getMIPExpression1D(port->Variable()));
-                    }
+                const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
+                if (ptrExp1D) {
+                    impact->computeEnvImpactContribution(j, ptrExp1D);
                 }
                 j++;
             }
@@ -282,9 +336,10 @@ void TechnicalSubModel::computeEconomicalContribution()
         if (mEcoInvestModel)
         {
             mExpOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-            mExpPureOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
+            mExpFixedOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
             mExpReplacement = MIPModeler::MIPExpression1D(mTimeSteps.size());
         }
+        mExpVariableOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
         mExpVariableCosts = MIPModeler::MIPExpression1D(mTimeSteps.size());
     }
 
@@ -305,7 +360,7 @@ void TechnicalSubModel::computeEconomicalContribution()
         {
             for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
             {
-                mExpPureOpex[t] = 0.;
+                mExpFixedOpex[t] = 0.;
             }
 
             for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
@@ -317,7 +372,7 @@ void TechnicalSubModel::computeEconomicalContribution()
         {
             for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
             {
-                mExpPureOpex[t] += TimeStep(t) * (mCapex * mOpex + mOpexConstant) * mExpSizeMax / 8760.;
+                mExpFixedOpex[t] += TimeStep(t) * (mCapex * mFixedOpex + mFixedOpexConstant) * mExpSizeMax / 8760.;
             }
 
             if (fabs(mLifeTime) > 1.e-6) {
@@ -339,7 +394,7 @@ void TechnicalSubModel::computeNetOpexContribution() {
     //NetOpex = PureOpex + Replacement + VarCost + EnvImpactCost 
     if (mEcoInvestModel) {
         for (uint64_t t = 0; t < mTimeSteps.size(); ++t) {
-            mExpOpex[t] = mExpPureOpex[t] + mExpReplacement[t] + mExpVariableCosts[t];
+            mExpOpex[t] = mExpFixedOpex[t] + mExpVariableOpex[t] + mExpReplacement[t] + mExpVariableCosts[t];
             if (mEnvironmentModel) {
                 for (int i = 0; i < mEnvImpacts.size(); i++) {
                     mExpOpex[t] += mEnvImpacts[i]->getExpEnvOpCost()->at(t);
@@ -355,7 +410,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     mTotalCostFunction.at(0) = 0.;
     mCapexContribution.at(0) = 0.;
     mOpexContribution.at(0) = 0.;
-    mPureOpexContribution.at(0) = 0.;
+    mFixedOpexContribution.at(0) = 0.;
     mVariableCosts.at(0) = 0.;
     mReplacementPart.at(0) = 0.;
     mEnvImpactPart.at(0) = 0.;
@@ -368,8 +423,10 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     if (mEcoInvestModel)
     {
         mCapexContribution.at(0) = mCapexContribution.at(1) = mExpCapex.evaluate(optSol);
-        for (uint64_t t = 0; t < mHorizon; ++t) mPureOpexContribution.at(0) += mExpPureOpex.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // mise à jour du PLAN
-        for (uint64_t t = 0; t < *mptrTimeshift; ++t) mPureOpexContribution.at(1) += mExpPureOpex.at(t).evaluate(optSol); // mise à jour du HIST
+        for (uint64_t t = 0; t < mHorizon; ++t) mFixedOpexContribution.at(0) += mExpFixedOpex.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // mise à jour du PLAN
+        for (uint64_t t = 0; t < *mptrTimeshift; ++t) mFixedOpexContribution.at(1) += mExpFixedOpex.at(t).evaluate(optSol); // mise à jour du HIST
+        for (uint64_t t = 0; t < mHorizon; ++t) mVariableOpexContribution.at(0) += mExpVariableOpex.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // mise à jour du PLAN
+        for (uint64_t t = 0; t < *mptrTimeshift; ++t) mVariableOpexContribution.at(1) += mExpVariableOpex.at(t).evaluate(optSol); // mise à jour du HIST
         for (uint64_t t = 0; t < mHorizon; ++t) mReplacementPart.at(0) += mExpReplacement.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // PLAN
         for (uint64_t t = 0; t < *mptrTimeshift; ++t) mReplacementPart.at(1) += mExpReplacement.at(t).evaluate(optSol); // HIST
     }
@@ -401,8 +458,8 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         }
     }
 
-    mOpexContribution.at(0) = mPureOpexContribution.at(0) + mReplacementPart.at(0) + mEnvImpactPart.at(0) + mVariableCosts.at(0);
-    mOpexContribution.at(1) = mPureOpexContribution.at(1) + mReplacementPart.at(1) + mEnvImpactPart.at(1) + mVariableCosts.at(1);
+    mOpexContribution.at(0) = mFixedOpexContribution.at(0) + mVariableOpexContribution.at(0) + mReplacementPart.at(0) + mEnvImpactPart.at(0) + mVariableCosts.at(0);
+    mOpexContribution.at(1) = mFixedOpexContribution.at(1) + mVariableOpexContribution.at(1) + mReplacementPart.at(1) + mEnvImpactPart.at(1) + mVariableCosts.at(1);
     double pureOpexContributionDiscounted = 0.;
     double replacementPartDiscounted = 0.;
     double envEmissionPartDiscounted = 0.;
@@ -411,7 +468,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     double variableCostsDiscounted = 0.;
 
     if (mEcoInvestModel) {
-        computeDiscounted(mHorizon, mNpdtPast, mExpPureOpex, optSol, pureOpexContributionDiscounted);
+        computeDiscounted(mHorizon, mNpdtPast, mExpFixedOpex, optSol, pureOpexContributionDiscounted);
         computeDiscounted(mHorizon, mNpdtPast, mExpReplacement, optSol, replacementPartDiscounted);
     }
 
@@ -426,7 +483,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         + envEmissionPartDiscounted + envImpactPartDiscounted + variableCostsDiscounted; 
 
     if (mEcoInvestModel) {
-        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpPureOpex, optSol, mHistPureOpexContributionDiscounted);
+        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpFixedOpex, optSol, mHistPureOpexContributionDiscounted);
         computeDiscounted(*mptrTimeshift, mNpdtPast, mExpReplacement, optSol, mHistReplacementPartDiscounted);
     }
 

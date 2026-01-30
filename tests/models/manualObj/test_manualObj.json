@@ -1,5 +1,5 @@
 {
-	"Saved with Cairn version": "5.1.0",
+	"Saved with Cairn version": "5.2.32",
 	"numberPages": 1,
 	"studyComment": "",
 	"mapParameters": {
@@ -7,6 +7,7 @@
 		"longitude": 6.0108203,
 		"zoomlevel": 13.5
 	},
+	"DynamicIndicators": [],
 	"Page1": {
 		"PageId": "Page1",
 		"Components": [
@@ -16,11 +17,11 @@
 				"nodeType": "TecEcoAnalysis",
 				"nodeTechnoType": "TecEcoAnalysis",
 				"componentPERSEEType": "TecEcoAnalysis",
-				"componentCarrier": "NO_CARRIER",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 50,
 				"y": 2,
+				"componentCarrier": "NO_CARRIER",
 				"paramListJson": [
 					{
 						"key": "EcoInvestModel",
@@ -45,6 +46,7 @@
 						"value": 0.07
 					}
 				],
+				"labelList": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -141,11 +143,11 @@
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
 				"componentPERSEEType": "EnergyVector",
-				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
 				"y": 2,
+				"energyTypeColor": "#E8A317",
 				"paramListJson": [
 					{
 						"key": "Potential",
@@ -197,11 +199,11 @@
 				"nodeType": "ManualObjective",
 				"nodeTechnoType": "ManualObjective",
 				"componentPERSEEType": "MultiObjCompo",
-				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 20,
 				"x": 118,
 				"y": 262,
+				"componentCarrier": "Electricity#1",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -242,6 +244,14 @@
 					{
 						"key": "MinConstraintBusValue",
 						"value": 0
+					},
+					{
+						"key": "ObjectiveType",
+						"value": ""
+					},
+					{
+						"key": "ObjectiveCoefficient",
+						"value": 10000
 					}
 				],
 				"optionListJson": [
@@ -251,7 +261,7 @@
 					},
 					{
 						"key": "ObjectiveType",
-						"value": "Blended"
+						"value": "Add"
 					}
 				],
 				"nodePorts": {
@@ -298,6 +308,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -310,11 +321,11 @@
 				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
-				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 20,
-				"x": 436,
-				"y": 202,
+				"x": 440,
+				"y": 164,
+				"componentCarrier": "Electricity#1",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -424,7 +435,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2085405445",
@@ -432,11 +444,11 @@
 				"nodeType": "GridFree",
 				"nodeTechnoType": "GridFree",
 				"componentPERSEEType": "Grid",
-				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 272,
 				"y": 308,
+				"componentCarrier": "Electricity#1",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -487,7 +499,7 @@
 						"value": 0
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
@@ -543,6 +555,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -555,11 +568,11 @@
 				"nodeType": "GridFree",
 				"nodeTechnoType": "GridFree",
 				"componentPERSEEType": "Grid",
-				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 860,
 				"y": 352,
+				"componentCarrier": "Electricity#1",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -682,6 +695,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -694,11 +708,11 @@
 				"nodeType": "SourceLoad",
 				"nodeTechnoType": "SourceLoad",
 				"componentPERSEEType": "SourceLoad",
-				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 714,
 				"y": 204,
+				"componentCarrier": "Electricity#1",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -748,7 +762,7 @@
 					},
 					{
 						"key": "Direction",
-						"value": "Sink"
+						"value": "Load"
 					}
 				],
 				"timeSeriesListJson": [
@@ -781,6 +795,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -793,11 +808,11 @@
 				"nodeType": "SourceLoad",
 				"nodeTechnoType": "WindSource",
 				"componentPERSEEType": "SourceLoad",
-				"componentCarrier": "Electricity#1",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 212,
 				"y": 158,
+				"componentCarrier": "Electricity#1",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -844,7 +859,7 @@
 						"value": 100
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0
 					},
 					{
@@ -912,6 +927,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -947,7 +963,7 @@
 				"listPoint": [
 					{
 						"x": 880,
-						"y": 220
+						"y": 182
 					}
 				]
 			},
@@ -959,7 +975,7 @@
 				"headSocketName": "PortR0",
 				"listPoint": [
 					{
-						"x": 448,
+						"x": 452,
 						"y": 328
 					}
 				]
@@ -972,7 +988,7 @@
 				"headSocketName": "PortR0",
 				"listPoint": [
 					{
-						"x": 448,
+						"x": 452,
 						"y": 372
 					}
 				]
@@ -986,7 +1002,7 @@
 				"listPoint": [
 					{
 						"x": 584,
-						"y": 208
+						"y": 170
 					},
 					{
 						"x": 584,
@@ -1003,7 +1019,7 @@
 				"listPoint": [
 					{
 						"x": 346,
-						"y": 214
+						"y": 176
 					},
 					{
 						"x": 346,
@@ -1026,6 +1042,5 @@
 			}
 		],
 		"Groups": []
-	},
-	"DynamicIndicators": []
+	}
 }

@@ -1,4 +1,4 @@
-.wy-nav-content {max-width: 90% !important;}
+﻿.wy-nav-content {max-width: 90% !important;}
 
 /*#063738 le vert fonce CEA
 /*#2d666e le vert clair CEA
@@ -120,3 +120,12 @@ ol.enumlist ol ol {list-style-type: upper-roman;}
 table.docutils td p {text-align: center;vertical-align: middle; font-size: 0.9em !important;}
 table.docutils th p {text-align: center;vertical-align: middle; font-size: 0.9em !important;}
 
+/* Style pour le rôle variable */
+.rc-font {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #2a5d81;
+    background-color: #f0f8ff;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+}

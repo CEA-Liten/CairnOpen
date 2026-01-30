@@ -1,14 +1,17 @@
 # ================================================================
 # All the default values for cairn cmake parameters
 # ================================================================
+# Dependencies flag
+option(DEPS_INSTALL "Install dependencies" ON)
 
 # Cplex path
 set(CPLEX_ROOT "C:/Program Files/IBM/ILOG/CPLEX_Studio201/cplex" CACHE INTERNAL "CPLEX installation path (if exists use CPLEX)")
 
 # Python, to force Python (if not defined, use find_package Python3)
-set(PYTHON_HOME C:/PythonPegase/3_10_9/python CACHE INTERNAL "Python installation path")
-set(PYTHON_VENV C:/PythonPegase/3_10_9/envPegase CACHE INTERNAL "Python virtual environment")
-set(pybind11_DIR ${PYTHON_VENV}/Lib/site-packages/pybind11/share/cmake/pybind11)
+set(PYTHON_HOME C:/Python/Python313 CACHE INTERNAL "Python installation path")
+set(PYTHON_VENV C:/Python/envs/buildCairn CACHE INTERNAL "Python virtual environment")
+set(PYTHON_PACKAGES Lib/site-packages CACHE INTERNAL "Python packages path")
+set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11)
 
 set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 
@@ -28,9 +31,10 @@ option(BUILD_SHARED_LIBS "Building of shared libraries. Default = ON" ON)
 option(BUILD_MIPMODELER "build MIPModeler if ON" ON)
 set(MIPMODELER_HOME ${CMAKE_SOURCE_DIR}/lib/MIPModeler CACHE INTERNAL "MIPModeler installation path")
 set(COINOR_ROOT ${MIPMODELER_HOME}/external/CoinOR CACHE INTERNAL "Cbc, Clp installation path")
-option(WITH_HIGHS_INSTALL "Highs install" ON) 
-option(WITH_EIGEN_INSTALL "Eigen install" ON) 
-option(WITH_SPDLOG_INSTALL "spdlog install" ON) 
+
+set(highs_DIR ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/lib/cmake/highs)
+set(eigen_DIR ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/share/eigen3/cmake)
+set(spdlog_DIR ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/lib/cmake/spdlog)
 
 # Compilation of Cairn
 option(BUILD_CAIRN "build Cairn if ON" ON)
@@ -39,5 +43,6 @@ set(CAIRNTESTS_HOME ${CMAKE_SOURCE_DIR}/tests CACHE INTERNAL "Cairn tests path")
 set(CAIRNMODELINTERFACE_HOME ${CAIRN_HOME}/modelInterface CACHE INTERNAL "Cairn Model interface installation path")
 set(CAIRN_DEFAULTSOLVER Highs CACHE INTERNAL "Cairn default solver")
 
-option(INSTALL_WHEEL "build python wheel of cairn" ON)
+# installation of API python
+option(INSTALL_WHEEL "install python wheel of cairn" ON)
 set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/virtualPy CACHE INTERNAL "Cairn wheel installation path")

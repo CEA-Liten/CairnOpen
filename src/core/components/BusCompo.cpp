@@ -25,19 +25,18 @@ BusCompo::~BusCompo()
 void BusCompo::declareCompoInputParam()
 {
     MilpComponent::declareCompoInputParam(); //Common component input param
-    mCompoInputParam->addParameter("VectorName", &mVectorName, "", true, true, "VectorName", "string", "DONOTSHOW");
 }
 
 void BusCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent)
 {
     MilpComponent::setCompoInputParam(aComponent);
+}
 
-    if (mVectorName == "") {
-        cCritical() << "Critical ERROR : Missing carried VectorName specified for Bus " << Name();
-        Cairn_Exception erreur("Invalid void <Vector> name :  " + mVectorName + " for " + Name(), -1);
-        throw& erreur;
+std::string BusCompo::CarrierName() const {
+    if (getMainCarrier()) {
+        return getMainCarrier()->Name();
     }
-    assert(mVectorName != "");
+    return "";
 }
 
 void BusCompo::DeleteBusPort(MilpPort* lptrport)
@@ -55,6 +54,11 @@ void BusCompo::addPort(MilpPort* lptrport)
 
 int BusCompo::initPorts()
 {   
+    if (!getMainCarrier()) {
+        Cairn_Exception error("Critical ERROR : Missing carrier for Bus " + Name(), -1);
+        throw error;
+    }
+
     /** Initialize Bus ports of mListPort then of mBusOwnPorts list */
     int ierr = 0 ;
     int iIn = 0 ;
@@ -111,19 +115,13 @@ int BusCompo::checkPorts()
     return ierr ;
 }
 
-void BusCompo::setBusFluxPortExpression(const double &aSignedCoefficient)
+void BusCompo::setBusFluxPortExpression()
 {
     // do nothing
 }
 void BusCompo::setBusSameValuePortExpression()
 {
     // do nothing
-}
-
-void BusCompo::initSubModelTopology()
-{
-    //mCompoModel->setTopo(mListPort) ;
-    mCompoModel->setParentCompo(this) ;
 }
 
 void BusCompo::addComponent(MilpComponent* lptr)
@@ -190,4 +188,30 @@ void BusCompo::jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string&
             port->jsonSaveGUIPortsData(nodePortArray, true);
         }
     }
+}
+
+std::string BusCompo::ObjectiveType() const {
+    return mCompoModel->ObjectiveType(); 
+}
+
+std::vector<InputParam*> BusCompo::get_InputParams()
+{
+    std::vector<InputParam*> result;
+    result.reserve(4);   // avoid reallocations
+
+    // Always available
+    result.push_back(getCompoInputParam());
+
+    // Component model, if available
+    if (auto* model = compoModel()) {
+        result.push_back(model->getInputParam());
+        result.push_back(model->getInputTimeSeries());
+    }
+
+    // GUI data, if available
+    if (auto* gui = getGUIData()) {
+        result.push_back(gui->getGuiInputParam());
+    }
+
+    return result;
 }

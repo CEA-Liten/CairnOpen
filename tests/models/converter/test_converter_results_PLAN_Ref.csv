@@ -27,21 +27,23 @@ Cold_Bus;Integrated bus balance;0;MWh;BusBalance
 Cold_Group;CAPEX;25.7143;EUR;CAPEX
 Cold_Group;is installed;1;-;IsInstalled
 Cold_Group;Annual operation cost;0.514286;EUR;OPEX
-Cold_Group;Annual OPEX;0.514286;EUR;PureOPEX
+Cold_Group;Annual fixed OPEX;0.514286;EUR;PureOPEX
+Cold_Group;Annual variable OPEX;0;EUR;VariableOPEX
 Cold_Group;Annual replacement costs;0;EUR;Replacement
 Cold_Group;Installed Optimal Size;0.257143;MW;Size
 Cold_Group;Running time at power >0.;6935;h;RunningTime
 Cold_Group;Running time availability;0.791667;-;RunningTimeAvailable
 Cold_Group;Annual consumption of ElectricalEnergy PowerIn;-1188.86;MWh;TotConsPowerIn
-Cold_Group;Mean consumption of  ElectricalPower PowerIn;-0.171429;MW;MeanConsPowerIn
+Cold_Group;Mean consumption of ElectricalPower PowerIn;-0.171429;MW;MeanConsPowerIn
 Cold_Group;Load factor PowerIn (PortL0);0.527778;-;UseRatePowerIn(PortL0)
 Cold_Group;Annual production of ThermalEnergy PowerOut;8322;MWh;TotProdPowerOut
 Cold_Group;Mean production of ThermalPower PowerOut;1.2;MW;MeanProdPowerOut
 Cold_Group;Annual consumption of FluidMass PowerIn;-23.7771;kg;TotConsPowerIn
-Cold_Group;Mean consumption of  FluidFlowrate PowerIn;-0.00342857;kg/h;MeanConsPowerIn
+Cold_Group;Mean consumption of FluidFlowrate PowerIn;-0.00342857;kg/h;MeanConsPowerIn
 Cold_Group;Load factor PowerIn (PortR1);0.0105556;-;UseRatePowerIn(PortR1)
 Cold_Load;is installed;1;-;IsInstalled
 Cold_Load;Annual operation cost;0;EUR;OPEX
+Cold_Load;Annual variable OPEX;0;EUR;VariableOPEX
 Cold_Load;Component Weight;1;Unit;Weight
 Cold_Load;ImposedProfile load time;6935;h;ImposedProfileTime
 Cold_Load;ImposedProfile ThermalEnergy SourceLoadFlow;-8322;MWh;TotImposedProfileSourceLoadFlow
@@ -50,13 +52,14 @@ Cold_Load;Mean ThermalPower SourceLoadFlow;-1.2;MW;MeanImposedProfileSourceLoadF
 Converter;CAPEX;307500;EUR;CAPEX
 Converter;is installed;1;-;IsInstalled
 Converter;Annual operation cost;6150;EUR;OPEX
-Converter;Annual OPEX;6150;EUR;PureOPEX
+Converter;Annual fixed OPEX;6150;EUR;PureOPEX
+Converter;Annual variable OPEX;0;EUR;VariableOPEX
 Converter;Annual replacement costs;0;EUR;Replacement
 Converter;Installed Optimal Size;1025;MW;Size
 Converter;Running time at power >0.;7300;h;RunningTime
 Converter;Running time availability;0.833333;-;RunningTimeAvailable
 Converter;Annual consumption of ThermalEnergy PowerIn;-5.31988e+06;MWh;TotConsPowerIn
-Converter;Mean consumption of  ThermalPower PowerIn;-728.75;MW;MeanConsPowerIn
+Converter;Mean consumption of ThermalPower PowerIn;-728.75;MW;MeanConsPowerIn
 Converter;Load factor PowerIn;0.59248;-;UseRatePowerIn
 Converter;Annual production of ElectricalEnergy PowerOut;4.2559e+06;MWh;TotProdPowerOut
 Converter;Mean production of ElectricalPower PowerOut;583;MW;MeanProdPowerOut
@@ -64,12 +67,14 @@ Elec_Bus;Integrated bus balance;0;MWh;BusBalance
 Elec_Bus_2;Integrated bus balance;0;MWh;BusBalance
 Elec_Grid;is installed;1;-;IsInstalled
 Elec_Grid;Annual operation cost;0;EUR;OPEX
-Elec_Grid;Grid extraction time;6935;h;extraction Time
+Elec_Grid;Annual variable OPEX;0;EUR;VariableOPEX
+Elec_Grid;Grid extraction time;6935;h;extractionTime
 Elec_Grid;Grid extraction ElectricalEnergy GridFlow;1188.86;MWh;TotGridFlow
 Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;13476.4;MWh;LvlzdTotGridFlow
 Elec_Grid;Mean extraction ElectricalPower GridFlow;0.171429;MW;MeanGridFlow
 Elec_Load;is installed;1;-;IsInstalled
 Elec_Load;Annual operation cost;0;EUR;OPEX
+Elec_Load;Annual variable OPEX;0;EUR;VariableOPEX
 Elec_Load;Component Weight;1;Unit;Weight
 Elec_Load;ImposedProfile load time;7300;h;ImposedProfileTime
 Elec_Load;ImposedProfile ElectricalEnergy SourceLoadFlow;-4.2559e+06;MWh;TotImposedProfileSourceLoadFlow
@@ -78,14 +83,16 @@ Elec_Load;Mean ElectricalPower SourceLoadFlow;-583;MW;MeanImposedProfileSourceLo
 Heat_Bus;Integrated bus balance;0;MWh;BusBalance
 Heat_Grid;is installed;1;-;IsInstalled
 Heat_Grid;Annual operation cost;0;EUR;OPEX
-Heat_Grid;Grid extraction time;7300;h;extraction Time
+Heat_Grid;Annual variable OPEX;0;EUR;VariableOPEX
+Heat_Grid;Grid extraction time;7300;h;extractionTime
 Heat_Grid;Grid extraction ThermalEnergy GridFlow;5.31988e+06;MWh;TotGridFlow
 Heat_Grid;Levelized Grid extraction ThermalEnergy GridFlow;6.03039e+07;MWh;LvlzdTotGridFlow
 Heat_Grid;Mean extraction ThermalPower GridFlow;728.75;MW;MeanGridFlow
 Water_Bus;Mean value during time period;0;;Mean
 Water_Consumption;is installed;1;-;IsInstalled
 Water_Consumption;Annual operation cost;0;EUR;OPEX
-Water_Consumption;Grid extraction time;6935;h;extraction Time
+Water_Consumption;Annual variable OPEX;0;EUR;VariableOPEX
+Water_Consumption;Grid extraction time;6935;h;extractionTime
 Water_Consumption;Grid extraction FluidMass at 0.000000 degC GridFlow;23.7771;kg;TotGridFlow
 Water_Consumption;Levelized Grid extraction FluidMass at 0.000000 degC GridFlow;269.528;kg;LvlzdTotGridFlow
 Water_Consumption;Mean extraction FluidFlowrate at 0.000000 degC GridFlow;0.00342857;kg/h;MeanGridFlow

@@ -37,11 +37,14 @@ int main()
 
 	TESTAPI("read study: " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
-	TESTAPI("rename TecEcoAnalysis: ", m_Problem.rename_TecEcoAnalysis("TecEco"))
+	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	TESTAPI("rename TecEcoAnalysis: ", vTecEcoAnalysis.rename("TecEco"))
 
-	TESTAPI("rename Solver: ", m_Problem.rename_Solver("Cplex"))
+	CairnAPI::SolverAPI vSolver = m_Problem.get_Solver();
+	TESTAPI("rename Solver: ", vSolver.rename("Cplex"))
 
-	TESTAPI("rename SimulationControl: ", m_Problem.rename_SimulationControl("Cairn"))
+	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
+	TESTAPI("rename SimulationControl: ", vSimulationControl.rename("Cairn"))
 
 	CairnAPI::MilpComponentAPI electrolyzer = m_Problem.get_Component("electrolyzer");
 	TESTAPI("rename electrolyzer: ", electrolyzer.rename("ELY_PEM"))

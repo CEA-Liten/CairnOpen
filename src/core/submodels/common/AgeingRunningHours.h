@@ -19,7 +19,7 @@
 class CAIRNCORESHARED_EXPORT AgeingRunningHours : public OperationSubModel {
 public:
 //----------------------------------------------------------------------------
-    AgeingRunningHours(InputParam* aInputParam, InputParam* aInputData);
+    AgeingRunningHours(InputParam* aInputParam);
     ~AgeingRunningHours();
 //----------------------------------------------------------------------------------------------------
     void computeModelContribution() override;

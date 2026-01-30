@@ -26,9 +26,10 @@ public:
 
     void initDefaultPorts() { }; //Bus doesn't have default ports!
 
+    std::string ObjectiveType() { return mObjectiveType; };
 
-//protected:
-
+protected:
+    std::string mObjectiveType;
 };
 
 #endif // BusSubModel_H
