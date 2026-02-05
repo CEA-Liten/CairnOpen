@@ -2,8 +2,6 @@
 # All the default values for cairn cmake parameters
 # ================================================================
 
-# Cplex path
-set(CPLEX_ROOT /home/share/570-Energie/570.15-TRILOGY/tools/CPLEX/CPLEX_Studio201/cplex CACHE INTERNAL "CPLEX installation path (if exists use CPLEX)")
 
 # Python, to force Python (if not defined, use find_package Python3)
 set(PYTHON_HOME /home/share/570-Energie/570.15-TRILOGY/tools/python-u24/python-3.13.9 CACHE INTERNAL "Python installation path")
@@ -17,11 +15,10 @@ set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 # --------- User-defined options ---------
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
-option(WITH_TESTING "Build tests. Default = OFF" ON)
-option(WITH_PYBIND "Cairn python binding" ON)
+option(WITH_TESTING "Build tests. Default = OFF" OFF)
+option(WITH_PYBIND "Cairn python binding" OFF)
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" ON)
-option(WITH_PRIVATEMODELS "Generate private models" ON)
-option(BUILD_WHEEL "build python wheel of cairn" ON)
+option(BUILD_WHEEL "build python wheel of cairn" OFF)
 
 # TODO!!
 set(WARNINGS_LEVEL 0 CACHE INTERNAL "Set compiler diagnostics level. 0: no warnings, 1: developer's minimal warnings, 2: strict level, warnings to errors and so on. Default =0")
@@ -44,5 +41,5 @@ set(CAIRN_DEFAULTSOLVER Highs CACHE INTERNAL "Cairn default solver")
 
 set(CAIRN_APP ${CMAKE_SOURCE_DIR} CACHE INTERNAL "Cairn installation path")
 
-option(INSTALL_WHEEL "build python wheel of cairn" ON)
+option(INSTALL_WHEEL "build python wheel of cairn" OFF)
 set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/virtualPy CACHE INTERNAL "Cairn wheel installation path")
