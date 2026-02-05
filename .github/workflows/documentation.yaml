@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   docs:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     env:
       GITHUB_URL: https://github.com/CEA-Liten/CairnOpen
@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-python@v3
     
       - name: Define WHL variables and download package
+        shell: bash
         run: |
           set -e
           WHL_FILENAME="cairn-${VERSION}-cp310-cp310-win_amd64.whl"
@@ -31,11 +32,13 @@ jobs:
           curl -o "$WHL_FILENAME" "$WHL_URL"
 
       - name: Install dependencies
+        shell: bash
         run: |
           pip install $WHL_FILENAME
           pip install -r ./doc/user/requirements.txt
           python ./scripts/doc/userDocGenRST.py
       - name: Sphinx build
+        shell: bash
         run: |
           sphinx-build -M html ./doc/user/ ./doc/user/_build
       - name: Deploy to GitHub Pages
