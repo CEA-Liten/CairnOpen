@@ -14,8 +14,9 @@ int main()
 
 	t_list vRef = { "H2", "ElectricityDistrib" };
 	t_list vEnergyVectors = m_Problem.get_EnergyCarriers();
-	TestUtils::Display_list(vEnergyVectors);
-	int vErr = TestUtils::compare_lists(vRef, vEnergyVectors);
+	TestUtils::Display_list(vRef, "reference");
+	TestUtils::Display_list(vEnergyVectors, "read study");
+	int vErr = TestUtils::compare_lists(vEnergyVectors, vRef);
 
 	if (vErr == noError) {
 		for (auto& vEnergyVector : vEnergyVectors) {

@@ -251,8 +251,6 @@ public:
               );
     virtual ~TecEcoEnv();
 
-    virtual void computeTecEcoEnvAnalysis() ;
-
     int NbYear() { return mNbYear ; }
     int NbYearOffset() { return mNbYearOffset ; }
     int NbYearInput() { return mNbYearInput ; }
@@ -273,6 +271,7 @@ public:
     double HistProductionContribution ()  const { return mHistProductionContribution ; }       /** Historical Production to be accounted for unit cost computation */
 
     void setCurrency (const std::string aCurrency) ;
+    void setObjectiveUnit(const std::string aObjectiveUnit);
     void setRange (const std::string aRange) ;
     void setNbYear (const int aNbYear) ;
     void setNbYearOffset (const int aNbYearOffset);

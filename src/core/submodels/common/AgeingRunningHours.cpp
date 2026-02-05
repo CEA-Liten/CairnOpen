@@ -8,7 +8,7 @@
 
 #include "AgeingRunningHours.h"
 //-------------------------------------------------------------------------------------------
-AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam, InputParam *aInputData)
+AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam)
     : OperationSubModel(),
     mHistRunningTime(0.),
     mHistRunningTime_save(0.),
@@ -16,14 +16,12 @@ AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam, InputParam *aInp
     mEfficiencyAgeing(1.),
     mCapacityAgeing(1.)
 {
-    mInputData = aInputData ;
     mInputParam = aInputParam ;
 }
 //-------------------------------------------------------------------------------------------
 AgeingRunningHours::~AgeingRunningHours()
 {
     mInputParam = nullptr;
-    mInputData = nullptr;
 }
 //-------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------

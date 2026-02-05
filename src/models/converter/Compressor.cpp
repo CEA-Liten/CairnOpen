@@ -196,6 +196,19 @@ void Compressor::computeInitialData()
     mPInlet = getInletPressure();
     mPOutlet = getOutletPressure();
 
+    if (fabs(mPInlet) < 1.e-6) { 
+        throw Cairn_Exception("Error in Compressor " + Name() + ": the potential of the carrier " + mPortInMassFlowRate->CarrierName()
+            + " used by the default port " + mPortInMassFlowRate->Name() + " cannot be 0.", -1);
+    }
+
+    if (fabs(mNbStages) < 1.e-6) {
+        throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter NbStages cannot be 0.", -1);
+    }
+
+    if (fabs(mMotorEfficiency) < 1.e-6) {
+        throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter MotorEfficiency cannot be 0.", -1);
+    }
+
     if (mPortInMassFlowRate->getCarrier()) {
         std::string vectorType = mPortInMassFlowRate->getCarrier()->Type();
         mSpecificHeatRatio = *(mPortInMassFlowRate->getCarrier()->pSpecificHeatRatio(vectorType));
@@ -205,13 +218,25 @@ void Compressor::computeInitialData()
 
     EV::Fluid_Type Type = EnergyVector::getFluidTypeFromQString(mMainCarrier->Type());
 
+    if (Type == EV::Fluid_Type::UnknownFluid) {
+        throw Cairn_Exception("Error: the Fluid type of the main carrier " + mMainCarrier->Name() + " of compressor " + Name() + " is unknown!", -1);
+    }
+    
     mCp_Gas = EnergyVector::Compute_Cp(mTInlet, EnergyVector::Get_Pointer_To_Fluid_Properties(Type));   // Cp in J/DegC/kg
 
+    // mK cannot be 0 due to a division
     if (mUsePolytropicModel) {
+        if (fabs(mPolytropicCoefficient) < 1.e-6) {
+            throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter PolytropicCoefficient cannot be 0 when UsePolytropicModel is true.", -1);
+        }
         mK = mPolytropicCoefficient;
         mEta = mPolytropicEfficiency;
     }
     else {
+        if (fabs(mSpecificHeatRatio) < 1.e-6) {
+            throw Cairn_Exception("Error in Compressor " + Name() + ": the SpecificHeatRatio cannot be 0 (coming from the carrier " + mPortInMassFlowRate->CarrierName()
+                + " used by the default port " + mPortInMassFlowRate->Name() + ")", -1);
+        }
         mK = mSpecificHeatRatio;
         mEta = mIsentropicEfficiency;
     }
@@ -224,15 +249,6 @@ void Compressor::computeInitialData()
         / mEta
         * (pow(mPOutlet / mPInlet, (mK - 1) / (mNbStages * mK)) - 1)
         / mMotorEfficiency * EnergyVector::MassToKg(mMassUnit);
-
-    if (isnan(mPowerConsumption)) {
-        std::string error_message = "A division by 0 is detected while computing Power Consumption of " + Name() + ".";
-        if (fabs(mPInlet) < 1.e-6) {
-            error_message += " The value of the parameter Potential of the carrier used by the first input port is 0.";
-        }
-        Cairn_Exception persee_error(error_message, -1);
-        throw persee_error;
-    }
 
     if (mUseSteamMap) {
         mMaxPower = *max_element(mUsedElecPowerSetPoint.begin(), mUsedElecPowerSetPoint.end());
@@ -332,6 +348,17 @@ void Compressor::computeModelContribution()
     mExpTOutlet = MIPModeler::MIPExpression();
     mExpTOutlet = mVarTOutlet ;
 }
+
+void Compressor::computeEconomicalContribution()
+{
+    TechnicalSubModel::computeEconomicalContribution();
+
+    //Variable OPEX
+    for (uint64_t t = 0; t < mHorizon; t++) {
+        mExpVariableOpex[t] += mExpOutMassFlow[t] * mVariableOpex * TimeStep(t);
+    }
+}
+
 
 void Compressor::computeAllIndicators(const double* optSol)
 {

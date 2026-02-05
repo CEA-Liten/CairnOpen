@@ -7,6 +7,7 @@ setup(
     author="CEA",
     license="CEA",    
     python_requires=">=3.9",
-	cmake_install_dir="Lib/site-packages/cairn",
-	cmake_args=['-DUSER_OPTIONS_FILE:STRING=cmake/api_options.cmake', '@PROJECT_OPTION1@', '@PROJECT_OPTION2@', '@PROJECT_OPTION3@', '@PROJECT_OPTION4@', '@PROJECT_OPTION5@']
+    install_requires=["numpy==2.1.0", "pandas==2.3.3"],
+	cmake_install_dir="@PYTHON_INSTALL_PACKAGE@",
+	cmake_args=['-DUSER_OPTIONS_FILE:STRING=cmake/api_options.cmake', @PROJECT_OPTIONS@]
 )

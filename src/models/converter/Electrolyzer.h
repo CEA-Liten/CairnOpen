@@ -61,7 +61,6 @@ public:
 
         /* Register non-IO 1D-expressions in order to automatically allocate and close them */
         addExp(&mExpPower_H2, &mHorizon);
-        addExp(&mExpCost, &mHorizon);
         addExp(&mExpAuxConso, &mHorizon);
         addExp(&mExpStdByConso, &mHorizon);
     }
@@ -79,8 +78,6 @@ public:
         ConverterSubModel::declareDefaultModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // InputParam instance for input data coming from User File : maximum power, performance maps...
-        // to mInputData instance for input data coming from Persee/PEGASE memory : time series (coming from PEGASE), state variables...
-        // 
         
         //Re-declare LifeTime and change default value
         addParameter("LifeTime", &mLifeTime, 10., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");   
@@ -148,7 +145,6 @@ protected:
     MIPModeler::MIPExpression1D mExpTotalPower;
     MIPModeler::MIPExpression1D mExpPower_H2;
     MIPModeler::MIPExpression1D mExpFlow_H2;
-    MIPModeler::MIPExpression1D mExpCost;
     MIPModeler::MIPExpression1D mExpAuxConso;
     MIPModeler::MIPExpression1D mExpStdByConso;
 

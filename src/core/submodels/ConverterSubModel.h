@@ -41,53 +41,73 @@ public:
     {
         TechnicalSubModel::declareDefaultModelIndicators();
 
-        //Indicators specific for Converters
-        mInputIndicators->addIndicator("Installed Size", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Size");
+        // ----------- Indicators specific for Converters -----------
 
+        mInputIndicators->addIndicator("Installed Size", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Size");
         mInputIndicators->addIndicator("Running time at power >0.", &mRunningTime, exp, "Running time", "h", "RunningTime");
         mInputIndicators->addIndicator("Running time availability", &mRunningTimeAvlblt, exp, "Maximum possible running time", "-", "RunningTimeAvailable");
         if (mUseAgeing) {
             mInputIndicators->addIndicator("Efficiency after running time << ", &mEfficiency_Ageing, exp, "Efficiency after running time", "-","Efficiency");
         }
 
-        for (auto& port : mListPort) {
-            std::string portName = port->Name();
-            std::string varName = port->Variable();
-            std::string storageName = port->getCarrier()->StorageName();
-            std::string fluxName = port->getCarrier()->FluxName();
-            bool isHeatCarrier = port->getCarrier()->isHeatCarrier();
+        for (const auto& port : mListPort) {
+            const std::string portId = port->ID();
+            const std::string varName = port->Variable();
+            const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
+            if (ptrExp1D) {
+                if (port->Direction() == GS::KPROD()) 
+                {
+                    mProductionMap.try_emplace(portId, 2, 0.0);
+                    mProdLvlTotMap.try_emplace(portId, 2, 0.0);
+                    mProdMeanMap.try_emplace(portId, 2, 0.0);
+                    mProdContributionMap.try_emplace(portId, 2, 0.0);
 
-            if (port->VarType() == "vector" )
-            {
-                std::string identifier = "";
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Annual production of", STORAGE_NAME, VARIABLE } }),
+                        &mProductionMap[portId], exp, "Annual production of "+varName, port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "TotProd", VARIABLE } })
+                        );
 
-                if (port->Direction() == GS::KPROD()) {
-                    mProductionMap[portName] = std::vector<double>(2, 0.);
-                    mProdLvlTotMap[portName] = std::vector<double>(2, 0.);
-                    mProdMeanMap[portName] = std::vector<double>(2, 0.);
-                    mProdContributionMap[portName] = std::vector<double>(2, 0.);
-                    if (!isIndicatorNameUnique(port, "StorageName")) identifier = "(" + port->Name() + ")";
-                    mInputIndicators->addIndicator("Annual production of " + storageName + " " + varName + " " + identifier, &mProductionMap[portName], exp, "Annual production of "+varName, port->pStorageUnit(), "TotProd" + varName + identifier);
-                    if (isIndicatorNameUnique(port, "FluxName")) identifier = ""; //put back to empty if name is unique w.r.t fluxName (rarely  happens!)
-                    mInputIndicators->addIndicator("Mean production of " + fluxName + " " + varName + " " + identifier, &mProdMeanMap[portName], exp, "Mean production of " + varName, port->pFluxUnit(), "MeanProd" + varName + identifier);
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Mean production of", FLUX_NAME, VARIABLE } }),
+                        &mProdMeanMap[portId], exp, "Mean production of " + varName, port->pFluxUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "MeanProd", VARIABLE } })
+                    );
                 }
-                else if (port->Direction() == GS::KCONS()) {
-                    mConsumptionMap[portName] = std::vector<double>(2, 0.);
-                    mConsLvlTotMap[portName] = std::vector<double>(2, 0.);
-                    mConsMeanMap[portName] = std::vector<double>(2, 0.);
-                    mConsPFMap[portName] = std::vector<double>(2, 0.);
-                    mRateOfUse[portName] = std::vector<double>(2, 0.);
-                    if (!isIndicatorNameUnique(port, "StorageName")) identifier = "(" + port->Name() + ")";
-                    mInputIndicators->addIndicator("Annual consumption of " + storageName + " " + varName + " " + identifier, &mConsumptionMap[portName], exp, "Annual consumption of " + varName, port->pStorageUnit(), "TotCons" + varName+ identifier);
-                   if (isIndicatorNameUnique(port, "FluxName")) identifier = ""; //put back to empty if name is unique w.r.t fluxName (rarely  happens!)
-                    mInputIndicators->addIndicator("Mean consumption of " + fluxName + " " + varName + " " + identifier, &mConsMeanMap[portName], exp, "Mean consumption of " + varName, port->pFluxUnit(), "MeanCons" + varName + identifier);
-                    if (!isIndicatorNameUnique(port)) identifier = "(" + port->Name() + ")";
-                    mInputIndicators->addIndicator("Load factor " + varName + " " + identifier, &mRateOfUse[portName], exp, "Mean/Max", "-", "UseRate"+varName+identifier);
+                else if (port->Direction() == GS::KCONS()) 
+                {
+                    mConsumptionMap.try_emplace(portId, 2, 0.0);
+                    mConsLvlTotMap.try_emplace(portId, 2, 0.0);
+                    mConsMeanMap.try_emplace(portId, 2, 0.0);
+                    mConsPFMap.try_emplace(portId, 2, 0.0);
+                    mRateOfUse.try_emplace(portId, 2, 0.0);
+
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Annual consumption of", STORAGE_NAME, VARIABLE } }),
+                        &mConsumptionMap[portId], exp, "Annual consumption of " + varName, port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "TotCons", VARIABLE } })
+                        );
+                   
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Mean consumption of", FLUX_NAME, VARIABLE } }),
+                        &mConsMeanMap[portId], exp, "Mean consumption of " + varName, port->pFluxUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "MeanCons", VARIABLE } })
+                        );
+                   
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Load factor", VARIABLE } }),
+                        &mRateOfUse[portId], exp, "Mean/Max", "-", 
+                        SExtFunctionName({ this, port, &indicatorName, { "UseRate", VARIABLE } })
+                        );
                 }
-                else if (port->Direction() == GS::KDATA()) {
-                    if (!isIndicatorNameUnique(port)) identifier = "(" + port->Name() + ")";
-                    mExpEchData[portName] = std::vector<double>(2, 0.);
-                    mInputIndicators->addIndicator("Data Port published " + varName + " - data computed " + identifier, &mExpEchData[portName], exp, "Data port", port->pStorageUnit(), "DataPort"+varName+identifier);
+                else if (port->Direction() == GS::KDATA()) 
+                {
+                    mExpEchData.try_emplace(portId, 2, 0.0);
+                    mInputIndicators->addIndicator(
+                        SExtFunctionName({ this, port, &indicatorName, { "Data Port published", VARIABLE, "- data computed" } }),
+                        &mExpEchData[portId], exp, "Data port", port->pStorageUnit(), 
+                        SExtFunctionName({ this, port, &indicatorName, { "DataPort", VARIABLE } })
+                    );
                 }
             }
         }

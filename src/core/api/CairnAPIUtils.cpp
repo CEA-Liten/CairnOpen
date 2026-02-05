@@ -59,7 +59,7 @@ namespace CairnAPIUtils {
 
 		// Parse File - Line-Line
 		std::istringstream iDataStream(inputData);
-		while (getline(iDataStream, line))
+		while (std::getline(iDataStream, line))
 		{
 			// Parse line with seperator ','			
 			std::string cell;
@@ -81,9 +81,14 @@ namespace CairnAPIUtils {
 	void initModelTypesMap()
 	{
 		//read model types from .txt file
-		std::string exeDir = std::getenv("CAIRN_BIN");		
-		std::string modelTypesFileName = exeDir + (std::string)"/../resources/modelTypes.txt";
-		mModelTypes = ParserTxt(modelTypesFileName);
+		if (const char* env_p = std::getenv("CAIRN_BIN")) {
+			std::string exeDir(env_p);
+			std::string modelTypesFileName = exeDir + (std::string)"/../resources/modelTypes.txt";
+			mModelTypes = ParserTxt(modelTypesFileName);
+		}
+		else {
+			spdlog::critical("environment variable CAIRN_BIN does not exist!");
+		}		
 	}
 
 	t_list get_Possible_Model_Names()

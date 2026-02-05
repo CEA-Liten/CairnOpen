@@ -10,17 +10,7 @@ Minimize
        + 992998.143260721 vGFxGridFree#1(6)
        + 992998.143260721 vGFxGridFree#1(7)
        + 992998.143260721 vGFxGridFree#1(8)
-       + 992998.143260721 vGFxGridFree#1(9)
-       + 9929.98143260721 vGFxGridFree#2(0)
-       + 9929.98143260721 vGFxGridFree#2(1)
-       + 9929.98143260721 vGFxGridFree#2(2)
-       + 9929.98143260721 vGFxGridFree#2(3)
-       + 9929.98143260721 vGFxGridFree#2(4)
-       + 9929.98143260721 vGFxGridFree#2(5)
-       + 9929.98143260721 vGFxGridFree#2(6)
-       + 9929.98143260721 vGFxGridFree#2(7)
-       + 9929.98143260721 vGFxGridFree#2(8)
-       + 9929.98143260721 vGFxGridFree#2(9) + 101 vWeightSourceLoad#2
+       + 992998.143260721 vGFxGridFree#1(9) + 100 vWeightSourceLoad#2
        + 0 vCommonMinManualObjective1 + 0 vCommonMaxManualObjective1
 Subject To
  csInstalledGridFree#10:         vInstalledGridFree#1  = 1

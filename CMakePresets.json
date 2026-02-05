@@ -2,14 +2,22 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "windows-base",
+            "name": "base",
             "hidden": true,
             "binaryDir": "${sourceDir}/out/${presetName}",
             "installDir": "${sourceDir}/bin/${presetName}",
             "cacheVariables": {
+                "PRESETNAME": "${presetName}",
+                "DEPS_ROOT": "${sourceDir}/deps"
+            }
+        },
+        {
+            "name": "windows-base",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl.exe",
-                "CMAKE_CXX_COMPILER": "cl.exe",
-                "PRESETNAME": "${presetName}"
+                "CMAKE_CXX_COMPILER": "cl.exe"
             },
             "condition": {
                 "type": "equals",
@@ -19,23 +27,46 @@
             "environment": {
                 "GUI_HOME": "${sourceDir}/gui",
                 "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
-                "Path": "$penv{Path};${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin"
+                "PATH": "${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
             }
         },
         {
-            "name": "windows-VS",
+            "name": "linux-base",
             "hidden": true,
-            "generator": "Visual Studio 17 2022",
-            "binaryDir": "${sourceDir}/out/${presetName}",
-            "installDir": "${sourceDir}/bin/${presetName}",
+            "inherits": "base",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "cl.exe",
-                "CMAKE_CXX_COMPILER": "cl.exe"
+                "USER_OPTIONS_FILE": "cmake/linux_options.cmake"
             },
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
-                "rhs": "Windows"
+                "rhs": "Linux"
+            },
+            "environment": {
+                "CAIRN_BIN": "${sourceDir}/bin/${presetName}/lib",
+                "LD_LIBRARY_PATH": "${sourceDir}/bin/${presetName}/lib:$penv{LD_LIBRARY_PATH}"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": [ "Linux" ]
+                },
+                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+                    "copySources": true,
+                    "rsyncCommandArgs": [ "-t", "--delete" ],
+                    "copySourcesOptions": {
+                        "method": "rsync",
+                        "exclusionList": [ ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "tests/apicpp/src/TEST_CairnCore.h" ]
+                    },
+                    "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
+                }
+            }
+        },
+        {
+            "name": "linux-debug",
+            "inherits": "linux-base",
+            "displayName": "Linux Debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
@@ -73,6 +104,20 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "wheel",
+            "displayName": "Wheel",
+            "inherits": "release",
+            "installDir": "${sourceDir}/bin/release",
+            "cacheVariables": {
+                "BUILD_WHEEL": "ON",
+                "INSTALL_WHEEL": "ON",
+                "BUILD_MIPMODELER": "OFF",
+                "BUILD_MODULECAIRN": "OFF",
+                "BUILD_CAIRNGUI": "OFF",
+                "BUILD_CAIRN": "OFF"
+            }
         }
     ],
     "buildPresets": [
@@ -80,6 +125,13 @@
             "name": "debug",
             "displayName": "Debug",
             "configurePreset": "debug",
+            "configuration": "debug",
+            "jobs": 4
+        },
+        {
+            "name": "linux-debug",
+            "displayName": "Linux Debug",
+            "configurePreset": "linux-debug",
             "configuration": "debug",
             "jobs": 4
         },
@@ -110,13 +162,23 @@
             "name": "debug",
             "displayName": "Debug",
             "configurePreset": "debug",
-            "configuration": "debug"
+            "configuration": "debug",
+            "environment": {
+                "GUI_HOME": "${sourceDir}/gui",
+                "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
+                "PATH": "${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
+            }
         },
         {
             "name": "release",
             "displayName": "Release",
             "configurePreset": "release",
-            "configuration": "release"
+            "configuration": "release",
+            "environment": {
+                "GUI_HOME": "${sourceDir}/gui",
+                "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
+                "PATH": "${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
+            }
         },
         {
             "name": "fullrelease",
@@ -129,6 +191,16 @@
             "displayName": "Full-Debug",
             "configurePreset": "fulldebug",
             "configuration": "debug"
+        },
+        {
+            "name": "linux-debug",
+            "displayName": "Linux Debug",
+            "configurePreset": "linux-debug",
+            "configuration": "debug",
+            "environment": {
+                "CAIRN_BIN": "${sourceDir}/bin/${presetName}/lib",
+                "LD_LIBRARY_PATH": "${sourceDir}/bin/${presetName}/lib:$penv{LD_LIBRARY_PATH}"
+            }
         }
     ]
 }

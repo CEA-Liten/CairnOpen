@@ -35,12 +35,12 @@ int main()
 	cout << "Creation of a new study" << endl;
 	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.create_Study(StudyRoot + StudyName);
 
-	// création du TechEcoAnalysis	
+	// Creation of TechEcoAnalysis	
+	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
 	TESTAPI("set_TecEcoAnalysisSettings",
-		m_Problem.set_TecEcoAnalysisSettings(
+		vTecEcoAnalysis.set_SettingValues(
 			{
 				{"DiscountRate", 0.07},
-				{"ImpactDiscountRate", 0.07},
 				{"NbYear", 20},
 				{"Range","HISTandPLAN"},
 				{"ForceExportAllIndicators",  true},
@@ -49,9 +49,10 @@ int main()
 		)
 	)
 
-	// création du SimulationControl	
+	// Creation of SimulationControl
+	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
 	TESTAPI("create_simulationcontrol",
-		m_Problem.set_SimulationControlSettings(
+		vSimulationControl.set_SettingValues(
 			{
 				{"ExportJson", 1},
 				{"ExportResults", 1},
@@ -61,9 +62,10 @@ int main()
 		)
 	)
 
-	// création du Solver
+	// Creation of Solver
+	CairnAPI::SolverAPI vSolver = m_Problem.get_Solver();
 	TESTAPI("create_MIPSolver",
-		m_Problem.set_MIPSolverSettings(
+		vSolver.set_SettingValues(
 			{
 				{"Solver", "Cplex"},
 				{"WriteLp", "YES"},
@@ -77,7 +79,6 @@ int main()
 	TESTAPI("reset Potential ElectricityDistrib", vElec.set_SettingValue("Potential", 220))
 	TESTAPI("set UseProfileBuyPrice of ElectricityDistrib",
 			vElec.set_SettingValue("UseProfileBuyPrice", "Elec_Grid.ElectricityPrice"))
-
 
 	CairnAPI::EnergyVectorAPI vH2;
 	TESTAPI("create EnergyVector H2", vH2 = m_Problem.create_EnergyCarrier("H2", "FluidH2"))
@@ -96,7 +97,7 @@ int main()
 	t_list vRef = { "H2","ElectricityDistrib" };
 	TESTAPI2("check list Energy Vector", TestUtils::compare_lists(vRef, vEVs))
 
-	// ajout d'un composant
+	// Adding a component
 	// -------------------------------------------------------------------
 	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { }))
 
@@ -128,7 +129,7 @@ int main()
 
 	vELY_PEM.set_SettingValues({
 		{ "Capex", 480000 },
-		{ "Opex", "0.04" },
+		{ "FixedOpex", "0.04" },
 		{ "Efficiency", "0.6667" },
 		{ "MaxPower", "-30" },
 		{ "MinPower", "0" },
@@ -154,19 +155,14 @@ int main()
 
 	TESTAPI("Change EnergyVector of vELY_PEM", vELY_PEM_L0.set_EnergyCarrier(vElec))
 
-	//Add a port then delete it
-	CairnAPI::MilpPortAPI dummyPort;
-	TESTAPI("Add port", dummyPort = vELY_PEM.add_Port("dummyPort", vElec))
-	TESTAPI("Delete port", vELY_PEM.remove_Port(dummyPort))
-
-	t_list vPorts = vELY_PEM.get_Ports();
-
 	//Verify Get and Set methods
 	TESTAPI2("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
-	vELY_PEM.set_SettingValue("Capex", 100000.0);
+	TESTAPI("Set the value of ELY_PEM.Capex.",
+		vELY_PEM.set_SettingValue("Capex", 100000.0);
+	)
 
 	TESTAPI2("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 100000.0, eDouble)
@@ -183,10 +179,9 @@ int main()
 	vELY_PEM_R0.set_SettingValue("Coeff", 1.0);
 
 	//Verify componenet list and port list
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), {"ELY_PEM"}))
-	TESTAPI2("check list ports", TestUtils::compare_lists(vPorts, vELY_PEM.get_Ports()))
+	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { "ELY_PEM" }))
 
-	// ajout d'un composant
+	// Adding a component
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vElecGrid(m_Problem, "Elec_Grid", "GridFree");
 
@@ -216,7 +211,7 @@ int main()
 		}
 	);
 
-	// ajout d'un composant
+	// Adding a component
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vElecGridInject = m_Problem.create_Component("Elec_Grid_Inject", "GridFree");
 
@@ -233,7 +228,7 @@ int main()
 		}
 	);
 
-	// ajout d'un composant
+	// Adding a component
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vH2_Load = m_Problem.create_Component("H2_Load", "SourceLoad");
 
@@ -248,7 +243,7 @@ int main()
 		{"Direction", "Sink" },
 		{"LPModelONLY", false},
 		{"Weight", "1"},
-		{"Opex", "0" },
+		{"FixedOpex", "0" },
 		{"Capex", "0" },
 		{"MaxFlow", "1000"},
 		{"EcoInvestModel", "1"},
@@ -256,7 +251,7 @@ int main()
 		}
 	);
 
-	// ajout d'un composant
+	// Adding a component
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vWind_farm(m_Problem, "Wind_farm", "SourceLoad");
 
@@ -290,7 +285,7 @@ int main()
 		{"PortL0.Acidification#Accumulated Exceedance EnvContentOffset_B", 0}
 		}
 	);
-	// ajout d'un composant
+	// Adding a component
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vH2_Tank(m_Problem, "H2_Tank", "StorageGen");
 
@@ -303,7 +298,7 @@ int main()
 
 	vH2_Tank.set_SettingValues({
 		  {"Capex", "50"},
-		  {"Opex", "0"},
+		  {"FixedOpex", "0"},
 		  {"Eta", "0.999"},
 		  {"FlowDirection", "1"},
 		  {"EcoInvestModel", "1"},

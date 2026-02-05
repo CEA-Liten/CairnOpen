@@ -8,8 +8,8 @@ def compareJson(file_json_ref: str, file_json : str, logs : TextIOWrapper, skipC
     logs.write(dash+'\n')
     logs.write('FILES\n') 
     logs.write(dash+'\n')
-    logs.write('Filename reference = ' + file_json_ref+'\n')
-    logs.write('Filename = ' + file_json+'\n\n')
+    logs.write('Reference = ' + file_json_ref+'\n')
+    logs.write('Filename  = ' + file_json+'\n\n')
  
     logs.write(dash+'\n')
     logs.write('DIFFERENCES\n') 
@@ -26,20 +26,25 @@ def compareJson(file_json_ref: str, file_json : str, logs : TextIOWrapper, skipC
     with open(file_json, 'r') as jf:
         for ref_line in json_ref_lines:
             json_line = jf.readline()
+            # Skip version line
             if "version" in json_line and "version" in ref_line:
                 continue
-            if skipCompoX != "" and not(isSkipX):
-                name_line = '\"nodeName\": \"' + skipCompoX + '\"'
+            # Handle skipCompoX 
+            if skipCompoX != "" and not isSkipX:
+                name_line = f'"nodeName": "{skipCompoX}"'
                 if name_line in json_line and name_line in ref_line:
                     isSkipX = True
+            # Skip line and reset flag when x_key matches
             if isSkipX and x_key in json_line and x_key in ref_line:
                 isSkipX = False
                 continue
+            # Compare lines
             if json_line != ref_line:
                 logs.write(ref_line) 
                 logs.write(json_line) 
                 logs.write('\n')
                 verdict = False
+                break
 
     return verdict
   

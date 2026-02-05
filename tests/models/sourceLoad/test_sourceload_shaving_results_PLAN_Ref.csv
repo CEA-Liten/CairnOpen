@@ -10,51 +10,48 @@ TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
 TecEcoAnalysis#1;Extrapolation Factor;182.5;-;ExtrapolationFactor
 TecEcoAnalysis#1;OBJECTIVE;2.42048e+07;EUR;Objective
 TecEcoAnalysis#1;Net Present Value (Levelized Profit);-2.42048e+07;EUR;NPV
-TecEcoAnalysis#1;Computed Average Rate Of Return Factor;-0.0256409;-;ComputedAverageRateOfReturnFactor
-TecEcoAnalysis#1;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
-TecEcoAnalysis#1;Current Rate Of Return perCent;-0.00123944;%;CurrentRateOfReturnperCent
 TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
 TecEcoAnalysis#1;Total CAPEX;300;EUR;CAPEX
 TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
-TecEcoAnalysis#1;Total Discounted Net OPEX;2.42045e+07;EUR;DiscountedNetOPEX
-TecEcoAnalysis#1;Total Discounted Pure OPEX;28.339;EUR;DiscountedPureOPEX
-TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
-TecEcoAnalysis#1;Total Discounted Sell Part;0;EUR;DiscountedSellPart
-TecEcoAnalysis#1;Total Discounted Buy Part;2.42044e+07;EUR;DiscountedBuyPart
-TecEcoAnalysis#1;Total Undiscounted Net OPEX;2.13526e+06;EUR;NetOPEX
-TecEcoAnalysis#1;Total Undiscounted Pure OPEX;2.5;EUR;PureOPEX
-TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
-TecEcoAnalysis#1;Total Undiscounted Sell Part;0;EUR;SellPart
-TecEcoAnalysis#1;Total Undiscounted Buy Part;2.13526e+06;EUR;BuyPart
+TecEcoAnalysis#1;Total project discounted operation cost;2.42045e+07;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted OPEX;28.339;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total project buying costs;2.42044e+07;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Annual operation cost;2.13526e+06;EUR;NetOPEX
+TecEcoAnalysis#1;Annual OPEX;2.5;EUR;PureOPEX
+TecEcoAnalysis#1;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Annual income;0;EUR;SellPart
+TecEcoAnalysis#1;Annual buying costs;2.13526e+06;EUR;BuyPart
 ELec_Bus;Integrated bus balance;0;MWh;BusBalance
-Grid_Extract;Total Cost Function;5.58561e+06;EUR;TotCosts
 Grid_Extract;is installed;1;-;IsInstalled
-Grid_Extract;Opex part (including energy cost);492750;EUR;OPEX
+Grid_Extract;Annual operation cost;492750;EUR;OPEX
+Grid_Extract;Annual variable OPEX;0;EUR;VariableOPEX
 Grid_Extract;Grid extraction time;1095;h;extraction Time
 Grid_Extract;Grid extraction ElectricalEnergy GridFlow;4927.5;MWh;TotGridFlow
 Grid_Extract;Levelized Grid extraction ElectricalEnergy GridFlow;55856.1;MWh;LvlzdTotGridFlow
 Grid_Extract;Mean extraction ElectricalPower GridFlow;4.5;MW;MeanGridFlow
-Grid_Inject;Total Cost Function;1.86187e+07;EUR;TotCosts
 Grid_Inject;is installed;1;-;IsInstalled
-Grid_Inject;Opex part (including energy cost);1.6425e+06;EUR;OPEX
+Grid_Inject;Annual operation cost;1.6425e+06;EUR;OPEX
+Grid_Inject;Annual variable OPEX;0;EUR;VariableOPEX
 Grid_Inject;Grid injection time;1825;h;injection Time
 Grid_Inject;Grid injection ElectricalEnergy GridFlow;-16425;MWh;TotGridFlow
 Grid_Inject;Levelized Grid injection ElectricalEnergy GridFlow;-186187;MWh;LvlzdTotGridFlow
 Grid_Inject;Mean injection ElectricalPower GridFlow;-9;MW;MeanGridFlow
-Load_PeakShaving;Total Cost Function;441.695;EUR;TotCosts
-Load_PeakShaving;Capex part;300;EUR;CAPEX
+Load_PeakShaving;CAPEX;300;EUR;CAPEX
 Load_PeakShaving;is installed;1;-;IsInstalled
-Load_PeakShaving;Opex part (including energy cost);12.5;EUR;OPEX
-Load_PeakShaving;Pure Opex part;2.5;EUR;PureOPEX
-Load_PeakShaving;Replacement part;0;EUR;Replacement
+Load_PeakShaving;Annual operation cost;12.5;EUR;OPEX
+Load_PeakShaving;Annual fixed OPEX;2.5;EUR;PureOPEX
+Load_PeakShaving;Annual variable OPEX;0;EUR;VariableOPEX
+Load_PeakShaving;Annual replacement costs;0;EUR;Replacement
 Load_PeakShaving;Component Weight;1;Unit;Weight
 Load_PeakShaving;ImposedProfile load time;8760;h;ImposedProfileTime
 Load_PeakShaving;ImposedProfile ElectricalEnergy SourceLoadFlow;-87600;MWh;TotImposedProfileSourceLoadFlow
 Load_PeakShaving;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-992998;MWh;LvlzdTotImposedProfileSourceLoadFlow
 Load_PeakShaving;Mean ElectricalPower SourceLoadFlow;-10;MW;MeanImposedProfileSourceLoadFlow
-Variable_Source;Total Cost Function;0;EUR;TotCosts
 Variable_Source;is installed;1;-;IsInstalled
-Variable_Source;Opex part (including energy cost);0;EUR;OPEX
+Variable_Source;Annual operation cost;0;EUR;OPEX
+Variable_Source;Annual variable OPEX;0;EUR;VariableOPEX
 Variable_Source;Component Weight;1;Unit;Weight
 Variable_Source;ImposedProfile source time;8760;h;ImposedProfileTime
 Variable_Source;ImposedProfile ElectricalEnergy SourceLoadFlow;99097.5;MWh;TotImposedProfileSourceLoadFlow

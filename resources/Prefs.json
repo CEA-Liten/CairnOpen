@@ -1,0 +1,10 @@
+{
+    "logs": {
+        "level": "debug",
+        "flushlevel":  "debug",
+        "console": true,
+        "file": true,
+        "auxfile": false,
+        "auxpath": ""
+    }
+}

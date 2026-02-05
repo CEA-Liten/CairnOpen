@@ -52,6 +52,7 @@ public:
     void setName(const std::string& name) { this->setObjectName(name); }
 
     std::string SolverName() const { return mSolverName; }
+    std::vector<InputParam*> get_InputParams();
 
 private:
     void doInit(const std::map<std::string, std::string>& aComponent);

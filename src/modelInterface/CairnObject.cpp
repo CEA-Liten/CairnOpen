@@ -39,6 +39,11 @@ const std::string& CairnObject::objectType() const
 	return m_Type;
 }
 
+const std::vector<CairnObject*>& CairnObject::children() const
+{
+	return m_children;
+}
+
 void CairnObject::addChild(CairnObject* ap_Child)
 {	
 	if (ap_Child) {

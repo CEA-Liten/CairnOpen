@@ -138,6 +138,9 @@ CairnObject* ModelFactory::ModelDescriptor::loadModel(CairnObject* aParent)
     }    
 #else   
     void* hGetProcIDDLL = dlopen((const char*)mDLLAbsoluteName.c_str(), RTLD_NOW);
+    if (!hGetProcIDDLL) {
+        spdlog::critical(dlerror());
+    }
 #endif
     if (!hGetProcIDDLL) {        
         spdlog::critical("could not load the dynamic library " + mDLLAbsoluteName);
@@ -168,23 +171,34 @@ CairnObject* ModelFactory::ModelDescriptor::loadModel(CairnObject* aParent)
 
 CairnObject* ModelFactory::ModelDescriptor::createModel(CairnObject* aParent, const std::string& instanceName)
 {
-    CairnObject* vRet = nullptr;
-    t_mapModels::iterator vIter = mModels.find(instanceName);
-    if (vIter != mModels.end()) {
-        vRet = vIter->second;
-    }
-    else {
+    CairnObject* vRet = findModel(instanceName);    
+    if (vRet == nullptr) {        
         vRet = loadModel(aParent);
         if (vRet)
-            mModels[instanceName] = vRet;
+            mModels.push_back(vRet);
     }    
     return vRet;
 }
 
 void ModelFactory::ModelDescriptor::deleteModel(const std::string& instanceName)
 {
-    t_mapModels::iterator vIter = mModels.find(instanceName);
-    if (vIter != mModels.end()) {
-        mModels.erase(vIter);
+    std::vector<CairnObject*>::iterator vIter;
+    for (vIter = mModels.begin(); vIter != mModels.end(); vIter++) {
+        if ((*vIter)->parent()->objectName() == instanceName) {
+            mModels.erase(vIter);
+            break;
+        }
+    }    
+}
+
+CairnObject* ModelFactory::ModelDescriptor::findModel(const std::string& instanceName)
+{
+    CairnObject* vRet = nullptr;    
+    for (auto& vModel : mModels) {
+        if (vModel->parent()->objectName() == instanceName) {
+            vRet = vModel;
+            break;
+        }
     }
+    return vRet;
 }

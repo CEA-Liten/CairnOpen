@@ -10,44 +10,41 @@ TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
 TecEcoAnalysis;Extrapolation Factor;182.5;-;ExtrapolationFactor
 TecEcoAnalysis;OBJECTIVE;1840.07;EUR;Objective
 TecEcoAnalysis;Net Present Value (Levelized Profit);-1500.04;EUR;NPV
-TecEcoAnalysis;Computed Average Rate Of Return Factor;-438000;-;ComputedAverageRateOfReturnFactor
-TecEcoAnalysis;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
-TecEcoAnalysis;Current Rate Of Return perCent;-21172.2;%;CurrentRateOfReturnperCent
 TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
 TecEcoAnalysis;Total CAPEX;1500;EUR;CAPEX
 TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
-TecEcoAnalysis;Total Discounted Net OPEX;0.0388205;EUR;DiscountedNetOPEX
-TecEcoAnalysis;Total Discounted Pure OPEX;0.0388205;EUR;DiscountedPureOPEX
-TecEcoAnalysis;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
-TecEcoAnalysis;Total Discounted Sell Part;0;EUR;DiscountedSellPart
-TecEcoAnalysis;Total Discounted Buy Part;0;EUR;DiscountedBuyPart
-TecEcoAnalysis;Total Undiscounted Net OPEX;0.00342466;EUR;NetOPEX
-TecEcoAnalysis;Total Undiscounted Pure OPEX;0.00342466;EUR;PureOPEX
-TecEcoAnalysis;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
-TecEcoAnalysis;Total Undiscounted Sell Part;0;EUR;SellPart
-TecEcoAnalysis;Total Undiscounted Buy Part;0;EUR;BuyPart
-Elec_grid;Total Cost Function;0;EUR;TotCosts
+TecEcoAnalysis;Total project discounted operation cost;0.0388205;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total project discounted OPEX;0.0388205;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total project buying costs;0;EUR;DiscountedBuyPart
+TecEcoAnalysis;Annual operation cost;0.00342466;EUR;NetOPEX
+TecEcoAnalysis;Annual OPEX;0.00342466;EUR;PureOPEX
+TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis;Annual income;0;EUR;SellPart
+TecEcoAnalysis;Annual buying costs;0;EUR;BuyPart
 Elec_grid;is installed;1;-;IsInstalled
-Elec_grid;Opex part (including energy cost);0;EUR;OPEX
+Elec_grid;Annual operation cost;0;EUR;OPEX
+Elec_grid;Annual variable OPEX;0;EUR;VariableOPEX
 Elec_grid;Grid injection time;1;h;injection Time
 Elec_grid;Grid injection ElectricalEnergy GridFlow;-132;MWh;TotGridFlow
 Elec_grid;Levelized Grid injection ElectricalEnergy GridFlow;-1496.3;MWh;LvlzdTotGridFlow
 Elec_grid;Mean injection ElectricalPower GridFlow;-132;MW;MeanGridFlow
-Elec_load;Total Cost Function;0;EUR;TotCosts
 Elec_load;is installed;1;-;IsInstalled
-Elec_load;Opex part (including energy cost);0;EUR;OPEX
+Elec_load;Annual operation cost;0;EUR;OPEX
+Elec_load;Annual variable OPEX;0;EUR;VariableOPEX
 Elec_load;Component Weight;20;Unit;Weight
 Elec_load;ImposedProfile load time;1;h;ImposedProfileTime
 Elec_load;ImposedProfile ElectricalEnergy SourceLoadFlow;-18;MWh;TotImposedProfileSourceLoadFlow
 Elec_load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-204.041;MWh;LvlzdTotImposedProfileSourceLoadFlow
 Elec_load;Mean ElectricalPower SourceLoadFlow;-18;MW;MeanImposedProfileSourceLoadFlow
 NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
-PV_Source;Total Cost Function;1500.04;EUR;TotCosts
-PV_Source;Capex part;1500;EUR;CAPEX
+PV_Source;CAPEX;1500;EUR;CAPEX
 PV_Source;is installed;1;-;IsInstalled
-PV_Source;Opex part (including energy cost);0.00342466;EUR;OPEX
-PV_Source;Pure Opex part;0.00342466;EUR;PureOPEX
-PV_Source;Replacement part;0;EUR;Replacement
+PV_Source;Annual operation cost;0.00342466;EUR;OPEX
+PV_Source;Annual fixed OPEX;0.00342466;EUR;PureOPEX
+PV_Source;Annual variable OPEX;0;EUR;VariableOPEX
+PV_Source;Annual replacement costs;0;EUR;Replacement
 PV_Source;Mass;0;kg;Mass
 PV_Source;Area;67500;m2;Area
 PV_Source;Volume;0;m3;Volume

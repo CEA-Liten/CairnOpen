@@ -37,7 +37,8 @@ int main()
 
 	TESTAPI("Read study file: " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
-	TESTAPI("Change Optim Model", m_Problem.set_TecEcoAnalysisSettings( { {"Model", "OptimEnvImpact-GWP"} } ))
+	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	TESTAPI("Change Optim Model", vTecEcoAnalysis.set_SettingValues( { {"Model", "OptimEnvImpact-GWP"} } ))
 
 	TESTAPI("Read the Timeseries: " + TimeseriesFileName, m_Problem.add_TimeSeries(TimeseriesFileName))
 

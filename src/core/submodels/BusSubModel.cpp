@@ -1,7 +1,8 @@
 #include "BusSubModel.h"
 
 BusSubModel::BusSubModel(CairnObject* aParent) :
-SubModel(aParent)
+SubModel(aParent),
+mObjectiveType("")
 {
 }
 

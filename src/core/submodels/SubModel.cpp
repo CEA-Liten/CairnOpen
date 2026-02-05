@@ -41,8 +41,7 @@ SubModel::SubModel(CairnObject* aParent) :
     mHorizon(0),
     mInputParam(nullptr),
     mInputPerfParam(nullptr),
-    mInputData(nullptr),
-    mInputDataTS(nullptr),
+    mInputTimeSeries(nullptr),
     mInputIndicators(nullptr),
     mInputEnvImpacts(nullptr),
     mInputPortImpacts(nullptr),
@@ -57,20 +56,9 @@ SubModel::SubModel(CairnObject* aParent) :
 
 SubModel::~SubModel()
 {
-    if (mInputParam) delete(mInputParam);
-    if (mInputPerfParam) delete(mInputPerfParam);
-    if (mInputData) delete(mInputData);
-    if (mInputDataTS) delete(mInputDataTS);
-    
-    if (mInputIndicators) delete(mInputIndicators);
-    if (mInputEnvImpacts) delete (mInputEnvImpacts);
-    if (mInputPortImpacts) delete (mInputPortImpacts);
-    if (mTSInputPortImpacts) delete (mTSInputPortImpacts);
-    
+    deleteInputParams();
     removeIOs();
-
     mListPort.clear();
-
     deleteEnvImpacts();
 }
 
@@ -79,13 +67,46 @@ void SubModel::finalizeModelData()
     // nothing here - Can be overridden in individual SubModels
 }
 
+std::string SubModel::ModelClassName() const {
+    return mParentCompo ? mParentCompo->ModelClassName() : "";
+}
+
+void SubModel::deleteInputParams()
+{
+    delete mInputParam;
+    delete mInputTimeSeries;
+    delete mInputEnvImpacts;
+    delete mInputPortImpacts;
+    delete mTSInputPortImpacts;
+    delete mInputPerfParam;
+    delete mInputIndicators;
+
+    // Avoid dangling pointer
+    mInputParam = nullptr;
+    mInputTimeSeries = nullptr;
+    mInputEnvImpacts = nullptr;
+    mInputPortImpacts = nullptr;
+    mTSInputPortImpacts = nullptr;
+    mInputPerfParam = nullptr;
+    mInputIndicators = nullptr;
+}
+
+
+void SubModel::removeImpactExpressionName(const std::string& impactName) {
+    CairnUtils::removeMatchingSubstring(mEnvImpactCostExpression, impactName);
+    CairnUtils::removeMatchingSubstring(mEnvImpactMassExpression, impactName);
+    CairnUtils::removeMatchingSubstring(mEnvGreyImpactCostExpression, impactName);
+    CairnUtils::removeMatchingSubstring(mEnvGreyImpactMassExpression, impactName);
+}
+
 void SubModel::deleteEnvImpacts()
 {
     for (EnvImpact* impact : mEnvImpacts) {
         if (impact) {
-            removeEnvImpactIOs(impact->Name()); /* remove related IOs from mIOExpressions */
+            removeImpactExpressionName(impact->Name());
+            removeEnvImpactIOs(impact->Name());
             /* remove related Exps from mExpressions0D and mExpressions1D? (currently there is no any!) */
-            delete(impact);
+            delete impact;
         }
     }
     mEnvImpacts.clear();
@@ -93,22 +114,14 @@ void SubModel::deleteEnvImpacts()
 
 void SubModel::declareInputParams(const std::string& name)
 {
-    if (mInputParam) delete(mInputParam);
-    if (mInputPerfParam) delete(mInputPerfParam);
-    if (mInputData) delete(mInputData);
-    if (mInputDataTS) delete(mInputDataTS);
-    if (mInputEnvImpacts) delete (mInputEnvImpacts);
-    if (mInputPortImpacts) delete (mInputPortImpacts);
-    if (mTSInputPortImpacts) delete (mTSInputPortImpacts);
+    deleteInputParams();
 
     // Param
     mInputParam = new InputParam(this, "SubModelbaseInputParam" + name);
     // Carto
     mInputPerfParam = new InputParam(this, "SubModelbaseInputPerfParam" + name);
-    // Config
-    mInputData = new InputParam(this, "SubModelbaseInputData" + name);
     // TimeSeries
-    mInputDataTS = new InputParam(this, "SubModelbaseInputDataTS" + name);
+    mInputTimeSeries = new InputParam(this, "SubModelbaseInputDataTS" + name);
 
     // Impacts
     deleteEnvImpacts(); 
@@ -199,7 +212,7 @@ void SubModel::addPerfParam(const std::string& aParamName, std::vector<double>* 
 void SubModel::addTimeSeries(const std::string& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking, t_flag aIsUsed, 
     const std::string& aDescription, const t_unit& aUnit, const std::string& aShowConfig, double a_default, double a_min, double a_max)
 {
-    mInputDataTS->addTimeSeries(aParamName, aDblePtr, a_default, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig, a_min, a_max);
+    mInputTimeSeries->addTimeSeries(aParamName, aDblePtr, a_default, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig, a_min, a_max);
 }
 
 //Model IO Interface
@@ -319,33 +332,26 @@ void SubModel::removeIO(const std::string& aName)
 
 void SubModel::removeEnvImpactIOs(const std::string& aImpactName)
 {
-    std:vector<std::string> keysToRemove = {};
-    //Delete related ModelIO
-    for (auto& [vKey, vIO] : mIOExpressions) {
-        if (vIO && CairnUtils::contains(vKey, aImpactName)) {
-            keysToRemove.push_back(vKey);
-            delete vIO;
+    // Remove from mIOExpressions
+    for (auto it = mIOExpressions.begin(); it != mIOExpressions.end(); ) {
+        if (it->second && CairnUtils::contains(it->first, aImpactName)) {
+            delete it->second; // Consider unique_ptr to avoid manual delete
+            it = mIOExpressions.erase(it);
+        }
+        else {
+            ++it;
         }
     }
 
-    //Remove from the map 
-    for (auto& vKey: keysToRemove) {
-        mIOExpressions.erase(vKey);
-    }
-
-    keysToRemove.clear();
-    //Delete related Control ModelIO
-    for (auto& [vKey, vIO] : mListControlIO) {
-        if (vIO && CairnUtils::contains(vKey, aImpactName)) 
-        {
-            keysToRemove.push_back(vKey);
-            delete vIO;
+    // Remove from mListControlIO
+    for (auto it = mListControlIO.begin(); it != mListControlIO.end(); ) {
+        if (it->second && CairnUtils::contains(it->first, aImpactName)) {
+            delete it->second;
+            it = mListControlIO.erase(it);
         }
-    }
-
-    //Remove from the map 
-    for (auto& vKey : keysToRemove) {
-        mIOExpressions.erase(vKey);
+        else {
+            ++it;
+        }
     }
 }
 
@@ -362,7 +368,7 @@ void SubModel::removeIOs()
     mListControlIO.clear();
 }
 
-MIPModeler::MIPExpression* SubModel::getMIPExpression(std::string aExpressionName)
+MIPModeler::MIPExpression* SubModel::getMIPExpression(std::string aExpressionName) const
 {
     ModelIO* vIO = getIOExpression(aExpressionName);
     if (vIO) {
@@ -380,9 +386,9 @@ void SubModel::buildControlVariables()
     }
 }
 
-MIPModeler::MIPExpression1D* SubModel::getMIPExpression1D(std::string aExpressionName)
+MIPModeler::MIPExpression1D* SubModel::getMIPExpression1D(std::string aExpressionName) const
 {
-    ModelIO* vIO = getIOExpression(aExpressionName);
+    const ModelIO* vIO = getIOExpression(aExpressionName);
     if (vIO) {
         if (vIO->getType() == EIOModelType::eMIPExpression1D) {
             return (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
@@ -406,7 +412,7 @@ MIPModeler::MIPExpression& SubModel::getMIPExpression1D(uint i, std::string aExp
     throw error;
 }
 
-void SubModel::dumpIOExpression1DList()
+void SubModel::dumpIOExpression1DList() const
 {
     // Loop on expected input parameters
     cInfo() << "\n\t Vector Expression ;" << " \t\t\t " << " Unit ;";
@@ -419,7 +425,7 @@ void SubModel::dumpIOExpression1DList()
     }
 }
 
-void SubModel::dumpIOExpressionList()
+void SubModel::dumpIOExpressionList() const
 {
     // Loop on expected input parameters
     cInfo() << "\n\t Scalar Expression " << " \t\t\t " << " Unit ";
@@ -432,15 +438,14 @@ void SubModel::dumpIOExpressionList()
     }
 }
 
-ModelIO* SubModel::getIOExpression(const std::string& aName)
+ModelIO* SubModel::getIOExpression(const std::string& aName) const
 {
-    t_mapIOs::iterator vIter = mIOExpressions.find(aName);
+    t_mapIOs::const_iterator vIter = mIOExpressions.find(aName);
     if (vIter != mIOExpressions.end()) {
         return vIter->second;
     }
     return nullptr;
 }
-
 
 std::vector<ModelIO*> SubModel::getIOExpressions(const EIOModelType& aIOType)
 {
@@ -453,6 +458,46 @@ std::vector<ModelIO*> SubModel::getIOExpressions(const EIOModelType& aIOType)
         }
     }
     return vRet;
+}
+
+double* SubModel::envGreyImpactMassContribution(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactMass(); 
+}
+
+double* SubModel::envGreyImpactCostContribution(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactPart(); 
+}
+
+double* SubModel::envImpactCostContribution(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartPLAN(); 
+}
+
+double* SubModel::envHistImpactCostContribution(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartHIST(); 
+}
+
+double* SubModel::envImpactCostContributionDiscounted(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartDiscountedPLAN(); 
+}
+
+double* SubModel::envHistImpactCostContributionDiscounted(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartDiscountedHIST(); 
+}
+
+double* SubModel::envImpactMassContribution(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassPLAN(); 
+}
+
+double* SubModel::envHistImpactMassContribution(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassHIST(); 
+}
+
+double* SubModel::envImpactMassContributionDiscounted(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassDiscountedPLAN(); 
+}
+
+double* SubModel::envHistImpactMassContributionDiscounted(const int aIdxEnvImpact) { 
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassDiscountedHIST(); 
 }
 
 void SubModel::fillExpression(MIPModeler::MIPExpression1D& aExpress1D, MIPModeler::MIPVariable1D& aVariable) 
@@ -640,40 +685,40 @@ bool SubModel::defineDefaultVarNames(MilpPort* port)
     return false;
 }
 
+int SubModel::checkVariable(const std::string variable) const
+{
+    const MIPModeler::MIPExpression* ptrExp = getMIPExpression(variable);
+    const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(variable);
+
+    if (ptrExp == nullptr && ptrExp1D == nullptr) {
+        cCritical() << ("ERROR no Milp Expression " + variable + " exist in submodel ! ");
+        cInfo() << "Available Milp Expressions are";
+        dumpIOExpressionList();
+        dumpIOExpression1DList();
+        return -1;
+    }
+    return 0;
+}
+
+
 int SubModel::checkUnit(MilpPort* port)
 {
     int ierr = 0 ;
     if (port->getCarrier() == nullptr) return 0;
-    std::string varName = port->Variable() ;
-    std::string varUse = port->Direction() ;
-    std::string varFluxUnit = port->FluxUnit();
-    std::string varStorageUnit = port->StorageUnit();
-    std::string varPotentialUnit = port->PotentialUnit();
-    std::string ExprUnit = ExpUnit(varName) ;
+    const std::string varName = port->Variable() ;
+    const std::string direction = port->Direction() ;
+    const std::string varFluxUnit = port->FluxUnit();
+    const std::string varStorageUnit = port->StorageUnit();
+    const std::string varPotentialUnit = port->PotentialUnit();
+    const std::string ExprUnit = ExpUnit(varName) ;
 
-    if (varUse == "") {
-        cWarning() << ("Variable "+varName +" neither defined as INPUT nor OUTPUT for the component ! ") ;
+    if (direction.empty()) {
+        cWarning() << ("Variable " + varName +" neither defined as INPUT nor OUTPUT for the component ! ") ;
         ierr = 1 ;
     }
 
-    MIPModeler::MIPExpression* ptrExp = getMIPExpression(varName);
-    MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(varName);
-
-    if (ptrExp != nullptr)
-    {
-        port->setVarType("scalar");   // Give access to Scalar value to Bus
-    }
-    else if (ptrExp1D != nullptr)
-    {
-        port->setVarType("vector");   // Give access to Scalar value to Bus
-    }
-    else
-    {
-        cCritical() << ("ERROR no Milp Expression "+varName +" exist in submodel ! ") ;
-        cInfo() << "Available Milp Expressions are";
-        dumpIOExpressionList();
-        dumpIOExpression1DList();
-        return -1 ;
+    if (checkVariable(varName) < 0) {
+        return -1;
     }
 
     if (port->PortType()=="BusSameValue")
@@ -1308,38 +1353,36 @@ void SubModel::addConstraint(MIPModeler::MIPConstraint constraint, const std::st
     mModel->add(constraint, CName(name,t));
 }
 
-bool SubModel::isIndicatorNameUnique(MilpPort* targetPort, std::string quantityName) {
-    for (auto &port : mListPort) {    
-        if(port == targetPort)
-            continue; //Exclude the targetPort!
-
-        if (CairnUtils::toUpper(port->Direction()) != CairnUtils::toUpper(targetPort->Direction()))
-            continue; //If the two ports don't have the same direction, then no problem (related to indicator names)!
-
-        if (CairnUtils::toUpper(quantityName) == "STORAGENAME") {
-            if(port->getStorageName() != targetPort->getStorageName())
-                continue; //Don't have the same StorageName => no problem
-        }
-        else if (CairnUtils::toUpper(quantityName) == "FLUXNAME") {
-            if (port->getFluxName() != targetPort->getFluxName())
-                continue; //Don't have the same FluxName => no problem
-        }
-
-        if (CairnUtils::toUpper(port->Variable()) == CairnUtils::toUpper(targetPort->Variable()))
+bool SubModel::isPortIndicatorNameUnique(const MilpPort* targetPort)
+{
+    // Find if there is a port that results in indicator names identical to that of targetPort 
+    if(!targetPort) return true;
+    const auto& tdir = targetPort->Direction();
+    const auto& tvar = targetPort->Variable();
+    for (MilpPort* port : mListPort) {
+        if (port == targetPort) continue;
+        if (tdir == port->Direction() && tvar == port->Variable()) {
             return false;
+        }
     }
     return true;
 }
 
-std::string SubModel::OptimalSizeUnit() const
+std::string SubModel::getAbsoluteFileName(const std::string& filename) const
 {
-    if (p_OptimalSizeUnit) {
-        return *p_OptimalSizeUnit;
-    }
-    else {
-        return m_OptimalSizeUnit;
-    }
+    if (mParentCompo) return mParentCompo->getAbsoluteFileName(filename);
+    return filename;
 }
+
+//std::string SubModel::OptimalSizeUnit() const
+//{
+//    if (p_OptimalSizeUnit) {
+//        return *p_OptimalSizeUnit;
+//    }
+//    else {
+//        return m_OptimalSizeUnit;
+//    }
+//}
 
 const std::string* SubModel::pOptimalSizeUnit() const
 {

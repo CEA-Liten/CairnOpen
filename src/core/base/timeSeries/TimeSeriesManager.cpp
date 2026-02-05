@@ -161,30 +161,33 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
     m_rowShift = iShift;
     m_npdtFutur = 0;
     for (int i = 0; i < r_MilpData.TimeSteps().size(); i++) {
-        m_npdtFutur += int(r_MilpData.TimeStep(i) / r_MilpData.TimeStep(0));
+        m_npdtFutur += int(r_MilpData.TimeStep(i) / r_MilpData.pdtHeure());
     }
 
     std::vector<double> vReadTimes;
-    if (p_Reader->readTimes(vReadTimes)) {
+    const double startTime = r_MilpData.pdt() * r_MilpData.startTime(); //in seconds
+    const double endTime = (r_MilpData.endTime() > 0) ? r_MilpData.pdt() * r_MilpData.endTime() : -1.0; //in seconds
+    if (p_Reader->readTimes(vReadTimes, startTime, endTime, r_MilpData.pdt())) {
         // times exists for this reader
         //Verify that the first time value is not 0
         if (vReadTimes[0] == 0) {
             Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe first time value cannot be 0; assuming that a variable value is 0 at time=0.", -1);
             throw cairn_error;
         }
-        else if (vReadTimes[0] < 3600 * r_MilpData.TimeStep(0)) {
-            cWarning() << "The first time value is " << vReadTimes[0] << " which is less than TimeStep=" << (3600 * r_MilpData.TimeStep(0)) << ".";
+        else if (vReadTimes[0] < r_MilpData.pdt()) {
+            cWarning() << "The first time value is " << vReadTimes[0] << " which is less than TimeStep=" << r_MilpData.pdt() << ".";
             cWarning() << "The first point is at time=TimeStep." + r_MilpData.readingMode() + "will be applied in this case.";
 
         }
-        //Find the first row where time is greater than or equal to 3600 * r_MilpData.TimeStep(0) * iShift
-    //The difference between time values inside .csv might not be equal to TimeStep    
+
+        //Find the first row where time is greater than or equal to r_MilpData.pdt() * iShift
+        //The difference between time values inside .csv might not be equal to TimeStep    
         int k_periodic = 0;
         if (m_rowShift > 0) {
             int k = 0;
             //for (int i = 0; i < vReadTimes.size(); i++) {
             while (true) {
-                if (fabs(vReadTimes[k] + k_periodic * vReadTimes[vReadTimes.size() - 1] - 3600 * r_MilpData.TimeStep(0) * iShift) < 10e-6)
+                if (fabs(vReadTimes[k] + k_periodic * vReadTimes[vReadTimes.size() - 1] - r_MilpData.pdt() * iShift) < 10e-6)
                 {
                     if (k == vReadTimes.size() - 1) {
                         k_periodic += 1;
@@ -194,7 +197,7 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
                         m_rowShift = k + 1;
                     break;
                 }
-                else if (vReadTimes[k] + k_periodic * vReadTimes[vReadTimes.size() - 1] > 3600 * r_MilpData.TimeStep(0) * iShift)
+                else if (vReadTimes[k] + k_periodic * vReadTimes[vReadTimes.size() - 1] > r_MilpData.pdt() * iShift)
                 {
                     m_rowShift = k;
                     if (k == vReadTimes.size() - 1)
@@ -214,7 +217,7 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
                     }
                     else {
                         Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe TimeShift used is beyond the Time values! Rolling Mode is : " + r_MilpData.rollingMode(), -1);
-                        cDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
+                        cDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.pdtHeure();
                         throw cairn_error;
                     }
                 }
@@ -223,13 +226,12 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
         }
 
         //Prepare time vector and apply TimeShift     
-        double vTimeStep = r_MilpData.TimeStep(0);
-        double time = 3600.0 * iShift * vTimeStep;
+        double time = iShift * r_MilpData.pdt();
         int l = 0;
         int r = 0;
         double delta = 0.0;
         //Add points until time == (m_npdtFutur + iShift)*TimeStep.
-        while (time < 3600 * vTimeStep * (iShift + m_npdtFutur)) {
+        while (time < r_MilpData.pdt() * (iShift + m_npdtFutur)) {
             if (l + m_rowShift < vReadTimes.size())
                 aTimes.push_back(k_periodic * vReadTimes[vReadTimes.size() - 1] + vReadTimes[l + m_rowShift]);
             else {
@@ -250,7 +252,7 @@ void TimeSeriesManager::readTimes(const std::string& aTSfile, const int& iShift,
                 else
                 {
                     Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe number of lines for Time column is not enough!", -1);
-                    cDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
+                    cDebug() << "Number of lines = " << vReadTimes.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.pdt();
                     throw cairn_error;
                 }
             }
@@ -317,7 +319,7 @@ void TimeSeriesManager::extrapolation(const std::string& aTSfile, const int& iSh
                 else // if (rollingMode() == "Stop")
                 {
                     Cairn_Exception cairn_error("Error while importing: " + aTSfile + "\n\nThe number of lines for variable " + aHeader.Name + " in the input CSV file is not enough!", -1);
-                    cDebug() << "Number of lines = " << vValues.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.TimeStep(0);
+                    cDebug() << "Number of lines = " << vValues.size() << ", FutureSize in TimeStep = " << m_npdtFutur << ", current TimeShift in TimeStep = " << iShift << "TimeStep = " << r_MilpData.pdt();
                     throw cairn_error;
                 }
             }
@@ -337,29 +339,71 @@ void TimeSeriesManager::conversion(const OrCheckUnits& checkUnits, std::vector<d
         OrUnitsConverter::OrDefUnit vDestUnit(checkUnits.keyUnit2);
 
         // conversion
-        for (size_t i=0;i<aValues.size();i++)
+        for (size_t i = 0; i < aValues.size(); i++) {
             aValues[i] = UnitsConverter::Convert(aValues[i], vSrcUnit, vDestUnit);
+        }
     }
 }
+
+OrCheckUnits TimeSeriesManager::CheckUnitConsistency(const std::string& a_FileUnit, const std::string& a_Unit, bool a_Check)
+{
+    OrCheckUnits vRet;
+    if (a_Check && (a_FileUnit != a_Unit)) 
+    {
+        // Check first if there is a possible conversion for the entire unit
+        UnitsConverter::CheckUnits(OrUnitsConverter::OrDefUnit(a_FileUnit), OrUnitsConverter::OrDefUnit(a_Unit), &vRet);
+        if (vRet.isSame || vRet.isConsistency) {
+            return vRet;
+        }
+
+        // Is it a concatenation of units ?
+        if (CairnUtils::contains(a_Unit, "/")) {
+            // All concatenated units should be the same one by one
+            t_list listFileUnit = CairnUtils::split(a_FileUnit, '/');
+            t_list listUnit = CairnUtils::split(a_Unit, '/');
+            if (listFileUnit.size() == listUnit.size()) {
+                for (size_t i = 0; i < listUnit.size(); i++) {
+                    OrUnitsConverter::OrDefUnit vUnitPart1(listFileUnit[i]);
+                    OrUnitsConverter::OrDefUnit vUnitPart2(listUnit[i]);
+                    UnitsConverter::CheckUnits(vUnitPart1, vUnitPart2, &vRet);
+                    if (!vRet.isSame) {
+                        vRet.isConsistency = false;
+                        break; // if there is a unit that is not the same (identical or an alias) => stop!
+                    }
+                }
+            }
+            else {
+                vRet.isSame = false;
+                vRet.isConsistency = false;
+            }
+        }
+    }
+    else {
+        vRet.isSame = true;
+        vRet.isConsistency = true;
+    }
+    return vRet;
+}
+
 
 OrCheckUnits TimeSeriesManager::CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check)
 {
     OrCheckUnits vRet;
     if (a_Check && (a_FileUnit != a_Units)) {
-        OrUnitsConverter::OrDefUnit vUnit1(a_FileUnit);
+        // Several units (separated by ;) are possible
         if (CairnUtils::contains(a_Units, ";")) {
             t_list listUnit = CairnUtils::split(a_Units, ';');
             for (auto& vUnit : listUnit) {
-                UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit(vUnit), &vRet);
+                vRet = CheckUnitConsistency(a_FileUnit, vUnit, a_Check);
                 if (vRet.isConsistency)
                     break;
             }
         }
         else if (a_Units == "") {
-            UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit("-"), &vRet);
+            UnitsConverter::CheckUnits(OrUnitsConverter::OrDefUnit(a_FileUnit), OrUnitsConverter::OrDefUnit("-"), &vRet);
         }
         else {
-            UnitsConverter::CheckUnits(vUnit1, OrUnitsConverter::OrDefUnit(a_Units), &vRet);
+            vRet = CheckUnitConsistency(a_FileUnit, a_Units, a_Check);
         }
     }
     else {
@@ -372,7 +416,7 @@ OrCheckUnits TimeSeriesManager::CheckUnits(const std::string& a_FileUnit, const 
 
 void TimeSeriesManager::importZEVarInterpolation(ZEVariables* var, std::vector<double> aVec, std::vector<double> pdtVec, const int& iShift)
 {
-    double time = 3600 * (iShift + 1) * r_MilpData.TimeStep(0);
+    double time = (iShift + 1) * r_MilpData.pdt();
     int iRow = 0;
 
     for (size_t j = r_MilpData.npdtPast(); j < r_MilpData.npdtTot(); j++)
@@ -423,7 +467,7 @@ void TimeSeriesManager::importZEVarInterpolation(ZEVariables* var, std::vector<d
 
 void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double> aVec, std::vector<double> pdtVec, const int& iShift)
 {
-    double time = 3600 * iShift * r_MilpData.TimeStep(0);
+    double time = iShift * r_MilpData.pdt();
     int iRow = 0;
     int previRow = -1;
 
@@ -450,8 +494,8 @@ void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double>
                 sumValue += aVec[iRow] * (pdtVec[iRow] - pdtVec[iRow - 1]);
             }
             else { //iRow == 0
-                sumTime += pdtVec[iRow] - 3600 * iShift * r_MilpData.TimeStep(0);
-                sumValue += aVec[iRow] * (pdtVec[iRow] - 3600 * iShift * r_MilpData.TimeStep(0));
+                sumTime += pdtVec[iRow] - iShift * r_MilpData.pdt();
+                sumValue += aVec[iRow] * (pdtVec[iRow] - iShift * r_MilpData.pdt());
                 if (sumTime < 0) {
                     Cairn_Exception cairn_error((std::string)"Error while importing input time series. Negative time value! Something went wrong!", -1);
                     throw cairn_error;

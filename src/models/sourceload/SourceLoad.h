@@ -158,7 +158,6 @@ public:
         SourceLoadSubModel::declareDefaultModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // addParameter to InputParam instance for input data coming from User File : maximum power, performance maps...
-        // addParameter to mInputData instance for input data coming from Cairn/PEGASE memory : time series (coming from PEGASE), state variables...
         
         //bool
         //re-declare this parameter to change its default value

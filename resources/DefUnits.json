@@ -198,6 +198,42 @@
    "inverse": "0"
   },
   {
+   "name": "Wh",
+   "alias": [
+    { "name": "Wh"}
+   ],
+   "kind": "Energy",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "kWh",
+   "alias": [
+    { "name": "kWh"}
+   ],
+   "kind": "Energy",
+   "A": "1000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "MWh",
+   "alias": [
+    { "name": "MWh"}
+   ],
+   "kind": "Energy",
+   "A": "1000000",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
    "name": "Wc",
    "alias": [
     { "name": "Wc"},
@@ -690,6 +726,57 @@
    "kind": "ImpactUnit13",
    "A": "1",
    "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "GWPkg/Wh",
+   "alias": [
+    { "name": "kg CO2 eq/Wh"},
+    { "name": "kg eq CO2/Wh"},
+    { "name": "kg CO2/Wh"},
+    { "name": "kgCO2eq/Wh"},
+    { "name": "kgCO2/Wh"},
+    { "name": "kgCO2e/Wh"}
+   ],
+   "kind": "ImpactUnit1ParEnergy",
+   "A": "1",
+   "B": "1",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "GWPkg/kWh",
+   "alias": [
+    { "name": "kg CO2 eq/kWh"},
+    { "name": "kg eq CO2/kWh"},
+    { "name": "kg CO2/kWh"},
+    { "name": "kgCO2eq/kWh"},
+    { "name": "kgCO2/kWh"},
+    { "name": "kgCO2e/kWh"}
+   ],
+   "kind": "ImpactUnit1ParEnergy",
+   "A": "1",
+   "B": "1000",
+   "C": "0",
+   "D": "1",
+   "inverse": "0"
+  },
+  {
+   "name": "GWPkg/MWh",
+   "alias": [
+    { "name": "kg CO2 eq/MWh"},
+    { "name": "kg eq CO2/MWh"},
+    { "name": "kg CO2/MWh"},
+    { "name": "kgCO2eq/MWh"},
+    { "name": "kgCO2/MWh"},
+    { "name": "kgCO2e/MWh"}
+   ],
+   "kind": "ImpactUnit1ParEnergy",
+   "A": "1",
+   "B": "1000000",
    "C": "0",
    "D": "1",
    "inverse": "0"

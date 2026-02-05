@@ -29,5 +29,8 @@ rem convert to html
 pip install junit2html
 junit2html  %WORKSPACE%\tests\reports\CairnCtest-TNR.xml %WORKSPACE%\tests\reports\CairnCtest-TNR.html
 
+rem temp
+copy %WORKSPACE%\tests\reports\CairnCtest-TNR.html %WORKSPACE%\tests\reports\CairnCtest-TNR-log.html
+
 rem force script to return code 0
 exit /B 0

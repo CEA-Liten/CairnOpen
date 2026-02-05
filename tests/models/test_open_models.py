@@ -47,10 +47,10 @@ test_cases = find_all_tests(BASE_DIR)
 
 
 @pytest.mark.Cairn
-def test_generic(name_study,app_home,sampling, main=False):
+def test_generic(name_study,app_home,sampling, block_assert=True,skip_col=[]):
     tnr = CNRT.CairnNRT(name=name_study,app_home=app_home,sampling=sampling)
     tnr.check_study_file_existence()
-    status = tnr.generic_testing()
+    status = tnr.generic_testing(skip_col=skip_col)
     status["SAMPLING"] = "NA"
     if sampling != "":
         sampling_status = tnr.sampling_test()
@@ -60,28 +60,25 @@ def test_generic(name_study,app_home,sampling, main=False):
     with open(file_report, mode='a', newline='') as file:
         writer = csv.writer(file,delimiter=';')
         writer.writerow([name_study,status["PLAN"],status["HIST"],status["TIMESERIES"],status["RUNLPFILE"],status["LPFILE"],status["SAMPLING"]])
-    if (__name__=='__main__')==True:
+    if (block_assert)==True:
         assert (status["PLAN"] == True)
         assert (status["HIST"] == True) 
-        assert (status["TIMESERIES"] == True) 
-        assert (status["SAMPLING"]=="Success" or status["SAMPLING"]=="NA")
+        assert (status["TIMESERIES"] == True)
+        assert (not "Failed" in status["SAMPLING"])
     return status
 
 
-def init_study(name_study, app_home):
-    tnr = CNRT.CairnNRT(name=name_study,app_home=app_home)
-    tnr.check_study_file_existence()
-    tnr.updateTest(False,False)
 
-def generate_report(record_property, main=False):
+
+def generate_report(record_property, block_assert=False):
     status_list = dict()
     for tc in test_cases:
         #init_study(tc[0],tc[1])
-        status_list[tc[0] +"."+ tc[1].name]=test_generic(tc[0],tc[1],tc[2], main=True)
+        status_list[tc[0] +"."+ tc[1].name]=test_generic(tc[0],tc[1],tc[2], block_assert=block_assert,skip_col=[])
 
 
 if __name__ == '__main__':
     init = False
     def record_property1(a,b):
         return
-    generate_report(record_property1, main=True)
+    generate_report(record_property1, block_assert=False)

@@ -1,4 +1,10 @@
 /*
+* \file		DynamicIndicator.h
+* \brief	A class to compute user-defined indicators from existing indicators
+* \version	1.0
+* \author	Ali KASSEM
+* \date		24/06/2024
+* 
  ******************************************************************
  *                                                                *
  * This file uses the C++ Mathematical Expression Toolkit Library *

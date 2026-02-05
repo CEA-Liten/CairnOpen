@@ -39,6 +39,7 @@ import os
 
 from datetime import datetime
 
+import math
 
 #from pandas.util.testing import assert_frame_equal
 #from bokeh.plotting import figure, output_file, show,save
@@ -60,23 +61,87 @@ def compare_plan_rempl(type_PLAN_FILE, file_plan_ref, file_plan, logs : TextIOWr
     try:
         plan_df_ref = pd.read_csv(file_plan_ref,sep=";",index_col=["Model","Alias"])
     except:
+        logs.write(file_plan_ref +" file not found \n")
         return "NA"
+    
     plan_df = pd.read_csv(file_plan,sep=";",index_col=["Model","Alias"])
 
     jointure = plan_df_ref.assign(value_current = plan_df["Value"])
     jointure["diff"] = jointure["Value"]-jointure["value_current"]
-    filter_diff = jointure[jointure["diff"].abs()>threshold]
+    jointure["relative_diff"] = abs(jointure["diff"]/jointure["Value"])
+    filter_diff = jointure[(jointure["relative_diff"].abs()>threshold)]
+    filter_na = jointure[jointure["diff"].abs().isna()]
     err=0
     if len(filter_diff)>0:
         logs.write(type_PLAN_FILE +" file changes :\n")
         logs.write("ref:" + file_plan_ref + "\n")
         logs.write("current:"+ file_plan+ "\n")
-        logs.write(str(filter_diff[["diff","Unit"]])+"\n")
+        logs.write(str(filter_diff[["diff","Unit","relative_diff"]])+"\n")
         err = filter_diff["diff"].max()
+        filter_diff.to_csv(file_plan[:-4]+"_diff.csv",sep=";")
+    if len(filter_na)>0:
+        logs.write(type_PLAN_FILE +" file changes :\n")
+        logs.write("ref:" + file_plan_ref + "\n")
+        logs.write("current:"+ file_plan+ "\n")
+        logs.write(str(filter_na[["diff"]])+"\n")
     return err
 
+def compare_csv_files(file_res, file_ref, logs:TextIOWrapper, threshold=0.1):
+    """
+    Compare two CSV files cell-by-cell.
+    - If both cells are numeric: check if difference is within tolerance.
+    - Otherwise: compare as strings.
+    - If row or column count differs: return False immediately.
+    """
+    def read_csv(filepath):
+        return pd.read_csv(filepath, header=None, sep=";")
 
-def new_compare_results(app_home, results, results_ref, logfileName, log_dir, threshold,pegase=False):
+    def to_number(s):
+        try:
+            return float(s)
+        except (ValueError, TypeError):
+            return None
+
+    dash = '-' * 40
+    logs.write(dash+'\n')
+    logs.write('FILES\n') 
+    logs.write(dash+'\n')
+    logs.write('Reference = ' + file_ref+'\n')
+    logs.write('Filename  = ' + file_res+'\n\n')
+ 
+    logs.write(dash+'\n')
+    logs.write('DIFFERENCES\n') 
+    logs.write(dash+'\n')
+
+    # Read both files
+    df_res = read_csv(file_res)
+    df_ref = read_csv(file_ref)
+
+    # Check shape first (same number of rows and columns?)
+    if df_res.shape != df_ref.shape:
+        logs.write("Rows or columns mismatch\n")
+        return False
+
+    # Compare cell by cell
+    for r in range(df_res.shape[0]):
+        for c in range(df_res.shape[1]):
+            val_a = df_res.iat[r, c]
+            val_b = df_ref.iat[r, c]
+
+            num_a = to_number(val_a)
+            num_b = to_number(val_b)
+
+            if num_a is not None and num_b is not None:
+                if not math.isclose(num_a, num_b, rel_tol=threshold):
+                    logs.write("Numeric difference: %f, %f\n"%(num_a, num_b))
+                    return False
+            else:
+                if str(val_a).strip() != str(val_b).strip():
+                    logs.write("String mismatch: %s, %s\n"%(val_a, val_b))
+                    return False
+    return True
+
+def new_compare_results(app_home, results, results_ref, logfileName, log_dir, threshold,pegase=False,skip_col = []):
     if pegase:
         skiprows = [1,2]
         index_col=[1]
@@ -88,17 +153,21 @@ def new_compare_results(app_home, results, results_ref, logfileName, log_dir, th
     results_df_ref = pd.read_csv(results_ref, sep=";", index_col = index_col,skiprows=skiprows).dropna(axis=1,how="all")
     
     if not pegase:
-        results_df.index = pd.to_datetime(results_df.index.astype(int),unit="s",dayfirst=1,yearfirst=2025)
+        results_df.index = pd.to_datetime(results_df.index.values.astype(int),unit="s",dayfirst=1,yearfirst=2025)
         results_df_ref.index = pd.to_datetime(results_df_ref.index,unit="s",dayfirst=1,yearfirst=2025)
     status = True
     if len(results_df) != len(results_df_ref):
         logfileName.write("TS file length doesn't match !")
         status = False
     for c in results_df_ref.columns:
-        if c not in results_df.columns:
+        skipcol = False
+        for skip in skip_col:
+            if skip  in c:
+                skipcol = True
+        if (c not in results_df.columns) and (not skipcol):
             logfileName.write("[TS] Column "+c+" in ref but not in results\n")
             status=False
-        elif pd.api.types.is_numeric_dtype(results_df_ref[c]):
+        elif pd.api.types.is_numeric_dtype(results_df_ref[c]) and (not skipcol):
             diff = (results_df[c] - results_df_ref[c])
             diff = diff.abs()
             idmax = diff.idxmax()

@@ -58,7 +58,7 @@ t_list CairnAPI::get_Models(const std::string& a_TechnoType)
 		vComponentDescrp["id"] = "__Component";
 		vComponentDescrp["type"] = std::string(a_TechnoType.c_str());
 		vComponentDescrp["ListPorts"] = "Port0";
-		if (vCairn->getProblem()->createComponent(vComponentDescrp, {})) {// {} is a nest map of ports list
+		if (vCairn->getProblem()->createComponent(vComponentDescrp["type"], vComponentDescrp, {})) {// {} is a nest map of ports list
 			MilpComponent* vComp = vCairn->getComponent(vComponentDescrp["id"]);
 			if (vComp) {
 				// dynamics list ?
@@ -90,7 +90,7 @@ t_list CairnAPI::get_ModelAttributs(const std::string& a_ModelClass, const std::
 		vComponentDescrp["Model"] = std::string(a_ModelClass.c_str());
 		vComponentDescrp["ModelClass"] = std::string(a_ModelClass.c_str());
 		vComponentDescrp["ListPorts"] = "Port0";
-		if (vCairn->getProblem()->createComponent(vComponentDescrp, {})) {// {} is a nest map of ports list
+		if (vCairn->getProblem()->createComponent(vComponentDescrp["type"], vComponentDescrp, {})) {// {} is a nest map of ports list
 			MilpComponent* vComp = vCairn->getComponent(vComponentDescrp["id"]);
 			if (vComp) {
 				int ierr = vComp->initProblem();
@@ -119,6 +119,7 @@ t_list CairnAPI::get_Solvers()
 //------------- Create Study ------------------------------------------
 CairnAPI::OptimProblemAPI CairnAPI::create_Study(const std::string& a_StudyName)
 {	
+	cInfo() << "Creating a study...";
 	OptimProblemAPI vRet;
 	if (m_Cairn) 
 		CairnAPIUtils::setError(CairnAPIUtils::errDefault, "Study already exist");
@@ -143,6 +144,10 @@ CairnAPI::OptimProblemAPI CairnAPI::read_Study(const std::string& a_filename)
 		vRet = create_Study(a_filename);		
 		try
 		{
+			cInfo() << "===================================================";
+			cInfo() << "Reading study file by the api: " << a_filename;
+			cInfo() << "===================================================";
+
 			m_Cairn->doInit();
 		}
 		catch (Cairn_Exception& error)

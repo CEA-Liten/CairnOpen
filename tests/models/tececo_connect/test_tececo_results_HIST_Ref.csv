@@ -1,0 +1,92 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;365;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;4.26186e+09;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-3.11894e+06;EUR;NPV
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;200000;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total project discounted operation cost;2.91894e+06;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted OPEX;28.2905;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total project buying costs;2.91892e+06;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total project cost of env impact of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Project env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWP
+TecEcoAnalysis#1;Total Project Operational impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Annual operation cost;257502;EUR;NetOPEX
+TecEcoAnalysis#1;Annual OPEX;2.49572;EUR;PureOPEX
+TecEcoAnalysis#1;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Annual income;0;EUR;SellPart
+TecEcoAnalysis#1;Annual buying costs;257500;EUR;BuyPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPFlowEnvImpactMass
+Converter;CAPEX;182188;EUR;CAPEX
+Converter;is installed;1;-;IsInstalled
+Converter;Annual operation cost;2.49572;EUR;OPEX
+Converter;Annual fixed OPEX;2.49572;EUR;PureOPEX
+Converter;Annual variable OPEX;0;EUR;VariableOPEX
+Converter;Annual replacement costs;0;EUR;Replacement
+Converter;Installed Optimal Size;607.292;MW;Size
+Converter;Running time at power >0.;6;h;RunningTime
+Converter;Running time availability;1;-;RunningTimeAvailable
+Converter;Annual consumption of ThermalEnergy PowerIn;-3643.75;MWh;TotConsPowerIn
+Converter;Mean consumption of ThermalPower PowerIn;-607.292;MW;MeanConsPowerIn
+Converter;Load factor PowerIn;1;-;UseRatePowerIn
+Converter;Annual production of ElectricalEnergy PowerOut;2915;MWh;TotProdPowerOut
+Converter;Mean production of ElectricalPower PowerOut;485.833;MW;MeanProdPowerOut
+Elec_Bus;Integrated bus balance;0;MWh;BusBalance
+Elec_Load;is installed;1;-;IsInstalled
+Elec_Load;Annual operation cost;0;EUR;OPEX
+Elec_Load;Annual variable OPEX;0;EUR;VariableOPEX
+Elec_Load;Component Weight;1;Unit;Weight
+Elec_Load;ImposedProfile load time;6;h;ImposedProfileTime
+Elec_Load;ImposedProfile ElectricalEnergy SourceLoadFlow;-3160;MWh;TotImposedProfileSourceLoadFlow
+Elec_Load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-35820.5;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Elec_Load;Mean ElectricalPower SourceLoadFlow;-526.667;MW;MeanImposedProfileSourceLoadFlow
+Heat_Bus;Integrated bus balance;0;MWh;BusBalance
+Heat_Grid;is installed;1;-;IsInstalled
+Heat_Grid;Annual operation cost;257500;EUR;OPEX
+Heat_Grid;Annual variable OPEX;0;EUR;VariableOPEX
+Heat_Grid;Grid extraction time;6;h;extraction Time
+Heat_Grid;Grid extraction ThermalEnergy GridFlow;2575;MWh;TotGridFlow
+Heat_Grid;Levelized Grid extraction ThermalEnergy GridFlow;29189.2;MWh;LvlzdTotGridFlow
+Heat_Grid;Mean extraction ThermalPower GridFlow;429.167;MW;MeanGridFlow
+NodeEquality#1;Mean value during time period;0;;Mean
+SourceLoad#1;CAPEX;17812.5;EUR;CAPEX
+SourceLoad#1;is installed;1;-;IsInstalled
+SourceLoad#1;Annual operation cost;0;EUR;OPEX
+SourceLoad#1;Annual fixed OPEX;0;EUR;PureOPEX
+SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX
+SourceLoad#1;Annual replacement costs;0;EUR;Replacement
+SourceLoad#1;Component Optimal Weight;178.125;Unit;Weight
+SourceLoad#1;ImposedProfile source time;6;h;ImposedProfileTime
+SourceLoad#1;ImposedProfile ThermalEnergy SourceLoadFlow;1068.75;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#1;Levelized ImposedProfile ThermalEnergy SourceLoadFlow;12114.9;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#1;Mean ThermalPower SourceLoadFlow;178.125;MW;MeanImposedProfileSourceLoadFlow
+StorageGen#1;CAPEX;0;EUR;CAPEX
+StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;Annual operation cost;0;EUR;OPEX
+StorageGen#1;Annual fixed OPEX;0;EUR;PureOPEX
+StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX
+StorageGen#1;Annual replacement costs;0;EUR;Replacement
+StorageGen#1;Storage Optimal Capacity;4126.67;MWh;Capacity
+StorageGen#1;Charging time;1;h;ChargingTime
+StorageGen#1;Discharging time;5;h;DischargingTime
+StorageGen#1;Charged  ElectricalEnergy Flow;-35.8333;MWh;TotChargedFlow
+StorageGen#1;Discharged ElectricalEnergy Flow;280.833;MWh;TotDischargedFlow
+StorageGen#1;Levelized Charged  ElectricalEnergy Flow;-406.192;MWh;LvlzdTotChargedFlow
+StorageGen#1;Levelized Discharged ElectricalEnergy Flow;3183.41;MWh;LvlzdDischargedFlow
+StorageGen#1;Mean Charged ElectricalPower Flow;-35.8333;MW;MeanChargedFlow
+StorageGen#1;Mean Discharged ElectricalPower Flow;56.1667;MW;MeanDischargedFlow
+StorageGen#1;Equivalent number of cycles ElectricalPower Flow;1;-;NbCycles
+StorageGen#1;Cumulated losses;0;MWh;CumulatedLosses

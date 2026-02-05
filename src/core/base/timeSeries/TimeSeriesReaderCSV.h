@@ -10,7 +10,7 @@ public:
 
 	bool open(const std::string& aTSfile);
 	void readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp> &aHeader);
-	bool readTimes(std::vector<double>& aTimes);
+	bool readTimes(std::vector<double>& aTimes, const double& aStartTime, const double& aEndTime, const double& aTimeStep);
 	void readValues(int a_index, std::vector<double>& aTimes);
 	void close();
 
@@ -19,9 +19,13 @@ public:
 protected:
 	static int iSkipHead;
 
+	int m_startRow{ -1 };
+	int m_endRow{ -1 };
+
 	std::vector<std::vector<std::string>> m_Data;
 
-	void readColumn(int aCol, int aRowSkipped, std::vector<double> &aValues);
+	void readTimeColumn(const double& aStartTime, const double& aEndTime, const double& aTimeStep, const int& aRowSkipped, std::vector<double>& aValues);
+	void readTSColumn(int aCol, int aRowSkipped, std::vector<double> &aValues);
 };
 
 #endif

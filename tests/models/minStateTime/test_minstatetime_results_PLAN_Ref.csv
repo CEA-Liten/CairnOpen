@@ -10,51 +10,44 @@ TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
 TecEcoAnalysis#1;Extrapolation Factor;91.25;-;ExtrapolationFactor
 TecEcoAnalysis#1;OBJECTIVE;-7.08027e+07;EUR;Objective
 TecEcoAnalysis#1;Net Present Value (Levelized Profit);7.08027e+07;EUR;NPV
-TecEcoAnalysis#1;Computed Average Rate Of Return Factor;0;-;ComputedAverageRateOfReturnFactor
-TecEcoAnalysis#1;Computed Average Rate Of Return perCent;0;%;ComputedAverageRateOfReturnPerCent
-TecEcoAnalysis#1;Current Rate Of Return perCent;0;%;CurrentRateOfReturnperCent
 TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
 TecEcoAnalysis#1;Total CAPEX;0;EUR;CAPEX
 TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
-TecEcoAnalysis#1;Total Discounted Net OPEX;-7.08027e+07;EUR;DiscountedNetOPEX
-TecEcoAnalysis#1;Total Discounted Pure OPEX;0;EUR;DiscountedPureOPEX
-TecEcoAnalysis#1;Total Discounted Replacement Part;0;EUR;DiscountedReplacement
-TecEcoAnalysis#1;Total Discounted Sell Part;-7.8475e+07;EUR;DiscountedSellPart
-TecEcoAnalysis#1;Total Discounted Buy Part;7.6723e+06;EUR;DiscountedBuyPart
-TecEcoAnalysis#1;Total Undiscounted Net OPEX;-3.54014e+06;EUR;NetOPEX
-TecEcoAnalysis#1;Total Undiscounted Pure OPEX;0;EUR;PureOPEX
-TecEcoAnalysis#1;Total Undiscounted Replacement Part;0;EUR;ReplacementPart
-TecEcoAnalysis#1;Total Undiscounted Sell Part;-3.92375e+06;EUR;SellPart
-TecEcoAnalysis#1;Total Undiscounted Buy Part;383615;EUR;BuyPart
-CH4_Grid;Total Cost Function;810300;EUR;TotCosts
+TecEcoAnalysis#1;Total project discounted operation cost;-7.08027e+07;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total project income;-7.8475e+07;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total project buying costs;7.6723e+06;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Annual operation cost;-3.54014e+06;EUR;NetOPEX
+TecEcoAnalysis#1;Annual OPEX;0;EUR;PureOPEX
+TecEcoAnalysis#1;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Annual income;-3.92375e+06;EUR;SellPart
+TecEcoAnalysis#1;Annual buying costs;383615;EUR;BuyPart
 CH4_Grid;is installed;1;-;IsInstalled
-CH4_Grid;Opex part (including energy cost);40515;EUR;OPEX
+CH4_Grid;Annual operation cost;40515;EUR;OPEX
+CH4_Grid;Annual variable OPEX;0;EUR;VariableOPEX
 CH4_Grid;Grid extraction time;4562.5;h;extraction Time
 CH4_Grid;Grid extraction FluidCH4Mass GridFlow;40515;kg;TotGridFlow
 CH4_Grid;Levelized Grid extraction FluidCH4Mass GridFlow;810300;kg;LvlzdTotGridFlow
 CH4_Grid;Mean extraction FluidCH4Flowrate GridFlow;8.88;kg/h;MeanGridFlow
-Converter;Total Cost Function;0;EUR;TotCosts
-Converter;Capex part;0;EUR;CAPEX
+Converter;CAPEX;0;EUR;CAPEX
 Converter;is installed;1;-;IsInstalled
-Converter;Opex part (including energy cost);0;EUR;OPEX
-Converter;Pure Opex part;0;EUR;PureOPEX
-Converter;Replacement part;0;EUR;Replacement
-Converter;Sum up at;1;-;SumUp
+Converter;Annual operation cost;0;EUR;OPEX
+Converter;Annual fixed OPEX;0;EUR;PureOPEX
+Converter;Annual variable OPEX;0;EUR;VariableOPEX
+Converter;Annual replacement costs;0;EUR;Replacement
 Converter;Installed Size;10;kg/h;Size
 Converter;Running time at power >0.;4562.5;h;RunningTime
 Converter;Running time availability;0.520833;-;RunningTimeAvailable
-Converter;CONS Total FluidCH4Mass PowerIn;-40515;kg;TotConsPowerIn
-Converter;CONS Levelized Total FluidCH4Mass PowerIn;-810300;kg;LvlzdTotConsPowerIn
-Converter;CONS Mean Total FluidCH4Flowrate PowerIn;-8.88;kg/h;MeanConsPowerIn
-Converter;CONS Total Power Factor PowerIn;0.888;-;PowerFactorPowerIn
-Converter;Rate of use PowerIn;0.4625;-;UseRatePowerIn
-Converter;PROD Total ElectricalEnergy PowerOut;40515;MWh;TotProdPowerOut
-Converter;PROD Levelized Total ElectricalEnergy PowerOut;810300;MWh;LvlzdTotProdPowerOut
-Converter;PROD Mean Total ElectricalPower PowerOut;8.88;MW;MeanProdPowerOut
+Converter;Annual consumption of FluidCH4Mass PowerIn;-40515;kg;TotConsPowerIn
+Converter;Mean consumption of FluidCH4Flowrate PowerIn;-8.88;kg/h;MeanConsPowerIn
+Converter;Load factor PowerIn;0.4625;-;UseRatePowerIn
+Converter;Annual production of ElectricalEnergy PowerOut;40515;MWh;TotProdPowerOut
+Converter;Mean production of ElectricalPower PowerOut;8.88;MW;MeanProdPowerOut
 Converter;Data Port published State - data computed;-4562.5;MWh;DataPortState
-Elec_Grid;Total Cost Function;-7.76355e+07;EUR;TotCosts
 Elec_Grid;is installed;1;-;IsInstalled
-Elec_Grid;Opex part (including energy cost);-3.88178e+06;EUR;OPEX
+Elec_Grid;Annual operation cost;-3.88178e+06;EUR;OPEX
+Elec_Grid;Annual variable OPEX;0;EUR;VariableOPEX
 Elec_Grid;Grid injection time;4562.5;h;injection Time
 Elec_Grid;Grid injection ElectricalEnergy GridFlow;-40515;MWh;TotGridFlow
 Elec_Grid;Levelized Grid injection ElectricalEnergy GridFlow;-810300;MWh;LvlzdTotGridFlow
@@ -64,6 +57,6 @@ MinStateTime;Undiscounted number of startups;3;-;NbStartUps
 MinStateTime;Undiscounted number of shutdowns;3;-;NbShutDowns
 MinStateTime;Levelized cost of startups;273750;EUR;LevStartUpsCost
 MinStateTime;Levelized cost of shutdowns;27375;EUR;LevShutDownsCost
-NodeEquality#1;Mean value during time period;0;-;Mean
+NodeEquality#1;Mean value during time period;0;;Mean
 NodeLaw#1;Integrated bus balance;0;kg;BusBalance
 NodeLaw#2;Integrated bus balance;0;MWh;BusBalance

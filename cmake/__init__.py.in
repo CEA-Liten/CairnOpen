@@ -1,15 +1,16 @@
-from email.errors import InvalidDateDefect
 import os
+import re
 from re import X
 import sys
 import pandas as pd
+import glob
+import copy
 
-cairnBin =  os.path.join(os.path.dirname(os.path.realpath(__file__)), '@CMAKE_INSTALL_BINDIR@')
-os.add_dll_directory(cairnBin)
+cairnBin =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bin')
 sys.path.append( cairnBin )
 os.environ["CAIRN_BIN"] = cairnBin
 
-from .cairn import *
+from .bin.cairn import *
 
 
 
@@ -40,18 +41,21 @@ def set_param(problem, header_col, value):
                 return(header_col[0],header_col[1],old_value)
             except RuntimeError:
                 try:
-                    old_value = problem.tech_eco_analysis[header_col[1]]
-                    problem.tech_eco_analysis = {header_col[1] : value}
+                    tech_eco = problem.get_tech_eco_analysis()
+                    old_value = tech_eco.get_setting_value(header_col[1])
+                    tech_eco.set_setting_value(header_col[1], value)
                     return(header_col[0],header_col[1],old_value)
                 except RuntimeError:
                     try:
-                        old_value = problem.solver[header_col[1]]
-                        problem.solver = {header_col[1] : value}
+                        solver = problem.get_solver()
+                        old_value = solver.get_setting_value(header_col[1])
+                        solver.set_setting_value(header_col[1], value)                        
                         return(header_col[0],header_col[1],old_value)
                     except RuntimeError:
                         try:
-                            old_value = problem.simulation_control[header_col[1]]
-                            problem.simulation_control = {header_col[1] : value}
+                            simulation_control = problem.get_simulation_control()
+                            old_value = simulation_control.get_setting_value(header_col[1])
+                            simulation_control.set_setting_value(header_col[1], value) 
                             return(header_col[0],header_col[1],old_value)
                         except RuntimeError:
                             assert False, "Component "+ header_col[0]+" or parameter "+header_col[1]+" not found"
@@ -167,3 +171,141 @@ def copy_component(problem, component,new_name,connexions = True):
                 if compo_name_link == component and l.split('.')[-1]==port.name:
                     problem.add_link(port2,problem.get_bus(problem.links[l]))
     return compo2
+
+
+def PasteResultsMonoLoc(projects_path, prefix, hist_plan, scenario_list=[],
+                        lines_to_delete=["no data computed", "save iteration"], file_out="SUMUPALL.csv", list_order=[]):
+    """
+    Parameters
+    ----------
+    projects_path : str
+        path of the project.
+    scenarioList : list
+        list of scenario names (when len < 2 the consider all scenario)
+    prefix : str
+        Beginning name of the case name (scenario).
+
+    Returns
+    -------
+    Write the files SUMUP_configCase in which plan file are gathered to be compared.
+    """
+
+    PasteFile = os.path.join(projects_path,file_out)
+
+    list_report, all_filenames = generate_report_list(projects_path, prefix, scenario_list, hist_plan + '.csv')
+
+    # Re-order reports in case of run sensitivity for result sumupall_sens.csv file
+    list_report, all_filenames = re_order_based_on_list(list_report, all_filenames, list_order)
+
+    print("Reading results :", list_report, 'in', all_filenames)
+
+    def import_sumup():
+        try:
+            perf_data = [pd.read_csv(f, sep=";", header=None, usecols=[0, 1, 2], on_bad_lines='warn', encoding="utf-8")
+                         for f in all_filenames]
+        except UnicodeDecodeError:
+            perf_data = [
+                pd.read_csv(f, sep=";", header=None, usecols=[0, 1, 2], on_bad_lines='warn', encoding="ISO-8859-1") for
+                f in all_filenames]
+        for i in range(len(perf_data)):
+            perf_data[i].dropna(how="all", inplace=True)
+            # for j in range(len(perf_data[i][0])):
+            ndc = perf_data[i][1].str.contains("no data computed").index
+            perf_data[i].drop(ndc)
+            perf_data[i]["Component.Variable"] = perf_data[i][0] + "." + perf_data[i][1]
+            for li in lines_to_delete:
+                ndc = perf_data[i][perf_data[i]["Component.Variable"].str.contains(li)].index
+            perf_data[i] = perf_data[i].drop(ndc)
+            perf_data[i] = perf_data[i].set_index("Component.Variable")
+            perf_data[i] = perf_data[i].rename(columns={2: list_report[i]})
+            del perf_data[i][0]
+            del perf_data[i][1]
+        return perf_data
+
+    def sumup_file():
+        tab = import_sumup()
+        try:
+            sumup = tab[0]
+            for i in range(1, len(tab)):
+                sumup = sumup.join(tab[i], how='inner')
+            return sumup
+        except IndexError:
+            print("Issue in sumup file, no run produced results")
+
+    sumup = sumup_file()
+    sumup.to_csv(PasteFile, sep=';', encoding="utf-8")
+    return sumup
+
+def generate_report_list(projects_path, prefix, scenario_list, file_ext):
+    all_filenames = []
+    list_report = []
+    if len(scenario_list) < 2:
+        scenario = prefix
+        if len(scenario_list) == 1:
+            scenario = scenario + '_' + scenario_list[0]
+        #check inside all folders starts with scenario
+        strs = os.path.join(projects_path,scenario+'*', '*'+file_ext)
+        print("Looking for a match to ", strs)
+        if file_ext == '.json':
+            all_filenames = list(set([i.replace("_self","") for i in glob.glob(strs)]))
+        else:
+            all_filenames = list(set([i for i in glob.glob(strs)]))
+
+        for f in range(len(all_filenames)):
+            m = re.search(scenario + '([\d _a-zA-Z]+)', all_filenames[f])
+            if type(m) is not type(None):
+                matchTest = m.group()
+                list_report.append(matchTest)
+            elif len(scenario_list) == 1:
+                m = re.search(scenario , all_filenames[f])
+                if type(m) is not type(None):
+                    list_report.append(scenario)
+    else:#multiple scenario names are given
+        for name in scenario_list:
+            scenario = prefix + '_' + name
+            #check only exact scenario folder
+            strs = os.path.join(projects_path,scenario,'*'+file_ext)
+            print("Looking for a match to ", strs)
+            if file_ext == '.json':
+                tmp_filenames = list(set([i.replace("_self","") for i in glob.glob(strs)]))
+            else:
+                tmp_filenames = list(set([i  for i in glob.glob(strs)]))
+            if tmp_filenames:
+                all_filenames.extend(tmp_filenames)
+                list_report.append(scenario)
+    return list_report, all_filenames
+
+def re_order_based_on_list(list_report, all_filenames, list_order):
+    #Re-order list_report and all_filenames based on the order set in list_order
+    ordered_reports, ordered_filenames = [], []
+    other_reports = copy.deepcopy(list_report)
+    other_filenames = copy.deepcopy(all_filenames)
+
+    #Order matched file in the same order as appears in list_order
+    for element in list_order:
+        for report in list_report:
+            if report == "Report_s"+element or report == element:
+                ordered_reports.append(report)
+                i_report = list_report.index(report)
+                ordered_filenames.append(all_filenames[i_report])
+
+    #Obtain the remaining reports
+    for report in list_report:
+        if report in ordered_reports:
+            i_report = other_reports.index(report)
+            other_reports.pop(i_report)
+            other_filenames.pop(i_report)
+
+    # Use alphabetic order
+    other_reports = sorted(other_reports)
+    other_filenames = sorted(other_filenames)
+
+    #merge lists
+    ordered_reports.extend(other_reports)
+    ordered_filenames.extend(other_filenames)
+
+    if set(ordered_reports) == set(list_report) and set(ordered_filenames) == set(all_filenames):
+        list_report = ordered_reports
+        all_filenames = ordered_filenames
+
+    return list_report, all_filenames

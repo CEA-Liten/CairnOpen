@@ -6,6 +6,7 @@ if (NOT Cairn_FIND_COMPONENTS)
     set(Cairn_FIND_COMPONENTS CairnCore)    
 endif()
 
+
 if (NOT CAIRN_INSTALL)
     # build sources
     if (NOT CAIRN_HOME)
@@ -28,8 +29,7 @@ if (NOT CAIRN_INSTALL)
           set_target_properties(CAIRN::CAIRN PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${CAIRN_INCLUDE_DIR}")
         endif()
-      endif()      
-      target_link_libraries(${COMPONENT} PRIVATE CAIRN::CAIRN)
+      endif()            
     endif()
 else()
      # get libs
@@ -58,7 +58,7 @@ else()
                 OUTPUT_NAME "${CAIRN_LIBRARY}"                
                 INTERFACE_INCLUDE_DIRECTORIES "${CAIRN_INCLUDE_DIR}"  
             )
-           target_link_libraries(${COMPONENT} PUBLIC ${CAIRN_LIBRARY})       
+           #target_link_libraries(${COMPONENT} PUBLIC ${CAIRN_LIBRARY})       
         endforeach()
     endif()
 endif()

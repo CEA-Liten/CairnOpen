@@ -80,6 +80,13 @@ void TecEcoEnv::setCurrency (std::string aCurrency)
        mCurrency = aCurrency ;
     }
 }
+void TecEcoEnv::setObjectiveUnit(const std::string aObjectiveUnit)
+{
+    if (aObjectiveUnit != "") {
+        mObjectiveUnit = aObjectiveUnit;
+    }
+}
+
 void TecEcoEnv::setRange (const std::string aRange)
 {
     if (aRange != "") {
@@ -147,10 +154,6 @@ void TecEcoEnv::setInternalRateOfReturn (const double aInternalRateOfReturn)
 void TecEcoEnv::setExtrapolationFactor(const double aExtrapolationFactor)
 {
     mExtrapolationFactor = aExtrapolationFactor;
-}
-
-void TecEcoEnv::computeTecEcoEnvAnalysis()
-{
 }
 
 void TecEcoEnv::setLevelizationTable(){

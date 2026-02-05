@@ -1,5 +1,15 @@
 @ECHO off
+rem =========================================================
+rem
+rem buildAll [<empty>=release|debug|fullrelease|fulldebug] 
+rem	 		 [<empty>=all|open]					: all=with private models, open=without
+rem			 [<empty>|wheel|wheel-noinstall]	: wheel=build and install wheel, wheel-noinstall=build but no install
+rem			 [<empty>|deps]			: deps=use dependencies installed in the directory D:/Tools/DepsCairn
+rem			 [<empty>|envCairn]		: envCairn=use env python enCairn<Number> else use defaultoption
+rem		
+rem ========================================================= 
 SET STARTTIME=%TIME%
+call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
 if exist "cmakepath.bat" (	
@@ -16,10 +26,43 @@ echo %CONFIGURATION%
 
 rem Input parameter: all, open
 set OPTION=%2
+set OPTION_PRIVATE=
 if "%OPTION%"=="" (
 	set OPTION=all
 )
-echo %OPTION%
+if "%OPTION%"=="all" ( 
+	set OPTION_PRIVATE=-DWITH_PRIVATEMODELS=ON
+) else (
+	set OPTION_PRIVATE=-DWITH_PRIVATEMODELS=OFF -DWITH_LICENCE=OFF -DCAIRN_DEFAULTSOLVER:STRING=Highs
+)
+echo %OPTION_PRIVATE%
+
+rem Input parameter: wheel
+set WHEEL=%3
+set OPTION_WHEEL=-DBUILD_WHEEL=OFF -DINSTALL_WHEEL=OFF
+if "%WHEEL%"=="wheel" (
+	set OPTION_WHEEL=-DBUILD_WHEEL=ON -DINSTALL_WHEEL=ON
+)
+if "%WHEEL%"=="wheel-noinstall" (
+	set OPTION_WHEEL=-DBUILD_WHEEL=ON -DINSTALL_WHEEL=OFF
+)
+echo %OPTION_WHEEL%
+
+rem Input parameter: deps
+set INSTALLDEPS=%4
+set OPTION_DEPS=
+if "%INSTALLDEPS%"=="deps" (
+	set OPTION_DEPS=-DDEPS_INSTALL=ON -DDEPS_ROOT:STRING=D:/Tools/DepsCairn
+)
+echo %OPTION_DEPS%
+
+rem Input parameter: envCairn
+set USE_ENVCAIRN=%5
+set OPTION_ENVCAIRN=
+if "%USE_ENVCAIRN%"=="envCairn" (
+	set OPTION_ENVCAIRN=-DUSE_ENVCAIRN=ON
+)
+echo %OPTION_ENVCAIRN%
 
 rem remove build directory
 set BUILD_PATH=out\%CONFIGURATION%
@@ -28,17 +71,11 @@ if exist %BUILD_PATH% (
 )
 mkdir "%BUILD_PATH%"
 
-
 rem Generate config
-if "%OPTION%"=="all" ( 
-	"%CMAKEPATH%" --preset=%CONFIGURATION% -S . 
-) else (
-    "%CMAKEPATH%" --preset=%CONFIGURATION% -DWITH_PRIVATEMODELS=OFF -DWITH_LICENCE=OFF -DWITH_TESTING=OFF -DWITH_PYBIND=OFF -DWITH_SPDLOG_INSTALL=OFF -DCAIRN_DEFAULTSOLVER:STRING=Highs -S . 
-)
+"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
 
-rem build  -j %NUMBER_OF_PROCESSORS%
-"%CMAKEPATH%" --build --preset %CONFIGURATION%  
-
+rem build 
+"%CMAKEPATH%\cmake.exe" --build --preset %CONFIGURATION%  
 
 rem remove previous install directory
 set BIN_PATH=bin\%CONFIGURATION%

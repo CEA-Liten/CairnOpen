@@ -43,6 +43,7 @@ Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const std::map<
     mSolverRunningTime(0.)
 {
     this->setObjectName(aName);
+    this->setObjectType("Solver");
     doInit(aComponent);
 }
 
@@ -55,22 +56,33 @@ Solver::~Solver()
 
 void Solver::doInit(const std::map<std::string, std::string>& aComponent) 
 {
+    if (mGUIData) delete mGUIData;
+    mGUIData = new GUIData(this);
+    mGUIData->doInit("Solver", "Solver", "Solver",
+        { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
+
     declareCompoInputParam();
     setCompoInputParam(aComponent);
     InitSolverParam();
 
-    if (mGUIData) delete mGUIData;
-    mGUIData = new GUIData(this);
-    mGUIData->doInit("Solver", "Solver", "Solver", { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
     mGUIData->setObjectName(mSolverName);
 }
 
 void Solver::declareCompoInputParam()
 {
+    std::string vDefaultSolver = CAIRN_DEFAULTSOLVER;
+    // test if default solver exists
+    t_list vSolverLoaded;
+    mSolvers.getAllInfos(vSolverLoaded);
+    if (!CairnUtils::contains(vSolverLoaded, vDefaultSolver)) {
+        // if not exist, take the first solver
+        if (vSolverLoaded.size()) vDefaultSolver = vSolverLoaded[0];
+    }
+
     mCompoInputParam = new InputParam(this, "CompoInputParam" + Name());
     //std::string
     mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used");
-    mCompoInputParam->addParameter("Solver", &mSolverName, CAIRN_DEFAULTSOLVER, true, true, "Solver name: Cbc or Cplex or Highs ..");
+    mCompoInputParam->addParameter("Solver", &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc or Cplex or Highs ..");
     mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Model type");
     mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default NO");
     mCompoInputParam->addParameter("ReadParamFile", &mReadParamFile, "NO", false, true, "Read a study_cplexParam.prm file to parameter cplex solving");
@@ -123,8 +135,7 @@ void Solver::InitSolverParam() {
 
         // Does the solver exist among the list of possible solvers?
         if (!CairnUtils::contains(vSolverLoaded, mSolverName)) {
-            mException = Cairn_Exception("Error: solver asked " + mSolverName + ", possible solver names are " + std::string(CairnUtils::join(vSolverLoaded).c_str()), -1);
-            throw mException;
+            mException = Cairn_Exception("Error: solver asked " + mSolverName + ", possible solver names are " + std::string(CairnUtils::join(vSolverLoaded).c_str()), -1);            
         }
     }
     else if (CairnUtils::contains(vModelerLoaded, mModelType)) {
@@ -136,15 +147,13 @@ void Solver::InitSolverParam() {
                 mProblemType != "DNLP" &&
                 mProblemType != "QCP" &&
                 mProblemType != "MIQCP") {
-                mException = Cairn_Exception((std::string)"Error: possible problem types are \"LP\", \"MIP\", \"NLP\", \"MINLP\", \"DNLP\", \"QCP\" or \"MIQCP\".", -1);
-                throw mException;
+                mException = Cairn_Exception((std::string)"Error: possible problem types are \"LP\", \"MIP\", \"NLP\", \"MINLP\", \"DNLP\", \"QCP\" or \"MIQCP\".", -1);                
             }
         }
         mExternalModeler = mModelers.getModeler(mModelType);
     }
     else {
-        mException = Cairn_Exception("Error: Modeler asked " + mModelType + ", possible modeler names are MIPModeler are " + std::string(CairnUtils::join(vModelerLoaded).c_str()), -1);
-        throw mException;
+        mException = Cairn_Exception("Error: Modeler asked " + mModelType + ", possible modeler names are MIPModeler are " + std::string(CairnUtils::join(vModelerLoaded).c_str()), -1);        
     }
 }
 
@@ -356,3 +365,19 @@ std::map<std::string, InputParam::ModelParam*> Solver::getParameters()
     return paramMap;
 }
 
+std::vector<InputParam*> Solver::get_InputParams()
+{
+    std::vector<InputParam*> result;
+    result.reserve(3);   // avoid reallocations
+
+    // Always available
+    result.push_back(getCompoInputParam());
+    result.push_back(getCompoInputSettings());
+
+    // Add GUI parameters if available
+    if (auto* gui = getGUIData()) {
+        result.push_back(gui->getGuiInputParam());
+    }
+
+    return result;
+}

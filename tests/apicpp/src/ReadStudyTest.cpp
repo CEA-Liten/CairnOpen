@@ -42,20 +42,20 @@ int main()
 
 	//Verify the values of some parameters with static ref values
 
-	CairnAPI::MilpComponentAPI ely_pem = m_Problem.get_Component("ELY_PEM");
+	CairnAPI::MilpComponentAPI vELY_PEM = m_Problem.get_Component("ELY_PEM");
 	TESTAPI2("Verify the value of ELY_PEM.Capex.",
-		TestUtils::compare_scalar(ely_pem.get_SettingValue("Capex"), 480000.0, eDouble)
+		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
 	TESTAPI2("Verify the value of ELY_PEM.GWP#EnvGreyContentCoefficient_A.",
-		TestUtils::compare_scalar(ely_pem.get_SettingValue("Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A"), 100.0, eDouble)
+		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A"), 100.0, eDouble)
 	)
 
 	TESTAPI2("Verify the value of ELY_PEM.ModelClass.",
-		TestUtils::compare_scalar(ely_pem.get_SettingValue("ModelClass"), std::string("Electrolyzer"), eString)
+		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("ModelClass"), std::string("Electrolyzer"), eString)
 	)
 
-	CairnAPI::MilpPortAPI ely_pem_PortL0 = ely_pem.get_Port("PortL0");
+	CairnAPI::MilpPortAPI ely_pem_PortL0 = vELY_PEM.get_Port("PortL0");
 	TESTAPI2("Verify the value of ELY_PEM.PortL0.coeff",
 		TestUtils::compare_scalar(ely_pem_PortL0.get_SettingValue("Coeff"), 1.0, eDouble)
 	)
@@ -83,22 +83,26 @@ int main()
 		TestUtils::compare_scalar(evH2.get_SettingValue("RHO"), 0.0899, eDouble)
 	)
 
+	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
 	TESTAPI2("Verify the value of SimulationControl.UseExtrapolationFactor.",
-		TestUtils::compare_scalar(m_Problem.get_SimulationControlSettings()["UseExtrapolationFactor"], true, eBool)
+		TestUtils::compare_scalar(vSimulationControl.get_SettingValue("UseExtrapolationFactor"), true, eBool)
 	)//true is the default value. Parameter UseExtrapolationFactor doesn't exist in formation_cairn.json
 
+	CairnAPI::SolverAPI vSolver = m_Problem.get_Solver();
 	TESTAPI2("Verify the value of Solver.NbSolToKeep.",
-		TestUtils::compare_scalar(m_Problem.get_MIPSolverSettings()["NbSolToKeep"], 1, eInt)
+		TestUtils::compare_scalar(vSolver.get_SettingValue("NbSolToKeep"), 1, eInt)
 	)//1 is the default value. Parameter NbSolToKeep doesn't exist in formation_cairn.json
 
 	TESTAPI2("Verify the value of Solver.Gap.",
-		TestUtils::compare_scalar(m_Problem.get_MIPSolverSettings()["Gap"], 0.001, eDouble)
+		TestUtils::compare_scalar(vSolver.get_SettingValue("Gap"), 0.001, eDouble)
 	)
 
 	std::vector<std::string> ConsideredEnvironmentalImpacts = { "Climate change#Global Warming Potential 100",
 																"Acidification#Accumulated Exceedance" };
+
+	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
 	TESTAPI2("Verify the value of TecEco.ConsideredEnvironmentalImpacts.",
-		TestUtils::compare_scalar(m_Problem.get_TecEcoAnalysisSettings()["ConsideredEnvironmentalImpacts"], ConsideredEnvironmentalImpacts, eStringList)
+		TestUtils::compare_scalar(vTecEcoAnalysis.get_SettingValue("ConsideredEnvironmentalImpacts"), ConsideredEnvironmentalImpacts, eStringList)
 	)
 		
 
@@ -118,16 +122,16 @@ int main()
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 
-	vSolution.exportTimeSeries();
+	TESTAPI("Export time series", vSolution.exportTimeSeries())
 
 	TESTAPI("Modify FutureSize",
-		m_Problem.set_SimulationControlSettings({
+		vSimulationControl.set_SettingValues({
 			{"FutureSize", 156}
 		})
 	)
 
 	TESTAPI("Run 2",
-		vSolution = m_Problem.run()
+		m_Problem.run()
 	)
 
 	TESTAPI2("Compare results for run 2",

@@ -66,7 +66,7 @@ int main()
 			{"Direction", "Sink"},
 			{"LPModelONLY", false},
 			{"Weight", "1"},
-			{"Opex", "0" },
+			{"FixedOpex", "0" },
 			{"Capex", "0" },
 			{"MaxFlow", "1000"},
 			{"EcoInvestModel", "1"},

@@ -150,6 +150,8 @@ std::vector<std::string> OrUnits::get_Quantities(const OrUnitsConverter::OrDefUn
 void OrUnits::getInfos(const OrUnitsConverter::OrDefUnit& a_SrcUnit, const OrUnitsConverter::OrDefUnit& a_DestUnit, OrCheckUnits& a_Infos)
 {
 	a_Infos.isSame = false;
+	a_Infos.keyUnit1 = -1;
+	a_Infos.keyUnit2 = -1;
 	OrUnit* pSrcUnit = (OrUnit*)get_Unit(a_SrcUnit);
 	OrUnit* pDestUnit = (OrUnit*)get_Unit(a_DestUnit);
 	if (pSrcUnit && pDestUnit) {

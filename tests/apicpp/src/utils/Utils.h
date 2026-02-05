@@ -1,4 +1,4 @@
-#include "..\TEST_CairnCore.h"
+#include "TEST_CairnCore.h"
 #include <iostream>
 #include <list>
 #include <string>
@@ -11,9 +11,10 @@
 #include<cstdio>
 #include <map>
 #include <iomanip>
-
+#include <cstring>
 #include <ctime> 
-
+#include <algorithm>
+#include <iterator>
 #include <filesystem>
 namespace fs = std::filesystem;
 enum ECodeError {
@@ -54,23 +55,30 @@ struct tokens : std::ctype<char>
 
 #define TESTAPI(name, code) \
 try { \
+    cout << "--- Test " << name << endl; \
     code; \
 } \
 catch (std::exception& error) { \
-    cout << "Error method " << name << ", " << error.what() << endl; \
+    cout << "Error test " << name << ", " << error.what() << endl; \
     return errSet;  \
 } \
 
 #define TESTAPIFALSE(name, code) \
 try { \
+    cout << "--- Test " << name << endl; \
     code; \
-    cout << "Error method " << name << ", must be in error" << endl; \
+    cout << "Error test " << name << ", must be in error" << endl; \
     return errSet;  \
 } \
 catch (std::exception& error) {} \
 
 #define TESTAPI2(name, code) \
-	if (code) { cout << "Error method " << name << endl; return errSet; }
+    cout << "--- Test " << name << endl; \
+	if (code) { cout << "Error test " << name << endl; return errSet; }
+
+#define TESTAPI2FALSE(name, code) \
+    cout << "--- Test " << name << endl; \
+	if (!code) { cout << "Error test " << name << endl; return errSet; }
 
 // Enum to represent log levels 
 enum LogLevel { DEBUG, INFO, WARNING, ERROR, CRITICAL };
@@ -83,7 +91,8 @@ public:
 	static void Display_Vector(vector<vector<string>> InputVector);
 	static vector<vector<string>> ParserTxt(const string& cheminFichier);
     static int compare_scalar(const t_value& val, const t_value& ref, const EParamType& type);
-	static int compare_lists(t_list InputList, t_list RefList);
+	static int compare_lists(const t_list &InputList, const t_list &RefList);
+    static int contains(const t_list& InputList, const std::string& val);
 	static int CreateRefrenceList(const vector<vector<string>>& DataRef, t_list& OutputSolverList);
 	static map<string, string> ParseDictionaryFile(const string& cheminFichier);
 	static string SearchValueInDict(const string& filePath, const string& PortName);
@@ -99,7 +108,7 @@ public:
 	static int ComparePortValue(const string& ValueToBeCompared, const string& ComponentName, const string& PortName, const string& PortAttribut, vector<vector<string>>& PortValueReferenceList);
     static std::vector<std::string> readCSV(const std::string& filename);
     static int ComparaisonCsvFile(string const CsvFilePath1, string const CsvFilePath2);
-    static std::vector<std::string> str_to_vector(std::string& str);
+    static std::vector<std::string> str_to_vector(const std::string& str);
     static map<std::string, std::map<std::string, std::string>> ReadDataFileWithIndex(const std::string& filePath);
     static string GetDataWithIndex(const std::map<std::string, std::map<std::string, std::string>>& data, const std::string& section, const std::string& key);
     static t_dict PreparePortSettings(const std::map<std::string, std::map<std::string, std::string>>& data, const std::string& section);

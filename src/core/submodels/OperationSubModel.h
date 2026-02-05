@@ -39,7 +39,8 @@ public:
 
 protected:
     //expressions
-    MIPModeler::MIPExpression1D mExpVariableCosts;                       
+    MIPModeler::MIPExpression1D mExpVariableCosts;
+    MIPModeler::MIPExpression1D mExpVariableOpex;
 
     //indicators
     std::vector<double> mVariableCosts;

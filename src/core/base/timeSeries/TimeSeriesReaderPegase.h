@@ -10,7 +10,7 @@ public:
 
 	bool open(const std::string& aTSfile);
 	void readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader);
-	bool readTimes(std::vector<double>& aTimes);
+	bool readTimes(std::vector<double>& aTimes, const double& aStartTime, const double& aEndTime, const double& aTimeStep);
 	void readValues(int a_index, std::vector<double>& aTimes);
 	void close();	
 protected:

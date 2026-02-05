@@ -16,6 +16,7 @@ public:
     TecEcoAnalysis(CairnObject* aParent, const std::map<std::string, std::string> &aComponent={});
     virtual ~TecEcoAnalysis();
 
+    void createEnvImpacts() override { /* do nothing */ }
     void declareEnvImpactParam();
     void declareConfigurationParameters();
     int setConfigurationParameters(const std::map<std::string, std::string>& aComponent);
@@ -47,17 +48,18 @@ public:
 
     bool ForceExportAllIndicators() const { return mForceExportAllIndicators; }
 
-    std::vector<std::string> EnvImpactsList() const { return mEnvImpacts; }
-    std::vector<std::string> EnvImpactUnitsList() const { return mEnvImpactUnits; }
-    std::vector<double> EnvImpactCosts();
     std::vector<std::string> getPossibleImpactNames() const;
     std::vector<std::string> getPossibleImpactShortNames() const;
-    std::vector<std::string> getImpactUnitsFromSelectedImpacts(const std::vector<std::string>& aSelectedImpactsList);
-    std::string getImpactShortName(const std::string& name);
-    std::string getImpactLongName(const std::string& name);
-    int getImpactIndex(const std::string& impactName); 
 
-    void updateEnvImpactUnitsList() { mEnvImpactUnits = getImpactUnitsFromSelectedImpacts(mEnvImpacts); }
+    std::vector<std::string> EnvImpactsList() const { return mSelectedEnvImpacts; }
+    std::vector<std::string> EnvImpactUnitsList() const;
+    std::vector<std::string> EnvImpactShortNamesList() const;
+    std::vector<double> EnvImpactCosts();
+
+    std::string EnvImpactUnit(const std::string& impactName) const;
+    std::string EnvImpactShortName(const std::string& name) const;
+    std::string EnvImpactLongName(const std::string& name);
+    int getImpactIndex(const std::string& impactName); 
 
     // ******************************************* CompoModel ************************************************ //
 
@@ -67,7 +69,6 @@ public:
     //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
     {
-
     }
 
     void declareModelParameters()
@@ -77,27 +78,30 @@ public:
     void declareModelInterface()
     {
         //TecEco total values
-        if (mMainCarrier != nullptr) {
+        if (mMainCarrier) {
             addIO("Total Capex", &mExpCapex, true, mMainCarrier->pFluxUnit()); /** Computed initial investment costs Total Capex */
             addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, mMainCarrier->pStorageUnit());     /** Computed operational cost Total Undiscounted Net Opex */
         }
         else {
             addIO("Total Capex", &mExpCapex, true, "FluxUnit");             /** Computed initial investment costs Total Capex */
-            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, mMainCarrier->pStorageUnit());     /** Computed operational cost Total Undiscounted Net Opex */
+            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, "StorageUnit");     /** Computed operational cost Total Undiscounted Net Opex */
         }
 
         addIO("Total Undiscounted VariableCosts", &mExpVariableCostsUndiscounted, true, &mCurrency); /** Computed Total undiscounted variable costs resulting from material/fuel consumption */
 
         /*
-            mExpPenaltyConstraintCosts cannot be exported because PenaltyConstraintCosts is a Bus expression
+            mExpPenaltyConstraintCosts should not be exported because PenaltyConstraintCosts is a Bus expression
+            Similarly for mExpSubObjective
         */
 
-        resizeEnvImpactVectors();
+        mExpEnvImpactMassUndiscountedVec.resize(mSelectedEnvImpacts.size());
+        mExpEnvImpactEmbodiedUndiscountedVec.resize(mSelectedEnvImpacts.size());
 
-        for (int i = 0; i < mEnvImpactsList.size(); i++)
-        {
-            addIO("Total Undiscounted " + mEnvImpactsList[i] + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, mEnvImpactUnitsList[i]); /** "TecEco undiscounted impactName Env impact  mass" */
-            addIO("Total Undiscounted " + mEnvImpactsList[i] + " Grey EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, mEnvImpactUnitsList[i]); /** "TecEco undiscounted impactName Env grey impact mass" */
+        for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) { //mSelectedEnvImpacts == SubModel::mEnvImpactsList
+            const auto& impact = mSelectedEnvImpacts[i];
+            const auto unit = EnvImpactUnit(impact);
+            addIO("Total Undiscounted " + impact + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env impact  mass" */
+            addIO("Total Undiscounted " + impact + " Grey EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env grey impact mass" */
         }
     }
 
@@ -126,17 +130,15 @@ public:
         }
         mInputIndicators->addIndicator("Extrapolation Factor", &mExtraFactorIndicator, &mExportIndicators, "Extrapolation Factor (only important for PLAN)", "-", "ExtrapolationFactor");
         //
-        std::string ObjectiveUnit = mParentCompo->ObjectiveUnit();
-        mInputIndicators->addIndicator("OBJECTIVE", &mObjectiveContribution, &mExportIndicators, "OBJECTIVE", ObjectiveUnit, "Objective");
+        mInputIndicators->addIndicator("OBJECTIVE", &mObjectiveContribution, &mExportIndicators, "OBJECTIVE", &mObjectiveUnit, "Objective");
         mInputIndicators->addIndicator("Net Present Value (Levelized Profit)", &mNetPresentValue, &mExportIndicators, "Net Present Value (Levelized Profit)", &mCurrency, "NPV");
         //
         if (mParentCompo->InternalRateOfReturn() >= 0.) {
             mInputIndicators->addIndicator("Imposed Internal Rate Of Return PerCent", &mInternalRateOfReturnPerCent, &mExportIndicators, "Imposed Internal Rate Of Return PerCent", "%", "ImposedInternalRateOfReturnPerCent");
             mInputIndicators->addIndicator("Imposed Internal Rate Of Return Factor", &mInternalRateOfReturnFactor, &mExportIndicators, "Imposed Internal Rate Of Return Factor", "-", "ImposedInternalRateOfReturnFactor");
-
         }
 
-        mInputIndicators->addIndicator("Total SubObjective (Type Add)", &mSubObjectiveContribution, &mExportIndicators, "Sum of SubObjective (Type Add)", ObjectiveUnit, "SubObjective");
+        mInputIndicators->addIndicator("Total SubObjective (Type Add)", &mSubObjectiveContribution, &mExportIndicators, "Sum of SubObjective (Type Add)", &mObjectiveUnit, "SubObjective");
         mInputIndicators->addIndicator("Total CAPEX", &mCapexContribution, &mExportIndicators, "Total CAPEX", &mCurrency, "CAPEX");
         mInputIndicators->addIndicator("Total PenaltyConstraintContribution", &mPenaltyConstraintContribution, &mExportIndicators, "Total PenaltyConstraintContribution", "-", "PenaltyPart");
         mInputIndicators->addIndicator("Total project discounted operation cost", &mOpexContributionDiscounted, &mExportIndicators, "Total project discounted operation cost (OPEX + replacement + buying cost + other cost - income)", &mCurrency, "DiscountedNetOPEX");
@@ -145,22 +147,30 @@ public:
         mInputIndicators->addIndicator("Total project income", &mSellVariableCostsContributionDiscounted, &mExportIndicators, "Total project income", &mCurrency, "DiscountedSellPart");
         mInputIndicators->addIndicator("Total project buying costs", &mBuyVariableCostsContributionDiscounted, &mExportIndicators, "Total project buying cost", &mCurrency, "DiscountedBuyPart");
 
-        for (int i = 0; i < mEnvImpactsList.size(); i++) {
-            std::string aImpactShortName = mParentCompo->EnvImpactsShortNamesList().at(i);
-            mInputIndicators->addIndicator("Total project cost of env impact of " + mEnvImpactsList[i], &mVDEnvImpactsTotalCostDiscounted[i], &mExportIndicators, "Total project cost of env impact of " + mEnvImpactsList[i], &mCurrency, aImpactShortName + "DiscountedEnvImpactPart" );
-            mInputIndicators->addIndicator("Total Project env impact of " + mEnvImpactsList[i], &mVDEnvImpactsTotalMassDiscounted[i], &mExportIndicators, "Total Project env impact of " + mEnvImpactsList[i], mEnvImpactUnitsList[i], aImpactShortName + "DiscountedEnvImpactMass" );
+        mVDEnvImpactsTotalCostDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEnvImpactsTotalMassDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEnvGreyImpactsMassContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEnvImpactsCostContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEnvImpactsMassContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEnvImpactsCostContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEnvImpactsMassContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+
+        for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
+            const std::string& impact= mSelectedEnvImpacts[i];
+            mInputIndicators->addIndicator("Total project cost of env impact of " + impact, &mVDEnvImpactsTotalCostDiscounted[i], &mExportIndicators, "Total project cost of env impact of " + impact, &mCurrency, EnvImpactShortName(impact) + "DiscountedEnvImpactPart");
+            mInputIndicators->addIndicator("Total Project env impact of " + impact, &mVDEnvImpactsTotalMassDiscounted[i], &mExportIndicators, "Total Project env impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "DiscountedEnvImpactMass");
         }
 
-        for (int i = 0; i < mEnvImpactsList.size(); i++) {
-            std::string aImpactShortName = mParentCompo->EnvImpactsShortNamesList().at(i);
-            mInputIndicators->addIndicator("Total Project Embodied env impact of " + mEnvImpactsList[i], &mVDEnvGreyImpactsMassContribution[i], &mExportIndicators, "Total Project Embodied env impact of " + mEnvImpactsList[i], mEnvImpactUnitsList[i], aImpactShortName + "GreyEnvImpactMass" );
-        }
-        for (int i = 0; i < mEnvImpactsList.size(); i++) {
-            std::string aImpactShortName = mParentCompo->EnvImpactsShortNamesList().at(i);
-            mInputIndicators->addIndicator("Total Project Operational impact cost of " + mEnvImpactsList[i], &mVDEnvImpactsCostContributionDiscounted[i], &mExportIndicators, "Total Project Operational impact cost of " + mEnvImpactsList[i], &mCurrency, aImpactShortName);
-            mInputIndicators->addIndicator("Total Project Operational impact of " + mEnvImpactsList[i], &mVDEnvImpactsMassContributionDiscounted[i], &mExportIndicators, "Total Project Operational impact of " + mEnvImpactsList[i], mEnvImpactUnitsList[i], aImpactShortName + "DiscountedFlowEnvImpactMass" );
+        for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
+            const std::string& impact = mSelectedEnvImpacts[i];
+            mInputIndicators->addIndicator( "Total Project Embodied env impact of " + impact, &mVDEnvGreyImpactsMassContribution[i], &mExportIndicators, "Total Project Embodied env impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "GreyEnvImpactMass");
         }
 
+        for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
+            const std::string& impact = mSelectedEnvImpacts[i];
+            mInputIndicators->addIndicator("Total Project Operational impact cost of " + impact, &mVDEnvImpactsCostContributionDiscounted[i], &mExportIndicators, "Total Project Operational impact cost of " + impact, &mCurrency, EnvImpactShortName(impact) + "DiscountedFlowEnvImpactCost");
+            mInputIndicators->addIndicator( "Total Project Operational impact of " + impact, &mVDEnvImpactsMassContributionDiscounted[i], &mExportIndicators, "Total Project Operational impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "DiscountedFlowEnvImpactMass");
+        }
 
         mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "Total annual operation cost (OPEX + replacement + buying cost + other cost - income)", &mCurrency, "NetOPEX");
         mInputIndicators->addIndicator("Annual OPEX", &mPureOpexContribution, &mExportIndicators, "Total Undiscounted Pure OPEX", &mCurrency, "PureOPEX");
@@ -168,15 +178,13 @@ public:
         mInputIndicators->addIndicator("Annual income", &mSellVariableCostsContribution, &mExportIndicators, "Annual income", &mCurrency, "SellPart");
         mInputIndicators->addIndicator("Annual buying costs", &mBuyVariableCostsContribution, &mExportIndicators, "Annual buying costs", &mCurrency, "BuyPart");
 
-        for (int i = 0; i < mEnvImpactsList.size(); i++)
-        {
-            std::string aImpactShortName = mParentCompo->EnvImpactsShortNamesList().at(i);
-            mInputIndicators->addIndicator("Total Undiscounted FlowEnvImpact Part " + mEnvImpactsList[i], &mVDEnvImpactsCostContribution[i], &mExportIndicators, "Total Undiscounted FlowEnvImpact Part " + mEnvImpactsList[i], &mCurrency, aImpactShortName + "FlowEnvImpactPart" );
-            mInputIndicators->addIndicator("Total Undiscounted FlowEnvImpact Mass " + mEnvImpactsList[i], &mVDEnvImpactsMassContribution[i], &mExportIndicators, "Total Undiscounted FlowEnvImpact Mass " + mEnvImpactsList[i], mEnvImpactUnitsList[i], aImpactShortName + "FlowEnvImpactMass" );
+        for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
+            const std::string& impact = mSelectedEnvImpacts[i];
+            mInputIndicators->addIndicator("Total Undiscounted FlowEnvImpact Part " + impact, &mVDEnvImpactsCostContribution[i], &mExportIndicators, "Total Undiscounted FlowEnvImpact Part " + impact, &mCurrency, EnvImpactShortName(impact) + "FlowEnvImpactPart" );
+            mInputIndicators->addIndicator("Total Undiscounted FlowEnvImpact Mass " + impact, &mVDEnvImpactsMassContribution[i], &mExportIndicators, "Total Undiscounted FlowEnvImpact Mass " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "FlowEnvImpactMass" );
         }
     }
     //----------------------------------------------------------------------------------------------------
-    void resizeEnvImpactVectors();
     void allocateExpressions();
     void closeExpressions();
 
@@ -184,13 +192,8 @@ public:
     void computeEconomicalContribution(); /** MILP Model description : objective contribution */
     void computeEnvContribution();       /** MILP Model description : environment constraints */
 
-    void computePenaltyConstraintCosts();
-    void computeBuyAndSellExpressions(const double* optSol, MIPModeler::MIPExpression1D& expBuyPart, MIPModeler::MIPExpression1D& expSellPart);
-    void computeUndiscountedExpressions();
-
     double objective(const int& i) { return mObjectiveContribution.at(i); } // i in {1, 2}
     MIPModeler::MIPExpression objectiveExpression() { return mExpObjective; }
-    std::map<std::string, MIPModeler::MIPExpression*> mapSubObjective() { return mMapSubObjective; }
 
     void initDefaultPorts() { };
 
@@ -202,11 +205,21 @@ public:
     void setLabelList(const std::vector< std::string >& aLabelList) { mLabelList = aLabelList; };
     bool isValidLabel(const std::string& aLabel) const;
 
+    std::vector<InputParam*> get_InputParams();
+
 private :
     void doInit(const std::map<std::string, std::string>& aComponent);
     void declareCompoInputParam();
     int setCompoInputParam(const std::map<std::string, std::string>& aComponent);
     std::map<std::string, MilpComponent*> MilpComponents();
+    std::vector<MilpComponent*> NonBusMilpComponents();
+    std::vector<BusCompo*> BusComponents();
+    void computeSubObjective();
+    void computePenaltyConstraintCosts();
+    void computeBuyAndSellExpressions(const double* optSol, MIPModeler::MIPExpression1D& expBuyPart, MIPModeler::MIPExpression1D& expSellPart);
+    void computeUndiscountedExpressions();
+
+    /*---------------------------------------------------*/
 
     std::vector< std::string > mLabelList;
 
@@ -229,10 +242,12 @@ private :
     double mInternalRateOfReturn ;         /** Target Internal Rate of Return chosen by the user*/
     bool mForceExportAllIndicators;
     
-    std::vector<SEnvImpact> mPossibleImpacts;  /** List of possible impacts */
-    std::vector<std::string> mEnvImpacts;                  /** List of selected impacts */
-    std::vector<std::string> mEnvImpactUnits;             /** List of units of selected impacts */
-    std::vector<int> mVBEnvImpactMaxConstraint;
+    std::vector<SEnvImpact>  mPossibleEnvImpacts;     /** List of possible impacts */
+    std::vector<std::string> mSelectedEnvImpacts;     /** List of selected impacts */
+
+    /** Attention: the EnvImpact-related vectors have the size of mPossibleImpacts and not mEnvImpacts
+    * This is to not loss the reference in case of impacts re-declaration */
+    std::vector<int>    mVBEnvImpactMaxConstraint;
     std::vector<double> mVDEnvImpactMaxConstraint;
     std::vector<double> mVDEnvImpactCost;
 
@@ -248,16 +263,13 @@ private :
 
     MIPModeler::MIPExpression mExpObjective;
     MIPModeler::MIPExpression mExpNegNPV;  //Global cost of the project (== - Net Present Value  = discountedCAPEX + discountedPureOPEX + other costs - Revenues)
-
-    MIPModeler::MIPExpression mExpSubObjective;  //Sum of the SubObjectives of MultiObjectives with Type == Add
-    std::map<std::string, MIPModeler::MIPExpression*> mMapSubObjective;  //List of SubObjectives (all types); used to write in _results_multiObj.csv
-
+    MIPModeler::MIPExpression mExpSubObjective; //Sum of all sub objectives of type Add
     MIPModeler::MIPExpression  mExpPenaltyConstraintCosts;   //A sum of all NodeLaw::mExpPenaltyConstraintCosts
 
     /** Expressions already esist in TechnicalSubModel (and can be used to carry TecEco (total) contribution)
         MIPModeler::MIPExpression mExpCapex;
         MIPModeler::MIPExpression1D mExpOpex;
-        MIPModeler::MIPExpression1D mExpPureOpex;
+        MIPModeler::MIPExpression1D mExpFixedOpex;
         MIPModeler::MIPExpression1D mExpReplacement;
 
         MIPModeler::MIPExpression1D mExpVariableCosts;
@@ -276,6 +288,7 @@ private :
     /* Expressions published on ports */
     MIPModeler::MIPExpression1D mExpOpexUndiscounted;
     MIPModeler::MIPExpression1D mExpVariableCostsUndiscounted;
+    MIPModeler::MIPExpression1D mExpVariableOpexUndiscounted;
     std::vector<MIPModeler::MIPExpression> mExpEnvImpactEmbodiedUndiscountedVec;
     std::vector<MIPModeler::MIPExpression1D> mExpEnvImpactMassUndiscountedVec;
 

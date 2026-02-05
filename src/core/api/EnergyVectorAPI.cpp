@@ -1,121 +1,57 @@
 #include "CairnAPI.h"
 #include "CairnCore.h"
 #include "CairnAPIUtils.h"
+#include "InputParam.h"
 using namespace CairnAPIUtils;
 
 CairnAPI::EnergyVectorAPI::EnergyVectorAPI(EnergyVector* ap_EnergyVector)
+	: CairnAPI::ObjectAPI(ap_EnergyVector)
 {	
-	set_EnergyVector(ap_EnergyVector);
 }
 
 CairnAPI::EnergyVectorAPI::EnergyVectorAPI(const OptimProblemAPI& a_Problem, 
 	const std::string& a_Name, const std::string& a_Type)
+	: CairnAPI::ObjectAPI()
 {
 	*this = a_Problem.create_EnergyCarrier(a_Name, a_Type);
 }
 
 EnergyVector* CairnAPI::EnergyVectorAPI::get_EnergyVector() const
 {
-	return m_EnergyVector;
+	return (EnergyVector*)get_Object();
 }
 
 void CairnAPI::EnergyVectorAPI::set_EnergyVector(EnergyVector* ap_EnergyVector)
 {
-	m_EnergyVector = ap_EnergyVector;
-}
-
-std::string CairnAPI::EnergyVectorAPI::get_Name() const
-{
-	if (m_EnergyVector) {
-		return m_EnergyVector->Name();
-	}
-	return "";
+	set_Object(ap_EnergyVector);
 }
 
 std::string CairnAPI::EnergyVectorAPI::get_Type() const
 {
-	if (m_EnergyVector) {
-		return m_EnergyVector->Type();
+	if (m_Object) {
+		EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
+		return pEnergyVector->Type();
 	}
 	return "";
 }
 
-void CairnAPI::EnergyVectorAPI::rename(const std::string& name)
-{
-	if (m_EnergyVector) {
-		m_EnergyVector->setName((name));
-	}
-}
-
-// Returns the list of parameter names 
-t_list CairnAPI::EnergyVectorAPI::get_SettingsList()
-{
-	/*
-	* property in CairnBind.cpp
-	*/
-	return get_SettingsListByType(ESettingsLimited::all);
-}
-t_list CairnAPI::EnergyVectorAPI::get_SettingsListByType(ESettingsLimited a_setLimited)
-{
-	t_list vRet = {};
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::getParametersName({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() }
-		, a_setLimited);
-	}
-	return vRet;
-}
-
-// Returns the value of a parameter 
-t_value CairnAPI::EnergyVectorAPI::get_SettingValue(const std::string& a_SettingName)
-{	
-	t_value vRet = "";
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::getParameter({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() }
-		, a_SettingName);	
-	}
-	return vRet;
-}
-
-// Returns a dict of all parameter values
-t_dict CairnAPI::EnergyVectorAPI::get_SettingValues()
-{
-	t_dict vRet = {};
-	if (m_EnergyVector) {
-		CairnAPIUtils::getParameters({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() }
-			, vRet);		
-	}
-	return vRet;
-}
-
 // Set the value of a parameter
-void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue)
-{
+void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance)
+{	
 	ECodeError vRet = noError;
-	if (m_EnergyVector) {
-		bool vOk = CairnAPIUtils::setParameter({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam()
-			}, a_SettingName, a_SettingValue);
-
-		if (vOk) {
-			vOk = m_EnergyVector->InitEnergyVectorParam();
+	if (m_Object) {
+		try
+		{
+			CairnAPI::ObjectAPI::set_SettingValue(a_SettingName, a_SettingValue);
+			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
+			bool vOk = pEnergyVector->InitEnergyVectorParam();
+			vRet = (vOk) ? noError : errParam;
 		}
-		vRet = (vOk) ? noError : errParam;
-	}
+		catch (const std::exception&)
+		{
+			vRet = errParam;
+		}
+	}	
 	CairnAPIUtils::setError(vRet);	
 }
 
@@ -123,89 +59,18 @@ void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingNam
 void CairnAPI::EnergyVectorAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
 	ECodeError vRet = noError;
-	if (m_EnergyVector) {				
-		bool vOk = CairnAPIUtils::setParameters({ 
-			m_EnergyVector->getCompoInputParam(), 
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam()
-			}, a_SettingValues);
-
-		if (vOk) {
-			vOk = m_EnergyVector->InitEnergyVectorParam();
+	if (m_Object) {
+		try
+		{
+			CairnAPI::ObjectAPI::set_SettingValues(a_SettingValues);
+			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
+			bool vOk = pEnergyVector->InitEnergyVectorParam();
+			vRet = (vOk) ? noError : errParam;
 		}
-		vRet = (vOk) ? noError : errParam;		
-	}
+		catch (const std::exception&)
+		{
+			vRet = errParam;
+		}
+	}	
 	CairnAPIUtils::setError(vRet);	
-}
-
-bool CairnAPI::EnergyVectorAPI::get_SettingMandatoryValue(const std::string& a_SettingName)
-{
-	bool vRet = true;
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::getParamMandatoryValue({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() },
-			a_SettingName);
-	}
-	return vRet;
-}
-
-bool CairnAPI::EnergyVectorAPI::is_DependentSetting(const std::string& a_SettingName)
-{
-	bool vRet = false;
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::isDependentParam({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() },
-			a_SettingName);
-	}
-	return vRet;
-}
-
-std::string CairnAPI::EnergyVectorAPI::get_SettingUnit(const std::string& a_SettingName)
-{
-	std::string vRet = "-";
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::getParamUnit({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() },
-			a_SettingName);
-	}
-	return vRet;
-}
-
-std::string CairnAPI::EnergyVectorAPI::get_SettingShowConfig(const std::string& a_SettingName)
-{
-	std::string vRet = "";
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::getParamShowConfig({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam() },
-			a_SettingName);
-	}
-	return vRet;
-}
-
-t_list CairnAPI::EnergyVectorAPI::get_ShowConfigList()
-{
-	t_list vRet = {};
-	if (m_EnergyVector) {
-		vRet = CairnAPIUtils::getShowConfigList({
-			m_EnergyVector->getCompoInputParam(),
-			m_EnergyVector->getCompoInputSettings(),
-			m_EnergyVector->getTimeSeriesParam(),
-			m_EnergyVector->getGUIData()->getGuiInputParam()
-			}
-		);
-	}
-	return vRet;
 }

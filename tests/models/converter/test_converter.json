@@ -1248,7 +1248,7 @@
 						"value": 100
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0.02
 					},
 					{
@@ -1393,7 +1393,7 @@
 						"value": 300
 					},
 					{
-						"key": "Opex",
+						"key": "FixedOpex",
 						"value": 0.02
 					},
 					{

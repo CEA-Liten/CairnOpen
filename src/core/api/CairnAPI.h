@@ -80,30 +80,26 @@ public:
     t_list get_Solvers();
 
 	// --------------------------------------------------------------------------------
-
-	class DECLSPEC EnergyVectorAPI {
+	class DECLSPEC ObjectAPI {
 	public:
-		EnergyVectorAPI(class EnergyVector* ap_EnergyVector = nullptr);
-		EnergyVectorAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, 
-			const std::string& a_Type);
-
-		class EnergyVector* get_EnergyVector() const;
-		void set_EnergyVector(class EnergyVector* ap_EnergyVector);
-
+		ObjectAPI(class CairnObject* ap_Object = nullptr);
+	
 		std::string get_Name() const;
-		std::string get_Type() const;
+		std::string get_ObjectType() const;
+		virtual void rename(const std::string& name);
 
-		void rename(const std::string& name);
+		class CairnObject* get_Object() const;
+		void set_Object(class CairnObject* ap_EnergyVector);
 
 		//returns a list of parameter names
 		t_list get_SettingsList();
 		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
 
-		t_value get_SettingValue(const std::string& a_SettingName);
-		t_dict get_SettingValues();
+		virtual t_value get_SettingValue(const std::string& a_SettingName);
+		virtual t_dict get_SettingValues();
 
-		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue);
-		void set_SettingValues(const t_dict& a_SettingValues);
+		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		virtual void set_SettingValues(const t_dict& a_SettingValues);
 
 		t_list get_ShowConfigList();
 		std::string get_SettingShowConfig(const std::string& a_SettingName);
@@ -113,12 +109,55 @@ public:
 
 		std::string get_SettingUnit(const std::string& a_SettingName);
 
-	private:
-		class EnergyVector* m_EnergyVector{ nullptr };
+	protected:
+		class CairnObject* m_Object{ nullptr };
+		std::vector<class InputParam*> get_InputParams();
+	};
+
+	// --------------------------------------------------------------------------------
+	class DECLSPEC SolverAPI : public ObjectAPI {
+	public:
+		SolverAPI();		
+		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		virtual void set_SettingValues(const t_dict& a_SettingValues);	
+	};
+
+	// --------------------------------------------------------------------------------
+	class DECLSPEC SimulationControlAPI : public ObjectAPI {
+	public:
+		SimulationControlAPI();
+		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		virtual void set_SettingValues(const t_dict& a_SettingValues);
+
+	protected:		
+		void updateMilpData();
+	};
+
+	// --------------------------------------------------------------------------------
+	class DECLSPEC TecEcoAnalysisAPI : public ObjectAPI {
+	public:
+		TecEcoAnalysisAPI();
+		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		virtual void set_SettingValues(const t_dict& a_SettingValues);	
+	};
+
+	// --------------------------------------------------------------------------------
+	class DECLSPEC EnergyVectorAPI : public ObjectAPI {
+	public:
+		EnergyVectorAPI(class EnergyVector* ap_EnergyVector = nullptr);
+		EnergyVectorAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, 
+			const std::string& a_Type);
+		
+		std::string get_Type() const;
+		class EnergyVector* get_EnergyVector() const;
+		void set_EnergyVector(class EnergyVector* ap_EnergyVector);
+		
+		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		void set_SettingValues(const t_dict& a_SettingValues);
 	};
 
 	// --------------------------------------------------------------------------------	
-	class DECLSPEC MilpPortAPI {
+	class DECLSPEC MilpPortAPI : public ObjectAPI {
 	public:
 		MilpPortAPI(class MilpPort* ap_Port=nullptr);
 		MilpPortAPI(MilpComponentAPI& a_Component, const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
@@ -128,31 +167,18 @@ public:
 		void set_MilpPort(class MilpPort* ap_Port);
 
 		std::string get_ID() const;
-		std::string get_Name() const;
 		std::string get_CarrierName() const;
+		std::string get_Variable() const;
 
-		void rename(const std::string& name);
+		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		void set_SettingValues(const t_dict& a_SettingValues);
 
 		EnergyVectorAPI get_EnergyCarrier();
 		void set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector);
-
-		// -- Parameters ---
-		// Returns the list of parameter names 
-		t_list get_SettingsList();
-		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
-		
-		t_value get_SettingValue(const std::string& a_SettingName);
-		t_dict get_SettingValues();
-
-		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue);
-		void set_SettingValues(const t_dict& a_SettingValues);
-
-	private:
-		class MilpPort* m_Port{ nullptr };
 	};
 
 	// --------------------------------------------------------------------------------	
-	class DECLSPEC BusAPI {
+	class DECLSPEC BusAPI : public ObjectAPI {
 	public:
 		BusAPI(class BusCompo* ap_Bus = nullptr);
 		BusAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, 
@@ -160,38 +186,22 @@ public:
 
 		class BusCompo* get_BusCompo() const;
 		void set_BusCompo(class BusCompo* ap_Bus);
-		
-		std::string get_Name() const;
+				
 		std::string get_Type() const;
 		std::string get_ModelClass() const;
 		std::string get_CarrierName() const;
-
-		void rename(const std::string& name);
+		void set_Carrier(const std::string& a_CarrierName);
+		void set_Carrier(const EnergyVectorAPI& EnergyCarrier);
 
 		std::string get_LabelValue(const std::string& a_Label) const;
 		void set_LabelValue(const std::string& a_Label, const std::string& a_Value);
 		//use t_dict ?!
 		std::map<std::string, std::string> get_LabelValues() const;
 		void set_LabelValues(const std::map<std::string, std::string>& a_Labels);
-
-		//returns a list of parameter names
-		t_list get_SettingsList();
-		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
-
-		t_value get_SettingValue(const std::string& a_SettingName);
-		t_dict get_SettingValues();
-
-		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue);
+		
+		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
-
-		t_list get_ShowConfigList();
-		std::string get_SettingShowConfig(const std::string& a_SettingName);
-
-		bool get_SettingMandatoryValue(const std::string& a_SettingName);
-		bool is_DependentSetting(const std::string& a_SettingName);
-
-		std::string get_SettingUnit(const std::string& a_SettingName);
-
+		
 		// -- IOs ---
 		// Returns the list of variables contains the component
 		t_list get_VarList();
@@ -205,12 +215,12 @@ public:
 		t_dict get_IndicatorValues(const std::string range = "PLAN");
 		double get_IndicatorValue(const std::string& name, const std::string range = "PLAN");
 
-	private:
-		class BusCompo* m_Bus{ nullptr };
+	private:		
+		void configure_Carrier(EnergyVector* vEnergyVector);
 	};
 
 	// --------------------------------------------------------------------------------	
-	class DECLSPEC MilpComponentAPI {
+	class DECLSPEC MilpComponentAPI : public ObjectAPI {
 	public:
 		MilpComponentAPI(class MilpComponent* ap_Component=nullptr);
 		MilpComponentAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, const std::string& a_ModelName);
@@ -218,16 +228,12 @@ public:
 		class MilpComponent* get_MilpComponent() const;
 		void set_MilpComponent(class MilpComponent* ap_Component);
 
-		std::string get_Name() const;
 		std::string get_Type() const;
 		const std::string get_ModelClass();
-
-		void rename(const std::string& name);
+		void set_ModelClass(const std::string& a_ModelClass) { m_ModelClass = a_ModelClass; }
 
 		std::string get_Direction();
-
-		void checkDefaultPortCarriers();
-
+		
 		std::string get_LabelValue(const std::string& a_Label) const;
 		void set_LabelValue(const std::string& a_Label, const std::string& a_Value);
 		//use t_dict ?!
@@ -235,28 +241,17 @@ public:
 		void set_LabelValues(const std::map<std::string, std::string>& a_Labels);
 
 		// -- Parameters ---
-		// Returns the list of parameter names 
-		t_list get_SettingsList();
-		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
-
+	
 		t_value get_SettingValue(const std::string& a_SettingName);
 		t_dict get_SettingValues();
 		t_value get_TimeSeriesVector(const std::string& a_SettingName);
 
-		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, const bool& checkExistance=true);
+		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
 		void set_TimeSeriesVector(const std::string& a_TimeSeriesName, const std::vector<double> a_TimeSeriesValue);
 
 		bool isTimeSeriesParam(const std::string& a_TimeSeriesName);
-
-		t_list get_ShowConfigList();
-		std::string get_SettingShowConfig(const std::string& a_SettingName);
-
-		bool get_SettingMandatoryValue(const std::string& a_SettingName);
-		bool is_DependentSetting(const std::string& a_Name);
-
-		std::string get_SettingUnit(const std::string& a_SettingName);
-
+		
 		void modify_ModelClass(const std::string& a_prevModelClass, const std::string& a_newModelClass);
 
 		// -- Ports ---
@@ -267,7 +262,7 @@ public:
 			const std::string& a_Direction="DATAEXCHANGE", const std::string& a_Variable = "", const bool& reinitializeCompo = true);
 		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo=false);
 
-		bool useEnergyVector(const std::string& a_EnergyVectorName);
+		bool useEnergyVector(const std::string& a_EnergyCarrierName);
 		void get_Links(t_dict &a_Links);
 
 		// -- IOs ---
@@ -289,11 +284,12 @@ public:
 		t_value get_dimParam();
 
 		/* Other methods */
-		void reinitialize();
+		void redeclarePortImpactParameters();
+		void removePortImpactParameters(const std::string& portName);
 		t_value get_OptimalSizeExpression();
 
 	private:
-		class MilpComponent* m_Component{ nullptr };		
+		void checkDefaultPortCarriers();		
 		std::string m_ModelClass;
 	};
 
@@ -345,15 +341,19 @@ public:
 		void save_Study(const std::string& a_filename = "", const std::string& a_posAlgorithm = "");
 
 		// Export parameters to a file
-		void export_Parameters(const std::string& fileName = "");
+		void export_Parameters(const std::string& fileName = "", const std::map<std::string, bool>& optionsMap = {});
 
 		// Export results to a file
 		void export_PLAN(const std::string& fileName = "", const int& aNsol = 0);
 
 		void add_Label(const std::string& a_Label);
 		void remove_Label(const std::string& a_Label);
-		const t_list& get_Labels() const;
+		t_list get_Labels() const;
 		void set_Labels(const t_list& a_Labels);
+
+		// --------- Objects ---------
+		t_list get_Objects();
+		ObjectAPI get_Object(const std::string& a_Name);
 
 		// --------- EnergyCarriers ---------
 		t_list get_EnergyCarriers();
@@ -389,50 +389,14 @@ public:
 		void remove(BusAPI& a_bus, MilpPortAPI& a_port);
 
 		// --------- TecEcoAnalysis ---------
-		void rename_TecEcoAnalysis(const std::string& name);
-
-		//  Get/Set parameters of the analysis component of the problem
-		t_dict get_TecEcoAnalysisSettings();
-		void set_TecEcoAnalysisSettings(const t_dict& a_Settings);
-
-		t_list get_TecEcoShowConfigList();
-		std::string get_TecEcoSettingShowConfig(const std::string& a_SettingName);
-
-		bool get_TecEcoSettingMandatoryValue(const std::string& a_SettingName);
-		bool is_DependentTecEcoSetting(const std::string& a_SettingName);
-
-		std::string get_TecEcoSettingUnit(const std::string& a_SettingName);
+		TecEcoAnalysisAPI get_TecEcoAnalysis();
 
 		// --------- Solver ---------
-		void rename_Solver(const std::string& name);
-
-		//  Get/Set parameters of the solver component of the problem
-		t_dict get_MIPSolverSettings();
-		void set_MIPSolverSettings(const t_dict& a_Settings);
-
-		t_list get_SolverShowConfigList();
-		std::string get_SolverSettingShowConfig(const std::string& a_SettingName);
-
-		bool get_SolverSettingMandatoryValue(const std::string& a_SettingName);
-		bool is_DependentSolverSetting(const std::string& a_SettingName);
+		SolverAPI get_Solver();
 		
-		std::string get_SolverSettingUnit(const std::string& a_SettingName);
-
 		// --------- SimulationControl ---------
-		void rename_SimulationControl(const std::string& name);
-
-		//  Get/Set parameters of the simulation component of the problem
-		t_dict get_SimulationControlSettings();
-		void set_SimulationControlSettings(const t_dict& a_Settings);
-
-		t_list get_ControlShowConfigList();
-		std::string get_ControlSettingShowConfig(const std::string& a_SettingName);
-
-		bool get_ControlSettingMandatoryValue(const std::string& a_SettingName);
-		bool is_DependentControlSetting(const std::string& a_SettingName);
-
-		std::string get_ControlSettingUnit(const std::string& a_SettingName);
-
+		SimulationControlAPI get_SimulationControl();
+		
 		// -- Run ---
 		 // Adds a time series file.
 		void add_TimeSeries(const std::string& a_fileName);

@@ -1,4 +1,4 @@
-#include "..\TEST_CairnCore.h"
+#include "TEST_CairnCore.h"
 #include "json.hpp"
 #include <string>
 #include <iostream>
@@ -30,19 +30,16 @@ public:
 
 	static json OpenJsonFile(const std::string& filePath);
 
-	static std::vector<std::unordered_map<std::string, std::string>> TestUtilsJson::ParseJsonFile(const std::string& filePath);
-	static std::map<std::string, json> TestUtilsJson::ParseandCompareJsonFromFile(const std::string& filePath);
-	static bool TestUtilsJson::compareJSON(const json& json1, const json& json2);
-	static void TestUtilsJson::Display_Json_File_Data(const std::vector<std::unordered_map<std::string, std::string>> parsedData);
-	static void TestUtilsJson::Display_Json_Object(std::map<std::string, json> dict);
-	static t_list  TestUtilsJson::GetAllPossibleModelsNameFromJsonFiles(const std::string& InputFilejsonPath, const std::string& JsComponentName, const std::string& JsSettingsType);
-	static t_list  TestUtilsJson::GetAllPossibleModelsTypeNameFromJsonFiles(const std::string& InputFilejsonPath);
-	static json  TestUtilsJson::readJSON(const std::string& filePath);
-	static void  TestUtilsJson::findDifferences(const json& json1, const json& json2, const std::string& path, std::vector<Difference>& differences);
-	
-	
-	
-	static int TestUtilsJson::CheckTestStatus(t_list gtl_TestStatusList);
+	static std::vector<std::unordered_map<std::string, std::string>> ParseJsonFile(const std::string& filePath);
+	static std::map<std::string, json> ParseandCompareJsonFromFile(const std::string& filePath);
+	static bool compareJSON(const json& json1, const json& json2);
+	static void Display_Json_File_Data(const std::vector<std::unordered_map<std::string, std::string>> parsedData);
+	static void Display_Json_Object(std::map<std::string, json> dict);
+	static t_list  GetAllPossibleModelsNameFromJsonFiles(const std::string& InputFilejsonPath, const std::string& JsComponentName, const std::string& JsSettingsType);
+	static t_list  GetAllPossibleModelsTypeNameFromJsonFiles(const std::string& InputFilejsonPath);
+	static json  readJSON(const std::string& filePath);
+	static void  findDifferences(const json& json1, const json& json2, const std::string& path, std::vector<Difference>& differences);			
+	static int CheckTestStatus(t_list gtl_TestStatusList);
 protected:
 	static bool findInList(const string& a_str, const vector<string>& a_List);
 };

@@ -39,16 +39,15 @@ def test_save_auto_positions_json():
     addGridFree(problem)
 
     #Save Study
-    problem.save_study(studyDir + r"./results/new_study.json")
+    problem.save_study(path.join(studyDir, './results/new_study.json'))
 
     #Close Study
     cairn_instance.close_study()
-
-    
-    problem2 = cairn_instance.read_study(studyDir + r"./results/new_study.json")
+        
+    problem2 = cairn_instance.read_study(path.join(studyDir, './results/new_study.json'))
 
     cairn_instance_ref = CairnAPI(True)
-    problem_ref = cairn_instance_ref.read_study(studyDir + r"./refs/new_study_ref.json")
+    problem_ref = cairn_instance_ref.read_study(path.join(studyDir, './refs/new_study_ref.json'))    
 
     assert problem_ref.get_component("My_Grid").get_setting_value("Xpos") == problem2.get_component("My_Grid").get_setting_value("Xpos")
     assert problem_ref.get_component("My_Grid").get_setting_value("Ypos") == problem2.get_component("My_Grid").get_setting_value("Ypos")
@@ -72,15 +71,15 @@ def test_save_grad_positions_json():
     addGridFree(problem)
 
     #Save Study - Gradient
-    problem.save_study(studyDir + r"./results/new_study_gradient.json", "gradient")
+    problem.save_study(path.join(studyDir, './results/new_study_gradient.json'), "gradient")
 
     #Close Study
     cairn_instance.close_study()
 
-    problem2 = cairn_instance.read_study(studyDir + r"./results/new_study_gradient.json")
+    problem2 = cairn_instance.read_study(path.join(studyDir, './results/new_study_gradient.json'))
 
     cairn_instance_ref = CairnAPI(True)
-    problem_ref = cairn_instance_ref.read_study(studyDir + r"./refs/new_study_gradient_ref.json")
+    problem_ref = cairn_instance_ref.read_study(path.join(studyDir, './refs/new_study_gradient_ref.json'))
 
     assert problem_ref.get_component("My_Grid").get_setting_value("Xpos") == problem2.get_component("My_Grid").get_setting_value("Xpos")
     assert problem_ref.get_component("My_Grid").get_setting_value("Ypos") == problem2.get_component("My_Grid").get_setting_value("Ypos")

@@ -67,14 +67,13 @@ int main()
 	vPV.set_SettingValues({
 		{"Direction", "Source" },
 		{"Weight", "1"},
-		{"Opex", "0" },
+		{"FixedOpex", "0" },
 		{"Capex", "1000" },
 		{"MaxFlow", -10},
 		{"EcoInvestModel", "1"},
 		{"UseProfileLoadFlux","PVProduction"}
 		}
 	);
-
 
     //Add link from the default port to Elec_Bus
 	CairnAPI::BusAPI vElec_Bus = m_Problem.get_Bus("Elec_Bus");

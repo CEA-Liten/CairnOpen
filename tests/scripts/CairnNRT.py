@@ -1,4 +1,3 @@
-from distutils.command import build
 
 import os
 import subprocess
@@ -11,13 +10,14 @@ from os import path, remove
 from subprocess import Popen, check_output
 from compare_results import new_compare_results
 from compare_results import compare_plan_rempl
+from compare_results import compare_csv_files as compare_csv
 
 from compare_lp import test_comparaison
 from compareJson import compareJson
 
 from sys import platform
 import cairn as crn
-
+import time
 
 def updateFile(file_current, file_ref, overwrite, keep_current = True):
     change = 0
@@ -98,12 +98,13 @@ class CairnNRT:
         problem = inst.read_study(self.__study_file)
         for ts in self.__dataseries:
             problem.add_timeseries(ts)
-        if problem.simulation_control["NbCycle"]>1:
+        simulation_control = problem.get_simulation_control()
+        if simulation_control.get_setting_value("NbCycle")>1:
             self.__file_res = os.path.join(self.__app_home, self.__test_name+'_results_rollinghorizon.csv')
             self.__file_ref = os.path.join(self.__app_home, self.__test_name+'_Results_rh_Ref.csv')
         solution = problem.run()
         assert solution.status == "Optimal"
-        return problem, inst
+        return problem, inst, solution
     
     def runPegase(self, tnr_dir="", tnr_xml="TNR.xml", maxtime=1200):
         if os.getenv('BUILD_STEP') is None or 'RUN' in os.getenv('BUILD_STEP'):
@@ -162,47 +163,62 @@ class CairnNRT:
         updateFile(self.__file_hist,self.__file_hist_ref,overwrite, keep_current=keep_current)
         updateFile(self.__file_res,self.__file_ref,overwrite, keep_current=keep_current)
         if checklp:
-            futuresize = problem.simulation_control["FutureSize"]
-            problem.simulation_control = {"FutureSize":10}
+            simulation_control = problem.get_simulation_control()
+            future_size = simulation_control.get_setting_value("FutureSize")
+            simulation_control.set_setting_value("FutureSize",10)
             try:
                 problem.run("checklp")
             except:
-                problem.simulation_control = {"FutureSize":futuresize}
+                simulation_control.set_setting_value("FutureSize",future_size)
                 problem.run("checklp")
             updateFile(self.__file_lp,self.__file_lp_ref,True, keep_current=keep_current)
-            problem.simulation_control = {"FutureSize":futuresize}
+            simulation_control.set_setting_value("FutureSize",future_size)
         if self.__sampling!="":
             tab_results = self.runSampling()
             tab_results.to_csv(self.__sampling_results_ref, sep=";")
         if self.__pegase==False:
             inst.close_study()
 
-    def generic_testing(self):
+    def generic_testing(self, skip_col=[], modif_check_lp=True):
         status = {}
-        problem,inst = self.runCairn()
-        future_size = problem.simulation_control["FutureSize"]
-        try:
-            problem.simulation_control = {"FutureSize":10}
-            solution = problem.run("checklp")
-            status["RUNLPFILE"] = solution.status
-            
-        except:
-            problem.simulation_control = {"FutureSize":future_size}
-            solution = problem.run("checklp")
-            status["RUNLPFILE"] = solution.status
-        problem.simulation_control = {"FutureSize":future_size}
-        status["LPFILE"] = self.checklp()
-        
-        status["OPTIM"] = problem.run().status
+        problem,inst,solution = self.runCairn()
+        status["OPTIM"] = solution.status
         status["PLAN"] = self.checkPlanHist("PLAN")
         status["HIST"] = self.checkPlanHist("HIST")
-        status["TIMESERIES"] = self.check(0.001)
+        status["TIMESERIES"] = self.check(0.001, skip_col=skip_col)
+        status["RUNLPFILE"] = False
+
+        simulation_control = problem.get_simulation_control()
+        future_size = simulation_control.get_setting_value("FutureSize")
+        past_size = simulation_control.get_setting_value("PastSize")
+        nb_cycle = simulation_control.get_setting_value("NbCycle")
+        time_shift = simulation_control.get_setting_value("TimeShift")
+        try:
+            if modif_check_lp:
+                simulation_control.set_setting_value("PastSize",1)
+                simulation_control.set_setting_value("NbCycle",1)
+                simulation_control.set_setting_value("TimeShift",1)
+                simulation_control.set_setting_value("FutureSize",10)
+            solution = problem.run("checklp")
+            status["RUNLPFILE"] = solution.status
+        except:
+            status["RUNLPFILE"] = False
+
+        if modif_check_lp:
+            simulation_control.set_setting_value("PastSize", past_size)
+            simulation_control.set_setting_value("NbCycle", nb_cycle)
+            simulation_control.set_setting_value("FutureSize", future_size)
+            simulation_control.set_setting_value("TimeShift", time_shift)
+
+        if status["RUNLPFILE"]:
+            status["LPFILE"] = self.checklp()
+        else:
+            status["LPFILE"] = False
         
         inst.close_study()
         return(status)
         
-    def sampling_test(self):
-
+    def sampling_test(self, check_ts=False):
         tab_res = self.runSampling()
         try:
             tab_ref = pd.read_csv(self.__sampling_results_ref,sep=";", index_col=0)
@@ -211,24 +227,38 @@ class CairnNRT:
             tab_ref = 0
             return "No reference"
         tab_res.to_csv(self.__sampling_results,sep=";")
+        res_sampling = {}
+
+        #PLAN
         diff = ((tab_res.round(decimals=3).reindex(sorted(tab_res.columns), axis=1)).compare((tab_ref.round(decimals=3)).reindex(sorted(tab_ref.columns), axis=1)))
         self.output("\n Sampling test \n ================ \n")
         if len(diff)==0:
             self.output("Results are identical\n")
+            res_sampling["PLAN"] = "Success"
         else:
             self.output("Difference in the sampling\n")
             self.output(diff.to_string())
-        if len(diff)>0:
-            return "Failed"
-        else:
-            return "Success"
+            res_sampling["PLAN"] = "Failed:" + str(tab_ref['Case'][diff.index].to_list())
+
+        #TIMESERIES
+        if check_ts:
+            res_ts = []
+            for case in tab_ref['Case'].to_list():
+                status = self.check_only_ref_columns("Report_s"+case, self.__test_name+"_results_Results.csv", self.__test_name+"_Results_Ref.csv",0.001)
+                if not status:
+                    res_ts.append("Failed:"+case)
+            if len(res_ts) == 0:
+                res_sampling["TIMESERIES"] = "Success"
+            else:
+                res_sampling["TIMESERIES"] = str(res_ts)
+
+        return res_sampling
 
     def output(self, msg):
         print(msg)
         self.__logfile.write("\n")
         self.__logfile.write(msg)
         
-
     def checkPlanHist(self,planOrHist,threshold = 0.1):
         status = True
         if planOrHist == "PLAN" or planOrHist == "":
@@ -238,12 +268,14 @@ class CairnNRT:
             planHist_file = self.__file_hist
             planHist_ref_file = self.__file_hist_ref
         err = compare_plan_rempl(planOrHist, planHist_ref_file, planHist_file, self.__logfile, threshold)
-        if err < threshold:
-            status = True
-            self.output(planOrHist + ' file difference < ' + str(threshold) + ': %\n')
-        else:
-            status = False
-            self.output(planOrHist + ' file difference > ' + str(threshold) + '%\n')
+        status = False
+        test = '>'
+        if isinstance(err,float) or isinstance(err,int) :
+            if err < threshold:
+                status = True
+                test = '<'
+        
+        self.output(planOrHist + ' file difference '+ test + ' ' + str(threshold) + '%\n')
         return status
 
     def checklp(self):
@@ -257,27 +289,65 @@ class CairnNRT:
         self.output(str_diff)
         return (same_file)
 
-    def checkJson(self, typeFile='json', fileNew='new_study.json', fileRef='study.json', skipCompoX=""):
-        tnr_dir = '.'
-        noDiff = False
-        file_json = os.path.join(self.__app_home, tnr_dir, fileNew)
-        file_json_ref = os.path.join(self.__app_home, tnr_dir, fileRef)
-        logfile = open(os.path.join(self.__app_home, tnr_dir, 'diff_' + typeFile + '_file.log'), 'a')
-        summary_update_file = open(os.path.join(self.__app_home, tnr_dir, "summary_file.txt"), 'a')
+    def compare_csv_files(self, app_home, file_res, file_ref, threshold=0.1):
+        status = False
+        file_results   = path.join(app_home, file_res)
+        file_reference = path.join(app_home, file_ref)
+        logfile = open(os.path.join(app_home, 'report_testing.txt'),'a')
+
+        if os.path.exists(file_results) and os.path.exists(file_reference):
+            status = compare_csv(file_results, file_reference, logfile, threshold=0.1)
+            if status:
+                logfile.write("NO difference in the csv files\n\n")
+            else:
+                logfile.write("Difference in the csv files\n\n")
+        else: 
+            logfile.write('Csv file not found!\n\n')
+
+        assert status == True
+
+    def checkJson(self, app_home, fileNew='new_study.json', fileRef='study.json', skipCompoX=""):
+        status = False
+        file_json = os.path.join(app_home, fileNew)
+        file_json_ref = os.path.join(app_home, fileRef)
+        logfile = open(os.path.join(app_home, 'report_testing.txt'),'a')
 
         if os.path.exists(file_json) and os.path.exists(file_json_ref):
-            noDiff = compareJson(file_json_ref, file_json, logfile, skipCompoX)
-            if noDiff:
-                self.output("NO difference in the json files\n")
+            status = compareJson(file_json_ref, file_json, logfile, skipCompoX)
+            if status:
+                logfile.write("NO difference in the json files\n")
             else:
-                self.output("Difference in the json files\n")
+                logfile.write("Difference in the json files\n")
         else:
-            self.output(typeFile + ' file not found\n')
+            logfile.write('Json file not found\n')
 
-        logfile.close()
-        summary_update_file.close()
+        assert status == True
 
-        return noDiff
+    def contain_file_with_extension(self, directory, extension, seconds):
+        """
+        Recursively checks if a file with the given extension exists in the directory,
+        and that it was created within the last `seconds`
+        """
+        status = False
+        logfile = open(os.path.join(directory, 'report_testing.txt'),'a')
+
+        now = time.time()
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.lower().endswith(extension.lower()):
+                    file_path = os.path.join(root, file)
+                    created_time = os.path.getctime(file_path)
+                    if (now - created_time) <= seconds:
+                        dash = '-' * 40
+                        logfile.write(dash)
+                        logfile.write(dash+'\n')
+                        logfile.write('HTML Report Found: %s\n'%file_path)
+                        status = True
+                        break
+            if status:
+                break
+
+        assert status == True
 
     def update(self, infos, log_file):
         found = re.search('(.+?)trunk', self.__file_res)
@@ -337,7 +407,7 @@ class CairnNRT:
             logfile.close()
             summary_update_file.close()
 
-    def check(self,folder_res = "",file_res = "", file_ref = "",threshold=0.01,):
+    def check(self,folder_res = "",file_res = "", file_ref = "",threshold=0.01,skip_col=[]):
         # change name of results files if pegase
         if file_res != "":
             self.__file_res = os.path.join(self.__app_home,folder_res,file_res)
@@ -346,7 +416,43 @@ class CairnNRT:
         if os.getenv('BUILD_STEP') is None or 'CHECK' in os.getenv('BUILD_STEP'):
             if not os.path.exists(self.__directory_res):
                 os.makedirs(self.__directory_res)
-            infos = new_compare_results(self.__app_home, self.__file_res, self.__file_ref, self.__logfile, self.__directory_res, threshold, pegase=self.__pegase)
+            infos = new_compare_results(self.__app_home, self.__file_res, self.__file_ref, self.__logfile, self.__directory_res, threshold, pegase=self.__pegase,skip_col=skip_col)
         
         return infos
 
+    def check_only_ref_columns(self, folder_res="", file_res="", file_ref="", threshold=0.01):
+        if file_res != "":
+            self.__file_res = os.path.join(self.__app_home, folder_res, file_res)
+        if file_ref != "":
+            self.__file_ref = os.path.join(self.__app_home, folder_res, file_ref)
+        #Find the columns to skip by keeping only the columns that are defined in the ref file
+        results_df = pd.read_csv(self.__file_res, sep=";", index_col=[0]).dropna(axis=1, how="all")
+        results_df_ref = pd.read_csv(self.__file_ref, sep=";", index_col=[0]).dropna(axis=1, how="all")
+        skip_col = list(set(results_df.columns) - set(results_df_ref.columns))
+
+        if not os.path.exists(self.__directory_res):
+            os.makedirs(self.__directory_res)
+        infos = new_compare_results(self.__app_home, self.__file_res, self.__file_ref, self.__logfile,
+                                    self.__directory_res, threshold, pegase=self.__pegase, skip_col=skip_col)
+
+        return infos
+
+    def data_collection(self,compo_type=[],param_list=[]):
+        inst = crn.CairnAPI()
+        problem = inst.read_study(self.__study_file)
+        dico = dict()
+        for comp in compo_type:
+            compos = problem.get_components(comp)
+            for c in compos:
+                compo_crn = problem.get_component(c)
+                dico[c]=[]
+                for p in param_list:
+                    try:
+                        v= compo_crn.get_indicator_value(p)
+                    except:
+                        v="Not applicable"
+                    dico[c].append([p,v])
+        return dico
+            
+
+        

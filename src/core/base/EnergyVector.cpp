@@ -464,6 +464,15 @@ std::string EnergyVector::getDefaultEnergyVectorColor()
     return defaultColor;
 }
 
+const double* EnergyVector::pSpecificHeatRatio(std::string aVectorType) { 
+    if (getFluidTypeFromQString(aVectorType) != UnknownFluid) {
+        return &Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(aVectorType))->Specific_Heat_Ratio;
+    }
+    else {
+        throw Cairn_Exception("Error while obtaining Specific Heat Ratio. The Fluid type of EnergyVector " + Name() + " is unknown!", -1);
+    }
+}
+
 EV::Fluid_Properties                                EnergyVector::Fill_Fluid_Properties(EV::Fluid_Type Type)
 {
     EV::Fluid_Properties Properties;
@@ -1065,4 +1074,22 @@ double EnergyVector::Mass2VolFrac(double Xmass_F1, EV::Fluid_Properties F1, EV::
 double EnergyVector::Vol2MassFrac(double Xmolar_F1, EV::Fluid_Properties F1, EV::Fluid_Properties F2)
 {
     return Xmolar_F1 * F1.Molar_Mass / (Xmolar_F1 * F1.Molar_Mass + (1-Xmolar_F1)*F2.Molar_Mass);
+}
+
+std::vector<InputParam*> EnergyVector::get_InputParams()
+{
+    std::vector<InputParam*> result;
+    result.reserve(4);   // avoid reallocations
+
+    // Always available
+    result.push_back(getCompoInputParam());
+    result.push_back(getCompoInputSettings());
+    result.push_back(getTimeSeriesParam());
+
+    // GUI data (optional)
+    if (auto* gui = getGUIData()) {
+        result.push_back(gui->getGuiInputParam());
+    }
+
+    return result;
 }

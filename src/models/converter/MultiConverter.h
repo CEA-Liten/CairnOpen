@@ -33,19 +33,21 @@ Be careful to set the number of ports consistency with NbInputFlux and NbOutputF
 
 Flows are of two types:
 
--  Input flux : unit system = [Power or Flowrate, Energy or Mass], with
+-  Input flux : unit system = [:rc:`Power` or Flowrate, Energy or Mass], with
    type "Electrical", "Thermal" or "Fluid", named INPUTFluxI where I is a number between 1 and NbInputFlux
 
 -  Output flux : input efficiency (unit system = [Power or Flowrate,
    Energy or Mass], with type "Electrical", "Thermal" or "Fluid", named OUTPUTFluxJ where J is a number between 1 and NbOutputFlux
 
-INPUTFluxI and OUTPUTFluxJ are linked by the matrices A and B, defined as A [X Y]^T = B
-Where A is a block matrix : [A1 A2, A3 A4], X the vector of INPUTFlux (size NbInputFlux) and Y the vector of OUTPUTFlux (size NbOutputFlux), and B a vector [B1 B2]^T that can be seen as an offset
-It defines the set of equations : A1 X + A2 Y = B1 (NbInput equations) and A3 X + A4 Y = B2.
+INPUTFluxI and OUTPUTFluxJ are linked by the matrices :math:`A` and :math:`B`, defined as :math:`A [X Y]^T = B`
 
-An option is available to define also the set of equations C [X Y]^T <= D in the same principle.
+Where :math:`A` is a block matrix : :math:`[A1 A2, A3 A4]`, :math:`X` the vector of INPUTFlux (size NbInputFlux) and Y the vector of OUTPUTFlux (size NbOutputFlux), and :math:`B` 
+a vector :math:`[B1 B2]^T` that can be seen as an offset.
+:math:`A` and :math:`B` defines the set of equations : :math:`A1 X + A2 Y = B1` (NbInput equations) and `A3 X + A4 Y = B2`.
 
-Sizing is done relative to the first ouput OUTPUTFlux1 for MaxPower and Capex.
+The option :rc:`Inequality Constraint` is available to define also the set of equations :math:`C [X Y]^T \leq D` in the same principle.
+
+Sizing is done relative to the first output :rc:`OUTPUTFlux1` for :rc:`MaxPower` and :rc:`Capex`.
 */
 
 
@@ -58,6 +60,7 @@ public:
     //----------------------------------------------------------------------------------------------------
     void computeInitialData() override;
     void computeModelContribution() override;
+    void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol) override;
 
     void setTimeData();

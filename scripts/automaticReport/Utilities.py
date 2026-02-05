@@ -55,9 +55,12 @@ def setColor(projectsPath, x_labels_pos):
     x_color = np.array([col.to_hex("xkcd:orange") for _ in range (len(x_labels_pos))])
     for i, v in enumerate(x_labels_pos):
       for elem in fields:
-          is_elem_in_label = elem[0].replace(' ','') in x_labels_pos[i] or elem[0] in x_labels_pos[i]
-          if (is_elem_in_label):
-              x_color[i] = col.to_hex(elem[1])
+          try:
+              is_elem_in_label = elem[0].replace(' ','') in x_labels_pos[i] or elem[0] in x_labels_pos[i]
+              if (is_elem_in_label):
+                  x_color[i] = col.to_hex(elem[1])
+          except IndexError as err:
+              print(f"Index error while setting colors: {err}")
     return x_color
 
 def convertCSV(excelName, mdelimiter=';'):

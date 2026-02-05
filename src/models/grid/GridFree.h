@@ -53,8 +53,8 @@ public:
     void declareModelParameters() {
         GridSubModel::declareDefaultModelParameters();
 
-        addParameter("ConstantBuyPrice", &mConstantBuyPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), "Constant buy price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
-        addParameter("ConstantSellPrice", &mConstantSellPrice, 0., &mUseConstantPrice, SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), "Constant sell price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
+        addParameter("ConstantBuyPrice", &mConstantBuyPrice, 0., SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), "Constant buy price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
+        addParameter("ConstantSellPrice", &mConstantSellPrice, 0., SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), "Constant sell price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
         addParameter("PriceMultiplier", &mPriceMultiplier, 1., false, true, "Multiplier coefficient on price acting on constant prices or timeseries.", "-");            
     }
 

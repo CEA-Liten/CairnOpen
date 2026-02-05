@@ -12,7 +12,9 @@ using namespace GS ;
 MilpData::MilpData(CairnObject* aParent, const std::string& aName, const double& aPdt,
     const uint& aNpdtPast,
     const uint& aNpdtFuture,
-    const uint& aTimeshift, const uint& aIHMFuturSize, const std::string& aGlobalTimeStepFile, const std::string& aGlobalTypicalPeriodFile) 
+    const uint& aTimeshift, 
+    const uint& aIHMFuturSize,
+    const std::string& aGlobalTimeStepFile, const std::string& aGlobalTypicalPeriodFile) 
     : CairnObject(aParent, aName),
     mPdt(aPdt),
     mPdtHeure(mPdt / 3600.),
@@ -55,6 +57,8 @@ MilpData::MilpData(CairnObject* aParent, const std::string& aName, const double&
 //
 MilpData::MilpData(CairnObject *aParent, const std::string& aName, const std::string &aGlobalTimeStepFile, const std::string &aGlobalTypicalPeriodFile) 
     : CairnObject(aParent, aName),
+    mStartTime(0),
+    mEndTime(-1),
     mPdt(3600.),
     mPdtHeure(mPdt/3600.),
     mNpdtPast(1),
@@ -90,17 +94,13 @@ MilpData::~MilpData()
 bool MilpData::setMilpDataFromSettings(const std::map<std::string, InputParam::ModelParam*>& paramMap, const bool& isStdAloneMode)
 {
     bool ierr = true;
-    //if (mSettings) {
-    //    ierr = configureFromSettingsFile(isStdAloneMode);
-    //}
-    //else {//isStdAloneMode is always true in this case (API) ? 
-    //    ierr = configureFromParam(paramMap, isStdAloneMode);
-    //}
 
     for (auto const& [key, param] : paramMap) 
     {
-        double value;
+        double value = std::nan("0");
         if (isStdAloneMode) {
+            if (key == "StartTime" && param->getNumValue(value))   mStartTime = int(value);
+            if (key == "EndTime" && param->getNumValue(value))     mEndTime = int(value);
             if (key == "TimeStep")  param->getNumValue(mPdt);
             if (key == "TimeShift" && param->getNumValue(value))   mTimeshift = int(value);
             if (key == "PastSize" && param->getNumValue(value))    mNpdtPast = int(value);
@@ -118,7 +118,7 @@ bool MilpData::setMilpDataFromSettings(const std::map<std::string, InputParam::M
         if (key == "ReadingMode")    mReadingMode   = param->toString();
     }
 
-    if (mPdt == 0 || mNpdt == 0 || mIHMFuturSize == 0)
+    if (mPdt == 0 || mNpdt == 0 || mIHMFuturSize == 0 || mStartTime < 0)
     {
         ierr = false;
     }

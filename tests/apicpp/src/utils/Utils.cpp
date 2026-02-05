@@ -152,6 +152,7 @@ vector<vector<string>> TestUtils::ParserTxt(const string& cheminFichier)
 	while (getline(fluxFichier, ligne))
 	{
 		// Read file Vars
+		ligne.erase(std::remove(ligne.begin(), ligne.end(), '\r'), ligne.end());
 		istringstream fluxLigne(ligne);
 		string cellule;
 		vector<string> ligneCSV;
@@ -228,20 +229,20 @@ int TestUtils::compare_scalar(const t_value& val, const t_value& ref, const EPar
 	}
 }
 
-int TestUtils::compare_lists(t_list InputList, t_list RefList)
+int TestUtils::compare_lists(const t_list &InputList, const t_list &RefList)
 {
 	bool lbFound = false;
 	int liDiffSize = 0;
 
 	if (InputList.size() == RefList.size())
 	{
-		for (auto& Inputit = InputList.begin(); Inputit != InputList.end(); ++Inputit)
+		for (auto& Input : InputList)
 		{
 			lbFound = false;
 
-			for( auto& Refit = RefList.begin(); Refit != RefList.end(); ++Refit)
+			for( auto& Ref : RefList)
 			{
-				if (*Inputit == *Refit)
+				if (Input == Ref)
 				{
 					lbFound = true;
 					break;
@@ -252,7 +253,7 @@ int TestUtils::compare_lists(t_list InputList, t_list RefList)
 				//Test Not Ok - the list of settings doesn't conforms to the expected list
 				cout << "Error in the compare - the Dict of component doesn't conforms to the expected list" << endl;
 				cout << "Please check the reference List file - the difference between the two list is in this element : " << endl;
-				cout << "This Input element not found in the reference list : " << *Inputit << endl;
+				cout << "This Input element not found in the reference list : " << Input << endl;
 				return errCompare;
 			}
 		}
@@ -275,6 +276,15 @@ int TestUtils::compare_lists(t_list InputList, t_list RefList)
 		}
 		return errSize;
 	}
+}
+
+int TestUtils::contains(const t_list& InputList, const std::string& val)
+{
+	/* Check if a list contains a given val */
+	if (std::find(InputList.begin(), InputList.end(), val) != InputList.end()) {
+		return noError;
+	}
+	return errCompare;
 }
 
 int TestUtils::CreateRefrenceList(const vector<vector<string>>& DataRef, t_list& OutputSolverList)
@@ -656,9 +666,20 @@ int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFil
 		{
 			//header
 			if (i == 0) {
-				if (lines1[i] != lines2[i]) {
+				std::vector<std::string> values1 = str_to_vector(lines1[i]);
+				std::vector<std::string> values2 = str_to_vector(lines2[i]);
+
+				if (values1.size() != values2.size()) {
 					areEqual = false;
 				}
+				else {
+					for (size_t j = 0; j < values1.size(); ++j) {//innerLoop
+						if (values1[j] != values2[j]) {
+							areEqual = false;
+							break;
+						}
+					}
+				}				
 			}
 			else {
 				std::vector<std::string> values1 = str_to_vector(lines1[i]);
@@ -708,7 +729,7 @@ int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFil
 	}
 }
 
-std::vector<std::string> TestUtils::str_to_vector(std::string& str)
+std::vector<std::string> TestUtils::str_to_vector(const std::string& str)
 {
 	std::stringstream ss(str);
 	ss.imbue(std::locale(std::locale(), new tokens()));

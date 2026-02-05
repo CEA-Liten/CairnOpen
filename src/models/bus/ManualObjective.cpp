@@ -15,7 +15,7 @@ extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 }
 
 ManualObjective::ManualObjective(CairnObject* aParent)
-    : TechnicalSubModel(aParent),
+    : BusSubModel(aParent),
     mBusEnergyBalance(2, 0.) 
 {
 }
@@ -143,21 +143,9 @@ void ManualObjective::computeEconomicalContribution()
 {
     cInfo()<<"model type"<<mObjectiveType;
 
-    if (mObjectiveType == "Blended") {
-        mEcoInvestModel = true;
-    }
-
-    TechnicalSubModel::computeEconomicalContribution();
-
-    // remarque : la gestion du cas "Add" est directement gérée au niveau de Optim Problem.
-    if (mObjectiveType == "Blended"){
-        mExpCapex += mObjectiveCoefficient*mBusBalance;
-        for (unsigned int t = 0; t < mHorizon ; ++t){
-            mExpVariableCosts[t] += TimeStep(t) * mBusBalance1D[t] * mObjectiveCoefficient;
-        }
-    }
-    else if (mObjectiveType == "Lexicographic"){
-        cInfo()<<"ajout de l'objectif "<<parent()->objectName();
+    // Note: The "Add" case is handled directly at the Optim Problem level
+    if (mObjectiveType == "Lexicographic"){
+        cInfo() << "adding the objective " << parent()->objectName();
         std::string name = parent()->objectName();
         MIPModeler::MIPSubobjective subObjective(name);
         subObjective.setSubObjective(mSubObjective,1,mObjectiveLevel,mAbsTol,mRelTol);
@@ -168,7 +156,6 @@ void ManualObjective::computeEconomicalContribution()
 void ManualObjective::computeSubObjectiveContribution()
 {
     for (unsigned int t = 0; t < mHorizon ; ++t){
-        // mSubObjective += mObjectiveCoefficient*mBusBalance1D[t];
         if (mTimeIntegration) {
             mSubObjective += TimeStep(t) * mBusBalance1D[t] * mObjectiveCoefficient;
         } else {
@@ -212,7 +199,7 @@ void ManualObjective::addMinConstraint()
 //-------------------------------------------------------
 void ManualObjective::computeAllIndicators(const double* optSol)
 {
-    TechnicalSubModel::computeDefaultIndicators(optSol);
+    BusSubModel::computeDefaultIndicators(optSol);
     mBusEnergyBalance.at(0) = 0.;
     mBusEnergyBalance.at(1) = 0.;
 }

@@ -138,6 +138,8 @@ public:
 
     std::string Type() const { return mCarrierType; }
 
+    std::vector<InputParam*> get_InputParams();
+
     bool isMassCarrier() const { return mIsMassCarrier; }
     bool isHeatCarrier() const { return mIsHeatCarrier; }
     bool isFuelCarrier() const { return mIsFuelCarrier; }
@@ -181,9 +183,7 @@ public:
     double Potential()      const { return mPotential; }
     double* pPotential() { return &mPotential; }
     
-    const double* pRgas(std::string aVectorType) { return &Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(aVectorType))->Gas_r; }
-    const double* pLHV(std::string aVectorType) { return &Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(aVectorType))->LHV; }
-    const double* pSpecificHeatRatio(std::string aVectorType) { return &Get_Pointer_To_Fluid_Properties(getFluidTypeFromQString(aVectorType))->Specific_Heat_Ratio; }
+    const double* pSpecificHeatRatio(std::string aVectorType);
 
     double SellPrice() { return mSellPrice; }
     double BuyPrice() { return mBuyPrice; }

@@ -10,34 +10,30 @@ using namespace CairnUtils;
 using Eigen::Map;
 using namespace GS ;
 
-OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aMilpData, TecEcoEnv &aTecEcoEnv, 
-    const bool& aStdAloneMode, const std::map<std::string, std::string> &aComponent) :
-    MilpComponent(aParent, aName, aMilpData, aTecEcoEnv, aComponent, {}),
+OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aMilpData, const bool& aStdAloneMode) :
+    CairnObject(aParent),
+    mMilpData(aMilpData),
     mSolver(nullptr),
     mSimulationControl(nullptr),
+    mExpObjective(nullptr),
     mStdAloneMode(aStdAloneMode),
     mExportIndicators(true),  
     mOptimStatus(2)
 {
+    this->setObjectType("OptimProblem");
     this->setObjectName(aName);
 
     mJsonDescription  = new JsonDescription (this, "JsonDescription");
-
-    mComponent["type"] = "OptimProblem";
-    setCompoInputParam(mComponent);
-
-    mType = "TecEcoAnalysis";
-    mCompoModelName = "TecEcoAnalysis";
-    mCompoTechnoType = "TecEcoAnalysis";
-
-    mTecEcoEnv = this ;
 
     //Retrieve the list of private submodels
     mModelFactory = new ModelFactory(spdlog::default_logger());
     mModelFactory->findModels();
 
     //Default TecEcoAnalysis
-    createCompoModel();
+    if (!createTecEcoAnalysis()) {
+        Cairn_Exception cairn_error((std::string)"Error creating the default TecEcoAnalysis!", -1);
+        throw cairn_error;
+    }
 
     //Default Solver 
     if (!createSolver()) {
@@ -47,7 +43,7 @@ OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aM
 
     //Default SimulationControl 
     if (!createSimulationControl()) {
-        Cairn_Exception cairn_error((std::string)"Error creating the default createSimulationControl!", -1);
+        Cairn_Exception cairn_error((std::string)"Error creating the default SimulationControl!", -1);
         throw cairn_error;
     }
 
@@ -55,32 +51,45 @@ OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aM
 
 OptimProblem::~OptimProblem()
 {
-    if (mSolver) delete mSolver;
-    if (mSimulationControl) delete mSimulationControl;
-    if (mJsonDescription) delete mJsonDescription ;
-    if (mModelFactory) delete mModelFactory;
-   
-    for (auto& iPublishedVariable : mListPublishedVars) {
-        ZEVariables* var = iPublishedVariable.second;
-        if (var) delete var;
-        var = nullptr;
+    //delete mTecEcoEnv; //Attention mTecEcoEnv == this so deleting it creates an infinite loop!
+    //delete mTecEcoAnalysis; mTecEcoAnalysis == mCompoModel which is deleted in ~TecEcoComponent()
+    delete mSolver;
+    delete mSimulationControl;
+    delete mJsonDescription;
+    delete mModelFactory;
+
+    // Avoid dangling pointer
+    mTecEcoEnv = nullptr;
+    mTecEcoAnalysis = nullptr;
+    mSolver = nullptr;
+    mSimulationControl = nullptr;
+    mJsonDescription = nullptr;
+    mModelFactory = nullptr;
+
+    // Clean up published variables
+    for (auto& [key, var] : mListPublishedVars) {
+        delete var;
     }
-    mListPublishedVars.clear();    
+    mListPublishedVars.clear();
     mListSubscribedVars.clear();
 
-    for (auto& [key, value] : MilpComponents()) {   
-        if (value) delete value;
-    }
-    
-    for (auto& value: EnergyVectors()) {
-        if (value) delete value;
+    // Clean up MILP components
+    for (auto& [key, value] : MilpComponents()) {
+        delete value;
     }
 
-    for (size_t i = 0;i < mDynamicIndicators.size();i++) {
-        if (mDynamicIndicators[i]) delete mDynamicIndicators[i];
+    // Clean up energy vectors
+    for (auto* value : EnergyVectors()) {
+        delete value;
+    }
+
+    // Clean up dynamic indicators
+    for (auto* indicator : mDynamicIndicators) {
+        delete indicator;
     }
     mDynamicIndicators.clear();
 }
+
 
 std::vector<MilpComponent*> OptimProblem::NonBusMilpComponents()
 {
@@ -118,29 +127,36 @@ std::vector<EnergyVector*> OptimProblem::EnergyVectors()
 //------------------------------------------------------------------------------
 
 void OptimProblem::setExtrapolationFactor() {
+    if (!mTecEcoAnalysis || !mMilpData) return;
+
+    TecEcoCompo* pTecEcoCompo = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    if (!pTecEcoCompo) return;
+
+    double factor = 1.;
     if (mMilpData->UseExtrapolationFactor()) {
-        if (mNbYearInput > 1) {
-            mExtrapolationFactor = 1.;
+        if (mTecEcoAnalysis->NbYearInput() > 1) {
+            factor = 1.;
         }
         else {
-            if (mLeapYearPos == 1) {
-                mExtrapolationFactor = 8784. / (mMilpData->npdt() * mMilpData->pdtHeure());
+            if (mTecEcoAnalysis->LeapYearPos() == 1) {
+                factor = 8784. / (mMilpData->npdt() * mMilpData->pdtHeure());
             }
             else {
-                mExtrapolationFactor = 8760. / (mMilpData->npdt() * mMilpData->pdtHeure());
+                factor = 8760. / (mMilpData->npdt() * mMilpData->pdtHeure());
             }
         }
     }
     else {
-        mExtrapolationFactor = 1.;
+        factor = 1.;
     }
 
-    this->setLevelizationTable();
-    this->setImpactLevelizationTable();
-    this->setTableYearsHours();
+    pTecEcoCompo->setExtrapolationFactor(factor);
+    pTecEcoCompo->setLevelizationTable();
+    pTecEcoCompo->setImpactLevelizationTable();
+    pTecEcoCompo->setTableYearsHours();
 
     for (auto& [key, lptrCompo] : MilpComponents()) {        
-        lptrCompo->setExtrapolationFactor(mExtrapolationFactor);
+        lptrCompo->setExtrapolationFactor(factor);
         lptrCompo->setLevelizationTable();
         lptrCompo->setImpactLevelizationTable();
         lptrCompo->setTableYearsHours();
@@ -179,7 +195,7 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
 
         // create components from Milp description map mMilpComponents
         try {
-            createTecEcoAnalysis(); //FromParamMap
+            createTecEcoAnalysisFromParamMap(); 
             createSimulationControlFromParamMap();
             createMilpComponentsFromParamMap();
             createLinksToBus();
@@ -209,36 +225,44 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
     }
 
     // create input ZEvariable (associated to input time series) list by component, and register them at Problem level.
-    createImportZEVariablesList(); //TODO: move to MilpComponent::initProblem so a component-related cars are published at the component creation
+    createImportZEVariablesList(); //TODO: move to MilpComponent::initProblem so a component-related vars are published at the component creation
     createExportZEVariablesList();
 }
 
 void OptimProblem::initOptimProblemFromTecEcoAnalysis()
 {
     if (!mTecEcoAnalysis) return;
-    mTecEcoAnalysis->updateEnvImpactUnitsList();
-    mCurrency = mTecEcoAnalysis->Currency() ;
-    mObjectiveUnit = mTecEcoAnalysis->ObjectiveUnit();
-    mRange = mTecEcoAnalysis->Range();
-    mForceExportAllIndicators = mTecEcoAnalysis->ForceExportAllIndicators();
-    mNbYear = mTecEcoAnalysis->NbYear();
-    mNbYearOffset = mTecEcoAnalysis->NbYearOffset();
-    mNbYearInput = mTecEcoAnalysis->NbYearInput();
-    mLeapYearPos = mTecEcoAnalysis->LeapYearPos();
-    mDiscountRate = mTecEcoAnalysis->DiscountRate();
-    mImpactDiscountRate = mTecEcoAnalysis->ImpactDiscountRate();
-    mInternalRateOfReturn = mTecEcoAnalysis->InternalRateOfReturn();
-    mEnvImpactsList = mTecEcoAnalysis->EnvImpactsList();
-    for (int i = 0; i < mEnvImpactsList.size(); i++) {
-        mEnvImpactsShortNamesList.push_back (mTecEcoAnalysis->getImpactShortName(mEnvImpactsList[i]));
-    }
 
-    mEnvImpactUnitsList = mTecEcoAnalysis->EnvImpactUnitsList();
-    mEnvImpactCosts = mTecEcoAnalysis->EnvImpactCosts();
+    mForceExportAllIndicators = mTecEcoAnalysis->ForceExportAllIndicators();
+
+    TecEcoCompo* pTecEcoCompo = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    if (!pTecEcoCompo) return;
+
+    pTecEcoCompo->setObjectiveUnit(mTecEcoAnalysis->ObjectiveUnit());
+    pTecEcoCompo->setCurrency(mTecEcoAnalysis->Currency());
+    pTecEcoCompo->setRange(mTecEcoAnalysis->Range());
+
+    pTecEcoCompo->setNbYear(mTecEcoAnalysis->NbYear());
+    pTecEcoCompo->setNbYearOffset(mTecEcoAnalysis->NbYearOffset());
+    pTecEcoCompo->setNbYearInput(mTecEcoAnalysis->NbYearInput());
+    pTecEcoCompo->setLeapYearPos(mTecEcoAnalysis->LeapYearPos());
+
+    pTecEcoCompo->setDiscountRate(mTecEcoAnalysis->DiscountRate());
+    pTecEcoCompo->setImpactDiscountRate(mTecEcoAnalysis->ImpactDiscountRate());
+    pTecEcoCompo->setInternalRateOfReturn(mTecEcoAnalysis->InternalRateOfReturn());
+
+    pTecEcoCompo->setEnvImpactsList(mTecEcoAnalysis->EnvImpactsList());
+    pTecEcoCompo->setEnvImpactUnitsList(mTecEcoAnalysis->EnvImpactUnitsList());
+    pTecEcoCompo->setEnvImpactsShortNamesList(mTecEcoAnalysis->EnvImpactShortNamesList());
+    pTecEcoCompo->setEnvImpactCosts(mTecEcoAnalysis->EnvImpactCosts());
 
     setExtrapolationFactor();
 
-    setCompoTecEcoEnvSettings(*mTecEcoEnv);
+    TecEcoEnv* tecEcoEnv = dynamic_cast<TecEcoEnv*>(pTecEcoCompo);
+    if (tecEcoEnv) {
+        mTecEcoEnv = tecEcoEnv;
+        setCompoTecEcoEnvSettings(*mTecEcoEnv);
+    }
 }
 
 void OptimProblem::setCompoTecEcoEnvSettings(TecEcoEnv& aTecEcoEnv) {
@@ -247,27 +271,24 @@ void OptimProblem::setCompoTecEcoEnvSettings(TecEcoEnv& aTecEcoEnv) {
     }
 }
 
-void OptimProblem::createTecEcoAnalysis()
+bool OptimProblem::createTecEcoAnalysis()
 {
-    for (auto & component : mMilpComponents)
-    {        
-        if (component["type"] == mType) // == "TecEcoAnalysis"
-        {
-            setName(component["id"]);
-            if (mCompoModel) delete mCompoModel; /* TODO: instead of deleting the model, initialize the parameters of the existing one */
-            mCompoModel = new TecEcoAnalysis(this, component);
-            mTecEcoAnalysis = dynamic_cast<TecEcoAnalysis*> (mCompoModel);
-            if (mCompoModel == nullptr || mTecEcoAnalysis == nullptr) {
-                Cairn_Exception cairn_error("Error creating TecEcoAnalysis " + component["id"], -1);
-                throw cairn_error;
+    createComponent("TecEcoAnalysis");
+    if (mTecEcoAnalysis) initOptimProblemFromTecEcoAnalysis();
+    return (mTecEcoAnalysis != nullptr);
+}
+
+void OptimProblem::createTecEcoAnalysisFromParamMap()
+{        
+    mTecEcoAnalysis = nullptr;
+    for (auto & component : mMilpComponents) {        
+        if (component["type"] == "TecEcoAnalysis") {
+            std::map < std::string, std::map<std::string, std::string> > ports = mJsonDescription->getCompoPortData(component["id"]);
+            createComponent(component["type"], component, ports);
+            if (mTecEcoAnalysis) {
+                mTecEcoAnalysis->setLabelList(mJsonDescription->LabelList());
+                initOptimProblemFromTecEcoAnalysis();
             }
-            initGuiData({ {"Xpos", component["Xpos"]}, {"Ypos", component["Ypos"]} }); //To be generalized for GUI data param         
-            mPorts = mJsonDescription->getCompoPortData(component["id"]); //Ports of TecEcoAnalysis
-            mCompoModel->initDefaultPorts();
-            MilpComponent::createPorts();
-            mCompoModel->setPortPointers();
-            mTecEcoAnalysis->setLabelList(mJsonDescription->LabelList());
-            initOptimProblemFromTecEcoAnalysis();
             break;
         }
     }
@@ -283,7 +304,7 @@ void OptimProblem::createMilpComponentsFromParamMap()
             //component["id"] is componenet name, and component["Solver"] is the name of the Solver: Cplex, Cbc, Highs, ...
             bool vOK = createSolver(component["id"], component);
             if (!vOK) {
-                Cairn_Exception cairn_error("Error creating Solver " + component["Solver"] + ": " + component["id"], -1);
+                Cairn_Exception cairn_error("Error creating Solver " + component["id"] + ": cannot found solver asked " + component["Solver"], -1);
                 throw cairn_error;
             }
         }
@@ -297,61 +318,74 @@ void OptimProblem::createMilpComponentsFromParamMap()
         }
         else {
             std::map < std::string, std::map<std::string, std::string> > ports = mJsonDescription->getCompoPortData(component["id"]);
-            createComponent(component, ports);
+            createComponent(component["type"], component, ports);
         }
     }
 }
 
-bool OptimProblem::createComponent(const std::map<std::string, std::string>& component, const std::map < std::string, std::map<std::string, std::string> >& ports)
+bool OptimProblem::createComponent(const std::string& componentType, const std::map<std::string, std::string>& paramsMap,
+    const std::map < std::string, std::map<std::string, std::string> >& portsMap)
 {
     MilpComponent* lptr = nullptr;
-    std::string vComponentType = component.at("type");
     try {
-        if (vComponentType == "Converter" 
-            || vComponentType == "Storage" 
-            || vComponentType == "PhysicalEquation" 
-            || vComponentType == "OperationConstraint") {
-            lptr = dynamic_cast <MilpComponent*> (new MilpComponent(this, component.at("id"), mMilpData, *mTecEcoEnv, component, ports, mModelFactory));
+        if (componentType == "TecEcoAnalysis")
+        {
+            // only one TecEco
+            TecEcoCompo *pTecEco = findChild<TecEcoCompo>();
+            if (pTecEco) removeChild(pTecEco);
+            TecEcoEnv vTecoEnv = TecEcoEnv();
+            lptr = dynamic_cast <MilpComponent*> (new TecEcoCompo(this, paramsMap, portsMap, mMilpData, vTecoEnv, mModelFactory));
+            lptr->initMilpComponent();
+            mTecEcoAnalysis = dynamic_cast<TecEcoAnalysis*> (lptr->compoModel());
+        }
+        else if (componentType == "Converter"
+            || componentType == "Storage"
+            || componentType == "PhysicalEquation"
+            || componentType == "OperationConstraint") {
+            lptr = dynamic_cast <MilpComponent*> (new MilpComponent(this, paramsMap.at("id"), mMilpData, *mTecEcoEnv, paramsMap, portsMap, mModelFactory));
             lptr->initMilpComponent(); 
-        }              
-        else if (vComponentType == "Grid")
+        }    
+        else if (componentType == "Grid")
         {
-            lptr = dynamic_cast <MilpComponent*> (new GridCompo(this, component, ports, mMilpData, *mTecEcoEnv, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new GridCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
             lptr->initMilpComponent();
         }
-        else if (vComponentType == "SourceLoad") {
-            lptr = dynamic_cast <MilpComponent*> (new SourceLoadCompo(this, component, ports, mMilpData, *mTecEcoEnv, mModelFactory));
+        else if (componentType == "SourceLoad") {
+            lptr = dynamic_cast <MilpComponent*> (new SourceLoadCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
             lptr->initMilpComponent();
         }
-        else if (vComponentType == "BusFlowBalance" || vComponentType == "BusSameValue") {
-            lptr = dynamic_cast <MilpComponent*> (new BusCompo(this, component, ports, mMilpData, *mTecEcoEnv, mModelFactory));
+        else if (componentType == "BusFlowBalance" || componentType == "BusSameValue") {
+            lptr = dynamic_cast <MilpComponent*> (new BusCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
             lptr->initMilpComponent();
+            /* set EnergyCarrier (needed for case GUI). When using API, carrier is set in OptimProblemAPI::create_Bus */
+            configureBusCarrier(lptr, CairnUtils::getParam(paramsMap, "componentCarrier"));
         }
-        else if (vComponentType == "MultiObjCompo") {
-            lptr = dynamic_cast <MilpComponent*> (new MultiObjCompo(this, component, ports, mMilpData, *mTecEcoEnv, mModelFactory));
+        else if (componentType == "MultiObjCompo") {
+            lptr = dynamic_cast <MilpComponent*> (new MultiObjCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
             lptr->initMilpComponent();
+            configureBusCarrier(lptr, CairnUtils::getParam(paramsMap, "componentCarrier"));
         }        
-        else if (vComponentType == "" || vComponentType == "undefined")
+        else if (componentType == "" || componentType == "undefined")
         {
-            Cairn_Exception cairn_error("Unkown type for component " + component.at("id"), -1);
+            Cairn_Exception cairn_error("Unkown type for component " + paramsMap.at("id"), -1);
             throw cairn_error;
         }
         else
         {
-            cInfo() << "Try loading special component type " << vComponentType;
-            f_MilpComponent UserMilp = LoadDllMilpComponent(component.at("file"), vComponentType);
+            cInfo() << "Try loading special component type " << componentType;
+            f_MilpComponent UserMilp = LoadDllMilpComponent(paramsMap.at("file"), componentType);
             if (UserMilp == nullptr)
             {
-                cCritical() << "Unable to load library or component " << component.at("id") + " of type " + vComponentType;
-                Cairn_Exception cairn_error("Please Check that file exists and is in the PATH: " + (component.at("file")), -1);
+                cCritical() << "Unable to load library or component " << paramsMap.at("id") + " of type " + componentType;
+                Cairn_Exception cairn_error("Please Check that file exists and is in the PATH: " + (paramsMap.at("file")), -1);
                 throw cairn_error;
             }
-            MilpComponent* lptr_temp = dynamic_cast <MilpComponent*> (UserMilp(this, component.at("id"), mMilpData, *mTecEcoEnv, component, ports));
+            MilpComponent* lptr_temp = dynamic_cast <MilpComponent*> (UserMilp(this, paramsMap.at("id"), mMilpData, *mTecEcoEnv, paramsMap, portsMap));
             lptr_temp->initMilpComponent(); 
         }
     }
     catch (...) {
-        Cairn_Exception cairn_error("Error creating component " + component.at("id") + " of type " + vComponentType, -1);
+        Cairn_Exception cairn_error("Error creating component " + paramsMap.at("id") + " of type " + componentType, -1);
         throw cairn_error;
     }
     if (lptr && lptr->compoModel()) {
@@ -364,21 +398,29 @@ bool OptimProblem::createComponent(const std::map<std::string, std::string>& com
     return true;
 }
 
+void OptimProblem::configureBusCarrier(MilpComponent* lptrBus, const std::string& carrierName)
+{
+    /* set EnergyCarrier (needed for case GUI) */
+    EnergyVector* vEnergyVector = findChild<EnergyVector>(carrierName);
+    if (vEnergyVector) {
+        lptrBus->setMainCarrier(vEnergyVector);
+    }
+    else {
+        Cairn_Exception cairn_error("Error creating Bus " + lptrBus->Name() + "There is no EnergyCarrier with name " + carrierName, -1);
+        throw cairn_error;
+    }
+}
 
 void OptimProblem::deleteComponent(MilpComponent* lptrComponent)
 {
-    try
-    {
-        if (lptrComponent != nullptr) {
+    if (lptrComponent) {
+        try {
             lptrComponent->deleteCompoModel();
             delete lptrComponent;
         }
-    }
-    catch (...)
-    {
-        Cairn_Exception erreur((std::string)"Error Deleting Compoenet ");
-        this->setException(erreur);
-        return;
+        catch (...) {
+            throw Cairn_Exception("Error Deleting Compoenet!");
+        }
     }
 }
 
@@ -395,7 +437,7 @@ void OptimProblem::createDynamicIndicators()
 
 void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the simulation has finished (should be called after readSolution)
 {       
-    const InputParam::t_Indicators& vIndicators = mCompoModel->getInputIndicators()->getIndicators();
+    const InputParam::t_Indicators& vIndicators = mTecEcoAnalysis->getInputIndicators()->getIndicators();
 
     const double* optSol = mSolver->getOptimalSolution(aNsol);
     for (int i = 0; i < mDynamicIndicators.size(); i++) {
@@ -427,19 +469,19 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
             else if (CairnUtils::split(value, '.').size() == 2) {
                 std::string compoName = CairnUtils::split(value, '.')[0];
                 std::string mipExpName = CairnUtils::split(value, '.')[1];
-                std::string mipExpLongName;
-                if (mTecEcoAnalysis) {
-                    mipExpLongName = mTecEcoAnalysis->getImpactLongName(mipExpName); //used for env impact indicators in case of components
-                }
+                //std::string mipExpLongName;
+                //if (mTecEcoAnalysis) {
+                //    mipExpLongName = mTecEcoAnalysis->EnvImpactLongName(mipExpName); //used for env impact indicators in case of components
+                //}
                 //Look for componenet
                 std::map <std::string, std::vector<double>*> compoIndicatorsMap;
                 //TecEco case
-                if (compoName == Name()) 
+                if (compoName == mTecEcoAnalysis->Name()) 
                 {
                     bool isFound = false;
                     for (auto& vIndicator : vIndicators) {
-                        const std::string &indicatorShortName = vIndicator->getShortName();
-                        if (CairnUtils::simplified(indicatorShortName) == CairnUtils::simplified(mipExpName))
+                        const std::string &tecEcoIndicatorShortName = vIndicator->getShortName();
+                        if (CairnUtils::simplified(tecEcoIndicatorShortName) == CairnUtils::simplified(mipExpName))
                         {
                             //tecEcoIndicator_Itr.key() is the long name of the indicator e.g. "Net Present Value (Levelized Profit)" for "NPV"
                             *varValueMap[varName] = vIndicator->getValue();
@@ -463,9 +505,10 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
                             const InputParam::t_Indicators& vIndicators = lptrComponent->compoModel()->getInputIndicators()->getIndicators();
                             bool isFoundIndicator = false;
                             for (auto& vIndicator : vIndicators) {
-                                std::string indicatorName = vIndicator->getName();
-                                if (CairnUtils::simplified(indicatorName) == CairnUtils::simplified(mipExpName)
-                                    || CairnUtils::simplified(indicatorName) == CairnUtils::simplified(mipExpLongName))
+                                const std::string& indicatorShortName = vIndicator->getShortName();
+                                if (CairnUtils::simplified(indicatorShortName) == CairnUtils::simplified(mipExpName)
+                                    //|| CairnUtils::simplified(indicatorName) == CairnUtils::simplified(mipExpLongName)
+                                    )
                                 {
                                     *varValueMap[varName] = vIndicator->getValue();
                                     isFoundIndicator = true;
@@ -498,7 +541,7 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
 
 bool OptimProblem::createSolver(const std::string& aName, const std::map<std::string, std::string>& paramMap)
 {
-    if (mSolver) delete mSolver;
+    delete mSolver;
     mSolver = new Solver(this, aName, paramMap);
     if (mSolver->getException().error() == -1) {
         return false;
@@ -527,7 +570,7 @@ void OptimProblem::createSimulationControlFromParamMap()
 
 bool OptimProblem::createSimulationControl(const std::string& mSimulationControlName, const std::map<std::string, std::string>& paramMap)
 {
-    if (mSimulationControl) delete mSimulationControl;
+    delete mSimulationControl;
     mSimulationControl = new SimulationControl(this, mSimulationControlName, paramMap);
     //TODO: use mException
     if (mSimulationControl) {
@@ -586,12 +629,15 @@ f_MilpComponent OptimProblem::LoadDllMilpComponent(std::string Filename, std::st
 
 void OptimProblem::createLinksToBus()
 {
-    for (auto& component : NonBusMilpComponents()) 
+    for (auto& component : NonBusMilpComponents())
     {
         createLinksToBus(component);
     }
     //Create TecEcoAnalysis links
-    createLinksToBus(this);
+    TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    if (pTecEco) {
+        createLinksToBus(pTecEco);
+    }
 }
 
 void OptimProblem::createLinksToBus(MilpComponent* lptrComponent) 
@@ -623,7 +669,7 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
         if (lptrLinkedBus)
         {
             //Verify that Bus and port have the same carrier
-            if (lptrLinkedBus->VectorName() != portCarrierName) {
+            if (lptrLinkedBus->CarrierName() != portCarrierName) {
                 std::string errorMsg = "Error creating link from " + lptrComponent->Name() + " (port " + lptrport->Name() + ") to Bus " 
                     + linkedBusName + ". Bus and port must have the same carrier (EnergyVector)!";
                 Cairn_Exception cairn_error(errorMsg, -1);
@@ -636,7 +682,7 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
             }
             else {
                 std::string errorMsg = "Error creating link from " + lptrComponent->Name() + " (port " + lptrport->Name() + ") to Bus " 
-                    + linkedBusName + ". EnergyVector " + lptrLinkedBus->VectorName() + " does not exist!";
+                    + linkedBusName + ". EnergyVector " + lptrLinkedBus->CarrierName() + " does not exist!";
                 Cairn_Exception cairn_error(errorMsg, -1);
                 throw cairn_error;
             }
@@ -706,10 +752,16 @@ void OptimProblem::createImportZEVariablesList()
     for (auto& [key, lptr] : MilpComponents()) {
          //Read time series        
         lptr->readTSVariablesFromModel();
-
         //register subscribed lists at OptimProblem level
         lptr->createImportListVars(mListSubscribedVars);
     }
+
+    //TecEco doesn't have timeseries
+    //TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
+    //if (lptrTecEco) {
+    //    lptrTecEco->readTSVariablesFromModel();
+    //    lptrTecEco->createImportListVars(mListSubscribedVars);
+    //}
 }
 
 void OptimProblem::createExportZEVariablesList()
@@ -719,6 +771,12 @@ void OptimProblem::createExportZEVariablesList()
         //register published lists at OptimProblem level
         lptr->createExportListVars(mListPublishedVars);
     }
+
+    //No need to export TecEco output timeseries 
+    //TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
+    //if (lptrTecEco) {
+    //    lptrTecEco->createExportListVars(mListPublishedVars);
+    //}
 }
 
 void OptimProblem::computeGUIBusLocations()
@@ -942,7 +1000,6 @@ void OptimProblem::jsonSaveDocument (ojson &jsonOutputFile)
     };
     //Links should be before Components to set the name of Bus ports 
     jsonSaveGuiLinks(jsonOutputFile["Links"]);
-    
     jsonSaveGuiComponents(jsonOutputFile["Components"]);  
 }
 
@@ -971,9 +1028,23 @@ void OptimProblem::jsonSaveGuiComponents(ojson &componentsArray)
     }
 }
 
-void OptimProblem::jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& compoName, const std::string& compoPortName, const std::string& busName, const std::string& busPortName, 
+void OptimProblem::jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& compoName, 
+    const std::string& compoPortName, const std::string& busName, const std::string& busPortName, 
     const int& compoX, const int& compoY, const int& busX, const int& busY)
 {
+    // Ensure linksArray is an array (important for push_back at the end)
+    if (!linksArray.is_array()) {
+        // turn null into array 
+        if (linksArray.is_null()) {
+            linksArray = ojson::array();
+        }
+        else {
+            cWarning() << "linksArray is not an array; type=" << linksArray.type_name()
+                << ". Re-initializing it to an array.";
+            linksArray = ojson::array();
+        }
+    }
+
     ojson linkObject = ojson{
         {"tailNodeName", compoName},
         {"tailSocketName", compoPortName },
@@ -1001,11 +1072,23 @@ void OptimProblem::jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& co
 void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
 {
     //Loop on Bus components
-    std::vector<BusCompo*> vBuses = findChildren<BusCompo>();
-    for (auto& lptrBus : vBuses) {
-        std::string busName = lptrBus->Name();
-        int busX = lptrBus->getXpos() ;
-        int busY = lptrBus->getYpos();
+    const std::vector<BusCompo*> pBuses = findChildren<BusCompo>();
+    for (const auto& pBus : pBuses) 
+    {
+        if (!pBus) {
+            cWarning() << "Encountered null BusCompo*; skipping.";
+            continue;
+        }
+
+        const std::string busName = pBus->Name();
+        int busX = 0, busY = 0;
+        try {
+            busX = pBus->getXpos();
+            busY = pBus->getYpos();
+        }
+        catch (...) {
+            cWarning() << "Failed to get position for bus " << busName << "; skipping bus.";
+        }
 
         /* Loop on (Bus) ports: 
         *  those are pointers to the ports of the componenets connected to the Bus
@@ -1013,65 +1096,105 @@ void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
         *  A Bus port means a link to the componenet that owns this port. 
         */
         
-        int iNum = 0;
-        int oNum = 0;
-        int dNum = 0;
+        int iNum = 0; // inputs ports (=> outputs of the Bus)
+        int oNum = 0; // outputs      (=> inputs of the Bus)
+        int dNum = 0; // data ports
 
-        for (MilpPort* lptrport : lptrBus->PortList()) {
-        
-            std::string busPortName = lptrport->BusPortName();
-
+        for (MilpPort* pPort : pBus->PortList()) 
+        {
+            if (!pPort) {
+                cWarning() << "Null MilpPort* found in bus " << busName << "; skipping port.";
+                continue;
+            }
+            // Bus side data
+            std::string busPortName = pPort->BusPortName();
             std::string bPortName;
             std::string bPortPosition;
-            if (lptrport->Direction() == KPROD()) {//Input to Bus
+
+            const auto direction = pPort->Direction();
+            if (direction == KPROD()) {// => Input to the Bus
                 bPortPosition = Left();
-                bPortName = "PortL" + std::to_string(iNum);
-                iNum++;
+                bPortName = "PortL" + std::to_string(iNum++);
             }
-            else if (lptrport->Direction() == KCONS()) {//Output from BUS
+            else if (direction == KCONS()) {// => Output from the Bus
                 bPortPosition = Right();
-                bPortName = "PortR" + std::to_string(oNum);
-                oNum++;
+                bPortName = "PortR" + std::to_string(oNum++);
             }
             else {//KDATA()
                 bPortPosition = Bottom();
-                bPortName = "PortB" + std::to_string(dNum);
-                dNum++;
+                bPortName = "PortB" + std::to_string(dNum++);
             }
             
-            if (busPortName == "") {//Case API
+            if (busPortName.empty()) {//Case API
                 busPortName = bPortName;
-                lptrport->setBusPortName(bPortName);
+                pPort->setBusPortName(bPortName);
             }
 
-            if (lptrport->BusPortPosition() == "") {//Expected
-                lptrport->setBusPortPosition(bPortPosition);
+            if (pPort->BusPortPosition().empty()) {//Expected
+                pPort->setBusPortPosition(bPortPosition);
             }
 
-            std::string compoPortName = lptrport->Name();
+            // Component side data
+            const std::string compoName = pPort->CompoName();
+            const std::string compoPortName = pPort->Name();
 
-            std::string compoName = lptrport->CompoName();
-            MilpComponent* lptrCompo = MilpComponents()[compoName];
-            int compoX = lptrCompo->getXpos();
-            int compoY = lptrCompo->getYpos();
-
-            const std::vector<MilpComponent*>& vBusComponents = lptrBus->ListComponent();
-            std::vector<MilpComponent*>::const_iterator vIter = std::find(vBusComponents.begin(), vBusComponents.end(), lptrCompo);
-            if (lptrport->LinkedBusName() != busName || vIter == vBusComponents.end()) {
-                cWarning() << "Something is wrong! The Bus and the linked component must be identical!";
-                cInfo() << "Skip link between " << compoName << " and " << busName;
+            if (compoName.empty()) {
+                cWarning() << "A link to bus " << busName << " has empty component name; skipping link.";
                 continue;
             }
 
-            jsonSaveGuiLinkNodes(linksArray, compoName, compoPortName, busName, busPortName, compoX, compoY, busX, busY);
+            MilpComponent* pComponent = nullptr;
+            if (compoName == mTecEcoAnalysis->Name()) {
+                pComponent = dynamic_cast<MilpComponent*> (mTecEcoAnalysis);
+            }
+            else {
+                pComponent = findChild<MilpComponent>(compoName);
+            }
+
+            if (!pComponent) {
+                cWarning() << "Encountered null MilpComponent*; skipping.";
+                continue;
+            }
+
+            int compoX = 0, compoY = 0;
+            try {
+                compoX = pComponent->getXpos();
+                compoY = pComponent->getYpos();
+            }
+            catch (...) {
+                cWarning() << "Failed to get position for component " << compoName << "; skipping link to bus " << busName << ".";
+                continue;
+            }
+
+            // Consistency checks: port must actually be linked to this bus, and component must belong to this bus
+            const auto& linkedComponents = pBus->ListComponent(); // component linked to pBus
+            const bool busNamesMatch = (pPort->LinkedBusName() == busName);
+            const bool compoLinkedToBus = (std::find(linkedComponents.begin(), linkedComponents.end(), pComponent) != linkedComponents.end());
+            if (!busNamesMatch || !compoLinkedToBus) {
+                cWarning() << "Mismatch: the bus and the linked component must be identical! "
+                << "Skip link between " << compoName << " and " << busName << ".";
+                continue;
+            }
+
+
+            // Write the link 
+            try {
+                jsonSaveGuiLinkNodes(linksArray, compoName, compoPortName, busName, busPortName, compoX, compoY, busX, busY);
+            }
+            catch (...) {
+                cWarning() << "Failed to serialize link between component " << compoName << " and bus " << busName << "; skipping link.";
+                continue;
+            }
         }
     }
 }
 
 std::string OptimProblem::getOptimDirection()
 {
-    if (mComponent["OptimDirection"] == "Maximize")
-        return mComponent["OptimDirection"] ;
+    /* Always Minimize ??!! */
+
+    //if (mComponent["OptimDirection"] == "Maximize")
+    //    return mComponent["OptimDirection"] ;
 
     return std::string("Minimize");
 }
@@ -1079,11 +1202,10 @@ std::string OptimProblem::getOptimDirection()
 void OptimProblem::setMIPModel(MIPModeler::MIPModel* aModel)
 {   
     // set global MIP model pointer
-    mModel = aModel ;
+    mModel = aModel;
     mModel->setExternalModeler(mSolver->getExternalModeler());
-    if (mCompoModel != nullptr)
-    {
-        mCompoModel->setMIPModel(aModel);
+    if (mTecEcoAnalysis) {
+        mTecEcoAnalysis->setMIPModel(aModel);
     }
 
     for (auto& [key, lptr] : MilpComponents()) {    
@@ -1102,6 +1224,7 @@ void OptimProblem::setStopSignal(int *stopSignal){
     mSolver->setStopSignal(stopSignal);
 
 }
+
 int OptimProblem::initProblem()
 {
     if (mMilpData->iHMFuturSize() < mMilpData->timeshift())
@@ -1135,33 +1258,56 @@ int OptimProblem::initProblem()
     }
 
     // init TecEcoAnalysis
-    ierr = MilpComponent::initPorts();
-    if (ierr <0) return ierr ;
-    ierr = MilpComponent::initSubModelConfiguration();
+    TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
+    if (lptrTecEco) {
+        ierr = lptrTecEco->initPorts();
+        if (ierr < 0) return ierr;
+        ierr = lptrTecEco->initSubModelConfiguration();
+    }
+    else {
+        throw Cairn_Exception("Error while configuring optim problem: TecEcoAnalysis is not well defined!", -1);
+    }
 
     return ierr ;
 }
 
-void OptimProblem::initSubModelTopology()
+void OptimProblem::redeclareEnvImpactParameters()
 {
-    mCompoModel->setParentCompo(this) ;
+    for (auto& [key, lptrCompo] : MilpComponents())
+    {
+        lptrCompo->redeclareEnvImpactParameters();
+    }
+    // create input ZEvariable (associated to input time series) list by component, and register them at Problem level.
+    createImportZEVariablesList(); //TODO: move to MilpComponent::initProblem so a component-related vars are published at the component creation
+    createExportZEVariablesList();
 }
 
 int OptimProblem::initSubModelInput()
 {
-    int ierr = 0 ;
+    int ierr = 0;
 
     for (auto& [key, lptr] : MilpComponents()) {
-       
         ierr = lptr->initSubModelInput() ; // read parameters then create and initialize MIP variables
-
         if (ierr <0) {
-            cCritical() << "ERROR in initialization of component " ;
+            cCritical() << "ERROR in initialization of component ";
             return ierr ;
         }
     }
 
-    ierr = MilpComponent::initSubModelInput() ;
+    //After checking ports, in particular defining the value of mVarType, now it is possible to publish port variables 
+    for (auto& [key, lptr] : MilpComponents()) {
+        lptr->createPortsExportListVars(mListPublishedVars);
+    }
+
+    TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
+    if (lptrTecEco) {
+        ierr = lptrTecEco->initSubModelInput();
+        if (ierr < 0) return ierr;
+        lptrTecEco->createPortsExportListVars(mListPublishedVars); 
+    }
+    else {
+        throw Cairn_Exception("Error while initializing optim problem: TecEcoAnalysis is not well defined!", -1);
+    }
 
     return ierr ;
 }
@@ -1174,30 +1320,14 @@ void OptimProblem::buildComponentConstraints()
     for (auto& [key, lptr] : MilpComponents()) {
 
         //Exclude Bus componenets
-        BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr) ;
-        if (lptrBus == nullptr)
-        {
+        BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr);
+        TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (lptr);
+        if (lptrBus == nullptr && lptrTecEco == nullptr) {
             try {
                 lptr->buildProblem(); // les bus doivent attendre que toutes les expressions soient ecrites !
             }
-            catch (Cairn_Exception cairn_error) {
-                this->setException(cairn_error);
-                return;
-            }
-        }
-    }
-}
-
-void OptimProblem::buildManualObjectiveConstraints()
-{
-    for (auto& [key, lptr] : MilpComponents()) {
-        BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr);
-        if (lptrBus != nullptr)
-        {
-            //Only ManualObjective
-            TechnicalSubModel* tecModel = dynamic_cast<TechnicalSubModel*> (lptrBus->compoModel());
-            if (tecModel != nullptr) {
-                lptrBus->buildProblem(); // les bus doivent attendre que toutes les expressions soient ecrites !
+            catch (const Cairn_Exception& cairn_error) {
+                throw cairn_error;
             }
         }
     }
@@ -1207,13 +1337,8 @@ void OptimProblem::buildBusConstraints()
 {
     for (auto& [key, lptr] : MilpComponents()) {
         BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr) ;
-        if (lptrBus != nullptr)
-        {
-            //Exclude ManualObjective componenets
-            TechnicalSubModel* tecModel = dynamic_cast<TechnicalSubModel*> (lptrBus->compoModel());
-            if (tecModel == nullptr) {
-                lptrBus->buildProblem(); // les bus doivent attendre que toutes les expressions soient ecrites !
-            }
+        if (lptrBus) {
+            lptrBus->buildProblem(); // les bus doivent attendre que toutes les expressions soient ecrites !
         }
     }
 }
@@ -1239,20 +1364,6 @@ void OptimProblem::resetFlags()
     }
 }
 
-bool OptimProblem::newCompoModel()
-{
-    /* 
-    * Create TecEcoAnalysis
-    * TecEcoAnalysis is the mCompoModel of OptimProblem
-    */
-    //default TecEcoAnalysis
-    mCompoModel = new TecEcoAnalysis(this);
-    mTecEcoAnalysis = dynamic_cast<TecEcoAnalysis*> (mCompoModel);
-    initOptimProblemFromTecEcoAnalysis();
-    initGuiData({});
-    return (mCompoModel != nullptr && mTecEcoAnalysis != nullptr);
-}
-
 void OptimProblem::buildProblem()
 {
     std::string vStudyFile = std::string(mStudyFile->archFile().c_str());
@@ -1262,37 +1373,30 @@ void OptimProblem::buildProblem()
     // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
     //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()
 
-    if (ierr <0) {
-        Cairn_Exception erreur ((std::string)"Error in OptimProblem init ", ierr);
-        this->setException(erreur) ;
-        return ;
+    if (ierr < 0) {
+        throw Cairn_Exception("Error in OptimProblem init!", -1);
     }
 
     // Create Constraints
     cInfo() << "OptimProblem::buildComponentConstraints";
     buildComponentConstraints();
 
-    cInfo() << "OptimProblem::buildManualObjectiveConstraints";
-    buildManualObjectiveConstraints();
-
     // Compute PreSimulation TecEco expressions 
-    if (mCompoModel != nullptr)
-    {
-        cInfo() << "optimProblem::computeAllContribution";
-        mCompoModel->computeAllContribution();
-    }
+    if (mTecEcoAnalysis) {
+        try {
+            cInfo() << "optimProblem::computeAllContribution";
+            mTecEcoAnalysis->computeAllContribution();
 
-    //TecEcoAnalysis Model Interface at ports
-    try
-    {
-        setBusFluxPortExpression();       /**  send flux expressions to FlowBalanceBus */
-        setBusSameValuePortExpression();  /**  publish expression to SameValueBus */
-    }
-    catch (...)
-    {
-        Cairn_Exception error((std::string)" ERROR in component setting the ports of TecEcoAnalysis", -1);
-        this->setException(error);
-        return;
+            //TecEcoAnalysis Model Interface at ports
+            MilpComponent* pTecEcoCompo = dynamic_cast<MilpComponent*> (mTecEcoAnalysis->parent());
+            if (pTecEcoCompo) {
+                pTecEcoCompo->setBusFluxPortExpression();       /**  send flux expressions to FlowBalanceBus */
+                pTecEcoCompo->setBusSameValuePortExpression();  /**  publish expression to SameValueBus */
+            }
+        }
+        catch (...) {
+            throw Cairn_Exception("ERROR in component setting the ports of TecEcoAnalysis", -1);
+        }
     }
 
     // dans la version actuelle, on ne prevoit pas de connexion directe d'un composant a un autre.
@@ -1306,10 +1410,9 @@ void OptimProblem::buildProblem()
     buildBusConstraints();
 
     // Model component behaviour
-    if (mCompoModel != nullptr)
-    {
-        cInfo() << "buildModel: " << mCompoModel->objectName();
-        mCompoModel->buildModel();     /**  define behaviour model and associated Variables */
+    if (mTecEcoAnalysis)  {
+        cInfo() << "buildModel: " << mTecEcoAnalysis->objectName();
+        mTecEcoAnalysis->buildModel();     /**  define behaviour model and associated Variables */
         computeObjectiveFunction(*mExpObjective);  /** set the value of mObjective to the ObjectiveExpression from TecEcoAnalysis */
     }
 
@@ -1438,16 +1541,12 @@ int OptimProblem::setParameters()
     return ierr ;
 }
 
-void OptimProblem::computeTecEcoEnvAnalysis(const int& aNsol, const int& istat)
+void OptimProblem::computeTecEcoEnvAnalysis(const int& aNsol)
 {
-    for (auto& [key, lptr] : MilpComponents()) {
-    
-        lptr->computeTecEcoEnvAnalysis();
-    }
 
     //-------------- Compute TecEco Indicators -----------------------------//
     //computeAllIndicators assumes mSolver->getModelType() == GS::MIPMODELER()
-    if (istat < 2) mCompoModel->computeAllIndicators(mSolver->getOptimalSolution(aNsol)); 
+    mTecEcoAnalysis->computeAllIndicators(mSolver->getOptimalSolution(aNsol));
 
     //Case of GAMS
     /*
@@ -1500,7 +1599,7 @@ void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, c
                 //list of all indicators 
                 const InputParam::t_Indicators& vIndicators = lptr->compoModel()->getInputIndicators()->getIndicators();
                 for (auto& vIndicator : vIndicators) {
-                    const std::string& vIndicatorName = vIndicator->getName();
+                    const std::string vIndicatorName = vIndicator->getName();
                     if (!CairnUtils::contains(vIndicatorName, impactNames[i])) {
                         continue;
                     }
@@ -1575,7 +1674,7 @@ void OptimProblem::exportEnvImpactParameters(const std::string& aFileName, const
                     if (!CairnUtils::contains(param->getName(), impactNames[i]))
                         continue;
                     if (first) {
-                        std::string impactShortNames = mTecEcoAnalysis->getImpactShortName(param->getName());
+                        std::string impactShortNames = mTecEcoAnalysis->EnvImpactShortName(param->getName());
                         header += " ; " + impactShortNames;
                     }
                     valuesMap[lptr->Name()] += std::string(" ; ") + param->toString();
@@ -1643,7 +1742,7 @@ void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, c
                         if (!CairnUtils::contains(param->getName(), impactNames[i]))
                             continue;
                         if (first) {
-                            std::string impactShortNames = mTecEcoAnalysis->getImpactShortName(param->getName());
+                            std::string impactShortNames = mTecEcoAnalysis->EnvImpactShortName(param->getName());
                             if (CairnUtils::split(impactShortNames, '.').size() > 1)
                                 header += " ; " + CairnUtils::split(impactShortNames, '.')[1];
                             else
@@ -1677,7 +1776,8 @@ void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, c
     FileOut.close();
 }
 
-void OptimProblem::exportParameters(const std::string& aFileName, const std::string& encoding) {
+void OptimProblem::exportParameters(const std::string& aFileName, const std::map<std::string, bool>& optionsMap, const std::string& encoding) 
+{
     //FileName
     std::string vFileName = aFileName;
     if (vFileName == "") {
@@ -1691,43 +1791,57 @@ void OptimProblem::exportParameters(const std::string& aFileName, const std::str
     }
 
     //header
+    auto getOption = [&](const std::string& key, bool defaultValue) {
+        auto it = optionsMap.find(key);
+        return (it != optionsMap.end()) ? it->second : defaultValue;
+    };
+
+    bool exportPortParameters = getOption("ExportPortParams", true);
+    bool showMandatory = getOption("ShowMandatory", true);
+    bool showLabels = getOption("ShowLabels", true);
+
     FileOut << "Component;Parameter;Value;Unit;Description";
-    for (auto const& label : mTecEcoAnalysis->getLabelList()) {
-        FileOut << ";" + label;
+    if (showMandatory) {
+        FileOut << ";Mandatory"; 
+    }
+    if (showLabels) {
+        for (auto const& label : mTecEcoAnalysis->getLabelList()) {
+            FileOut << ";" + label;
+        }
     }
     FileOut << std::endl;
 
     //Solver 
     if (mSolver) {
-        exportParameters(FileOut, mSolver->Name(), mSolver->getParameters());
+        exportParameters(FileOut, mSolver->Name(), mSolver->getParameters(), optionsMap);
     }
 
     //SimulationControl
     if (mSimulationControl) {
-        exportParameters(FileOut, mSimulationControl->Name(), mSimulationControl->getParameters());
+        exportParameters(FileOut, mSimulationControl->Name(), mSimulationControl->getParameters(), optionsMap);
     }
 
     //TecEcoAnalysis 
     if (mTecEcoAnalysis) {
-        exportParameters(FileOut, Name(), mTecEcoAnalysis->getParameters());
+        exportParameters(FileOut, mTecEcoAnalysis->Name(), mTecEcoAnalysis->getParameters(), optionsMap);
     }
 
     //MilpComponents
     for (auto& [key, lptr] : MilpComponents()) {
         if (lptr) {
-            exportParameters(FileOut, lptr->Name(), lptr->getParameters(), lptr->getTimeSeriesNames(), lptr->compoModel()->getLabelMap());
+            exportParameters(FileOut, lptr->Name(), lptr->getParameters(exportPortParameters), optionsMap, lptr->getTimeSeriesNames(), lptr->compoModel()->getLabelMap());
         }
     }
     FileOut.close();
 }
 
-void OptimProblem::exportParameters_all_files(std::string aFileName, const std::string& encoding)
+void OptimProblem::exportParameters_all_files(std::string aFileName, const std::map<std::string, bool>& optionsMap, const std::string& encoding)
 {
     try {
         if (aFileName == "") {
             aFileName = mStudyFile->getScenarioFile("_Parameters.csv", 0, false);
         }
-        exportParameters(aFileName, encoding);
+        exportParameters(aFileName, optionsMap, encoding);
         //Env Impacts coeff and results - special files
         const std::string suffix = "_EnvImpact.csv";
         exportEnvImpactParameters(CairnUtils::replace(aFileName, ".csv", suffix), encoding);
@@ -1740,11 +1854,20 @@ void OptimProblem::exportParameters_all_files(std::string aFileName, const std::
 }
 
 void OptimProblem::exportParameters(std::fstream& out, const std::string& name, const std::map<std::string, InputParam::ModelParam*>& paramMap,
-    const std::map<std::string, std::string>& aTimeSeriesNames, const std::map<std::string, std::string>& labelMap)
+    const std::map<std::string, bool>& optionsMap, const std::map<std::string, std::string>& aTimeSeriesNames, const std::map<std::string, std::string>& labelMap)
 {
+    auto getOption = [&](const std::string& key, bool defaultValue) {
+        auto it = optionsMap.find(key);
+        return (it != optionsMap.end()) ? it->second : defaultValue;
+    };
+
+    bool onlyIsUsed = getOption("OnlyUsedParams", false);
+    bool showMandatory = getOption("ShowMandatory", true);
+    bool showLabels = getOption("ShowLabels", true);
+
     for (auto const& [key, param] : paramMap) {
         //Only used parameters (and optional timeseries if value is not empty)
-        if (param->IsUsed() || (aTimeSeriesNames.find(key) != aTimeSeriesNames.end() && aTimeSeriesNames.at(key) != ""))
+        if (!onlyIsUsed || param->IsUsed() || (aTimeSeriesNames.find(key) != aTimeSeriesNames.end() && aTimeSeriesNames.at(key) != ""))
         {
             std::string  value = "";
             if (aTimeSeriesNames.find(key) != aTimeSeriesNames.end()) {
@@ -1753,14 +1876,20 @@ void OptimProblem::exportParameters(std::fstream& out, const std::string& name, 
             else {
                 value = param->toString();
             }
-            out << name << ";" << param->getName() << ";" << value << ";" << param->getUnit() << ";" << param->getDescription();
-            for (auto const& label : mTecEcoAnalysis->getLabelList()) {
-                std::string val = "";
-                auto vIter = labelMap.find(label);
-                if (vIter != labelMap.end()) {
-                    val = vIter->second;
+            out << name << ";" << key << ";" << value << ";" << param->getUnit() << ";" << param->getDescription();
+            if (showMandatory) {
+                std::string mandatory = param->IsBlocking() ? "true" : "false";
+                out << ";" + mandatory;
+            }
+            if (showLabels) {
+                for (auto const& label : mTecEcoAnalysis->getLabelList()) {
+                    std::string val = "";
+                    auto vIter = labelMap.find(label);
+                    if (vIter != labelMap.end()) {
+                        val = vIter->second;
+                    }
+                    out << ";" + val;
                 }
-                out << ";" + val;
             }
             out << std::endl;
         }
@@ -1769,13 +1898,16 @@ void OptimProblem::exportParameters(std::fstream& out, const std::string& name, 
 
 void OptimProblem::exportMultiObjFile(std::fstream& out, int aNsol, const bool showDescription)
 {
-    if (mTecEcoAnalysis != nullptr) {
-        std::map<std::string, MIPModeler::MIPExpression*> mapSubObjective = mTecEcoAnalysis->mapSubObjective();
-        for (auto &[key, value] : mapSubObjective) {        
-            if(showDescription)
-                CairnUtils::outputIndicator(out, key, "Subobjective", value->evaluate(mSolver->getOptimalSolution(aNsol)), mObjectiveUnit, "Subobjective", "Sub objective");
-            else 
-                CairnUtils::outputIndicator(out, key, "Subobjective", value->evaluate(mSolver->getOptimalSolution(aNsol)), mObjectiveUnit, "Subobjective");
+    if (mTecEcoAnalysis) {
+        for (auto& lptrBus : BusComponents()) {
+            if (lptrBus->ModelClassName() == "ManualObjective") {
+                MIPModeler::MIPExpression* expSubObjective = lptrBus->getMIPExpression("SubObjectiveExpression");
+                double value = expSubObjective->evaluate(mSolver->getOptimalSolution(aNsol));
+                if (showDescription)
+                    CairnUtils::outputIndicator(out, lptrBus->Name(), "Subobjective", value, mTecEcoAnalysis->ObjectiveUnit(), "Subobjective", "Sub objective");
+                else
+                    CairnUtils::outputIndicator(out, lptrBus->Name(), "Subobjective", value, mTecEcoAnalysis->ObjectiveUnit(), "Subobjective");
+            }
         }
     }
 }
@@ -1796,10 +1928,10 @@ void OptimProblem::exportAllTecEcoEnvAnalysis(const std::string& aResultFile, co
     FileOut << std::endl;
 
     //TecEco
-    InputParam* modelIndicators = mCompoModel->getInputIndicators();
+    InputParam* modelIndicators = mTecEcoAnalysis->getInputIndicators();
     const InputParam::t_Indicators& vIndicators = modelIndicators->getIndicators();
     for (size_t i = 0; i < vIndicators.size(); i++) {
-        vIndicators[i]->Export(FileOut, Name(), range, mForceExportAllIndicators, showDescription);
+        vIndicators[i]->Export(FileOut, mTecEcoAnalysis->Name(), range, mForceExportAllIndicators, showDescription);
     }
 
     // DETAILED DATA; BY COMPONENTS 
@@ -1847,7 +1979,8 @@ void OptimProblem::computeHistState()
     for (auto& [key, lptr] : MilpComponents()) {
         lptr->computeHistNbHours();
     }
-    MilpComponent::computeHistNbHours();
+    TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    pTecEco->computeHistNbHours();
 }
 
 void OptimProblem::exportResults()
@@ -1900,4 +2033,12 @@ void OptimProblem::exportOptimaSizeAllCycles(const std::string& aFileName, const
         }
         FileOut << optimalSizeValues << "\n";
     }
+}
+
+std::string OptimProblem::getAbsoluteFileName(const std::string& filename)
+{
+    if (!fs::exists(filename)) {
+        return (projectDir() + filename);
+    }
+    return filename;
 }

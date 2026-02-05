@@ -1,8 +1,7 @@
 #ifndef CAIRNOBJECT_H
 #define CAIRNOBJECT_H
 #include "ModelInterface_global.h"
-#include <algorithm>
-#include <typeinfo>
+#include "spdlog/spdlog.h"
 
 class MODELINTERFACESHARED_EXPORT CairnObject
 {
@@ -18,17 +17,20 @@ public:
     void addChild(CairnObject* ap_Child);      
     void removeChild(CairnObject* ap_Child);
     CairnObject* findChild(const std::string& a_Name, const std::string& a_Type = "");
-
+    static bool ends_with(std::string_view str, std::string_view suffix)
+    {
+        return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    }
     template<typename T>
     inline T* findChild(const std::string& a_Name = "") const
-    {        
-        for (auto& vChild : m_children) {            
-            if (vChild->objectName() == a_Name) {
-                if (vChild->objectType()!="") {                    
-                    if (typeid(T).name() == ("class " + vChild->objectType()))
+    {                
+        for (auto& vChild : m_children) {                        
+            if (vChild->objectType()!="") { 
+                if (a_Name == "" || vChild->objectName() == a_Name) {
+                    if (ends_with(typeid(T).name(), vChild->objectType()))
                         return (T*)vChild;
-                }
-            }            
+                }                    
+            }                        
         }
         return nullptr;
     }
@@ -38,13 +40,16 @@ public:
     {
         std::vector<T*> vRet;
         for (auto& vChild : m_children) {
-            if (vChild->objectType() != "") {
-                if (typeid(T).name() == ("class " + vChild->objectType()))
+            if (vChild->objectType() != "") {                
+                if (ends_with(typeid(T).name(), vChild->objectType()))
                     vRet.push_back((T*)vChild);
             }            
         }
         return vRet;
     }
+    const std::vector<CairnObject*>& children() const;
+    virtual std::vector<class InputParam*> get_InputParams() { return {}; };
+
 private:
 	CairnObject* p_Parent{ nullptr };
     std::vector<CairnObject*> m_children;

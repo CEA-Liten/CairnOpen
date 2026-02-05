@@ -16,6 +16,11 @@ OptimProblem
 
 .. autoclass:: cairn.OptimProblem
 
+CairnObject
+-----------
+
+.. autoclass:: cairn.CairnObject
+
 EnergyVector
 ------------
 
