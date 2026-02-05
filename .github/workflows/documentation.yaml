@@ -31,7 +31,7 @@ jobs:
           echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
           echo "WHL_URL=$WHL_URL" >> $GITHUB_ENV
           echo "Downloading wheel from $WHL_URL"
-          curl -o "$WHL_FILENAME" "$WHL_URL"
+          curl -L -o "$WHL_FILENAME" "$WHL_URL"
 
       - name: Install dependencies
         run: |
