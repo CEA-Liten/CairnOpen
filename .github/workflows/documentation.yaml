@@ -21,9 +21,11 @@ jobs:
       - uses: actions/setup-python@v3
     
       - name: Define WHL variables and download package
+        shell: bash
         run: |
-          WHL_FILENAME="cairn-${env.VERSION}-cp310-cp310-win_amd64.whl"
-          WHL_URL="${env.GITHUB_URL}/releases/download/${env.VERSION}/${env.WHL_FILENAME}"
+          set -e
+          WHL_FILENAME="cairn-${VERSION}-cp310-cp310-win_amd64.whl"
+          WHL_URL="${GITHUB_URL}/releases/download/${VERSION}/${WHL_FILENAME}"
           echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
           echo "WHL_URL=$WHL_URL" >> $GITHUB_ENV
           echo "Downloading wheel from $WHL_URL"
