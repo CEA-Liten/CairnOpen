@@ -17,7 +17,7 @@ jobs:
         run: git submodule update --init --recursive --remote
       
       - name: buildALL
-        run: ./buildAll.sh
+        run: bash ./buildAll.sh
       - name: TNR Tests
-        run: ./tests/scripts/startPytest.sh
+        run: bash ./tests/scripts/startPytest.sh
  
