@@ -27,15 +27,7 @@ jobs:
       - name: buildALL
         run: bash ./buildAll.sh
   
-  docs:
-    needs: cairn-build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      
+  #docs:
       - name: extract version
         run: |
           set -e
@@ -44,17 +36,17 @@ jobs:
           echo "CAIRN_VERSION=$CAIRN_VERSION" >> $GITHUB_ENV
           echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
       
-      - name: Install dependencies
+      - name: (docs) Install wheel dependencies
         run: |
           set -e
           python --version
           pip install bin/$WHL_FILENAME
           pip install -r ./doc/user/requirements.txt
           python ./scripts/doc/userDocGenRST.py
-      - name: Sphinx build
+      - name: (docs) Sphinx build
         run: |
           sphinx-build -M html ./doc/user/ ./doc/user/_build
-      - name: Deploy to GitHub Pages
+      - name: (docs) Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           publish_branch: gh-pages
