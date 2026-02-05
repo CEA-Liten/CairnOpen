@@ -2,58 +2,59 @@
 #define GUIData_H
 class GUIData ;
 
-#include <QtCore>
 #include "CairnCore_global.h"
-#include <QObject>
+#include "InputParam.h"
 
-const float MAX_X = 10000;
-const float MAX_Y = 10000;
+const float MAX_X = 2000;
+const float MAX_Y = 2000;
 
 const int OFFSET_X = 100;
 const int OFFSET_Y = 100;
 
-class CAIRNCORESHARED_EXPORT GUIData : public QObject
-{
-    Q_OBJECT
+class CAIRNCORESHARED_EXPORT GUIData : public CairnObject
+{    
 public:
 
-    GUIData(QObject *aParent, QString aName);
+    GUIData(CairnObject *aParent);
+    ~GUIData();
 
-    virtual ~GUIData();
-    void doInit(const QString aType, const QString aSubType, const QString aCategory, const int aXpos, const int aYpos) ;
+    void doInit(const std::string aType, const std::string aSubType, const std::string aCategory, const std::map<std::string, std::string> paramMap = {}) ;
 
     int getXpos() const {return mXpos ;}
     int getYpos() const {return mYpos ;}
 
-    QString getGuiNodeClass() const {return mGuiNodeModelType ;}
-    QString getGuiNodeClassSubtype() const {return mGuiNodeTechnoType ;}
-    QString getGuiNodeName() const {return mGuiNodeName ;}
-    QString getGuiComponentPERSEEType() const {return mGuiComponentCairnType ;}
+    std::string getGuiNodeClass() const {return mGuiNodeModelType ;}
+    std::string getGuiNodeClassSubtype() const {return mGuiNodeTechnoType ;}
+    std::string getGuiComponentPERSEEType() const {return mGuiComponentCairnType ;}
 
     uint GetId() {return mId;}
 
     void setXpos (int val) { mXpos = fmax (0., fmin(val, MAX_X)); }
     void setYpos (int val) { mYpos = fmax (0., fmin(val, MAX_Y)); }
 
-    void setGuiNodeClass        (const QString val) {mGuiNodeModelType = val;}
-    void setGuiNodeClassSubtype (const QString val) {mGuiNodeTechnoType = val;}
-    void setGuiNodeName         (const QString val) { mGuiNodeName = val;}
-    void setGuiComponentPERSEEType (const QString val)      {mGuiComponentCairnType = val;}
+    std::string Name() { return std::string(this->parent()->objectName().c_str()); } /* component name */
+    void setGuiNodeClass        (const std::string val) {mGuiNodeModelType = val;}
+    void setGuiNodeClassSubtype (const std::string val) {mGuiNodeTechnoType = val;}
+    void setGuiComponentPERSEEType (const std::string val)      {mGuiComponentCairnType = val;}
 
-    void jsonSaveGUILine(QJsonObject& componentObject, const QString& componentCarrier="");
+    void jsonSaveGUILine(ojson& componentObject, const std::string& componentCarrier="");
 
-protected:
+ 	InputParam* getGuiInputParam() { return mGuiInputParam; }
+
+    void declareGuiInputParam();
+    void setGuiInputParam(const std::map<std::string, std::string> paramMap);protected:
 
     uint mId ;
+
+    InputParam* mGuiInputParam{ nullptr };
 
     int mXpos ;         /** X position on planteditor */
     int mYpos ;         /** Y position on planteditor */
 
-    QString mGuiNodeModelType ;  /** GuiClass on planteditor */
-    QString mGuiNodeName ;  /** GuiName on planteditor */
-    QString mGuiNodeTechnoType ;  /** GuiType on planteditor - models of the same GuiClass */
-    QString mGuiComponentCairnType ;  /** mGuiCategory on planteditor */
-    QString mGuiCarrier ;  /** mGuiCarrier name on planteditor */
+    std::string mGuiNodeModelType ;  /** GuiClass on planteditor */
+    std::string mGuiNodeTechnoType ;  /** GuiType on planteditor - models of the same GuiClass */
+    std::string mGuiComponentCairnType ;  /** mGuiCategory on planteditor */
+    std::string mGuiCarrier ;  /** mGuiCarrier name on planteditor */
 };
 
 #endif // GUIData_H
