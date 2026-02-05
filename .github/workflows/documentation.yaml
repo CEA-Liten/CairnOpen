@@ -15,7 +15,7 @@ jobs:
 
     env:
       GITHUB_URL: https://github.com/CEA-Liten/CairnOpen
-      VERSION: 5.0.0
+      VERSION: 5.3.0
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          #pip install $WHL_FILENAME
+          pip install $WHL_FILENAME
           pip install -r ./doc/user/requirements.txt
           python ./scripts/doc/userDocGenRST.py
       - name: Sphinx build
