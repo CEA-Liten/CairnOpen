@@ -16,6 +16,8 @@ jobs:
       - name: Update submodules
         run: git submodule update --init --recursive --remote
       
+      - name: Set CAIRN_HOME
+        run: echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: buildALL
         run: bash ./buildAll.sh
       - name: TNR Tests
