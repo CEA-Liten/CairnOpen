@@ -22,7 +22,6 @@ jobs:
     
       - name: Define WHL variables and download package
         run: |
-          set -e
           WHL_FILENAME="cairn-${env.VERSION}-cp310-cp310-win_amd64.whl"
           WHL_URL="${env.GITHUB_URL}/releases/download/${env.VERSION}/${env.WHL_FILENAME}"
           echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
