@@ -4,8 +4,8 @@
 
 
 # Python, to force Python (if not defined, use find_package Python3)
-set(PYTHON_HOME /home/share/570-Energie/570.15-TRILOGY/tools/python-u24/python-3.13.9 CACHE INTERNAL "Python installation path")
-set(PYTHON_VENV /home/share/570-Energie/570.15-TRILOGY/tools/python-u24/venvs/buildCairn CACHE INTERNAL "Python virtual environment")
+set(PYTHON_HOME /usr/bin/python3 CACHE INTERNAL "Python installation path")
+set(PYTHON_VENV ${CMAKE_SOURCE_DIR}/venvs/buildCairn CACHE INTERNAL "Python virtual environment")
 set(PYTHON_PACKAGES lib/python3.13/site-packages CACHE INTERNAL "Python packages path")
 
 set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11)
@@ -16,9 +16,9 @@ set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
 option(WITH_TESTING "Build tests. Default = OFF" OFF)
-option(WITH_PYBIND "Cairn python binding" OFF)
+option(WITH_PYBIND "Cairn python binding" ON)
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" ON)
-option(BUILD_WHEEL "build python wheel of cairn" OFF)
+option(BUILD_WHEEL "build python wheel of cairn" ON)
 
 # TODO!!
 set(WARNINGS_LEVEL 0 CACHE INTERNAL "Set compiler diagnostics level. 0: no warnings, 1: developer's minimal warnings, 2: strict level, warnings to errors and so on. Default =0")
