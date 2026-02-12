@@ -58,14 +58,14 @@ jobs:
       - name: upload wheel on workflow 
         uses: actions/upload-artifact@v4
         with:
-          name: cairn-wheel-linux-${ env.CAIRN_VERSION }
+          name: cairn-wheel-linux-${{ env.CAIRN_VERSION }}
           path: bin/${{ env.WHL_FILENAME }}
       
       - name: Upload on release 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ env.VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
+          gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
       
       #TODO 
       #- name: TNR Tests
