@@ -36,6 +36,19 @@ jobs:
           echo "CAIRN_VERSION=$CAIRN_VERSION" >> $GITHUB_ENV
           echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
       
+      #upload wheel file
+      - name: upload wheel on workflow 
+        uses: actions/upload-artifact@v4
+        with:
+          name: cairn-wheel-linux-${ env.CAIRN_VERSION }
+          path: bin/$WHL_FILENAME
+      
+      - name: Upload on release 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ env.VERSION }} bin/$WHL_FILENAME --repo ${{ github.repository }} --clobber 
+      
       - name: (docs) Install wheel dependencies
         run: |
           set -e
