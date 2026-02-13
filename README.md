@@ -16,9 +16,9 @@ Cairn is developped by the CEA-Liten in Grenoble and Chambéry.
 ## 🛠️ Prerequisites
 Before installing Cairn, ensure your system meets the following prerequisites:
 
-- Operating System: Windows, Linux, macOS. 
+- Operating System: Windows.
 - C++ compiler compatible with C++17 or higher (for instance CMake)
-- Python 3.10
+- Python 3.13
 
 ## ⚙️ Dependencies 
 - Qt libraries (version 5.12 or higher). 
