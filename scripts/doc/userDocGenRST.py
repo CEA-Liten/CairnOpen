@@ -41,6 +41,7 @@ def filter_lines_rst(f, modelname,folder_csv,list_param): # filtre le fichier .c
     varDico, exprList, lines_to_ignore = getVariables(lines)
     var_table = pd.DataFrame.from_dict(varDico, orient = 'index', columns = ["dimension","Associated Expr" ,"size", "varMin", "varMax", "varType"])
     modelnameUsed=modelname#.replace("\_","")
+    os.makedirs(folder_csv,exist_ok=True)
     var_table.to_csv(folder_csv+modelnameUsed+"varList.csv",sep=",",index_label="Variable name")
     
     
