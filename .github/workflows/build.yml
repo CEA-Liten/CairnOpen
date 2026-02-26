@@ -10,6 +10,9 @@ permissions:
 jobs:
   cairn-build:
     runs-on: ubuntu-latest
+    outputs:
+      cairn_version: ${{ steps.extract.outputs.cairn_version }}
+      whl_filename: ${{ steps.extract.outputs.whl_filename }}
 
     steps:
       - uses: actions/setup-python@v5
@@ -26,16 +29,54 @@ jobs:
         run: echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: buildALL
         run: bash ./buildAll.sh
-  
-  #docs:
+      - name: TNR CTests
+        run: bash ./tests/scripts/startCtest.sh
+      - name: Publish TNR reports
+        uses: phoenix-actions/test-reporting@v2
+        with:
+          files: tests/reports/*.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: extract version
+        id: extract
         run: |
           set -e
           CAIRN_VERSION=$(tail -n 1 resources/officialVersions.txt)
           WHL_FILENAME="cairn-${CAIRN_VERSION}-cp313-cp313-linux_x86_64.whl"
-          echo "CAIRN_VERSION=$CAIRN_VERSION" >> $GITHUB_ENV
-          echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
-      
+          echo "cairn_version=$CAIRN_VERSION" >> $GITHUB_OUTPUT
+          echo "whl_filename=$WHL_FILENAME" >> $GITHUB_OUTPUT
+
+      - name: upload bin folder 
+        uses: actions/upload-artifact@v4
+        with:
+          name: cairn-bin
+          path: bin/
+  
+  #job2: docs:
+  docs:
+    runs-on: ubuntu-latest
+    needs: cairn-build
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Update submodules
+        run: git submodule update --init --recursive --remote
+      - name: download bin folder
+        uses: actions/download-artifact@v4
+        with:
+          name: cairn-bin
+          path: bin/
+      - name: set vars
+        run: |
+          echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
+          echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
+
       - name: (docs) Install wheel dependencies
         run: |
           set -e
@@ -54,7 +95,23 @@ jobs:
           publish_dir: ./doc/user/_build/html
           force_orphan: true
 
-  #upload wheel file
+  #job3: upload wheel
+  uploads:
+    runs-on: ubuntu-latest
+    needs: cairn-build
+
+    steps:
+      - name: download bin folder
+        uses: actions/download-artifact@v4
+        with:
+          name: cairn-bin
+          path: bin/
+      - name: set vars
+        run: |
+          echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
+          echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
+
+    #upload wheel file
       - name: upload wheel on workflow 
         uses: actions/upload-artifact@v4
         with:
@@ -66,8 +123,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
+  
+  #TODO
+  #job4: upload on pypi.org
+
       
-      #TODO 
-      #- name: TNR Tests
-      #   run: bash ./tests/scripts/startPytest.sh
- 
