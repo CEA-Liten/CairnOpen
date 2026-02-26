@@ -30,7 +30,7 @@ jobs:
       - name: buildALL
         run: bash ./buildAll.sh
       - name: TNR CTests
-        run: bash ./tests/scripts/startCtest.sh
+        run: bash ./tests/startCtest.sh
       - name: Publish TNR reports
         uses: phoenix-actions/test-reporting@v2
         with:
@@ -51,6 +51,7 @@ jobs:
         with:
           name: cairn-bin
           path: bin/
+          retention-days: 1
   
   #job2: docs:
   docs:
