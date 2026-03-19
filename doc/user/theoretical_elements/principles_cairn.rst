@@ -84,10 +84,7 @@ Methodology to define a |cairn| problem and simulation
 		- How to define the total calculation time and the time step management?
 		- How to define the solver management?
 		
-#.  **Run** of the |cairn| problem:	
-
-	.. seealso:: 
-		- :ref:`running_mode`
+#.  **Run** of the |cairn| problem.
 		
 #.  **Analyse the results** of the |cairn| problem:
 

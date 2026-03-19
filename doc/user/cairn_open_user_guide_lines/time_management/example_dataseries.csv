@@ -1,0 +1,10 @@
+Time;H2_Load.LoadMassFlowrate;Elec_Grid.ElectricityPrice;Wind_Farm.ElectricityPrice
+01/01/2012 00:00;charge debit;prix elec;prix elec
+s;kg/h;eur/MWh;eur/MWh
+true;true;true;true
+3600;0;60.44;0
+7200;0;60.44;0
+10800;0;60.44;0
+14400;0;60.44;0
+18000;0;60.44;0
+21600;0;60.44;0

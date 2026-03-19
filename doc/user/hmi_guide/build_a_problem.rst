@@ -191,6 +191,7 @@ Once the group is created, its name can be changed at the top left of it. At the
 * Ungroup the group can also be done here.
 
 .. _load_input_timeseries:
+
 Upload the Input time series
 ============================
 
@@ -240,7 +241,7 @@ The parameters that are highlighted in **blue** are **Optimization** parameters.
    An Optimization variable must be defined with the **negative sign**. In this why, the user is defining the max value that this variable could have and 
    the min value as 0. 
 
-Each component has its own set of parameters depending how it has been modeled. To have more details about the static and optimization parameters, please refer to the section - :ref:`attention`.
+Each component has its own set of parameters depending how it has been modeled. 
 As it can been seen in the upper part of the window, other sections are available. 
 The **Time Series & Files** section is used to upload into the model the considered time series if needed. Once the time series file have been upload into |cairn| (refer to the previous section),
 the user can find the desired time series in the dropdown menu as shown in :numref:`Timeseries_Uploading`.

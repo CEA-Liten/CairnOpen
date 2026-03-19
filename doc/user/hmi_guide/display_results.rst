@@ -90,6 +90,7 @@ The plotter has a dedicated menu to perform the following actions (from left to 
 |
 
 .. _load_result_timeseries:
+
 Load Result TimeSeries
 ======================
 

@@ -1,4 +1,4 @@
-.. _display_sized_components:
+.. _display_sized_components1:
 
 Display the components to be sized
 ===================================

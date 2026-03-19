@@ -28,7 +28,7 @@ a **Node law** or a ** NodeEquality** is necessary to perform flow balances ; te
 There are 3 different types of link. The way to draw them is described below (:numref:`FigHowToLinks`):
 
 .. figure:: images/Link_types.png
-   :alt: FigHowToLinks, 3 different link types
+   :alt: FigHowToLink, 3 different link types
    :name: FigHowToLinks
    :width: 600
    :align: center

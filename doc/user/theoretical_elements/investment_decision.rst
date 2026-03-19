@@ -21,8 +21,9 @@ A cash flow of **year i** is defined as the difference between cash inflow of **
   :width: 500 
   :name: InvestDecision1
   :align: center
+  
+  Cash flows of a project
 
-   Cash flows of a project
 
 Often, the fact that the value of money is not constant is taken into account to check whether a project is profitable or not.
 

@@ -75,5 +75,10 @@ In the following example, the |cop| is modelled by 2 values for x and 2 values f
 	:class: table1
 
 
+Time-dependant performance maps
+=====================================
 
+Instead of giving one single performance maps, the user can decide to provide a timeserie of a performance maps. This feature is only available for 2-dimension performance maps, in converter.
+
+- Activate 
 

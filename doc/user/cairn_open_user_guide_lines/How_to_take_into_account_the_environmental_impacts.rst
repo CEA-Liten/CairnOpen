@@ -17,33 +17,32 @@ It is possible to consider several impacts (list based on EF V3.0, :numref:`lca_
        :widths: 50 50
     
        * - .. figure:: images/lca_parameters.PNG
-			:name: lca_parameters
-			:align: center
-			:width: 400
-			   
-			In the "Parameters Tab" in the "TecEcoAnalysis" component
+            :name: lca_parameters
+            :align: center
+            :width: 400
+
+            In the "Parameters Tab" in the "TecEcoAnalysis" component
          - .. code-block:: python 
-            :caption: Using the |python| |api|
-            
-			problem.tech_eco_analysis = {'ConsideredEnvironmentalImpacts':
-			'Climate change#Global Warming Potential 100,
-			'Land use#Soil quality index' }
+             :caption: Using the |python| |api|
+			
+             problem.tech_eco_analysis = {'ConsideredEnvironmentalImpacts':'Climate change#Global Warming Potential 100, 'Land use#Soil quality index' }
 			   
 .. container:: cadre
 
     .. list-table:: How to enable environmental impact calculation for a component?
         :widths: 50 50	
     
-        * - .. figure:: images/lca_parameters_compo.PNG
-             :name: lca_parameters_compo
-             :align: center
-             :width: 400
-        
-        	 In the "Parameters Tab of the component"
-          - .. code-block:: python 
+       * - .. figure:: images/lca_parameters_compo.PNG
+            :name: lca_parameters_compo
+            :align: center
+            :width: 400
+
+            In the "Parameters Tab of the component".
+         - .. code-block:: python 
+
              :caption: Using the |python| |api|
         	
-             my_elz.set_setting_value("EnvironmentModel", True) 
+            my_elz.set_setting_value("EnvironmentModel", True) 
 
 .. seealso:: 
 
@@ -54,9 +53,8 @@ For each component:
 
 	- Indicators are calculated only for a component itself.
 	- The environmental model (EnvironmentModel, :numref:`lca_parameters_compo`) has to be activated.
-	- The tabs (Env. Impacts and Ports) in which environmental impacts can be configured are colored green.
-	  It is possible to set for each impact :
-	  
+	- The tabs (Env. Impacts and Ports) in which environmental impacts can be configured are colored green. It is possible to set for each impact :
+
 		-  **Grey or manufacturing impact** linked to the size (in tab "Environmental impacts" of a component) owing to coeffs A and B
 		   (see :numref:`lca_parameters_compo_grey`) : :math:`m = A * size + B`
 		   
@@ -67,6 +65,7 @@ For each component:
 		   (see :numref:`lca_parameters_compo_direct`): :math:`m = A * flux + B`.
 		   
 		   The A coefficient can be also set using a timeseries ("UseEnvContentTS_A"=True, the timeseries is given in the "EnvContentTS_A" field).
+
 
 .. container:: cadre
 

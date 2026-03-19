@@ -32,22 +32,19 @@
 
 .. toctree:: 
    :maxdepth: 2
-   :caption: Cairn Open User Guide Lines
+   :caption: Cairn User Guide Lines
    
    cairn_open_user_guide_lines/general
-   cairn_open_user_guide_lines/time_management
+   cairn_open_user_guide_lines/time_management/time_management
    cairn_open_user_guide_lines/input_output_files
    cairn_open_user_guide_lines/economic_aspects
    cairn_open_user_guide_lines/environmental_aspects
    cairn_open_user_guide_lines/mixed_integer_linear_optimization
+   privateDoc/advanced_features/modelling_guidelines
+   privateDoc/advanced_features/how_to_perform
+   privateDoc/debug
 
-.. ifconfig:: cea_content
 
-   .. toctree::
-      :maxdepth: 2
-      :caption: Cairn Solus User Guide Lines
-	  
-      privateDoc/cairn_user_guide_lines/how_to_perform
     
 
 .. toctree::
@@ -66,46 +63,23 @@
     :maxdepth: 2
     :caption: API Guide
 
+    api_guide/quick_api
     api_guide/commands
     api_guide/notebook
 
 
-.. toctree:: 
-   :maxdepth: 2
-   :caption: Advanced features
-
-   privateDoc/advanced_features/pegase_cairn
-   privateDoc/advanced_features/develop_model_with_installer
-   privateDoc/advanced_features/cairn_Uranie
-   privateDoc/advanced_features/Transport_network
-   privateDoc/advanced_features/investment_phases
-   privateDoc/cairn_user_guide_lines/how_to_perform/how_to_perform_a_sensitivity_study
-   privateDoc/cairn_user_guide_lines/how_to_perform/how_to_perform_sizing_optimization
-   privateDoc/cairn_user_guide_lines/how_to_perform/uncertainties_analysis
-
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
     :caption: Components description
     
     models/models
-    models/bus_toc
-    models/converter_toc
-    models/sourceload_toc
-    models/storage_toc
-    models/operationconstraint_toc
-
-.. toctree::
-    :maxdepth: 3
-    :caption: Cairn solus components description
-    
-    privateDoc/models/models
-    privateDoc/models/bus_toc
-    privateDoc/models/converter_toc
-    privateDoc/models/sourceload_toc
-    privateDoc/models/storage_toc
-    privateDoc/models/operationconstraint_toc
-    
-
+    models/grids
+    models/bus
+    models/converters
+    models/sourceloads
+    models/storages
+    models/operationconstraints
+    models/physicalequation
 
 .. toctree::
     :maxdepth: 2

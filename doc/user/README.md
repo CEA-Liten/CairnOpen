@@ -20,6 +20,13 @@ Le résultat sera dans doc/Documentation/htmlSphinx
 
 Génération automatique de la doc après le build de PERSEE : TODO
 
+### Balises:
+
+```
+.. important::
+.. admonition::
+```
+
 ### Structure de la doc:
 
 Les titres sont écrits dans cet ordre ( à respecter pour ne pas casser l'arborescence !!)
@@ -81,7 +88,7 @@ Il faut donc mettre toutes les informations à garder privées dans le dossier U
 
 ### Intégrer une image
 ```
-.. image:: images/mutliconv_exemple.PNG.png
+.. image:: images/mutliconv_exemple.PNG
 
     :width: 100
     :alt: example multiconverter
@@ -99,6 +106,19 @@ En paragraphe: `.. math::`.
  .. include::file.rst
  ```
 
+ ## Faire référence à une autre page dans la doc
+
+Poser l'ancre: 
+
+```
+.. _cairn_map_file:
+```
+
+Y faire référence: 
+```
+:ref:`cairn_map_file`
+```
+**Ne pas oublier de retirer l'underscore !!**
 
 ## Citer des papiers
 

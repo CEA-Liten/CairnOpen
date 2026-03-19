@@ -95,8 +95,8 @@ To use the |cplex| solver with the |python| package, you must:
 - Ensure that `cplex.exe` and `cplex2010.dll` are present on your system.
 - Add their location to your system `PATH` environment variable.
 
-Dependencies
-------------
+Dependencies to compile the API
+---------------------------------
 
 **Required dependencies**
 

@@ -26,29 +26,21 @@ The EnergyVector class allows the definition of several parameters :
         
         - if sell or buy prices are added to grid or load components (using constant or timeserie profile); these values are not taken into account.
 
-.. list-table:: How to define parameters of an energy carrier?   
 
-	* - .. figure:: images/energy_carrier2.PNG
-		   :scale: 60 
-		   :name: energy_carrier2
-		   :align: center
+.. figure:: images/energy_carrier.PNG
+	:scale: 60 
+	:name: energy_carrier2
+	:align: center
 
-		   Using the |gui|
+	Parameters of an energy carrier
 
-	  - .. 	literalinclude:: energy_carrier2.txt 
-		   :caption: In the json file
+.. figure:: images/energy_carrier2.PNG
+	:scale: 60 
+	:name: energy_carrier1
+	:align: center
 
-.. list-table:: How to set options of an energy carrier?   
+	Options of an energy carrier
 
-	* - .. figure:: images/energy_carrier.PNG
-		   :scale: 60 
-		   :name: energy_carrier1
-		   :align: center
-
-		   Using the |gui|
-
-	  - .. literalinclude:: energy_carrier.txt 
-		   :caption: In the json file
 
 
 .. _Setunits:

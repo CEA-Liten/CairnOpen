@@ -233,7 +233,7 @@ Citing
 
 If you use |cairn|, please cite the following paper :cite:`ruby_persee_2024`.
 
-The folling paper :cite:`montignac_multi-criteria_2023` refers |cairn| .
+The folling paper refers |cairn|
 
 .. bibliography::
     :all:

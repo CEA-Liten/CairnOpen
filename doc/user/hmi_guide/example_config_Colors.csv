@@ -1,0 +1,10 @@
+Element_name;Color xkcd:colorname according to https://xkcd.com/color/rgb/
+Wind;xkcd:blue
+Solar;xkcd:dark yellow
+Electricity#1;xkcd:lime green
+StorageGen#1;xkcd:baby blue
+Demande_H2;xkcd:sea blue
+H2Vector#1;xkcd:azure
+Electrolyzer#1;xkcd:teal
+GridFree#4;xkcd:greyish green
+GridFree#5;xkcd:deep red

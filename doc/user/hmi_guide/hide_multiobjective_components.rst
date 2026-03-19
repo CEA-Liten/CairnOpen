@@ -1,4 +1,4 @@
-.. _hide_multiobjective_components:
+.. _hide_multiobjective_components1:
 
 Show/Hide MultiObjective components
 ===================================

@@ -5,7 +5,6 @@ Input and output files
    :maxdepth: 2
    :caption: Input and output files
    
-   What_are_the_input_and_output_files_of_a_cairn_simulation
+   What_are_the_input_and_output_files_of_a_Cairn_simulation
    how_to_make_a_performance_map_file
-   ../guidelines_examples/performance_maps
    
