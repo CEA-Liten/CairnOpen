@@ -18,3 +18,5 @@
 
 /src/core/CairnDefine.h
 CMakeOutput.log
+
+.venv

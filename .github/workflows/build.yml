@@ -31,13 +31,18 @@ jobs:
       - name: buildALL
         run: bash ./buildAll.sh
       
-      # - name: TNR CTests
-      #   run: bash ./tests/startCtest.sh
-      # - name: Publish TNR reports
-      #   uses: phoenix-actions/test-reporting@v2
-      #   with:
-      #     files: tests/reports/*.xml
-      #     token: ${{ secrets.GITHUB_TOKEN }}
+      - name: TNR PyTest
+        run: bash ${WORKSPACE}/tests/scripts/startPytest.sh
+        continue-on-error: true
+      - name: TNR CTest
+        run: bash ./tests/startCtest.sh
+        continue-on-error: true
+      - name: Publish TNR reports
+        uses: phoenix-actions/test-reporting@v2
+        continue-on-error: true
+        with:
+          files: tests/reports/*.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: extract version
         id: extract #mandatory for $GITHUB_OUTPUT
@@ -135,9 +140,9 @@ jobs:
         run: |
           gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
   
-  #job4 build wheel on windows
+  #job4 build wheel on other platforms (windows)
   build-wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.runs-on }}
     needs: cairn-build
     strategy:
@@ -145,8 +150,10 @@ jobs:
         include:
           - os: windows
             runs-on: windows-latest
+            platform: win_amd64
           #- os: linux
           #  runs-on: ubuntu-latest
+          #  platform: linux_x86_64
 
     steps:
       - uses: actions/checkout@v5
@@ -161,7 +168,7 @@ jobs:
       - name: set vars
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
+          echo "WHL_FILENAME=cairn-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
 
       - name: Build wheel via pypa/cibuildwheel
         uses: pypa/cibuildwheel@v3.3.1
@@ -172,6 +179,13 @@ jobs:
         with:
           name: cairn-wheel-${{ matrix.os }}-${{ env.CAIRN_VERSION }}
           path: ./cibuildwheel/*.whl
+      - name: Upload on release 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WHEEL_FILENAME=""
+          gh release upload ${{ env.CAIRN_VERSION }} cibuildwheel/$WHEEL_FILENAME --repo ${{ github.repository }} --clobber 
+  
 
   #job5: upload on pypi.org (TODO)
 
