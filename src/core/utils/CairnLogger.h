@@ -24,13 +24,16 @@
 #include <string>
 #include <vector>
 #include "spdlog/spdlog.h"
-
+#include "spdlog/sinks/dist_sink.h"
+#include "CairnAPI.h"
 namespace CairnLogger {
 
-	void CAIRNLOGGERSHARED_EXPORT CreateLogger(bool a_LogCons = true, const std::string& a_LogFile = "");
+	void CAIRNLOGGERSHARED_EXPORT CreateLogger();
+	void CAIRNLOGGERSHARED_EXPORT CreateLogger(bool a_LogCons, const std::string& a_LogFile = "");
+	void CAIRNLOGGERSHARED_EXPORT CreateLogger(const t_dict& a_DefLogs);
 	std::shared_ptr<spdlog::logger> CAIRNLOGGERSHARED_EXPORT GetDefaultLogger();
 
-	//void CAIRNLOGGERSHARED_EXPORT AddFileLogger(const std::string& a_LogFile);
+	void CAIRNLOGGERSHARED_EXPORT ChangeFileLogger(const std::string& a_LogFile);
 	void CAIRNLOGGERSHARED_EXPORT Flush();
 
 	class CAIRNLOGGERSHARED_EXPORT MessageLogger {
@@ -49,6 +52,30 @@ namespace CairnLogger {
 		int m_level;
 		std::string m_msg;		
 	};	
+
+	class CAIRNLOGGERSHARED_EXPORT LoggerFactory {
+	public:
+		LoggerFactory();
+		void CreateLogger(const t_dict& a_DefLogs);
+		void ChangeFileLogger(const std::string& a_LogPath);
+
+	private:			
+		std::string m_name;
+		bool m_LogCons;
+		bool m_LogFile;
+		std::string m_LogPath;
+		bool m_LogAuxFile;
+		std::string m_LogAuxPath;
+		spdlog::level::level_enum m_Level;
+		spdlog::level::level_enum m_FlushLevel;
+
+		std::shared_ptr<spdlog::sinks::dist_sink_mt> m_dist_sink;
+
+		std::vector<spdlog::sink_ptr> create_sinks();
+		
+		
+	};
+	static LoggerFactory loggerFactory;
 }
 
 CAIRNLOGGERSHARED_EXPORT CairnLogger::MessageLogger&  operator<<(CairnLogger::MessageLogger& os, const std::string& msg);

@@ -7,6 +7,7 @@ class TechnicalSubModel;
 #include "InputParam.h"
 #include "MilpPort.h"
 #include <cmath>
+#include <deque>
 
 /**
  * \brief The EnvImpact class is the base class for each environmental impact
@@ -25,9 +26,17 @@ public:
     void addIOExpressions();
     void addIndicators();
 
-    void computeEmbodiedEnvImpactContribution(MIPModeler::MIPExpression aExpSizeMax);
-    void computeReplacementEnvImpactContribution(MIPModeler::MIPExpression aExpSizeMax);
-    void computeEnvImpactContribution(const int j, const MIPModeler::MIPExpression1D* aFlux);
+    void computeEmbodiedEnvImpactContribution(
+        const MIPModeler::MIPExpression& aExpSizeMax,
+        const MIPModeler::MIPExpression& aExpInstalled);
+
+    void computeReplacementEnvImpactContribution(
+        const MIPModeler::MIPExpression& aExpSizeMax,
+        const MIPModeler::MIPExpression& aExpInstalled);
+
+    void computeEnvImpactContribution(const size_t j, const MIPModeler::MIPExpression1D* aFlux,
+        const MIPModeler::MIPExpression& aExpInstalled);
+
     void computeEnvImpactContributionCost();
     void evaluateEnvGreyImpact(const double* optSol);
 
@@ -43,9 +52,8 @@ public:
     InputParam* InputIndicators();
     InputParam* InputPerfParam();
 
-    int Horizon() { return TimeSteps().size(); }
-    std::vector<double>& TimeSteps();
-    double LifeTime();
+    const std::vector<double>& getTimeSteps() const;
+    const double getLifeTime() const;
 
     MIPModeler::MIPExpression1D* getExpEnvOpCost() {return &mExpOpEnvImpactCost;}
     MIPModeler::MIPExpression1D* getExpEnvOp() { return &mExpOpEnvImpact; }
@@ -94,14 +102,16 @@ public:
 
     }
 
-    void resizeCoeffs(const int aSize)
+    void resizeCoeffs(const size_t vecSize)  
     {
-        mEnvContentCoefficients.resize(aSize);
-        mEnvContentOffsets.resize(aSize);
-        mUseTSEnvContentCoeff.resize(aSize);
-        mTSEnvContentCoeff.resize(aSize);
-        for (int i = 0; i < aSize; i++) {
-            mTSEnvContentCoeff[i].resize(Horizon());
+        mEnvContentCoefficients.resize(vecSize);
+        mEnvContentOffsets.resize(vecSize);
+        mUseTSEnvContentCoeff.resize(vecSize);
+        mTSEnvContentCoeff.resize(vecSize);
+
+        const size_t horizon = getTimeSteps().size();
+        for (auto& coeffVec : mTSEnvContentCoeff) {   
+            coeffVec.resize(horizon);
         }
     }
 
@@ -137,7 +147,7 @@ protected:
 
     std::vector<double> mEnvContentCoefficients;           /** Environmental Emission in kg per input flow unit : vector as there can be several ports **/
     std::vector<double> mEnvContentOffsets;                /** Environmental Emission in kg per time **/
-    std::vector<int> mUseTSEnvContentCoeff;
+    std::deque<bool> mUseTSEnvContentCoeff;     /** use std::deque because std::vector doens't provide a referance &mUseTSEnvContentCoeff[j] */
     MIPModeler::MIPData2D mTSEnvContentCoeff;              /** Environmental Emission in kg per input flow unit per timestep */
 
     MIPModeler::MIPExpression1D mExpOpEnvImpactCost;

@@ -1,16 +1,16 @@
 #ifndef MILPPORT_H
 #define MILPPORT_H
-class MilpPort;
+
+class BusCompo;
 
 #include "MIPModeler.h"
-
-#include <string.h>
-using namespace std ;
-
 #include "CairnCore_global.h"
-#include "MilpComponent.h"
-#include "SubModel.h"
+
 #include "EnergyVector.h"
+#include "GlobalSettings.h"
+
+using namespace std;
+using namespace GS;
 
 /**
  * \brief The MilpPort class defines MilpComponent ports used to exchange MilpExpression with agregator (bus components)
@@ -77,9 +77,8 @@ public:
     EnergyVector* getCarrier() { return mCarrier; }
     void setCarrier(EnergyVector* aptrEnergyVector);
 
-    MilpComponent* getLinkedBus() { return mLinkedBus; }
-    void setLinkedBus(MilpComponent* aLinkedBus);
-    void DeleteLinkedBus();
+    BusCompo* getLinkedBus() { return mLinkedBus; }
+    void setLinkedBus(BusCompo* linkedBus);
 
     const std::string PotentialName() { 
         if(mCarrier) return mCarrier->PotentialName();
@@ -106,7 +105,19 @@ public:
     std::string StorageUnit() const;
     std::string PotentialUnit() const;
 
-    void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusPort=false);
+    bool useProfileLHV() const;
+    bool useProfileGHV() const;
+
+    double LHV() const;
+    const double LHV(const uint64_t t) const;
+    const double minLHV() const;
+
+    double GHV() const;
+
+    const std::vector<double>* LHVProfile() const;
+    const std::vector<double>* GHVProfile() const;
+
+    void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusLinkedPort = false);
 
     std::vector<InputParam*> get_InputParams();
 
@@ -114,7 +125,7 @@ private:
     InputParam* mInputParam{ nullptr };
 
     EnergyVector* mCarrier{ nullptr };  
-    MilpComponent* mLinkedBus{ nullptr };
+    BusCompo* mLinkedBus{ nullptr };
 
     //Units and Phy. Names
     const std::string* mFluxUnit;
@@ -146,6 +157,8 @@ private:
     MIPModeler::MIPExpression mFlux0D;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression1D mPotential;  /** MIP expression of potential based on Variable mPotentialVarName */
     double mTimeDependant;               /** 0 if not timeDependant, 1 else*/
+
+    const std::vector<double>* getTimeSeries(const std::string& tsName) const;
 };
 
 #endif // MILPPORT_H

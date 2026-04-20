@@ -1,0 +1,123 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;1;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;20995.2;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);-20310.6;EUR;NPV
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;20310.6;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total project discounted operation cost;0;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total project buying costs;0;EUR;DiscountedBuyPart
+TecEcoAnalysis;Annual operation cost;0;EUR;NetOPEX
+TecEcoAnalysis;Annual OPEX;0;EUR;PureOPEX
+TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis;Annual income;0;EUR;SellPart
+TecEcoAnalysis;Annual buying costs;0;EUR;BuyPart
+Converter;CAPEX;8520;EUR;CAPEX
+Converter;is installed;1;-;IsInstalled
+Converter;Annual operation cost;0;EUR;OPEX
+Converter;Annual fixed OPEX;0;EUR;PureOPEX
+Converter;Annual variable OPEX;0;EUR;VariableOPEX
+Converter;Annual replacement costs;0;EUR;Replacement
+Converter;Installed Size;20;kW;Size
+Converter;Running time at power >0.;1;h;RunningTime
+Converter;Running time availability;1;-;RunningTimeAvailable
+Converter;Annual consumption of ElectricalEnergy PowerIn;-0.189474;kWh;TotConsPowerIn
+Converter;Mean consumption of ElectricalPower PowerIn;-0.189474;kW;MeanConsPowerIn
+Converter;Load factor PowerIn;0.00947368;-;UseRatePowerIn
+Converter;Annual production of ElectricalEnergy PowerOut;0.18;kWh;TotProdPowerOut
+Converter;Mean production of ElectricalPower PowerOut;0.18;kW;MeanProdPowerOut
+Defaillance;is installed;1;-;IsInstalled
+Defaillance;Annual operation cost;0;EUR;OPEX
+Defaillance;Annual variable OPEX;0;EUR;VariableOPEX
+Defaillance;Grid extraction time;0;h;extractionTime
+Defaillance;Grid extraction ElectricalEnergy GridFlow;0;kWh;TotGridFlow
+Defaillance;Levelized Grid extraction ElectricalEnergy GridFlow;0;kWh;LvlzdTotGridFlow
+Defaillance;Mean extraction ElectricalPower GridFlow;0;kW;MeanGridFlow
+Eclairage Interieur;is installed;1;-;IsInstalled
+Eclairage Interieur;Annual operation cost;0;EUR;OPEX
+Eclairage Interieur;Annual variable OPEX;0;EUR;VariableOPEX
+Eclairage Interieur;Component Weight;0.84;Unit;Weight
+Eclairage Interieur;ImposedProfile load time;0;h;ImposedProfileTime
+Eclairage Interieur;ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;TotImposedProfileSourceLoadFlow
+Eclairage Interieur;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;LvlzdTotImposedProfileSourceLoadFlow
+Eclairage Interieur;Mean ElectricalPower SourceLoadFlow;0;kW;MeanImposedProfileSourceLoadFlow
+Eclairage exterieur;is installed;1;-;IsInstalled
+Eclairage exterieur;Annual operation cost;0;EUR;OPEX
+Eclairage exterieur;Annual variable OPEX;0;EUR;VariableOPEX
+Eclairage exterieur;Component Weight;0.18;Unit;Weight
+Eclairage exterieur;ImposedProfile load time;1;h;ImposedProfileTime
+Eclairage exterieur;ImposedProfile ElectricalEnergy SourceLoadFlow;-0.18;kWh;TotImposedProfileSourceLoadFlow
+Eclairage exterieur;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-2.04041;kWh;LvlzdTotImposedProfileSourceLoadFlow
+Eclairage exterieur;Mean ElectricalPower SourceLoadFlow;-0.18;kW;MeanImposedProfileSourceLoadFlow
+Ecretage;is installed;1;-;IsInstalled
+Ecretage;Annual operation cost;0;EUR;OPEX
+Ecretage;Annual variable OPEX;0;EUR;VariableOPEX
+Ecretage;Grid injection time;0;h;injectionTime
+Ecretage;Grid injection ElectricalEnergy GridFlow;0;kWh;TotGridFlow
+Ecretage;Levelized Grid injection ElectricalEnergy GridFlow;0;kWh;LvlzdTotGridFlow
+Ecretage;Mean injection ElectricalPower GridFlow;0;kW;MeanGridFlow
+Imprimantes;is installed;1;-;IsInstalled
+Imprimantes;Annual operation cost;0;EUR;OPEX
+Imprimantes;Annual variable OPEX;0;EUR;VariableOPEX
+Imprimantes;Component Weight;2.4;Unit;Weight
+Imprimantes;ImposedProfile load time;0;h;ImposedProfileTime
+Imprimantes;ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;TotImposedProfileSourceLoadFlow
+Imprimantes;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;LvlzdTotImposedProfileSourceLoadFlow
+Imprimantes;Mean ElectricalPower SourceLoadFlow;0;kW;MeanImposedProfileSourceLoadFlow
+NodeLaw#1;Integrated bus balance;0;kWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;kWh;BusBalance
+PC;is installed;1;-;IsInstalled
+PC;Annual operation cost;0;EUR;OPEX
+PC;Annual variable OPEX;0;EUR;VariableOPEX
+PC;Component Weight;1.25;Unit;Weight
+PC;ImposedProfile load time;0;h;ImposedProfileTime
+PC;ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;TotImposedProfileSourceLoadFlow
+PC;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;LvlzdTotImposedProfileSourceLoadFlow
+PC;Mean ElectricalPower SourceLoadFlow;0;kW;MeanImposedProfileSourceLoadFlow
+PV;CAPEX;7220.6;EUR;CAPEX
+PV;is installed;1;-;IsInstalled
+PV;Annual operation cost;0;EUR;OPEX
+PV;Annual fixed OPEX;0;EUR;PureOPEX
+PV;Annual variable OPEX;0;EUR;VariableOPEX
+PV;Annual replacement costs;0;EUR;Replacement
+PV;Component Weight;15.8;Unit;Weight
+PV;ImposedProfile source time;0;h;ImposedProfileTime
+PV;ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;TotImposedProfileSourceLoadFlow
+PV;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;LvlzdTotImposedProfileSourceLoadFlow
+PV;Mean ElectricalPower SourceLoadFlow;0;kW;MeanImposedProfileSourceLoadFlow
+Pompes;is installed;1;-;IsInstalled
+Pompes;Annual operation cost;0;EUR;OPEX
+Pompes;Annual variable OPEX;0;EUR;VariableOPEX
+Pompes;Component Weight;0.75;Unit;Weight
+Pompes;ImposedProfile load time;0;h;ImposedProfileTime
+Pompes;ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;TotImposedProfileSourceLoadFlow
+Pompes;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;kWh;LvlzdTotImposedProfileSourceLoadFlow
+Pompes;Mean ElectricalPower SourceLoadFlow;0;kW;MeanImposedProfileSourceLoadFlow
+StorageGen#1;CAPEX;4570;EUR;CAPEX
+StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;Annual operation cost;0;EUR;OPEX
+StorageGen#1;Annual fixed OPEX;0;EUR;PureOPEX
+StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX
+StorageGen#1;Annual replacement costs;0;EUR;Replacement
+StorageGen#1;Storage Capacity;10;kWh;Capacity
+StorageGen#1;Charging time;0;h;ChargingTime
+StorageGen#1;Discharging time;1;h;DischargingTime
+StorageGen#1;Charged ElectricalEnergy Flow;0;kWh;TotChargedFlow
+StorageGen#1;Discharged ElectricalEnergy Flow;0.189474;kWh;TotDischargedFlow
+StorageGen#1;Levelized Charged ElectricalEnergy Flow;0;kWh;LvlzdTotChargedFlow
+StorageGen#1;Levelized Discharged ElectricalEnergy Flow;2.1478;kWh;LvlzdDischargedFlow
+StorageGen#1;Mean Charged ElectricalPower Flow;0;kW;MeanChargedFlow
+StorageGen#1;Mean Discharged ElectricalPower Flow;0.189474;kW;MeanDischargedFlow
+StorageGen#1;Equivalent number of cycles ElectricalPower Flow;1;-;NbCycles
+StorageGen#1;Cumulated losses;0;kWh;CumulatedLosses

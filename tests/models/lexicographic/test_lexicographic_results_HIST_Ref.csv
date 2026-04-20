@@ -1,0 +1,52 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;584;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;0;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);0;EUR;NPV
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;0;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total project discounted operation cost;0;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total project buying costs;0;EUR;DiscountedBuyPart
+TecEcoAnalysis;Annual operation cost;0;EUR;NetOPEX
+TecEcoAnalysis;Annual OPEX;0;EUR;PureOPEX
+TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis;Annual income;0;EUR;SellPart
+TecEcoAnalysis;Annual buying costs;0;EUR;BuyPart
+GridFree#1;is installed;1;-;IsInstalled
+GridFree#1;Annual operation cost;0;EUR;OPEX
+GridFree#1;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#1;Grid extraction time;0;h;extractionTime
+GridFree#1;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+GridFree#1;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
+GridFree#1;Data Port published GridFlow - data computed;0;MWh;DataPortGridFlow
+GridFree#2;is installed;1;-;IsInstalled
+GridFree#2;Annual operation cost;0;EUR;OPEX
+GridFree#2;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#2;Grid extraction time;0;h;extractionTime
+GridFree#2;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+GridFree#2;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+GridFree#2;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
+GridFree#2;Data Port published GridFlow - data computed;0;MWh;DataPortGridFlow
+ManualObjective#1;Integrated bus balance;0;MWh;BusBalance
+ManualObjective#2;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+SourceLoad#1;is installed;1;-;IsInstalled
+SourceLoad#1;Annual operation cost;0;EUR;OPEX
+SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX
+SourceLoad#1;Component Weight;1;Unit;Weight
+SourceLoad#1;ImposedProfile load time;0;h;ImposedProfileTime
+SourceLoad#1;ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#1;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#1;Mean ElectricalPower SourceLoadFlow;0;MW;MeanImposedProfileSourceLoadFlow

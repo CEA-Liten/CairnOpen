@@ -48,6 +48,8 @@ public:
         mInputIndicators->addIndicator("ImposedProfile " + Direction() + " time", &mRunningTime, exp, "Running time", "h", "ImposedProfileTime");
 
         for (const auto& port : mListPort) {
+            if (!port->getCarrier())
+                continue;
             const std::string portId = port->ID();
             const std::string varName = port->Variable();
             const std::string storageName = port->getCarrier()->StorageName();
@@ -128,6 +130,8 @@ public:
         mInputIndicators->addIndicator("Component Weight", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Weight");
 
         for (auto& port : mListPort) {
+            if (!port->getCarrier())
+                continue;
             const std::string portId = port->ID();
             const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
             if (ptrExp1D) {

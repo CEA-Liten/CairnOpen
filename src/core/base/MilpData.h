@@ -17,7 +17,7 @@ public:
 
     virtual ~MilpData();
 
-    bool setMilpDataFromSettings(const std::map<std::string, InputParam::ModelParam*>& paramMap = {}, const bool& isStdAloneMode = true);
+    bool setMilpDataFromSettings(const std::map<std::string, ModelParam*>& paramMap = {}, const bool& isStdAloneMode = true);
 
     virtual void prepareOptim() ;
 

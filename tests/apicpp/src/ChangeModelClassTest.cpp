@@ -40,6 +40,13 @@ int main()
 	TESTAPI("Read study file: " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
 	CairnAPI::MilpComponentAPI vELY_PEM = m_Problem.get_Component("ELY_PEM");
+
+	t_list refList = { "Electrolyzer", "ElectrolyzerDetailed" };
+	t_list classList = vELY_PEM.get_PossibleModelClasses();
+	TESTAPI2("Check list of model classes", TestUtils::compare_lists(refList, classList))
+
+	TESTAPIFALSE("Try using non-supported model class Converter", vELY_PEM.set_SettingValue("ModelClass", "Converter"))
+
 	TESTAPI("Change ModelClass of ELY_PEM", vELY_PEM.set_SettingValue("ModelClass", "Electrolyzer"))
 	vELY_PEM.set_SettingValues({
 		{ "Capex", 480000 },

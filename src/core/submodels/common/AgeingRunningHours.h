@@ -19,7 +19,7 @@
 class CAIRNCORESHARED_EXPORT AgeingRunningHours : public OperationSubModel {
 public:
 //----------------------------------------------------------------------------
-    AgeingRunningHours(InputParam* aInputParam);
+    AgeingRunningHours(InputParam* aInputParam, bool* aUseAgeing);
     ~AgeingRunningHours();
 //----------------------------------------------------------------------------------------------------
     void computeModelContribution() override;
@@ -42,11 +42,11 @@ public:
     void declareModelParameters()
     {
         //bool
-        addParameter("GeometricalSequence", &mGeometricalSequence, true, false, true, "If the efficiency decreases following a geometrical set true. Else it will evolve artimtetically", "", "Ageing");
+        addParameter("GeometricalSequence", &mGeometricalSequence, true, false, mActivateAgeing, "If the efficiency decreases following a geometrical set true. Else it will evolve artimtetically", "", "Ageing");
         //double
-        addParameter("EfficiencyAgeingCoeff", &mEfficiencyAgeingCoeff, 0., true, true,"","", "Ageing") ; /** Coefficient of efficiency reduction, in proportion of current efficiency per running time hours */
-        addParameter("EfficiencyMaxHours", &mEfficiencyMaxHours, 4.e4, true, true,"","", "Ageing") ; /** Maximum number of hours before assuming replacement and resetting Efficiency to initial efficiency. */
-        addParameter("CapacityAgeingCoeff", &mCapacityAgeingCoeff, 0., true, true, "", "", "Ageing");/** Coefficient of capacity reduction, in proportion of current capacity per running time hours */
+        addParameter("EfficiencyAgeingCoeff", &mEfficiencyAgeingCoeff, 0., mActivateAgeing, mActivateAgeing, "Coefficient of efficiency reduction, in proportion of current efficiency per running time hours","", "Ageing");
+        addParameter("EfficiencyMaxHours", &mEfficiencyMaxHours, 4.e4, mActivateAgeing, mActivateAgeing, "Maximum number of hours before assuming replacement and resetting Efficiency to initial efficiency","", "Ageing");
+        addParameter("CapacityAgeingCoeff", &mCapacityAgeingCoeff, 0., mActivateAgeing, mActivateAgeing, "Coefficient of capacity reduction, in proportion of current capacity per running time hours", "", "Ageing");
     }
 
 //----------------------------------------------------------------------------
@@ -66,6 +66,8 @@ protected:
     double mCapacityAgeing ; /** Computed capacity reduction by ageing. */
     double mCapacityAgeingCoeff ;  /** capacity reduction coefficient by ageing, per running Time hour */
     bool mGeometricalSequence;
+
+    bool* mActivateAgeing;
 };
 
 #endif // AgeingRunningHours_H

@@ -3,10 +3,10 @@ include(FindPackageHandleStandardArgs)
 
 # default CairnModels package
 if (NOT CairnModels_FIND_COMPONENTS)
-    set(CairnModels_FIND_COMPONENTS ElectrolyzerModel)    
+    set(CairnModels_FIND_COMPONENTS Electrolyzer)    
 endif()
 
-if (NOT CairnModels_INSTALL)
+if (NOT CAIRN_INSTALL)
     
     find_package_handle_standard_args(CairnModels REQUIRED_VARS CAIRNMODELS_INCLUDE_DIR)
 
@@ -26,5 +26,5 @@ if (NOT CairnModels_INSTALL)
     endif()
 
 else()
-     # TODO
+      find_package(cairn REQUIRED CONFIG)
 endif()

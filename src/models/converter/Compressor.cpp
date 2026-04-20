@@ -6,6 +6,9 @@
 * \date		06/12/2019
 */
 #include "Compressor.h"
+#include "CarrierTypes.h"
+#include "OrUnitsConverter.h"
+
 extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
     return new Compressor(aParent);
@@ -28,6 +31,9 @@ Compressor::Compressor(CairnObject* aParent)
     mPowerUnit("MW"),
     mMassUnit("kg")
 {
+    std::string rsc = std::getenv("CAIRN_BIN") + (std::string)"/../resources/DefUnits.json";
+    UnitsConverter::Load(rsc);
+    CarrierTypes::Load(rsc);
 }
 
 Compressor::~Compressor() {}
@@ -55,10 +61,10 @@ void Compressor::ComputeElecPowerMapPOut(double aCp_Gas, double ak, double aEta,
         //PointsPOut[p] = mPInlet + p * (mPOutlet - mPInlet)/mPrecisionPressure;
         PointsPOut[p] = p * (mPOutletFixe)/mPrecisionPressure;
         PointsPowerConsumption[p] = mNbStages
-                * 1.e-6 / EnergyVector::PowerToMW(mPowerUnit) //MW default unit !
+                * 1.e-6 / UnitsConverter::Convert(1, mPowerUnit, "MW") //MW default unit !
                 * 1. / 3600 // kg/s
                 * aCp_Gas
-                * EnergyVector::Deg2Kel(mTInlet)
+                * UnitsConverter::Convert(mTInlet, "DegC", "K")
                 / aEta
                 * (pow(PointsPOut[p] / mPInlet, (ak - 1)/(mNbStages*ak)) -1)
                 / mMotorEfficiency;
@@ -95,10 +101,10 @@ void Compressor::ComputeElecPowerMapTIn(double aCp_Gas, double ak, double aEta, 
         //PointsPOut[p] = mPInlet + p * (mPOutlet - mPInlet)/mPrecisionPressure;
         PointsTIn[p] = -5 + p * (100)/mPrecisionTemperature;
         PointsPowerConsumption[p] = mNbStages
-                * 1.e-6 / EnergyVector::PowerToMW(mPowerUnit) //MW default unit !
+                * 1.e-6 / UnitsConverter::Convert(1, mPowerUnit, "MW") //MW default unit !
                 * 1. / 3600 // kg/s
                 * aCp_Gas
-                * EnergyVector::Deg2Kel(PointsTIn[p])
+                * UnitsConverter::Convert(PointsTIn[p], "DegC", "K")
                 / aEta
                 * (pow(mPOutletFixe / mPInlet, (ak - 1)/(mNbStages*ak)) -1)
                 / mMotorEfficiency ;
@@ -205,24 +211,18 @@ void Compressor::computeInitialData()
         throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter NbStages cannot be 0.", -1);
     }
 
-    if (fabs(mMotorEfficiency) < 1.e-6) {
+    EnergyVector* vCarrier = mPortInMassFlowRate->getCarrier();
+    if (vCarrier) {        
+        std::string vectorType = vCarrier->Type();
+        mSpecificHeatRatio = CarrierTypes::getCarrierProp(vectorType, "Specific_Heat_Ratio");
+        mPowerUnit = vCarrier->PowerUnit();
+        mMassUnit = vCarrier->MassUnit();
+    }
+	if (fabs(mMotorEfficiency) < 1.e-6) {
         throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter MotorEfficiency cannot be 0.", -1);
     }
-
-    if (mPortInMassFlowRate->getCarrier()) {
-        std::string vectorType = mPortInMassFlowRate->getCarrier()->Type();
-        mSpecificHeatRatio = *(mPortInMassFlowRate->getCarrier()->pSpecificHeatRatio(vectorType));
-        mPowerUnit = mPortInMassFlowRate->getCarrier()->PowerUnit();
-        mMassUnit = mPortInMassFlowRate->getCarrier()->MassUnit();
-    }
-
-    EV::Fluid_Type Type = EnergyVector::getFluidTypeFromQString(mMainCarrier->Type());
-
-    if (Type == EV::Fluid_Type::UnknownFluid) {
-        throw Cairn_Exception("Error: the Fluid type of the main carrier " + mMainCarrier->Name() + " of compressor " + Name() + " is unknown!", -1);
-    }
     
-    mCp_Gas = EnergyVector::Compute_Cp(mTInlet, EnergyVector::Get_Pointer_To_Fluid_Properties(Type));   // Cp in J/DegC/kg
+    mCp_Gas = CarrierTypes::computeCp(mMainCarrier->Type(), mTInlet);   // Cp in J/DegC/kg
 
     // mK cannot be 0 due to a division
     if (mUsePolytropicModel) {
@@ -242,13 +242,13 @@ void Compressor::computeInitialData()
     }
 
     mPowerConsumption = mNbStages
-        * 1.e-6 / EnergyVector::PowerToMW(mPowerUnit) //MW default unit !
+        * 1.e-6 / UnitsConverter::Convert(1, mPowerUnit, "MW") //MW default unit !
         * 1. / 3600 // kg/s
         * mCp_Gas
-        * EnergyVector::Deg2Kel(mTInlet)
+        * UnitsConverter::Convert(mTInlet, "DegC", "K")
         / mEta
         * (pow(mPOutlet / mPInlet, (mK - 1) / (mNbStages * mK)) - 1)
-        / mMotorEfficiency * EnergyVector::MassToKg(mMassUnit);
+        / mMotorEfficiency * UnitsConverter::Convert(1, mMassUnit, "kg"); 
 
     if (mUseSteamMap) {
         mMaxPower = *max_element(mUsedElecPowerSetPoint.begin(), mUsedElecPowerSetPoint.end());

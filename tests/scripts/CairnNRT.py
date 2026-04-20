@@ -156,7 +156,7 @@ class CairnNRT:
 
     def updateTest(self, overwrite, keep_current = False, checklp=True):
         if self.__pegase==False:
-            problem, inst = self.runCairn()
+            problem, inst, sol = self.runCairn()
         else:
             self.runPegase(tnr_xml=self.__test_name+".xml")
         updateFile(self.__file_plan,self.__file_plan_ref,overwrite, keep_current=keep_current)
@@ -220,17 +220,21 @@ class CairnNRT:
         
     def sampling_test(self, check_ts=False):
         tab_res = self.runSampling()
+        res_sampling = {}
         try:
             tab_ref = pd.read_csv(self.__sampling_results_ref,sep=";", index_col=0)
         except:
             print("tab ref not found")
             tab_ref = 0
-            return "No reference"
+            res_sampling["PLAN"] = "Failed: no reference"
+            return res_sampling
         tab_res.to_csv(self.__sampling_results,sep=";")
-        res_sampling = {}
 
         #PLAN
-        diff = ((tab_res.round(decimals=3).reindex(sorted(tab_res.columns), axis=1)).compare((tab_ref.round(decimals=3)).reindex(sorted(tab_ref.columns), axis=1)))
+        #force dtype of Case column to string in order to avoid type difference
+        tab_res["Case"] = tab_res["Case"].astype(str)
+        tab_ref["Case"] = tab_ref["Case"].astype(str)
+        diff = (tab_res.round(decimals=3).reindex(sorted(tab_res.columns), axis=1)).compare(tab_ref.round(decimals=3).reindex(sorted(tab_ref.columns), axis=1))
         self.output("\n Sampling test \n ================ \n")
         if len(diff)==0:
             self.output("Results are identical\n")
@@ -271,11 +275,11 @@ class CairnNRT:
         status = False
         test = '>'
         if isinstance(err,float) or isinstance(err,int) :
-            if err < threshold:
+            if abs(err) < threshold:
                 status = True
                 test = '<'
         
-        self.output(planOrHist + ' file difference '+ test + ' ' + str(threshold) + '%\n')
+        self.output(planOrHist + ' file difference '+str(abs(err))+ test + ' ' + str(threshold) + '%\n')
         return status
 
     def checklp(self):

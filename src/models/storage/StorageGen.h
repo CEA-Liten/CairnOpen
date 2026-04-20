@@ -3,7 +3,8 @@
 
 #include "globalModel.h"
 #include "StorageSubModel.h"
-//linkPerseeModelClass StorageGen.h StorageLinearBounds.h StorageThermal.h Battery_V1.h StorageSeasonal.h 
+
+//linkPerseeModelClass StorageGen.h StorageLinearBounds.h StorageThermal.h Battery_V1.h StorageSeasonal.h BatteryDetailledBeta.h
 
 /**
  * \details

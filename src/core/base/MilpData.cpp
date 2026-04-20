@@ -91,7 +91,7 @@ MilpData::~MilpData()
 {
 }  
 
-bool MilpData::setMilpDataFromSettings(const std::map<std::string, InputParam::ModelParam*>& paramMap, const bool& isStdAloneMode)
+bool MilpData::setMilpDataFromSettings(const std::map<std::string, ModelParam*>& paramMap, const bool& isStdAloneMode)
 {
     bool ierr = true;
 

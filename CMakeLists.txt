@@ -100,6 +100,23 @@ if (BUILD_CAIRNGUI)
     add_subdirectory(${CAIRNGUI_HOME})   
 endif()
 
+if (WITH_TESTING)
+    if(TEST_WITH_COVERAGE)
+        set(Python_DIR ${Python_ROOT_DIR})
+	    find_package(Python REQUIRED COMPONENTS Interpreter Development)
+        python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} PCK "gcovr" FORCE ON)		
+        include(CodeCoverage)
+        setup_target_for_coverage_gcovr_html(NAME coverage 
+                          EXECUTABLE ctest)
+    endif()
+endif()
+
+# ============= Wheel configuration =============
+ string(TOLOWER ${CMAKE_BUILD_TYPE} CAIRN_BUILD_TYPE)
+ if (BUILD_WHEEL AND (CAIRN_BUILD_TYPE STREQUAL release))   
+    include(buildWheel)
+endif()
+
 
 # ============= Summary =============
 message(STATUS "============================================ Summary ============================================")
@@ -111,6 +128,7 @@ message(STATUS "C flags : ${CMAKE_C_FLAGS}")
 message(STATUS "Compilation mode is : ${CMAKE_BUILD_TYPE}")
 message(STATUS "Code Sources are in : ${CMAKE_SOURCE_DIR}")
 message(STATUS "Testing is : ${WITH_TESTING}")
+message(STATUS "Build Doc : ${BUILD_DOC}")
 message(STATUS "Build wheel is : ${BUILD_WHEEL}")
 message(STATUS "Privatemodels is : ${WITH_PRIVATEMODELS}")
 message(STATUS "Build GUI : ${BUILD_CAIRNGUI}")

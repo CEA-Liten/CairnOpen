@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graph_list>
+	<graph>
+		<type>TableDiff</type>
+		<title>Differences entre les paramétrages</title>
+	</graph>
+	<graph>
+		<type>SankeyGraph</type>
+		<title>Sankey graph</title>
+		<overwrite>True</overwrite>
+		<file_path>.\sankey_graph.xml</file_path>
+	</graph>
+	<graph>
+		<type>AreaGraph</type>
+		<vector>Electricitycontinu</vector>
+		<title>Electrical Power production and storage</title>
+		<unit>MW</unit>
+		<section_title>Time series : Electrical Power Provenance</section_title>
+		<file_path>.\sankey_graph.xml</file_path>
+		<comment>Positive : produced, negative: consumed</comment>
+	</graph>
+
+		<graph>
+		<type>AreaGraph</type>
+		<vector>Electricityalternatif</vector>
+		<title>Electrical Power consumptions</title>
+		<unit>MW</unit>
+		<section_title>Time series : Electrical Power Provenance</section_title>
+		<file_path>.\sankey_graph.xml</file_path>
+		<comment>Positive : produced, negative: consumed</comment>
+	</graph>
+<graph>
+	<type>Table</type>
+	<title>Cost structure table [EUR]</title>
+	<search_strings>CAPEX</search_strings>
+	<threshold>1.00E+03</threshold>
+</graph>
+<graph>
+	<type>Table</type>
+	<title>Sizes</title>
+	<search_strings>Optimal</search_strings>
+	<threshold>1.00E+03</threshold>
+</graph>
+<graph>
+	<type>PieChart</type>
+	<title>Cost structure [EUR]</title>
+	<color>True</color>
+	<search_strings>CAPEX</search_strings>
+	<threshold>1.00E+03</threshold>
+</graph>
+<graph>
+	<type>PieChart</type>
+	<title>Sizes</title>
+	<color>True</color>
+	<search_strings>Optimal</search_strings>
+	<threshold>1.00E+03</threshold>
+</graph>
+<graph>
+	<type>BarGraph</type>
+	<title>Component Optimal Weight PV, Wind, ...</title>
+	<search_strings>Optimal</search_strings>
+	<threshold>1</threshold>
+</graph>
+<graph>
+	<type>MonotonicLoadGraph</type>
+	<title>Electrical Power produced </title>
+	<unit>MW</unit>
+	<plotted_variables>PV.OUTPUTFlux1</plotted_variables>
+	<section_title>Time series : Electrical Power Provenance</section_title>
+	<comment>.</comment>
+</graph>
+
+</graph_list>

@@ -42,7 +42,6 @@ int main()
 			{
 				{"DiscountRate", 0.07},
 				{"NbYear", 20},
-				{"Range","HISTandPLAN"},
 				{"ForceExportAllIndicators",  true},
 				{"ConsideredEnvironmentalImpacts", "Climate change#Global Warming Potential 100,Acidification#Accumulated Exceedance"}
 			}

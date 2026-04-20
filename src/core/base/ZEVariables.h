@@ -42,7 +42,7 @@ public:
     void setCoeffExport(float aCoeffExport) {mCoeffExport=aCoeffExport;}
     void setCoeffOffset(float aCoeffOffset) {mCoeffOffset=aCoeffOffset;}
 
-    bool set_Values(class InputParam::ModelParam* a_Param,
+    bool set_Values(class ModelParam* a_Param,
         double aTimeStepOut, const std::vector<double>& aTimeStepsIn, uint aNpdtPast);
     bool update_PastValues(int nptPast, int timeShift);
 

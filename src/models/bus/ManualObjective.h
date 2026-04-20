@@ -41,7 +41,7 @@ public:
     {
         BusSubModel::declareDefaultModelConfigurationParameters() ;
 
-        addParameter("TimeIntegration", &mTimeIntegration, false, false, true);  /** If True then uses time integration for Add and Lexicographic objective types otherwise uses simple summation - default = false */
+        
         addParameter("StrictConstraint",&mStrictConstraint, false, false, true, "Strictconstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true","", "Constraints");
         addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false", "", "Constraints");
         addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false ", "", "Constraints");
@@ -68,6 +68,7 @@ public:
         addParameter("RelTol", &mRelTol, 0., false, true, "Relative tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
         //vector
         addTimeSeries("UseProfileObjectiveCoeff", &mObjectiveCoeffTS, false, true, "time series coefficient");
+        addParameter("TimeIntegration", &mTimeIntegration, false, false, &mUseCommonMaxVariable||&mUseCommonMinVariable, "If True then the common max or min variable contraint is written with the integral of the variables ", "Base");
     }
 //----------------------------------------------------------------------------------------------------
     void declareModelInterface()
@@ -102,6 +103,7 @@ public:
     void addStrictConstraint() ;
     void addMinConstraint() ;
     void addMaxConstraint() ;
+    void addLexicographicObjective();
 //----------------------------------------------------------------------------------------------------
     virtual void initDefaultPorts() { }; //Bus doesn't have default ports!
 
@@ -137,6 +139,7 @@ protected:
     MIPModeler::MIPVariable0D mCommonMaxVariable;
     MIPModeler::MIPExpression mExpCommonMaxVariable;
 
+    
     //Indicateurs
     std::vector<double> mBusEnergyBalance;
 };

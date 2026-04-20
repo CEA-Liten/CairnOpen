@@ -63,23 +63,27 @@ namespace CairnAPIUtils {
 	DECLSPEC std::vector<double> getParamVectorValue(const t_value& a_Value);
 
 	t_value getParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
-
 	void getParameters(std::vector<InputParam*> a_Inputs, t_dict& a_Params);
 
 	bool setParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const t_value& a_Value);
-
 	bool setParameters(std::vector<InputParam*> a_Inputs, const t_dict& a_Params);
 
-	t_list getShowConfigList(std::vector<InputParam*> a_Inputs);
+	std::string getParamComment(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+	void getParamComments(std::vector<InputParam*> a_Inputs, t_dictComment& a_Params);
+
+	bool setParamComment(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const std::string& a_Comment);
+	bool setParamComments(std::vector<InputParam*> a_Inputs, const t_dictComment& a_Params);
+
+	bool isMandatoryParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+	bool isUsedParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+	std::string getParamUnit(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 	std::string getParamShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 
-	bool getParamMandatoryValue(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
-
-	bool isDependentParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
-
-	std::string getParamUnit(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
+	t_list getShowConfigList(std::vector<InputParam*> a_Inputs);
 
 	void setError(ECodeError a_Err, const std::string& a_msg = "");	
+
+	std::string valueToString(const t_value& value);
 
 	/* 
 	 * Utilities that perform type-checked access to a t_value variant, 

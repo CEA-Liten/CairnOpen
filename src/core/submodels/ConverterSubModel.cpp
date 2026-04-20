@@ -15,7 +15,7 @@ ConverterSubModel::~ConverterSubModel()
 void ConverterSubModel::declareInputParams(const std::string& name)
 {
     SubModel::declareInputParams(name);
-    mAgeingModel = new AgeingRunningHours(mInputParam);
+    mAgeingModel = new AgeingRunningHours(mInputParam, &mUseAgeing);
 }
 
 void ConverterSubModel::setTimeData()
@@ -82,7 +82,7 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     mMaxRunningTime.at(1) += mNpdtPast * TimeStep(0); // fichier hist, cumulé 
 
     if (mUseAgeing) {
-        mEfficiency_Ageing.at(0) = mEfficiency_Ageing.at(1) = Efficiency();
+        mEfficiency_Ageing.at(0) = mEfficiency_Ageing.at(1) = EfficiencyAgeing();
     }
 
     //Save optimal size from the current cycle

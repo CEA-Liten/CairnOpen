@@ -21,6 +21,7 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # Default colors and line styles
 COLOR_SCALE = px.colors.qualitative.Bold + px.colors.qualitative.Pastel + px.colors.qualitative.Set3
 LINES = ["solid", "dot", "dash", "longdash", "dashdot", "longdashdot"]
+SYMBOLS = ["circle", "square", "diamond", "cross", "x", "triangle", "pentagon", "hexagram", "star", "hourglass", "bowtie", "asterisk", "hash"]
 
 """
 Remark: each function takes the same types of arguments:
@@ -53,16 +54,18 @@ def PieChart(data: pd.DataFrame, graphProperties: dict, folder=""):
         c_dic = {}
         for i, c in enumerate(df["Component"]):
             c_dic[c] = (x_color[i])
-        fig = px.pie(
-            df, values=df.columns[1], names="Component", title=graphProperties["title"], color="Component",
-            color_discrete_map=c_dic
-        )
+        col_base = df.columns[1]
+        labels = list(df["Component"])
+        values = list(df[col_base])
+        fig = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
+                             insidetextorientation='radial', marker_colors = x_color,title=graphProperties.get("title", "")
+                            )])
     # colors of the components are randomly defined
     else:
-        fig = px.pie(
-            df, values=df.columns[1], names="Component", title=graphProperties["title"]
-        )
-
+        col_base = df.columns[1]
+        fig = go.Figure(data=[go.Pie(labels=labels, values=values, textinfo='label+percent',
+                             insidetextorientation='radial'
+                            )])
     # Create buttons to select the report.
     buttons = []
     for c in df.drop(["Component", "Variable"], axis=1).columns:
@@ -70,7 +73,7 @@ def PieChart(data: pd.DataFrame, graphProperties: dict, folder=""):
             dict(
                 method="update",
                 label=c,
-                args=[{"values": [df[c]], "names": [df["Component"]]}]
+                args=[{"values": [df[c]]}]
             )
         )
 
@@ -122,17 +125,18 @@ def MultiPieChart(data: pd.DataFrame, graphProperties: dict, folder=""):
     index_position = [(i, j) for i in range(1, nb_lines + 1) for j in range(1, nb_col + 1)]
     for c in list_cases:
         df_sel = melted[melted["Case"] == c]
+        labels = list(df_sel["Component"])
+        values = list(df_sel["value"])
         if folder != "" and graphProperties.get("color", True) == "True":
             x_color = utils.setColor(folder, df["Component"])
             c_dic = {}
             for i, c in enumerate(df["Component"]):
                 c_dic[c] = x_color[i]
-            fig.add_trace(go.Pie(
-                labels=df_sel["Component"], values=df_sel["value"], scalegroup='one', marker_colors=x_color),
+            fig.add_trace(go.Pie(labels=labels, values=values, scalegroup='one', marker_colors=x_color),
                 index_position[k][0], index_position[k][1])
         else:
             fig.add_trace(go.Pie(
-                labels=df_sel["Component"], values=df_sel["value"], scalegroup='one'),
+                labels=labels, values=values, scalegroup='one'),
                 index_position[k][0], index_position[k][1])
         k += 1
     fig.update_layout(title_text=graphProperties.get("title", "MultiPieChart"))
@@ -265,32 +269,29 @@ def StackBarGraph(df: pd.DataFrame, graphProperties: dict, folder=""):
     # - one for the name of case, (previously columns)
     # - one for the name of the component,
     # - one for the value
+    df_transf = df.groupby(by="Component").sum()
     melted = pd.melt(
-        df.drop("Variable",axis=1),
-        id_vars="Component",
+        df_transf.drop("Variable",axis=1),
+        ignore_index=False,
         var_name=case
     )
+    fig= go.Figure()
+    possible_cases = melted["Case"].unique()
+    possible_components = melted.index.unique()
+    c_dic = {}
     if folder != "" and graphProperties.get("color", False) == "True":
-        x_color = utils.setColor(folder, df["Component"])
-        c_dic = {}
-        for i, c in enumerate(df["Component"]):
-            c_dic[c] = (x_color[i])
-        fig = px.bar(
-            melted,
-            x=case,
-            y="value",
-            color="Component",
-            title=graphProperties.get("title", ''),
-            color_discrete_map=c_dic
-        )
+        x_color = utils.setColor(folder, possible_components)
+        for i, c in enumerate(possible_components):
+            c_dic[c] = str(x_color[i])
     else:
-        fig = px.bar(
-            melted,
-            x=case,
-            y="value",
-            color="Component",
-            title=graphProperties.get("title", ''),
-        )
+        for i, c in enumerate(possible_components):
+            c_dic[c] = COLOR_SCALE[i]
+    for pc in possible_components:
+        filter_melted = melted.loc[pc]
+        x = list(filter_melted["Case"])
+        y = list(filter_melted["value"])
+        fig.add_trace(go.Bar(x=x,y=y,marker_color=c_dic[pc], name=pc))
+
 
     fig.update_layout(barmode='relative')
     fig.update_yaxes(title=graphProperties.get("ylabel", ""))
@@ -321,24 +322,42 @@ def XYGraph(df_ts: pd.DataFrame, graphProperties: dict, folder=""):
            graphProperties.get('minimum_date').strip("'"),
            graphProperties.get('maximum_date').strip("'")])
 
-
+    
+    
     for i, case in enumerate(dd.ConfigCase.unique()):
         print(i, case)
         data = dd[dd.ConfigCase == case]
         data = data.drop("ConfigCase", axis=1).set_index('Variable').T
         data = data.dropna(how='all')
+        c_dic = {}
+        if folder != "" and graphProperties.get("color", "True")=="True":
+            possible_compo = [i.split(".")[0] for i in data.columns]
+            x_color = utils.setColor(folder, possible_compo)
+            for k, c in enumerate(possible_compo):
+                c_dic[c] = str(x_color[k])
         for j, var in enumerate(data.columns):
             if var == 'Data.Time':
                 continue
             if var == xvar[0]:
                 continue
+            
             try:
-                fig.add_trace(
-                    go.Scatter(x=data[xvar[0]].astype(float), y=data[var].astype(float), name=var,
-                               legendgroup=i, legendgrouptitle={'text': case}, mode='markers',
-                               visible=True if i == 0 else 'legendonly', marker_color=COLOR_SCALE[i]
-                               )
-                )
+                if len(c_dic.keys())>0:
+                    fig.add_trace(
+                        go.Scatter(x=list(data[xvar[0]].astype(float)), y=list(data[var].astype(float)), name=var,
+                                legendgroup=i, legendgrouptitle={'text': case}, mode='markers',
+                                visible=True if i == 0 else 'legendonly', marker_color=c_dic[var.split(".")[0]],
+                                marker_symbol=SYMBOLS[i]+"-open",
+                                marker_size=15,
+                                )
+                    )
+                else:
+                    fig.add_trace(
+                        go.Scatter(x=list(data[xvar[0]].astype(float)), y=list(data[var].astype(float)), name=var,
+                                legendgroup=i, legendgrouptitle={'text': case}, mode='markers',
+                                visible=True if i == 0 else 'legendonly'
+                                )
+                    )
             except:
                 print(xvar[0] +" and " + var + " not found !!!!!")
                 continue
@@ -394,16 +413,17 @@ def XYGraphMultiStudy(df: pd.DataFrame, graphProperties: dict, folder=""):
 
     if len(yvar) > 0 and len(xvar) > 0:
         print("XYGraphMultiStudy Plot: ", xvar, yvar)
-        fig = px.scatter(
-            ddf,
-            x=pd.to_numeric(ddf[xvar], errors='coerce', downcast='float'),
-            y=(ddf[yvar[0]].astype(float)),
-        )
+        fig = go.Figure(data = go.Scatter(
+            x=list(ddf[xvar].astype(float)),
+            y=list(ddf[yvar[0]].astype(float)), mode='markers',
+            text=ddf.index
+        ))
     else:
         print("XYGraphMultiStudy Plot: ", xvar, "[ALL]")
         fig=px.scatter(ddf)
     fig.update_yaxes(title=graphProperties.get("ylabel", yvar[0]))
     fig.update_xaxes(title=graphProperties.get("xlabel", xvar))
+    fig.update_layout(title=dict(text=graphProperties["title"]))
     return fig
 
 
@@ -557,6 +577,7 @@ def DistributionGraph(df_ts: pd.DataFrame, graphProperties: dict, folder=""):
     fig.update_traces(opacity=0.75)
     fig.update_yaxes(title=graphProperties.get("ylabel", "Number of timestep"))
     fig.update_xaxes(title=graphProperties.get("xlabel", "MW"))
+    fig.update_layout(title=graphProperties.get("title","Distribution graph of "+ graphProperties.get('plotted_variables')))
     return fig
 
 def NPV(df: pd.DataFrame, graphProperties: dict, folder=""):
@@ -564,15 +585,15 @@ def NPV(df: pd.DataFrame, graphProperties: dict, folder=""):
     df_loc = df.copy()
     df_loc.set_index("Component.Variable",inplace=True)
     try:
-        tab_annees = df_loc.loc["TecEcoAnalysis#1 . NbYear "]
-        tab_capex = df_loc.loc["TecEcoAnalysis#1 . Total CAPEX "].astype(float)
-        tab_opex = df_loc.loc["TecEcoAnalysis#1 . UnDiscounted Net OPEX "].astype(float)
-        tab_discount_rate = df_loc.loc["TecEcoAnalysis#1 . Discount Rate "].astype(float)
+        tab_annees = df_loc.loc["TecEco.NbYear"]
+        tab_capex = df_loc.loc["TecEco.CAPEX"].astype(float)
+        tab_opex = df_loc.loc["TecEco.NetOPEX"].astype(float)
+        tab_discount_rate = df_loc.loc["TecEco.DiscountRate"].astype(float)
     except:
-        tab_annees = df_loc.loc["TecEco . NbYear "]
-        tab_capex = df_loc.loc["TecEco . Total CAPEX "].astype(float)
-        tab_opex = df_loc.loc["TecEco . UnDiscounted Net OPEX "].astype(float)
-        tab_discount_rate = df_loc.loc["TecEco . Discount Rate "].astype(float)
+        tab_annees = df_loc.loc["TecEcoAnalysis.NbYear"]
+        tab_capex = df_loc.loc["TecEcoAnalysis.CAPEX"].astype(float)
+        tab_opex = df_loc.loc["TecEcoAnalysis.NetOPEX"].astype(float)
+        tab_discount_rate = df_loc.loc["TecEcoAnalysis.DiscountRate"].astype(float)
     dept_year = graphProperties.get("start_year",0)
     j=0
     fig = go.Figure()
@@ -645,7 +666,7 @@ def Table(df_table: pd.DataFrame, graphProperties: dict, folder=""):
             except:
                 tab_col.append(["grey" for val in i])
     try:
-        fig = go.Figure(data=[go.Table(header=dict(values=[c.replace("paramListJson.","").replace("optionListJson.","") for c in list(df_table.columns)]),
+        fig = go.Figure(data=[go.Table(header=dict(values=(df_table.columns)),
                                     cells=dict(values=[df_table[name] for name in df_table.columns],
                                                 fill=dict(color=tab_col)))
                             ])
@@ -1247,13 +1268,14 @@ def ResolCplex(df_table: pd.DataFrame, graphProperties: dict, folder=""):
     fig.add_trace(go.Table(header=dict(values=[c for c in list(df_table.columns)]),
                            cells=dict(values=[df_table[name] for name in df_table.columns]))
                   , row=1, col=1)
-    fig.add_trace(go.Bar(x=df_table["Case"], y=(-df_table["objectif"].astype(float)),name="NPV",
+    df_table["NPV"] = -df_table["objectif"].astype(float)
+    fig.add_trace(go.Bar(x=list(df_table["Case"]), y=list(df_table["NPV"]),name="NPV",
                              error_y=dict(type='data',
                                           symmetric=False,
                                           array=-df_table["objectif"].astype(float).mul(((df_table["precision"].replace("%","", regex=True)).astype(float)))/100,
                                           arrayminus=[0 for i in range(len(df_table))])),
                          secondary_y=False,row=2,col=1)
-    fig.add_trace(go.Scatter(x=df_table["Case"], y=df_table["tmps_resolution"], name="Time of resolution"),secondary_y=True, row=2,col=1)
+    fig.add_trace(go.Scatter(x=list(df_table["Case"]), y=list(df_table["tmps_resolution"].astype(float)), name="Time of resolution"),secondary_y=True, row=2,col=1)
     fig.update_yaxes(title_text="NPV", secondary_y=False,row=2,col=1)
     fig.update_yaxes(title_text="Time of resolution (sec)", secondary_y=True, row=2, col=1)
     return fig

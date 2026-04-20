@@ -1,0 +1,5 @@
+Case;ManualObjective#1;ManualObjective#1;ManualObjective#1;ManualObjective#1;SourceLoad#2;SourceLoad#2;SourceLoad#3;SourceLoad#3
+;CommonMinVariable;CommonMaxVariable;ObjectiveCoefficient;TimeIntegration;PortB2--Variable;PortB2--Coeff;PortB1--Variable;PortB1--Coeff
+maxConstraint;False;True;1;False;Weight;-1;Weight;-1
+maxConstraintintegrate;False;True;1;True;SourceLoadFlow;-1;SourceLoadFlow;-1
+minConstraint;True;False;-1;False;Weight;1;Weight;1

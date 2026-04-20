@@ -85,6 +85,8 @@ protected:
     std::vector< std::string > mLabelList = {}; /* existing labels as specified by TecEcoAnalysis (acts as a reference) */
     std::map<std::string, t_mapParams > mLabelMap = {}; /* key is the componenet name, and t_mapParams is labelName: labelValue (only labels from mLabelNames are accepted at the end) */
 
+    std::string extractComponentType(const json& comp) const;
+
     void extractDocumentData(const json& jsonData);
 
     void extractComponentData(const json& comp);
@@ -98,6 +100,7 @@ protected:
     json readJSONFile(const std::string& aFileName);
 
     std::string read(const json& in, const std::string& id, const std::string& defaultValue = "") const;
+    std::string getPortVariable(const std::string& compoName, const std::string& portName) const;
 };
 
 #endif // JsonDescription_H

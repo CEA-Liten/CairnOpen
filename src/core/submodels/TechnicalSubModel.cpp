@@ -145,7 +145,7 @@ void TechnicalSubModel::setExpInstalled()
     else
     {
         mExpInstalled = mVarInstalled;
-        if (mMaxValue >= 0.) {
+        if (mMaxValue >= 10E-10) {
             addConstraint(mVarInstalled == 1, "sInstalled");
         }
     }
@@ -271,11 +271,11 @@ void TechnicalSubModel::computeEnvContribution()
         //Environmental impacts
         //Direct emissions
         for (EnvImpact* impact : mEnvImpacts) {
-            int j = 0;
+            size_t j = 0;
             for (auto& port : mListPort) {            
                 const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
                 if (ptrExp1D) {
-                    impact->computeEnvImpactContribution(j, ptrExp1D);
+                    impact->computeEnvImpactContribution(j, ptrExp1D, mExpInstalled);
                 }
                 j++;
             }
@@ -288,9 +288,9 @@ void TechnicalSubModel::computeEnvContribution()
                     impact->EnvGreyContentOffset(), *(impact->getExpEnvEmbodied()));
             }
             else {
-                impact->computeEmbodiedEnvImpactContribution(mExpSizeMax);
+                impact->computeEmbodiedEnvImpactContribution(mExpSizeMax, mExpInstalled);
             }
-            impact->computeReplacementEnvImpactContribution(mExpSizeMax);
+            impact->computeReplacementEnvImpactContribution(mExpSizeMax, mExpInstalled);
         }
     }
     //
@@ -345,46 +345,34 @@ void TechnicalSubModel::computeEconomicalContribution()
 
     if (mEcoInvestModel)
     {
+        const double EPSILON = 1.e-6;
+        const double HOURS_PER_YEAR = 8760.0;
+
+        // Validate LifeTime before computing costs
+        if (std::fabs(mLifeTime) < EPSILON) {
+            throw Cairn_Exception( "An error occurred while computing the replacement cost of " + Name() +
+                ". The value of the parameter LifeTime cannot be 0.", -1);
+        }
+
+        // Normalize near-zero capex values
+        if (std::fabs(mCapex) < EPSILON) {
+            mCapex = 0.0;
+        }
+
+        // Compute Capex contribution
         if (mPiecewiseCapex) {
-            cInfo() << "Add Piecewise Capex. Try Relaxation : " << mTryRelaxationCapex;
+            cInfo() << "Add Piecewise Capex. Try Relaxation: " << mTryRelaxationCapex;
             computePiecewiseContribution(mCapexCapacitySetPoint, mCapexSetPoint, mTryRelaxationCapex, 0, mExpCapex);
         }
-        else
-        {
-            if (mCapex < 1.e-10) // pourquoi cette distinction ??
-                mExpCapex = mTotalCapexOffset * mExpInstalled;
-            else
-                mExpCapex += mTotalCapexCoefficient * mCapex * mExpSizeMax + mTotalCapexOffset*mExpInstalled;
+        else {
+            mExpCapex = mTotalCapexCoefficient * mCapex * mExpSizeMax + mTotalCapexOffset * mExpInstalled;
         }
-        if (mCapex < 1.e-10)
-        {
-            for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
-            {
-                mExpFixedOpex[t] = 0.;
-            }
 
-            for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
-            {
-                mExpReplacement[t] = 0.;
-            }
-        }
-        else
+        // Compute Opex and replacement contributions
+        for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
         {
-            for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
-            {
-                mExpFixedOpex[t] += TimeStep(t) * (mCapex * mFixedOpex + mFixedOpexConstant) * mExpSizeMax / 8760.;
-            }
-
-            if (fabs(mLifeTime) > 1.e-6) {
-                for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
-                {
-                    mExpReplacement[t] += TimeStep(t) * (mCapex * mReplacement + mReplacementConstant) * mExpSizeMax / (mLifeTime * 8760.);
-                }
-            }
-            else {
-                Cairn_Exception cairn_error("An error occurred while computing the replacement cost of " + Name() + ". The value of the parameter LifeTime cannot be 0.", -1);
-                throw cairn_error;
-            }
+            mExpFixedOpex[t] += TimeStep(t) * (mCapex * mFixedOpex * mExpSizeMax + mFixedOpexConstant * mExpInstalled) / HOURS_PER_YEAR;
+            mExpReplacement[t] += TimeStep(t) * (mCapex * mReplacement * mExpSizeMax + mReplacementConstant * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
         }
     }
 }
@@ -431,6 +419,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         for (uint64_t t = 0; t < *mptrTimeshift; ++t) mReplacementPart.at(1) += mExpReplacement.at(t).evaluate(optSol); // HIST
     }
     mExistence.at(0) = mExistence.at(1) = mExpInstalled.evaluate(optSol);
+    double xxx = mExpSizeMax.evaluate(optSol);
     for (uint64_t t = 0; t < mHorizon; ++t) mVariableCosts.at(0) += mExpVariableCosts.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // PLAN
     for (uint64_t t = 0; t < *mptrTimeshift; ++t) mVariableCosts.at(1) += mExpVariableCosts.at(t).evaluate(optSol); // HIST
 

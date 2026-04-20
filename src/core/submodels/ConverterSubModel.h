@@ -23,13 +23,15 @@ public:
     void declareDefaultModelConfigurationParameters()
     {
         TechnicalSubModel::declareDefaultModelConfigurationParameters();
-        addParameter("UseAgeing", &mUseAgeing, false, false, true, "", "", "Ageing");          /** Use UseAgeing Model if true - default to false. Current Efficiency will be reduced by 1-EfficiencyAgeingCoeff*HistRunnningTime and reset to 1 when HistRunnningTime reaches EfficiencyMaxHours */
+        addParameter("UseAgeing", &mUseAgeing, false, false, true, "Use Ageing Model if true - default to false. Current Efficiency will be reduced by 1-EfficiencyAgeingCoeff*HistRunnningTime and reset to 1 when HistRunnningTime reaches EfficiencyMaxHours", "", "Ageing");  
     }
     
     void declareDefaultModelParameters()
     {
         TechnicalSubModel::declareDefaultModelParameters();
-        if (mAgeingModel && mUseAgeing) mAgeingModel->declareModelParameters();
+        if (mAgeingModel) { //&& mUseAgeing) { // Always declare even if UseAgeing is false
+            mAgeingModel->declareModelParameters();
+        }
     }
 
     void declareDefaultModelInterface()
@@ -51,6 +53,8 @@ public:
         }
 
         for (const auto& port : mListPort) {
+            if (!port->getCarrier())
+                continue;
             const std::string portId = port->ID();
             const std::string varName = port->Variable();
             const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
@@ -120,17 +124,25 @@ public:
     virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr);
     virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr);
     
-    double Efficiency() const { 
-        if (mAgeingModel && mUseAgeing)
-            return mAgeingModel->EfficiencyAgeing();
-        else
-            return 1;
+    inline double EfficiencyAgeing() const {
+        if (mAgeingModel && mUseAgeing) {
+            const double efficiencyAgeing = mAgeingModel->EfficiencyAgeing();
+            cInfo() << Name() + " efficiency ageing:" << efficiencyAgeing;
+            return efficiencyAgeing;
+        }
+        else {
+            return 1.0;
+        }
     }
-    double CapacityAgeing() const {
-        if (mAgeingModel && mUseAgeing)
-            return mAgeingModel->CapacityAgeing();
-        else
-            return 1;
+    inline double CapacityAgeing() const {
+        if (mAgeingModel && mUseAgeing) {
+            const double capacityAgeing = mAgeingModel->CapacityAgeing();
+            cInfo() << Name() + " capcity ageing:" << capacityAgeing;
+            return capacityAgeing;
+        }
+        else {
+            return 1.0;
+        }
     }
 protected:
     

@@ -33,8 +33,9 @@ class SourceLoadCompo ;
 class CAIRNCORESHARED_EXPORT SourceLoadCompo : public MilpComponent
 {
 public:
-    SourceLoadCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map<std::string, std::map<std::string, std::string>>& aPorts,
-        MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
+    SourceLoadCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, 
+        const std::map<std::string, std::map<std::string, std::string>>& aPorts,
+        MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory);
 
     virtual ~SourceLoadCompo();
   

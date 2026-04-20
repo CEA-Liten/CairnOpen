@@ -44,7 +44,7 @@ void NodeEquality::computeModelContribution()
     // le bus est une contrainte systeme sous forme d'une expression a laquelle chaque composant contribue directement
     // we will loop on the list of connected ports imposing BusSameValue constraint for each of them with BusValue one
 
-    for (auto& port : mListPort) {    
+    for (auto& port : mLinkedPorts) {    
 	  for (unsigned int t = 0; t < mHorizon ; ++t)
 	  {
          addConstraint(mVarBusValue(t) - port->ExpPotential()[t] == 0,"E",t) ;

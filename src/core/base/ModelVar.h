@@ -49,7 +49,7 @@ public:
     );
     ~ControlVar();
 
-    void subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Import);
+    void subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Import, size_t a_npdtTot);
   
     void set_Values(const std::string& a_ControlMode,
         const InputParam::t_mapParams& a_Params,
@@ -58,6 +58,7 @@ public:
     );
 
     double get_DefaultValue();
+    std::vector<double> getValues();
 
     void ComputeValue(int aNpdtPast);
 

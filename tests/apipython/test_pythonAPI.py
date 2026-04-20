@@ -46,6 +46,13 @@ def problem():
     problem = cairn_instance.read_study(simu_full)
     yield problem
 
+@pytest.fixture()
+def instance():
+    app_home = path.dirname(path.realpath(__file__))
+    simu_full =  path.join(app_home, './data/cairn_training.json')
+    cairn_instance = CairnAPI(False)
+    problem = cairn_instance.read_study(simu_full)
+    yield cairn_instance
 
 def read_compos(problem):
     print(problem.get_components())
@@ -156,6 +163,29 @@ def get_ts_results(problem):
     assert len(ely_pem.get_var_value("UsedPower")) > 0
     assert ely_pem.get_var_value("UsedPower")[0] > 0
 
+    
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_set_get_Param(problem):
+    simulation_control = problem.get_simulation_control()
+    P1 = simulation_control.get_setting("FutureSize")
+    assert P1.value == 48
+    assert P1.isMandatory == True
+    assert P1.defaultValue == 8760
+    P1.value = 168
+    assert simulation_control.get_setting_value('FutureSize') == 168
+    
+    ely_pem = problem.get_component("ELY_PEM")
+    P2 = ely_pem.get_setting("Capex")
+    assert P2.value == 480000.0
+    assert P2.isMandatory == True
+    assert P2.unit == 'EUR/MW'
+    assert P2.show_config == 'EcoInvestModel'
+
+   
+
+
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
 @pytest.mark.xdist_group("PythonAPI")
@@ -214,11 +244,11 @@ def test_set_get_Solvers(problem):
 @pytest.mark.xdist_group("PythonAPI")
 def test_add_component(problem):
     my_pv_field = problem.create_component("PV", "SourceLoad")
-    elec_bus = problem.get_energy_carrier("ElectricityDistrib")
+    carrier = problem.get_energy_carrier("ElectricityDistrib")
     defaultPorts = my_pv_field.default_ports
     assert len(defaultPorts) == 1
     my_PV_L0 = my_pv_field.get_port(defaultPorts[0])  # "PortL0"
-    my_PV_L0.set_carrier(elec_bus)
+    my_PV_L0.set_carrier(carrier)
     my_PV_L0.setting_values = {
         "Direction": "OUTPUT",
         "Variable": "SourceLoadFlow"
@@ -280,6 +310,20 @@ def test_get_energy_carrier(problem):
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
 @pytest.mark.xdist_group("PythonAPI")
+def test_get_study(instance):
+    assert instance.get_study().get_components() == ['ELY_PEM', 'Elec_Grid', 'Elec_Grid_Inject', 'H2_Load', 'H2_Tank', 'Wind_farm']
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_model_class(problem):
+    storage = problem.get_component("H2_Tank")
+    print(storage.possible_model_classes)
+    assert "StorageGen", "StorageThermal" in storage.possible_model_classes
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
 def test_add_udl(problem):
     problem.add_label("country")
     problem.add_label("year")
@@ -320,9 +364,21 @@ def test_add_grid(problem):
 def test_add_port(problem):
     ely_pem = problem.get_component("ELY_PEM")
     carrier = problem.get_energy_carrier("ElectricityDistrib")
-    port_new = Port(ely_pem,"test_port",carrier)
+    port_new = ely_pem.add_port("test_port", carrier)
     assert port_new.carrier_name == "ElectricityDistrib"
-    ely_pem.remove_port(port_new, True)
+    ely_pem.remove_port(port_new)
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_get_default_port(problem):
+    ely_pem = problem.get_component("ELY_PEM")
+    default_ports = ely_pem.default_ports
+    assert len(default_ports) == 2
+    assert "PortR0" in default_ports
+    assert "PortL0" in default_ports
+    assert ely_pem.get_port("PortR0").carrier_name == "H2"
+    assert ely_pem.get_port("PortL0").carrier_name == "ElectricityDistrib"
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
@@ -364,6 +420,29 @@ def test_sequence_run_compare(problem):
     get_plan_results(problem)
     get_ts_results(problem)
 
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_tececo_link(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath =  path.join(app_home, 'data')
+    tecEco = problem.get_tech_eco_analysis()
+    carrier = problem.get_energy_carrier("ElectricityDistrib")
+    #add port
+    portName = "TecEcoPort"
+    tecEco_port = tecEco.add_port(portName, carrier, "DATAEXCHANGE", "Total Capex");
+    assert tecEco.ports == [portName]
+    #create link
+    bus = problem.get_bus("Elec_Bus")
+    problem.add_link(tecEco_port, bus)
+    assert f"TecEco.{portName}" in problem.links
+    #remove link 
+    problem.remove_link(tecEco_port, bus)
+    assert f"TecEco.{portName}" not in problem.links
+    #remove port 
+    tecEco.remove_port(tecEco_port)
+    assert tecEco.ports == []
 
 def read_and_lauch_study_twice(study, app_home=""):
     file_path = path.join(app_home, study + ".json")
@@ -418,14 +497,17 @@ def test_loop_on_all_models_twice():
 
 if __name__ == '__main__':
     app_home = path.dirname(path.realpath(__file__))
-    """
+
     simu_full = path.join(app_home, './data/cairn_training.json')
     timeseries = path.join(app_home, './data/cairn_training_dataseries.csv')
     cairn_instance = CairnAPI(True)
     problem = cairn_instance.read_study(simu_full)
+    ely_pem = problem.get_component("ELY_PEM")
+    default_ports = ely_pem.default_ports
+    print(default_ports)
 
     test_plan_results(problem)
-    """
+
 
     # test_sequence_run_compare(problem)
     # add_grid(problem)

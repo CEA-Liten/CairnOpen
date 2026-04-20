@@ -9,6 +9,7 @@ StorageGen::StorageGen(CairnObject* aParent) : StorageSubModel(aParent),
     mInitialSoe_Def(0.),
     mInternalLosses(2,0.)
 {
+    mPossibleModelClasses = { "StorageGen", "StorageLinearBounds", "StorageThermal", "Battery_V1", "StorageSeasonal", "BatteryDetailledBeta" };
 }
 
 StorageGen::~StorageGen(){ }

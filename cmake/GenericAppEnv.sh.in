@@ -13,7 +13,7 @@ export WHITE='\e[1;37m'
 
 export OPTION=$1
 if [ "$OPTION" = "" ]; then 
-    export OPTION=release
+    export OPTION=Release
 fi; 
 echo -e "\n$GREEN➡  Run mode : ${OPTION} $RESET"
 

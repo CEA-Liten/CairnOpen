@@ -51,7 +51,6 @@ OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aM
 
 OptimProblem::~OptimProblem()
 {
-    //delete mTecEcoEnv; //Attention mTecEcoEnv == this so deleting it creates an infinite loop!
     //delete mTecEcoAnalysis; mTecEcoAnalysis == mCompoModel which is deleted in ~TecEcoComponent()
     delete mSolver;
     delete mSimulationControl;
@@ -59,7 +58,6 @@ OptimProblem::~OptimProblem()
     delete mModelFactory;
 
     // Avoid dangling pointer
-    mTecEcoEnv = nullptr;
     mTecEcoAnalysis = nullptr;
     mSolver = nullptr;
     mSimulationControl = nullptr;
@@ -126,43 +124,6 @@ std::vector<EnergyVector*> OptimProblem::EnergyVectors()
 //  init Problem
 //------------------------------------------------------------------------------
 
-void OptimProblem::setExtrapolationFactor() {
-    if (!mTecEcoAnalysis || !mMilpData) return;
-
-    TecEcoCompo* pTecEcoCompo = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
-    if (!pTecEcoCompo) return;
-
-    double factor = 1.;
-    if (mMilpData->UseExtrapolationFactor()) {
-        if (mTecEcoAnalysis->NbYearInput() > 1) {
-            factor = 1.;
-        }
-        else {
-            if (mTecEcoAnalysis->LeapYearPos() == 1) {
-                factor = 8784. / (mMilpData->npdt() * mMilpData->pdtHeure());
-            }
-            else {
-                factor = 8760. / (mMilpData->npdt() * mMilpData->pdtHeure());
-            }
-        }
-    }
-    else {
-        factor = 1.;
-    }
-
-    pTecEcoCompo->setExtrapolationFactor(factor);
-    pTecEcoCompo->setLevelizationTable();
-    pTecEcoCompo->setImpactLevelizationTable();
-    pTecEcoCompo->setTableYearsHours();
-
-    for (auto& [key, lptrCompo] : MilpComponents()) {        
-        lptrCompo->setExtrapolationFactor(factor);
-        lptrCompo->setLevelizationTable();
-        lptrCompo->setImpactLevelizationTable();
-        lptrCompo->setTableYearsHours();
-    }
-}
-
 void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
 {
     mStudyFile = &aStudy;
@@ -197,6 +158,7 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
         try {
             createTecEcoAnalysisFromParamMap(); 
             createSimulationControlFromParamMap();
+            createEnergyVectorsFromParamMap();
             createMilpComponentsFromParamMap();
             createLinksToBus();
             createDynamicIndicators();
@@ -207,7 +169,7 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
         }
     }
 
-    setExtrapolationFactor();
+    computeExtrapolationFactor();
 
     // init components and their models
     int ierr = 0;
@@ -229,52 +191,16 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
     createExportZEVariablesList();
 }
 
-void OptimProblem::initOptimProblemFromTecEcoAnalysis()
-{
-    if (!mTecEcoAnalysis) return;
-
-    mForceExportAllIndicators = mTecEcoAnalysis->ForceExportAllIndicators();
-
-    TecEcoCompo* pTecEcoCompo = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
-    if (!pTecEcoCompo) return;
-
-    pTecEcoCompo->setObjectiveUnit(mTecEcoAnalysis->ObjectiveUnit());
-    pTecEcoCompo->setCurrency(mTecEcoAnalysis->Currency());
-    pTecEcoCompo->setRange(mTecEcoAnalysis->Range());
-
-    pTecEcoCompo->setNbYear(mTecEcoAnalysis->NbYear());
-    pTecEcoCompo->setNbYearOffset(mTecEcoAnalysis->NbYearOffset());
-    pTecEcoCompo->setNbYearInput(mTecEcoAnalysis->NbYearInput());
-    pTecEcoCompo->setLeapYearPos(mTecEcoAnalysis->LeapYearPos());
-
-    pTecEcoCompo->setDiscountRate(mTecEcoAnalysis->DiscountRate());
-    pTecEcoCompo->setImpactDiscountRate(mTecEcoAnalysis->ImpactDiscountRate());
-    pTecEcoCompo->setInternalRateOfReturn(mTecEcoAnalysis->InternalRateOfReturn());
-
-    pTecEcoCompo->setEnvImpactsList(mTecEcoAnalysis->EnvImpactsList());
-    pTecEcoCompo->setEnvImpactUnitsList(mTecEcoAnalysis->EnvImpactUnitsList());
-    pTecEcoCompo->setEnvImpactsShortNamesList(mTecEcoAnalysis->EnvImpactShortNamesList());
-    pTecEcoCompo->setEnvImpactCosts(mTecEcoAnalysis->EnvImpactCosts());
-
-    setExtrapolationFactor();
-
-    TecEcoEnv* tecEcoEnv = dynamic_cast<TecEcoEnv*>(pTecEcoCompo);
-    if (tecEcoEnv) {
-        mTecEcoEnv = tecEcoEnv;
-        setCompoTecEcoEnvSettings(*mTecEcoEnv);
-    }
-}
-
-void OptimProblem::setCompoTecEcoEnvSettings(TecEcoEnv& aTecEcoEnv) {
-    for (auto& [key, lptrCompo] : MilpComponents()) {        
-        lptrCompo->setTecEcoEnvSettings(aTecEcoEnv);
-    }
+void OptimProblem::computeExtrapolationFactor() {
+    if (!mTecEcoAnalysis || !mMilpData)
+        return;
+    mTecEcoAnalysis->computeExtrapolationFactor(mMilpData);
 }
 
 bool OptimProblem::createTecEcoAnalysis()
 {
     createComponent("TecEcoAnalysis");
-    if (mTecEcoAnalysis) initOptimProblemFromTecEcoAnalysis();
+    computeExtrapolationFactor();
     return (mTecEcoAnalysis != nullptr);
 }
 
@@ -287,19 +213,21 @@ void OptimProblem::createTecEcoAnalysisFromParamMap()
             createComponent(component["type"], component, ports);
             if (mTecEcoAnalysis) {
                 mTecEcoAnalysis->setLabelList(mJsonDescription->LabelList());
-                initOptimProblemFromTecEcoAnalysis();
+                computeExtrapolationFactor();
             }
             break;
         }
     }
 }
 
-void OptimProblem::createMilpComponentsFromParamMap()
-{    
+void OptimProblem::createEnergyVectorsFromParamMap()
+{
     for (auto& component : mMilpComponents)
-    {        
+    {
         if (component["type"] == "TecEcoAnalysis" || component["type"] == "SimulationControl")
+        {
             continue; //already created
+        }
         if (component["type"] == "Solver") {
             //component["id"] is componenet name, and component["Solver"] is the name of the Solver: Cplex, Cbc, Highs, ...
             bool vOK = createSolver(component["id"], component);
@@ -310,11 +238,27 @@ void OptimProblem::createMilpComponentsFromParamMap()
         }
         else if (component["type"] == "EnergyVector") {
             //component["Type"] is the carrier type : Fluid, Electrical, Thermal
-            bool vOK = createEnergyVector(component["id"], component["Type"], component); 
+            bool vOK = createEnergyVector(component["id"], component["Type"], component);
             if (!vOK) {
                 Cairn_Exception cairn_error("Error creating EnergyVector " + component["id"], -1);
                 throw cairn_error;
             }
+        }
+        else {
+            continue; //create after
+        }
+    }
+}
+
+
+void OptimProblem::createMilpComponentsFromParamMap()
+{    
+    for (auto& component : mMilpComponents)
+    {        
+        if (component["type"] == "TecEcoAnalysis" || component["type"] == "SimulationControl"
+            || component["type"] == "EnergyVector" || component["type"] == "Solver")
+        {
+            continue; //already created
         }
         else {
             std::map < std::string, std::map<std::string, std::string> > ports = mJsonDescription->getCompoPortData(component["id"]);
@@ -333,41 +277,41 @@ bool OptimProblem::createComponent(const std::string& componentType, const std::
             // only one TecEco
             TecEcoCompo *pTecEco = findChild<TecEcoCompo>();
             if (pTecEco) removeChild(pTecEco);
-            TecEcoEnv vTecoEnv = TecEcoEnv();
-            lptr = dynamic_cast <MilpComponent*> (new TecEcoCompo(this, paramsMap, portsMap, mMilpData, vTecoEnv, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new TecEcoCompo(this, paramsMap, portsMap, mMilpData, mModelFactory));
             lptr->initMilpComponent();
             mTecEcoAnalysis = dynamic_cast<TecEcoAnalysis*> (lptr->compoModel());
+            lptr->setTecEcoAnalysis(mTecEcoAnalysis); //In case of TecEcoCompo mTecEcoAnalysis == mCompoModel ! 
         }
         else if (componentType == "Converter"
             || componentType == "Storage"
             || componentType == "PhysicalEquation"
             || componentType == "OperationConstraint") {
-            lptr = dynamic_cast <MilpComponent*> (new MilpComponent(this, paramsMap.at("id"), mMilpData, *mTecEcoEnv, paramsMap, portsMap, mModelFactory));
-            lptr->initMilpComponent(); 
+            lptr = dynamic_cast <MilpComponent*> (new MilpComponent(this, paramsMap.at("id"), mMilpData, mTecEcoAnalysis, paramsMap, portsMap, mModelFactory));
+            lptr->initMilpComponent();
         }    
         else if (componentType == "Grid")
         {
-            lptr = dynamic_cast <MilpComponent*> (new GridCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new GridCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
             lptr->initMilpComponent();
         }
         else if (componentType == "SourceLoad") {
-            lptr = dynamic_cast <MilpComponent*> (new SourceLoadCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new SourceLoadCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
             lptr->initMilpComponent();
         }
         else if (componentType == "BusFlowBalance" || componentType == "BusSameValue") {
-            lptr = dynamic_cast <MilpComponent*> (new BusCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new BusCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
             lptr->initMilpComponent();
             /* set EnergyCarrier (needed for case GUI). When using API, carrier is set in OptimProblemAPI::create_Bus */
             configureBusCarrier(lptr, CairnUtils::getParam(paramsMap, "componentCarrier"));
         }
         else if (componentType == "MultiObjCompo") {
-            lptr = dynamic_cast <MilpComponent*> (new MultiObjCompo(this, paramsMap, portsMap, mMilpData, *mTecEcoEnv, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new MultiObjCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
             lptr->initMilpComponent();
             configureBusCarrier(lptr, CairnUtils::getParam(paramsMap, "componentCarrier"));
         }        
         else if (componentType == "" || componentType == "undefined")
         {
-            Cairn_Exception cairn_error("Unkown type for component " + paramsMap.at("id"), -1);
+            Cairn_Exception cairn_error("Unkown type " + componentType + " for component " + paramsMap.at("id"), -1);
             throw cairn_error;
         }
         else
@@ -380,7 +324,7 @@ bool OptimProblem::createComponent(const std::string& componentType, const std::
                 Cairn_Exception cairn_error("Please Check that file exists and is in the PATH: " + (paramsMap.at("file")), -1);
                 throw cairn_error;
             }
-            MilpComponent* lptr_temp = dynamic_cast <MilpComponent*> (UserMilp(this, paramsMap.at("id"), mMilpData, *mTecEcoEnv, paramsMap, portsMap));
+            MilpComponent* lptr_temp = dynamic_cast <MilpComponent*> (UserMilp(this, paramsMap.at("id"), mMilpData, mTecEcoAnalysis, paramsMap, portsMap));
             lptr_temp->initMilpComponent(); 
         }
     }
@@ -576,7 +520,7 @@ bool OptimProblem::createSimulationControl(const std::string& mSimulationControl
     if (mSimulationControl) {
         //Set MilpData from SimulationControl params
         mMilpData->setMilpDataFromSettings(mSimulationControl->getParameters(), mStdAloneMode); 
-        setExtrapolationFactor();
+        computeExtrapolationFactor();
         return true;
     }
     return false;
@@ -629,19 +573,29 @@ f_MilpComponent OptimProblem::LoadDllMilpComponent(std::string Filename, std::st
 
 void OptimProblem::createLinksToBus()
 {
-    for (auto& component : NonBusMilpComponents())
-    {
+    /* The order is not necessary here. It is only to preserve a certain solution for existing studies */
+
+    // Component -> Bus links
+    for (auto& component : NonBusMilpComponents()) {
         createLinksToBus(component);
     }
-    //Create TecEcoAnalysis links
+
+    //TecEcoAnalysis -> Bus links
     TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
     if (pTecEco) {
         createLinksToBus(pTecEco);
+    }
+
+    // Bus -> Bus links
+    for (auto& bus : BusComponents()) {
+        createLinksToBus(bus);
     }
 }
 
 void OptimProblem::createLinksToBus(MilpComponent* lptrComponent) 
 {
+    std::vector<MilpPort*> portsToRemove;
+
     /** Get list of ports for connections onto a Bus  */    
     for (auto& lptrport : lptrComponent->PortList()) {
     
@@ -687,13 +641,12 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
                 throw cairn_error;
             }
 
-            //Set LinkedBus and EnergyVector of the port
-            lptrport->setLinkedBus(lptrLinkedBus);
+            //Set EnergyVector of the port
             lptrport->setCarrier(lptrEnergyVector);
 
             //Add bus port and create the corresponding link
-            lptrLinkedBus->addPort(lptrport);
-            lptrLinkedBus->addComponent(lptrComponent);
+            lptrLinkedBus->addLink(lptrComponent, lptrport);
+
         } 
         else {
             //A non-connected port or link is not well-set
@@ -739,10 +692,15 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
                 }
             }
             else {
-                //A non-default port that is not connected => not needed
-                lptrComponent->removePort(lptrport);
+                //A non-default port that is not connected => remove it ?!
+                portsToRemove.push_back(lptrport);
             }
         }
+    }
+
+    // Remove after iteration — no iterator invalidation
+    for (MilpPort* port : portsToRemove) {
+        lptrComponent->removePort(port);
     }
 }
 
@@ -750,6 +708,9 @@ void OptimProblem::createImportZEVariablesList()
 {
     mListSubscribedVars.clear();
     for (auto& [key, lptr] : MilpComponents()) {
+        if (!lptr->allDefaultPortsHaveCarriers()) {
+            continue;
+        }
          //Read time series        
         lptr->readTSVariablesFromModel();
         //register subscribed lists at OptimProblem level
@@ -767,7 +728,7 @@ void OptimProblem::createImportZEVariablesList()
 void OptimProblem::createExportZEVariablesList()
 {
     mListPublishedVars.clear();
-    for (auto& [key, lptr] : MilpComponents()) {   
+    for (auto& [key, lptr] : MilpComponents()) { 
         //register published lists at OptimProblem level
         lptr->createExportListVars(mListPublishedVars);
     }
@@ -868,7 +829,12 @@ int OptimProblem::SaveFullArchitecture(const std::string& filename, const std::s
         vFileName = mStudyFile->getScenarioFile("_self.json", 0, false);
     }
 
-    fs::path vOutputFile(vFileName);
+    fs::path outputPath(vFileName);
+    if (outputPath.extension() != ".json") {
+        outputPath.replace_extension(".json");
+    }
+    vFileName = outputPath.string();
+
     std::ofstream file(vFileName);
     if (file.is_open()) {        
         bool generatePositions = false;
@@ -965,14 +931,16 @@ void OptimProblem::computeGUICompoAndBusLocations() {
         positions(i, 0) = cos((double(i) / double(nbCompo)) * 2 * 3.14) * maxDist;
         positions(i, 1) = sin((double(i) / double(nbCompo)) * 2 * 3.14) * maxDist;
     }
+
     GradDescResult calcPos;
     cDebug()<<"Debut de la descente de gradient";
-    calcPos = GradientDescent(Energy, &positions, &distances, nIteration, gab, 0.001, 0.001);
+    calcPos = CairnUtils::GradientDescent(CairnUtils::Energy, &positions, &distances, nIteration, gab, 0.001, 0.001);
+   
     MatrixXf newPos;
-    if (calcPos.cond)
-        newPos = calcPos.X[calcPos.iter-1];
+    if (calcPos.condition)
+        newPos = calcPos.X[calcPos.iteration -1];
     else
-        newPos = calcPos.X[calcPos.iter-2];
+        newPos = calcPos.X[calcPos.iteration -2];
     cDebug()<<"Fin de la descente de gradient";
 
     double shift = - min(0.,double(newPos.minCoeff()));
@@ -1100,7 +1068,7 @@ void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
         int oNum = 0; // outputs      (=> inputs of the Bus)
         int dNum = 0; // data ports
 
-        for (MilpPort* pPort : pBus->PortList()) 
+        for (MilpPort* pPort : pBus->LinkedPorts()) 
         {
             if (!pPort) {
                 cWarning() << "Null MilpPort* found in bus " << busName << "; skipping port.";
@@ -1145,7 +1113,7 @@ void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
 
             MilpComponent* pComponent = nullptr;
             if (compoName == mTecEcoAnalysis->Name()) {
-                pComponent = dynamic_cast<MilpComponent*> (mTecEcoAnalysis);
+                pComponent = findChild<TecEcoCompo>(compoName);
             }
             else {
                 pComponent = findChild<MilpComponent>(compoName);
@@ -1235,12 +1203,12 @@ int OptimProblem::initProblem()
         return -1 ;
     }
 
-    int ierr = 0 ;    
+    int ierr = 0;    
 
     //Loop on Non-Bus components
     for (auto& lptrCompo : NonBusMilpComponents()) 
     {
-        ierr = lptrCompo->initProblem() ; // read parameters then create and initialize MIP variables
+        ierr = lptrCompo->initProblem(); // read parameters then create and initialize MIP variables
         if (ierr <0) {
             cCritical() << "ERROR in initialization of component : " << (lptrCompo->Name());
             return ierr ;
@@ -1250,7 +1218,7 @@ int OptimProblem::initProblem()
     // Loop on Bus components
     for (auto& lptrBus : BusComponents()) 
     {
-        ierr = lptrBus->initProblem() ; // read parameters then create and initialize MIP variables
+        ierr = lptrBus->initProblem(); // read parameters then create and initialize MIP variables
         if (ierr <0) {
             cCritical() << "ERROR in initialization of Bus component : " << (lptrBus->Name());
             return ierr ;
@@ -1287,7 +1255,7 @@ int OptimProblem::initSubModelInput()
     int ierr = 0;
 
     for (auto& [key, lptr] : MilpComponents()) {
-        ierr = lptr->initSubModelInput() ; // read parameters then create and initialize MIP variables
+        ierr = lptr->initSubModelInput(); // read parameters then create and initialize MIP variables
         if (ierr <0) {
             cCritical() << "ERROR in initialization of component ";
             return ierr ;
@@ -1317,28 +1285,83 @@ int OptimProblem::initSubModelInput()
 //------------------------------------------------------------------------------
 void OptimProblem::buildComponentConstraints()
 {
-    for (auto& [key, lptr] : MilpComponents()) {
+    for (auto& [key, lptr] : MilpComponents()) { // for (auto& lptr : NonBusMilpComponents()) use ?
 
-        //Exclude Bus componenets
         BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr);
+        if (lptrBus) continue;
+
         TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (lptr);
-        if (lptrBus == nullptr && lptrTecEco == nullptr) {
-            try {
-                lptr->buildProblem(); // les bus doivent attendre que toutes les expressions soient ecrites !
-            }
-            catch (const Cairn_Exception& cairn_error) {
-                throw cairn_error;
-            }
+        if (lptrTecEco) continue;
+
+        try {
+            lptr->buildProblem();  
+        }
+        catch (const Cairn_Exception& cairn_error) {
+            throw cairn_error;
         }
     }
 }
 
 void OptimProblem::buildBusConstraints()
 {
-    for (auto& [key, lptr] : MilpComponents()) {
-        BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr) ;
-        if (lptrBus) {
-            lptrBus->buildProblem(); // les bus doivent attendre que toutes les expressions soient ecrites !
+    // Build problem for the Buses that have own ports first because 
+    // their expressions will be used by the other Buses
+
+    // Collect buses
+    // const std::vector<BusCompo*>& buses = BusComponents();
+
+    //std::list<std::string> busNames;
+    //for (const BusCompo* bus : buses) {
+    //    if (bus) {
+    //        busNames.push_back(bus->Name());
+    //    }
+    //}
+
+    std::vector<BusCompo*> buses;
+    std::list<std::string> busNames;
+    for (auto& [key, compo] : MilpComponents()) {
+
+        BusCompo* bus = dynamic_cast<BusCompo*> (compo);
+        if (bus) {
+            buses.push_back(bus);
+            busNames.push_back(bus->Name());
+        }
+    }
+
+    // Iterate and build problem for buses starting from those that don't depend on other buses
+    std::unordered_set<std::string> processedBuses;
+
+    const int maxIterations = busNames.size();
+    int iteration = 0;
+    while (!busNames.empty())
+    {
+        if (iteration++ >= maxIterations) {
+            throw Cairn_Exception("Circular dependency detected between buses: unable to resolve build order!", -1);
+        }
+
+        for (BusCompo* bus : buses)
+        {
+            if (!bus) continue;
+
+            bool shouldWait = false;
+            for (const MilpPort* port : bus->LinkedPorts())
+            {
+                const BusCompo* portParent = dynamic_cast<const BusCompo*>(port->parent());
+                if (!portParent) continue;
+                if (!processedBuses.count(portParent->Name()))
+                {
+                    shouldWait = true;
+                    break;
+                }
+            }
+
+            if (!shouldWait)
+            {
+                bus->buildProblem();
+                const std::string name = bus->Name();
+                busNames.remove(name);
+                processedBuses.insert(name);  // insert for unordered_set, not push_back
+            }
         }
     }
 }
@@ -1369,13 +1392,12 @@ void OptimProblem::buildProblem()
     std::string vStudyFile = std::string(mStudyFile->archFile().c_str());
 
     int ierr = initSubModelInput();
-
-    // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
-    //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()
-
     if (ierr < 0) {
         throw Cairn_Exception("Error in OptimProblem init!", -1);
     }
+
+    // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
+    //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()
 
     // Create Constraints
     cInfo() << "OptimProblem::buildComponentConstraints";
@@ -1399,24 +1421,17 @@ void OptimProblem::buildProblem()
         }
     }
 
-    // dans la version actuelle, on ne prevoit pas de connexion directe d'un composant a un autre.
-    // la connexion n'est possible que par un convertisseur ou une relation d'agregation.
-
-    // dans cette solution, les bus sont des agregateurs a potentiel identique, et assurent une somme de flux
-    // les contributions sont des expressions calculees par tous les ports contributeurs.
-    // la contrainte que les potentiels sont identiques est implicite, c'est porte par le vecteur energetique.
-    // on passe d'un vecteur a un autre (== potentiel different) par un convertisseur.
     cInfo() << "OptimProblem::buildBusConstraints";
     buildBusConstraints();
 
     // Model component behaviour
     if (mTecEcoAnalysis)  {
         cInfo() << "buildModel: " << mTecEcoAnalysis->objectName();
-        mTecEcoAnalysis->buildModel();     /**  define behaviour model and associated Variables */
+        mTecEcoAnalysis->buildModel();             /**  define behaviour model and associated Variables */
         computeObjectiveFunction(*mExpObjective);  /** set the value of mObjective to the ObjectiveExpression from TecEcoAnalysis */
     }
 
-    return ;
+    return;
 }
 
 void OptimProblem::solveProblem(std::string& optimLogFileName,  const int cycle, const std::map<std::string, bool> paramMap, const bool aExportResultsEveryCycle)
@@ -1568,280 +1583,437 @@ void OptimProblem::computeTecEcoEnvAnalysis(const int& aNsol)
     computeDynamicIndicators(aNsol); 
 }
 
-void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, const std::string& encoding) {
-    //FileName
-    std::string vFileName = aFileName;
-    if (vFileName == "") {
-        vFileName = "study_results_EnvImpactMass.csv";
-    }
-    //----------------- Generate the Table -----------------
-    std::string headerNames1 = std::string("");
-    std::string headerNames2 = std::string("");
-    std::string headerUnits = std::string("");
-    std::map<std::string, std::string> valuesMap;
-    t_list impactNames;
-    if(mTecEcoAnalysis) impactNames  = mTecEcoAnalysis->getPossibleImpactNames();
-    bool first = true; //first componenet
-    //loop over all componenets
-    for (auto& [key, lptr] : MilpComponents()) {    
-        //consider only componenets that have an Environment Model
-        if (lptr->EnvironmentModel()) {
-            if (first) {
-                headerNames1 = "Impact Name";
-                headerNames2 = "";
-                headerUnits = "Unit";
-            }
-            valuesMap[lptr->Name()] = std::string("");
-            //loop over the considered impacts: used only to have a good order (less efficent)
-            for (int i = 0; i < impactNames.size(); i++) {
-                double mass = 0.0;
-                double grey = 0.0;
-                //list of all indicators 
-                const InputParam::t_Indicators& vIndicators = lptr->compoModel()->getInputIndicators()->getIndicators();
-                for (auto& vIndicator : vIndicators) {
-                    const std::string vIndicatorName = vIndicator->getName();
-                    if (!CairnUtils::contains(vIndicatorName, impactNames[i])) {
-                        continue;
-                    }
-                    else if (CairnUtils::contains(vIndicatorName, "Env impact mass")) {
-                        mass = vIndicator->getValue();
-                    }
-                    else if (CairnUtils::contains(vIndicatorName, "EnvGrey impact mass")) {
-                        grey = vIndicator->getValue();
-                        if (first) {
-                            headerNames1 += " ; " + impactNames[i] + " ; " + impactNames[i] + " ; " + impactNames[i];
-                            headerNames2 += " ; Cumulative impact mass  ; Env impact mass ; EnvGrey impact mass";
-                            std::string unit = vIndicator->getUnit();
-                            headerUnits += " ; " + unit + " ; " + unit + " ; " + unit;
-                        }
-                        valuesMap[lptr->Name()] += " ; " + std::to_string(mass + grey) + " ; " + std::to_string(mass) + " ; " + std::to_string(grey);
-                    }
-                }               
-            }
-            first = false;
-        }
-    }
-
-    //No Env Impact is selected or Environment Model is off for all componenets => Don't export the file !
-    if (headerNames1 == std::string("")) {
-        return;
-    }
-
-    //----------------- Open the File ----------------- 
-    std::fstream FileOut;
-    if (!CairnUtils::openFileForWriting(FileOut, vFileName)) {
-        return; //error!
-    }
-
-    //-----------------  Write the Table ----------------- 
-    FileOut << headerNames1 << std::endl;
-    FileOut << headerNames2 << std::endl;
-    FileOut << headerUnits << std::endl;
-    
-    for (auto &[key, value] : valuesMap) {
-        FileOut << key << value << "\n";
-    }
-
-    FileOut.close();
-}
-
-void OptimProblem::exportEnvImpactParameters(const std::string& aFileName, const std::string& encoding) {
-    //FileName
-    std::string vFileName = aFileName;
-    if (vFileName == "") {
-        vFileName = "study_EnvImpactParameters.csv";
-    }
-    //----------------- Generate the Table -----------------
-    std::string header = std::string("");
-    std::map<std::string, std::string> valuesMap;
-    std::vector<std::string> impactNames;
-    if (mTecEcoAnalysis) impactNames = mTecEcoAnalysis->getPossibleImpactNames();
-    bool first = true; //first componenet
-    //loop over all componenets
-    for (auto& [key, lptr] : MilpComponents()) {    
-        //consider only componenets that have an Environment Model
-        if (lptr->EnvironmentModel()) {
-            if (first) {
-                header = "Component Name";
-            }
-            valuesMap[lptr->Name()] = std::string("");
-
-            std::map<std::string, InputParam::ModelParam*> paramMap = lptr->compoModel()->getInputEnvImpactsParam()->getMapParams();
-
-            //loop over the considered impacts: used only to have a good order (less efficent)
-            for (int i = 0; i < impactNames.size(); i++) {                            
-                for (auto const& [key, param] : paramMap) {
-                    if (!CairnUtils::contains(param->getName(), impactNames[i]))
-                        continue;
-                    if (first) {
-                        std::string impactShortNames = mTecEcoAnalysis->EnvImpactShortName(param->getName());
-                        header += " ; " + impactShortNames;
-                    }
-                    valuesMap[lptr->Name()] += std::string(" ; ") + param->toString();
-                }                
-            }
-            first = false;
-        }
-    }
-
-    //No Env Impact is selected or Environment Model is off for all componenets => Don't export the file !
-    if (header == std::string("")) {
-        return;
-    }
-
-    //----------------- Open the File ----------------- 
-    std::fstream FileOut;
-    if(!CairnUtils::openFileForWriting(FileOut, vFileName)) {
-        return; //error!
-    }
-
-    
-    //-----------------  Write the Table ----------------- 
-    FileOut << header << std::endl;
-    for (auto& [key, value] : valuesMap) {
-        FileOut << key << value << "\n";
-    }
-    FileOut.close();
-}
-
-void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, const std::string& encoding) {
-    //FileName
-    std::string vFileName = aFileName;
-    if (vFileName == "") {
-        vFileName = "study_PortEnvImpactParameters.csv";
-    }
-    //----------------- Generate the Table -----------------
-    std::string header = std::string("");
-    std::map<std::string, std::string> valuesMap;
-    std::vector<std::string> impactNames;
-    if (mTecEcoAnalysis) impactNames = mTecEcoAnalysis->getPossibleImpactNames();
-    bool first = true; //first port
-    //loop over all componenets
-    for (auto& [key, lptr] : MilpComponents()) {    
-        //consider only componenets that have an Environment Model
-        if (lptr->EnvironmentModel()) {
-            std::vector<MilpPort*> portList = lptr->PortList();
-            //loop over all ports
-            for (int p = 0; p < portList.size(); p++) {
-                std::string portName = portList[p]->Name();
-                std::string varName = portList[p]->Variable();
-                std::string fullName = lptr->Name() + "." + portName;
-                //
-                if (first) {
-                    header = "Port Name ; Variable";
-                }
-                valuesMap[fullName] = " ; " + varName; 
-
-                std::map<std::string, InputParam::ModelParam*> paramMap = lptr->compoModel()->getInputPortImpactsParam()->getMapParams();
-
-                //loop over the impacts: used only to have a good order (less efficent)
-                for (int i = 0; i < impactNames.size(); i++) {
-                    for (auto const& [key, param] : paramMap) {
-                        if (!CairnUtils::contains(param->getName(), portName))
-                            continue;
-                        if (!CairnUtils::contains(param->getName(), impactNames[i]))
-                            continue;
-                        if (first) {
-                            std::string impactShortNames = mTecEcoAnalysis->EnvImpactShortName(param->getName());
-                            if (CairnUtils::split(impactShortNames, '.').size() > 1)
-                                header += " ; " + CairnUtils::split(impactShortNames, '.')[1];
-                            else
-                                header += " ; " + impactShortNames;
-                        }
-                        valuesMap[fullName] += std::string(" ; ") + param->toString();
-                    }                   
-                }
-                first = false;
-            }
-        }
-    }
-
-    //No Env Impact is selected or Environment Model is off for all componenets => Don't export the file !
-    if (header == std::string("")) {
-        return;
-    }
-
-    //----------------- Open the File ----------------- 
-    std::fstream FileOut;
-    if (!CairnUtils::openFileForWriting(FileOut, vFileName)) {
-        return; //error!
-    }
-    
-    //-----------------  Write the Table ----------------- 
-    FileOut << header << std::endl;
-    for (auto& [key, value] : valuesMap) {
-        FileOut << key << value << "\n";
-    }
-
-    FileOut.close();
-}
-
-void OptimProblem::exportParameters(const std::string& aFileName, const std::map<std::string, bool>& optionsMap, const std::string& encoding) 
+void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, const std::string& encoding)
 {
-    //FileName
-    std::string vFileName = aFileName;
-    if (vFileName == "") {
-        vFileName = "study_parameters.csv";
+    if (!mTecEcoAnalysis) return;
+
+    // Determine output filename
+    std::string fileName = aFileName.empty()
+        ? "study_results_EnvImpactMass.csv"
+        : aFileName;
+
+    // Obtain possible env impact names 
+    const t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
+
+    // -------------------------
+    // Build headers + values
+    // -------------------------
+    std::string header1;     // Impact Name 
+    std::string header2;     // Cumulative / Mass / EnvGrey
+    std::string headerUnits; // Impact Unit 
+    std::map<std::string, std::string> valuesMap;
+
+    bool firstComponent = true;
+
+    for (auto& [key, comp] : MilpComponents()) {
+        if (!comp->EnvironmentModel())
+            continue;
+
+        if (firstComponent) {
+            header1 = "Impact Name";
+            header2 = "";
+            headerUnits = "Unit";
+        }
+
+        std::string& row = valuesMap[comp->Name()];
+        const auto& indicators = comp->compoModel()->getInputIndicators()->getIndicators();
+
+        for (const auto& impact : impactNames) {
+            double mass = 0.0;
+            double grey = 0.0;
+            bool foundMass = false; 
+            bool foundGrey = false; 
+            std::string unit;
+
+            // Scan indicators for this impact
+            for (const auto* ind : indicators) {
+                const std::string& name = ind->getName();
+
+                if (!CairnUtils::contains(name, impact))
+                    continue;
+
+                if (CairnUtils::contains(name, "Env impact mass")) {
+                    mass = ind->getValue();
+                    unit = ind->getUnit();
+                    foundMass = true;
+                }
+                else if (CairnUtils::contains(name, "EnvGrey impact mass")) {
+                    grey = ind->getValue();
+                    unit = ind->getUnit();
+                    foundGrey = true;
+                }
+
+                if (foundMass && foundGrey)
+                    break;
+            }
+
+            if (foundMass || foundGrey) {
+                if (firstComponent) {
+                    header1 += ";" + impact + ";" + impact + ";" + impact;
+                    header2 += ";Cumulative impact mass"
+                        ";Env impact mass"
+                        ";EnvGrey impact mass";
+                    headerUnits += ";" + unit + ";" + unit + ";" + unit;
+                }
+
+                row += ";" + std::to_string(mass + grey)
+                    + ";" + std::to_string(mass)
+                    + ";" + std::to_string(grey);
+            }
+
+        }
+
+        firstComponent = false;
     }
 
-    //Open the File
-    std::fstream FileOut;
-    if (!CairnUtils::openFileForWriting(FileOut, vFileName)) {
-        return; //error!
+    // Nothing to export
+    if (header1.empty()) {
+        return;
     }
 
-    //header
+    // -------------------------
+    // Open file
+    // -------------------------
+    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
+    std::fstream out;
+
+    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
+        return; //error ?!
+    }
+
+    // -------------------------
+    // Write BOM if encoding is UTF-8
+    // -------------------------
+    if (encoding == "UTF-8") {
+        writeUTF8BOM(out);
+    }
+
+    // -------------------------
+    // Write table
+    // -------------------------
+    out << header1 << "\n";
+    out << header2 << "\n";
+    out << headerUnits << "\n";
+
+    for (auto& [name, values] : valuesMap) {
+        out << name << values << "\n";
+    }
+
+    out.close();
+}
+
+void OptimProblem::exportEnvImpactParameters(const std::string& aFileName, const std::string& encoding)
+{
+    if (!mTecEcoAnalysis) return;
+
+    // Determine output filename
+    std::string fileName = aFileName.empty()
+        ? "study_EnvImpactParameters.csv"
+        : aFileName;
+
+    // Obtain possible impact names 
+    t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
+
+    // -------------------------
+    // Build header + values
+    // -------------------------
+    std::string header;
+    std::map<std::string, std::string> valuesMap;
+
+    bool firstComponent = true;
+
+    for (auto& [key, comp] : MilpComponents()) {
+
+        if (!comp->EnvironmentModel())
+            continue;
+
+        if (firstComponent) {
+            header = "Component Name";
+        }
+
+        std::string& row = valuesMap[comp->Name()];
+        const auto& paramMap = comp->compoModel()->getInputEnvImpactsParam()->getMapParams();
+
+        // Iterate impacts in a stable order
+        for (const auto& impact : impactNames) {
+
+            // Scan all parameters to find those matching this impact
+            for (const auto& [pkey, param] : paramMap) {
+                const std::string& paramName = param->getName();
+
+                if (!CairnUtils::contains(paramName, impact))
+                    continue;
+
+                // First component => build header columns
+                if (firstComponent) {
+                    const std::string shortName = mTecEcoAnalysis->EnvImpactShortName(paramName);
+                    header += ";" + shortName;
+                }
+
+                // Append parameter value
+                row += ";" + param->toString();
+            }
+        }
+
+        firstComponent = false;
+    }
+
+    // Nothing to export
+    if (header.empty()) {
+        return;
+    }
+
+    // -------------------------
+    // Open file
+    // -------------------------
+    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
+    std::fstream out;
+
+    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
+        return;
+    }
+
+    // -------------------------
+    // Write BOM if encoding is UTF-8
+    // -------------------------
+    if (encoding == "UTF-8") {
+        writeUTF8BOM(out);
+    }
+
+    // -------------------------
+    // Write table
+    // -------------------------
+    out << header << "\n";
+
+    for (auto& [name, values] : valuesMap) {
+        out << name << values << "\n";
+    }
+
+    out.close();
+}
+
+void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, const std::string& encoding)
+{
+    if (!mTecEcoAnalysis) return;
+
+    // Determine output filename
+    std::string fileName = aFileName.empty()
+        ? "study_PortEnvImpactParameters.csv"
+        : aFileName;
+
+    // Obtain possible impact names 
+    t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
+
+    // -------------------------
+    // Build header + values
+    // -------------------------
+    std::string header;
+    std::map<std::string, std::string> valuesMap;
+
+    bool firstPort = true;
+
+    for (auto& [compKey, comp] : MilpComponents()) {
+
+        if (!comp->EnvironmentModel())
+            continue;
+
+        const auto& ports = comp->PortList();
+        const auto& paramMap = comp->compoModel()->getInputPortImpactsParam()->getMapParams();
+
+        for (MilpPort* port : ports) {
+
+            const std::string portName = port->Name();
+            const std::string varName = port->Variable();
+            const std::string fullName = comp->Name() + "." + portName;
+
+            // First port → build header base
+            if (firstPort) {
+                header = "Port Name;Variable";
+            }
+
+            // Initialize row with variable name
+            valuesMap[fullName] = ";" + varName;
+
+            // Iterate impacts in stable order
+            for (const auto& impact : impactNames) {
+
+                // Scan all parameters for this port + impact
+                for (const auto& [pkey, param] : paramMap) {
+
+                    const std::string& paramName = param->getName();
+
+                    // Must match port name AND impact name
+                    if (!CairnUtils::contains(paramName, portName))
+                        continue;
+                    if (!CairnUtils::contains(paramName, impact))
+                        continue;
+
+                    // First port => build header columns
+                    if (firstPort) {
+                        std::string shortName = mTecEcoAnalysis->EnvImpactShortName(paramName);
+                        const auto parts = CairnUtils::split(shortName, '.');
+                        header += ";" + (parts.size() > 1 ? parts[1] : shortName);
+                    }
+
+                    // Append parameter value
+                    valuesMap[fullName] += ";" + param->toString();
+                }
+            }
+
+            firstPort = false;
+        }
+    }
+
+    // Nothing to export
+    if (header.empty()) {
+        return;
+    }
+
+    // -------------------------
+    // Open file
+    // -------------------------
+    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
+    std::fstream out;
+
+    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
+        return; //error ?!
+    }
+
+    // -------------------------
+    // Write BOM if encoding is UTF-8
+    // -------------------------
+    if (encoding == "UTF-8") {
+        writeUTF8BOM(out);
+    }
+
+    // -------------------------
+    // Write table
+    // -------------------------
+    out << header << "\n";
+
+    for (auto& [name, values] : valuesMap) {
+        out << name << values << "\n";
+    }
+
+    out.close();
+}
+
+ExportParameterData OptimProblem::collectParameterData(const std::map<std::string, bool>& optionsMap)
+{
+    ExportParameterData data;
+
+    // Get options
     auto getOption = [&](const std::string& key, bool defaultValue) {
         auto it = optionsMap.find(key);
         return (it != optionsMap.end()) ? it->second : defaultValue;
     };
 
-    bool exportPortParameters = getOption("ExportPortParams", true);
-    bool showMandatory = getOption("ShowMandatory", true);
-    bool showLabels = getOption("ShowLabels", true);
+    const bool exportPortParameters = getOption("ExportPortParams", true);
+    const bool showLabels = getOption("ShowLabels", true);
 
-    FileOut << "Component;Parameter;Value;Unit;Description";
-    if (showMandatory) {
-        FileOut << ";Mandatory"; 
+    // Collect label headers
+    std::vector<std::string> labelList;
+    if (showLabels && mTecEcoAnalysis) {
+        labelList = mTecEcoAnalysis->getLabelList();
+        data.labelHeaders = labelList;
     }
-    if (showLabels) {
-        for (auto const& label : mTecEcoAnalysis->getLabelList()) {
-            FileOut << ";" + label;
-        }
-    }
-    FileOut << std::endl;
 
-    //Solver 
+    // Collect Solver parameters
     if (mSolver) {
-        exportParameters(FileOut, mSolver->Name(), mSolver->getParameters(), optionsMap);
+        CairnUtils::collectParameters(data.rows, mSolver->Name(),
+            mSolver->getParameters(), optionsMap);
     }
 
-    //SimulationControl
+    // Collect SimulationControl parameters
     if (mSimulationControl) {
-        exportParameters(FileOut, mSimulationControl->Name(), mSimulationControl->getParameters(), optionsMap);
+        CairnUtils::collectParameters(data.rows, mSimulationControl->Name(),
+            mSimulationControl->getParameters(), optionsMap);
     }
 
-    //TecEcoAnalysis 
+    // Collect TecEcoAnalysis parameters
     if (mTecEcoAnalysis) {
-        exportParameters(FileOut, mTecEcoAnalysis->Name(), mTecEcoAnalysis->getParameters(), optionsMap);
+        CairnUtils::collectParameters(data.rows, mTecEcoAnalysis->Name(),
+            mTecEcoAnalysis->getParameters(), optionsMap);
     }
 
-    //MilpComponents
-    for (auto& [key, lptr] : MilpComponents()) {
-        if (lptr) {
-            exportParameters(FileOut, lptr->Name(), lptr->getParameters(exportPortParameters), optionsMap, lptr->getTimeSeriesNames(), lptr->compoModel()->getLabelMap());
-        }
+    // Collect MILP component parameters
+    for (auto& [key, comp] : MilpComponents()) {
+        if (!comp) continue;
+
+        CairnUtils::collectParameters(data.rows, comp->Name(),
+            comp->getParameters(exportPortParameters),
+            optionsMap,
+            comp->getTimeSeriesNames(),
+            labelList,
+            comp->compoModel()->getLabelMap());
     }
-    FileOut.close();
+
+    return data;
 }
 
-void OptimProblem::exportParameters_all_files(std::string aFileName, const std::map<std::string, bool>& optionsMap, const std::string& encoding)
+void OptimProblem::exportParameters( 
+    const std::string& aFileName,
+    const std::string& encoding,
+    const std::map<std::string, bool>& optionsMap,
+    const std::map< std::string, std::vector<ExtraParameterData> >& extraData)
+{
+    // Determine output filename
+    std::string fileName = aFileName.empty() ? "study_parameters.csv" : aFileName;
+
+    // Open file
+    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
+    std::fstream out;
+    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
+        return;
+    }
+
+    // Write BOM for UTF-8
+    if (encoding == "UTF-8") {
+        writeUTF8BOM(out);
+    }
+
+    // Collect data
+    ExportParameterData data = collectParameterData(optionsMap);
+
+    // ------ Add extra data -------------
+
+    // Build a lookup map for efficiency
+    std::map<std::pair<std::string, std::string>, size_t> rowIndex;
+    for (size_t i = 0; i < data.rows.size(); ++i) {
+        auto key = std::make_pair(data.rows[i].component, data.rows[i].parameter);
+        rowIndex[key] = i;
+    }
+
+    // Process extra data 
+    for (const auto& [columnName, paramDataList] : extraData) {
+        data.extraHeaders.push_back(columnName);
+
+        for (const ExtraParameterData& paramData : paramDataList) {
+            auto key = std::make_pair(paramData.component, paramData.parameter);
+            auto it = rowIndex.find(key);
+
+            if (it != rowIndex.end()) {
+                data.rows[it->second].extraData[columnName] = paramData.value;   
+            }
+        }
+    }
+    // ---------------------------------------
+
+    // Write to file
+    CairnUtils::writeParameterDataToCSV(out, data, optionsMap);
+
+    out.close();
+}
+
+void OptimProblem::exportParameters_all_files(std::string aFileName, const std::string& encoding, 
+    const std::map<std::string, bool>& optionsMap, 
+    const std::map< std::string, std::vector<ExtraParameterData> >& extraData)
 {
     try {
         if (aFileName == "") {
             aFileName = mStudyFile->getScenarioFile("_Parameters.csv", 0, false);
         }
-        exportParameters(aFileName, optionsMap, encoding);
+        exportParameters(aFileName, encoding, optionsMap, extraData);
         //Env Impacts coeff and results - special files
         const std::string suffix = "_EnvImpact.csv";
         exportEnvImpactParameters(CairnUtils::replace(aFileName, ".csv", suffix), encoding);
@@ -1850,49 +2022,6 @@ void OptimProblem::exportParameters_all_files(std::string aFileName, const std::
     catch (...) {
         Cairn_Exception error("Error while exporting parameters! ", -1);
         throw error;
-    }
-}
-
-void OptimProblem::exportParameters(std::fstream& out, const std::string& name, const std::map<std::string, InputParam::ModelParam*>& paramMap,
-    const std::map<std::string, bool>& optionsMap, const std::map<std::string, std::string>& aTimeSeriesNames, const std::map<std::string, std::string>& labelMap)
-{
-    auto getOption = [&](const std::string& key, bool defaultValue) {
-        auto it = optionsMap.find(key);
-        return (it != optionsMap.end()) ? it->second : defaultValue;
-    };
-
-    bool onlyIsUsed = getOption("OnlyUsedParams", false);
-    bool showMandatory = getOption("ShowMandatory", true);
-    bool showLabels = getOption("ShowLabels", true);
-
-    for (auto const& [key, param] : paramMap) {
-        //Only used parameters (and optional timeseries if value is not empty)
-        if (!onlyIsUsed || param->IsUsed() || (aTimeSeriesNames.find(key) != aTimeSeriesNames.end() && aTimeSeriesNames.at(key) != ""))
-        {
-            std::string  value = "";
-            if (aTimeSeriesNames.find(key) != aTimeSeriesNames.end()) {
-                value = aTimeSeriesNames.at(key);
-            }
-            else {
-                value = param->toString();
-            }
-            out << name << ";" << key << ";" << value << ";" << param->getUnit() << ";" << param->getDescription();
-            if (showMandatory) {
-                std::string mandatory = param->IsBlocking() ? "true" : "false";
-                out << ";" + mandatory;
-            }
-            if (showLabels) {
-                for (auto const& label : mTecEcoAnalysis->getLabelList()) {
-                    std::string val = "";
-                    auto vIter = labelMap.find(label);
-                    if (vIter != labelMap.end()) {
-                        val = vIter->second;
-                    }
-                    out << ";" + val;
-                }
-            }
-            out << std::endl;
-        }
     }
 }
 
@@ -1912,52 +2041,84 @@ void OptimProblem::exportMultiObjFile(std::fstream& out, int aNsol, const bool s
     }
 }
 
-void OptimProblem::exportAllTecEcoEnvAnalysis(const std::string& aResultFile, const std::string& range, const bool showDescription, const std::string& encoding, const bool isRollingHorizon, const int aNsol)
+void OptimProblem::exportAllTecEcoEnvAnalysis(const std::string& resultFile, const std::string& range,
+    bool showDescription, const std::string& encoding, bool isRollingHorizon, int aNsol)
 {
-    std::fstream FileOut;
-    if (!CairnUtils::openFileForWriting(FileOut, aResultFile)) {
-            Cairn_Exception cairn_error("OptimProblem: couldn't open result file for writing : "+ aResultFile, -1);
-            throw cairn_error;
-     }
+    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
 
-    FileOut << "Model" << ";Indicator" << ";Value" << ";Unit" << ";Alias"; 
-    for (auto const& label : mTecEcoAnalysis->getLabelList()) {
-        FileOut << ";"+label;
+    std::fstream out;
+    if (!CairnUtils::openFileForWriting(out, resultFile, mode)) {
+        throw Cairn_Exception("OptimProblem: couldn't open result file for writing: " + resultFile, -1);
     }
-    if (showDescription) FileOut << ";Description";
-    FileOut << std::endl;
 
-    //TecEco
+    // Write UTF‑8 BOM only when encoding is UTF‑8
+    if (encoding == "UTF-8") {
+        writeUTF8BOM(out);
+    }
+
+    // -----------------------------------------
+    // Write header
+    // -----------------------------------------
+    out << "Model;Indicator;Value;Unit;Alias";
+
+    const auto& labels = mTecEcoAnalysis->getLabelList();
+    for (const auto& label : labels) {
+        out << ";" << label;
+    }
+
+    if (showDescription) {
+        out << ";Description";
+    }
+
+    out << "\n";
+
+    const bool exportAll = mTecEcoAnalysis->ForceExportAllIndicators();
+
+    // -----------------------------------------
+    // Export TecEcoAnalysis indicators (Total)
+    // -----------------------------------------
     InputParam* modelIndicators = mTecEcoAnalysis->getInputIndicators();
-    const InputParam::t_Indicators& vIndicators = modelIndicators->getIndicators();
-    for (size_t i = 0; i < vIndicators.size(); i++) {
-        vIndicators[i]->Export(FileOut, mTecEcoAnalysis->Name(), range, mForceExportAllIndicators, showDescription);
+    const auto& indicators = modelIndicators->getIndicators();
+
+    for (const auto* ind : indicators) {
+        ind->Export(out, mTecEcoAnalysis->Name(), range, exportAll, showDescription);
     }
 
-    // DETAILED DATA; BY COMPONENTS 
-    for (auto& [key, lptr] : MilpComponents()) {
-    
-        lptr->setRange(std::string(range.c_str()));
-        lptr->compoModel()->exportIndicators(FileOut, lptr->Name(), range, mTecEcoAnalysis->getLabelList(), 
-            showDescription, mForceExportAllIndicators, isRollingHorizon);
+    // -----------------------------------------
+    // Export component-level indicators
+    // -----------------------------------------
+    for (auto& [key, comp]: MilpComponents()) {
+        comp->compoModel()->exportIndicators(out, comp->Name(), range, labels,
+            showDescription, exportAll, isRollingHorizon);
     }
 
-    //Add multiObj results
+    // -----------------------------------------
+    // Multi-objective results (PLAN only)
+    // -----------------------------------------
     if (range == "PLAN") {
-        exportMultiObjFile(FileOut, aNsol, showDescription);
+        exportMultiObjFile(out, aNsol, showDescription);
     }
 
-    //User-defined indicators
+    // -----------------------------------------
+    // User-defined indicators (PLAN only)
+    // -----------------------------------------
     if (range == "PLAN") {
-        for (int i = 0; i < mDynamicIndicators.size(); i++) {
-            if(showDescription)
-                CairnUtils::outputIndicator(FileOut, "User-Defined", mDynamicIndicators[i]->getName(), mDynamicIndicators[i]->compute(), "UNIT", mDynamicIndicators[i]->getName(), "User-Defined Indicator");
-            else 
-                CairnUtils::outputIndicator(FileOut, "User-Defined", mDynamicIndicators[i]->getName(), mDynamicIndicators[i]->compute(), "UNIT", mDynamicIndicators[i]->getName());
+        for (auto* dyn : mDynamicIndicators) {
+            const std::string& name = dyn->getName();
+            const double value = dyn->compute();
+
+            if (showDescription) {
+                CairnUtils::outputIndicator(out, "User-Defined", name,
+                    value, "UNIT", name, "User-Defined Indicator");
+            }
+            else {
+                CairnUtils::outputIndicator(out, "User-Defined", name,
+                    value, "UNIT", name);
+            }
         }
     }
 
-    FileOut.close();
+    out.close();
 }
 
 void OptimProblem::exportResultsPLAN(std::string aResultFile, const int& aNsol)
@@ -1983,11 +2144,10 @@ void OptimProblem::computeHistState()
     pTecEco->computeHistNbHours();
 }
 
-void OptimProblem::exportResults()
+void OptimProblem::populatePublishedVars()
 {
     for (auto& [key, lptr] : MilpComponents()) {
-        lptr->exportResults(mListPublishedVars);
-       // lptr->exportResults();
+        lptr->populatePublishedVars(mListPublishedVars);
     }
 }
 
@@ -1998,41 +2158,56 @@ void OptimProblem::setDefaultsResults()
     }
 }
 
-void OptimProblem::exportOptimaSizeAllCycles(const std::string& aFileName, const int cycle, const std::string &encoding)
+void OptimProblem::exportOptimaSizeAllCycles(const std::string& fileName, int cycle, const std::string& encoding)
 {
-    std::fstream FileOut;
-    if (!CairnUtils::openFileForWriting(FileOut, aFileName)) {
-        Cairn_Exception cairn_error((std::string)"OptimProblem: couldn't open file optimalSize.csv for writing.", -1);
-        throw cairn_error;
-    }
-   
-    FileOut << "sep=;\n";
+    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
 
+    std::fstream out;
+    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
+        throw Cairn_Exception("OptimProblem: couldn't open file optimalSize.csv for writing.", -1);
+    }
+
+    // Write BOM only if encoding is UTF‑8
+    if (encoding == "UTF-8") {
+        writeUTF8BOM(out);
+    }
+
+    // -------------------------
+    // Build header row
+    // -------------------------
     std::string header = "";
-    for (auto& [key, lptr] : MilpComponents()) {
-        if (lptr->compoModel()->getOptimalSizeAllCycles().size() > 0) { 
-            header += ";" + lptr->Name();
-        }
-        else {
-            //Must be a Bus component. In case of Bus, mOptimalSizeAllCycles is empty. 
+    for (auto& comp : NonBusMilpComponents()) {
+        const auto& sizes = comp->compoModel()->getOptimalSizeAllCycles();
+        if (!sizes.empty()) {
+            header += ";" + comp->Name();
         }
     }
-    FileOut << header << std::endl;
-    
-    for (int i = 0; i < cycle; i++) {
-        std::string optimalSizeValues = "Cycle " + std::to_string(i + 1);
-        for (auto& [key, lptr] : MilpComponents()) {
-            if (i < lptr->compoModel()->getOptimalSizeAllCycles().size()) {
-                optimalSizeValues += ";" + std::to_string((lptr->compoModel()->getOptimalSizeAllCycles())[i]);
+
+    out << header << "\n";
+
+    // -------------------------
+    // Write each cycle row
+    // -------------------------
+    for (int i = 0; i < cycle; ++i) {
+        std::string row = "Cycle " + std::to_string(i + 1);
+
+        for (auto& comp : NonBusMilpComponents()) {
+            const auto& sizes = comp->compoModel()->getOptimalSizeAllCycles();
+
+            if (i < static_cast<int>(sizes.size())) {
+                row += ";" + std::to_string(sizes[i]);
             }
-            else if (CairnUtils::contains(header, lptr->Name())) {            
-                //This means that there is a non-Bus component with mOptimalSizeAllCycles.size > 0 but < nCycles. 
-                //If happened then there must be something wrong!
-                optimalSizeValues += ";"; 
+            else if (CairnUtils::contains(header, comp->Name())) {
+                // Component has some sizes but fewer than expected -> write empty cell
+                // Usually, should not be the case!
+                row += ";";
             }
         }
-        FileOut << optimalSizeValues << "\n";
+
+        out << row << "\n";
     }
+
+    out.close();
 }
 
 std::string OptimProblem::getAbsoluteFileName(const std::string& filename)

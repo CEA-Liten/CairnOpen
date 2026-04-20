@@ -11,9 +11,9 @@ GridCompo::GridCompo (CairnObject *aParent,
     const std::map<std::string, std::string>& aComponent,
     const std::map < std::string, std::map<std::string, std::string> >& aPorts,
     MilpData* aMilpData,
-    TecEcoEnv& aTecEcoEnv,
+    TecEcoAnalysis* aTecEcoAnalysis,
     ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
+    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
 {      
 }
 
@@ -90,29 +90,30 @@ void GridCompo::readTSVariablesFromModel()
     //Read time series
     MilpComponent::readTSVariablesFromModel();
 
+    //MilpPort* lptrport = PortList().at(0);
+    //EnergyVector* pCarrier = lptrport->getCarrier();
 
-    MilpPort* lptrport = PortList().at(0) ;
-    EnergyVector* lvect=lptrport->getCarrier();
+    EnergyVector* pCarrier = getMainCarrier();
    
     if (mCompoModel->Sens() > 0) {
         //sens = " extracted " ;
         mEnergyPriceProfileName = m_timeSeries["UseProfileBuyPrice"].getName();
         mEnergyPriceProfileNameSeasonal = m_timeSeries["UseProfileBuyPriceSeasonal"].getName();
         if (mEnergyPriceProfileName == "") {
-            mEnergyPriceProfileName = lvect->UseProfileBuyPrice() ;
-            m_timeSeries["UseProfileBuyPrice"].setName(lvect->UseProfileBuyPrice());
+            mEnergyPriceProfileName = pCarrier->UseProfileBuyPrice() ;
+            m_timeSeries["UseProfileBuyPrice"].setName(pCarrier->UseProfileBuyPrice());
         }
 	    if (mEnergyPriceProfileNameSeasonal == "") {
-                mEnergyPriceProfileNameSeasonal = lvect->UseProfileBuyPriceSeasonal() ;
-                m_timeSeries["UseProfileBuyPriceSeasonal"].setName(lvect->UseProfileBuyPriceSeasonal());
+                mEnergyPriceProfileNameSeasonal = pCarrier->UseProfileBuyPriceSeasonal() ;
+                m_timeSeries["UseProfileBuyPriceSeasonal"].setName(pCarrier->UseProfileBuyPriceSeasonal());
         }		 
     }
     else  {
         //sens = " injected " ;
         mEnergyPriceProfileName = m_timeSeries["UseProfileSellPrice"].getName();
         if (mEnergyPriceProfileName == "") {
-            mEnergyPriceProfileName = lvect->UseProfileSellPrice() ;
-            m_timeSeries["UseProfileSellPrice"].setName(lvect->UseProfileSellPrice());
+            mEnergyPriceProfileName = pCarrier->UseProfileSellPrice() ;
+            m_timeSeries["UseProfileSellPrice"].setName(pCarrier->UseProfileSellPrice());
         }
     }
 }

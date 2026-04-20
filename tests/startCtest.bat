@@ -33,4 +33,4 @@ rem temp
 copy %WORKSPACE%\tests\reports\CairnCtest-TNR.html %WORKSPACE%\tests\reports\CairnCtest-TNR-log.html
 
 rem force script to return code 0
-exit /B 0
+rem exit /B 0

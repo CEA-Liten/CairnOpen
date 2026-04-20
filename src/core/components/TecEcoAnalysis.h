@@ -1,13 +1,12 @@
 #ifndef TECECOANALYSISCOMPO_H
 #define TECECOANALYSISCOMPO_H
 
+#include "CairnCore_global.h"
+#include "TechnicalSubModel.h"
 #include "InputParam.h"
 #include "MIPModeler.h"
 #include "GUIData.h"
 #include "EnvImpact.h"
-
-#include "CairnCore_global.h"
-#include "TechnicalSubModel.h"
 
 class CAIRNCORESHARED_EXPORT TecEcoAnalysis : public TechnicalSubModel
 {
@@ -16,10 +15,9 @@ public:
     TecEcoAnalysis(CairnObject* aParent, const std::map<std::string, std::string> &aComponent={});
     virtual ~TecEcoAnalysis();
 
-    void createEnvImpacts() override { /* do nothing */ }
     void declareEnvImpactParam();
-    void declareConfigurationParameters();
-    int setConfigurationParameters(const std::map<std::string, std::string>& aComponent);
+
+    void createEnvImpacts() override { /* do nothing */ }
 
     void resetFlags() {
         mAllocate = true;
@@ -29,15 +27,16 @@ public:
     InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
     InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
     InputParam* getCompoEnvImpactsParam() { return mCompoEnvImpactsParam; }
-    std::map<std::string, InputParam::ModelParam*> getParameters();
+    std::map<std::string, ModelParam*> getParameters();
     InputParam* getInputIndicators() { return mInputIndicators; }
 
     void jsonSaveGuiComponent(ojson& componentsArray);
 
     std::string Model() const {return mModelName;}
     std::string Currency() const {return mCurrency;}
+    const std::string* pCurrency() const  { return &mCurrency; };
     std::string ObjectiveUnit() const { return mObjectiveUnit; }
-    std::string Range() const {return mRange;}
+
     int NbYear() const {return mNbYear;}
     int NbYearOffset() const {return mNbYearOffset;}
     int NbYearInput() const {return mNbYearInput;}
@@ -114,17 +113,17 @@ public:
         mInputIndicators->addIndicator("Leap Year Position", &mLeapYearPosIndicator, &mExportIndicators, "Leap Year Position", "-", "LeapYearPosition");
         mInputIndicators->addIndicator("Payback period offset", &mNbYearOffsetIndicator, &mExportIndicators, "Payback period offset", "-", "PaybackPeriodOffset");
         mInputIndicators->addIndicator("Discount Factor", &mDiscountFactorIndicator, &mExportIndicators, "Discount Factor", "-", "DiscountFactor");
-        if (mParentCompo->LevelizationTable().size() > 1) {
-            mDiscountFactorListIndicator.resize(mParentCompo->LevelizationTable().size(), { 0, 0 });
-            for (int i = 0; i < mParentCompo->LevelizationTable().size(); i++) {
+        if (mLevelizationTable.size() > 1) {
+            mDiscountFactorListIndicator.resize(mLevelizationTable.size(), { 0, 0 });
+            for (int i = 0; i < mLevelizationTable.size(); i++) {
                 mInputIndicators->addIndicator("Discount Factor " + std::to_string(i + 1), &mDiscountFactorListIndicator.at(i), &mExportIndicators, "Discount Factor " + std::to_string(i + 1), "-", "DiscountFactor" + std::to_string(i + 1));
             }
         }
         mInputIndicators->addIndicator("Impact Discount Factor", &mImpactDiscountFactorIndicator, &mExportIndicators, "Impact Discount Factor", "-", "ImpactDiscountFactor");
-        if (mParentCompo->ImpactLevelizationTable().size() > 1) {
-            mImpactDiscountFactorListIndicator.resize(mParentCompo->ImpactLevelizationTable().size(), { 0, 0 });
-            int size = mParentCompo->ImpactLevelizationTable().size();
-            for (int i = 0; i < mParentCompo->ImpactLevelizationTable().size(); i++) {
+        if (mImpactLevelizationTable.size() > 1) {
+            mImpactDiscountFactorListIndicator.resize(mImpactLevelizationTable.size(), { 0, 0 });
+            int size = mImpactLevelizationTable.size();
+            for (int i = 0; i < mImpactLevelizationTable.size(); i++) {
                 mInputIndicators->addIndicator("Impact Discount Factor " + std::to_string(i + 1), &mImpactDiscountFactorListIndicator.at(i), &mExportIndicators, "Impact Discount Factor " + std::to_string(i + 1), "-", "ImpactDiscountFactor" + std::to_string(i + 1));
             }
         }
@@ -133,7 +132,7 @@ public:
         mInputIndicators->addIndicator("OBJECTIVE", &mObjectiveContribution, &mExportIndicators, "OBJECTIVE", &mObjectiveUnit, "Objective");
         mInputIndicators->addIndicator("Net Present Value (Levelized Profit)", &mNetPresentValue, &mExportIndicators, "Net Present Value (Levelized Profit)", &mCurrency, "NPV");
         //
-        if (mParentCompo->InternalRateOfReturn() >= 0.) {
+        if (mInternalRateOfReturn >= 0.) {
             mInputIndicators->addIndicator("Imposed Internal Rate Of Return PerCent", &mInternalRateOfReturnPerCent, &mExportIndicators, "Imposed Internal Rate Of Return PerCent", "%", "ImposedInternalRateOfReturnPerCent");
             mInputIndicators->addIndicator("Imposed Internal Rate Of Return Factor", &mInternalRateOfReturnFactor, &mExportIndicators, "Imposed Internal Rate Of Return Factor", "-", "ImposedInternalRateOfReturnFactor");
         }
@@ -205,12 +204,20 @@ public:
     void setLabelList(const std::vector< std::string >& aLabelList) { mLabelList = aLabelList; };
     bool isValidLabel(const std::string& aLabel) const;
 
-    std::vector<InputParam*> get_InputParams();
+    void computeExtrapolationFactor(const MilpData* aMilpData);
+    void computeLevelizationTable();
+
+    double& ExtrapolationFactor() { return mExtrapolationFactor; };
+    std::vector<double>& LevelizationTable() { return mLevelizationTable; }
+    std::vector<double>& ImpactLevelizationTable() { return mImpactLevelizationTable; }
+    std::vector<double>& TableYearsHours() { return mTableYearsHours; }
 
 private :
     void doInit(const std::map<std::string, std::string>& aComponent);
     void declareCompoInputParam();
-    int setCompoInputParam(const std::map<std::string, std::string>& aComponent);
+    void declareConfigurationParameters();
+    void setConfigurationParameters(const std::map<std::string, std::string>& aComponent);
+    void setCompoInputParam(const std::map<std::string, std::string>& aComponent);
     std::map<std::string, MilpComponent*> MilpComponents();
     std::vector<MilpComponent*> NonBusMilpComponents();
     std::vector<BusCompo*> BusComponents();
@@ -219,7 +226,10 @@ private :
     void computeBuyAndSellExpressions(const double* optSol, MIPModeler::MIPExpression1D& expBuyPart, MIPModeler::MIPExpression1D& expSellPart);
     void computeUndiscountedExpressions();
 
+
     /*---------------------------------------------------*/
+
+    double mExtrapolationFactor;
 
     std::vector< std::string > mLabelList;
 
@@ -232,7 +242,7 @@ private :
 
     std::string mCurrency ;     /** Currency unit - default to EUR */
     std::string mObjectiveUnit; /** Objective unit - default to currency unit */
-    std::string mRange ;        /** Evaluation range used for TecEco analysis : HIST = past operation, PLAN = planned operation */
+
     int mNbYear ;           /** Number of year for economic data extrapolation */
     int mNbYearOffset ;     /** Offset of nb of year for discount cost computation */
     int mNbYearInput ;      /** Number of years in the input time series */
@@ -242,12 +252,16 @@ private :
     double mInternalRateOfReturn ;         /** Target Internal Rate of Return chosen by the user*/
     bool mForceExportAllIndicators;
     
+    std::vector<double> mLevelizationTable;             /** levelization factor table by calculated year */
+    std::vector<double> mImpactLevelizationTable;       /** levelization factor table for env impacts by calculated year */
+    std::vector<double> mTableYearsHours;               /** Table of cumulative hours per year */
+
     std::vector<SEnvImpact>  mPossibleEnvImpacts;     /** List of possible impacts */
     std::vector<std::string> mSelectedEnvImpacts;     /** List of selected impacts */
 
     /** Attention: the EnvImpact-related vectors have the size of mPossibleImpacts and not mEnvImpacts
     * This is to not loss the reference in case of impacts re-declaration */
-    std::vector<int>    mVBEnvImpactMaxConstraint;
+    std::deque<bool> mVBEnvImpactMaxConstraint;     /** use std::deque because std::vector doens't provide a referance &mVBEnvImpactMaxConstraint[j] */
     std::vector<double> mVDEnvImpactMaxConstraint;
     std::vector<double> mVDEnvImpactCost;
 

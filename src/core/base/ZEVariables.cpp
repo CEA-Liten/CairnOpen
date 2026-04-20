@@ -68,7 +68,7 @@ std::vector<double>* ZEVariables::ptrOutVariable()
         return &m_Values;
 }
 
-bool ZEVariables::set_Values(InputParam::ModelParam* a_Param, double aTimeStepOut, const std::vector<double>& aTimeStepsIn, uint aNpdtPast)
+bool ZEVariables::set_Values(ModelParam* a_Param, double aTimeStepOut, const std::vector<double>& aTimeStepsIn, uint aNpdtPast)
 {
     // exportResults
     bool vRet = false;

@@ -10,9 +10,9 @@ SourceLoadCompo::SourceLoadCompo(CairnObject *aParent,
     const std::map<std::string, std::string>& aComponent,
     const std::map < std::string, std::map<std::string, std::string> >& aPorts,
     MilpData* aMilpData,
-    TecEcoEnv& aTecEcoEnv,
+    TecEcoAnalysis* aTecEcoAnalysis,
     ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoEnv, aComponent, aPorts, aModelFactory)
+    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
 {
 }
 

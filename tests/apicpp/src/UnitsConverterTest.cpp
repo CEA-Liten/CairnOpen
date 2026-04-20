@@ -3,9 +3,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "OrUnitsConverter.h"
-
-#define TESTVALUE(var, ref) \
-		if (fabsf(var - ref)>1e-6) return 1; \
+#include "Utils.h"
 
 int main()
 { 
@@ -67,5 +65,16 @@ int main()
 	
 	if (!UnitsConverter::CheckUnits(vSrc, vSrc))
 		return 1;
+
+	// L'unité source n'existe pas, destination existe, prends le SI de temperature: °K
+	double vX = UnitsConverter::Convert(10, "FR", "°K");
+	TESTVALUE(vX, 10); // pas de conversion
+	// L'unité destination n'existe pas, source existe, prends le SI de temperature: °K
+	double vY = UnitsConverter::Convert(10, "°C", "KT");
+	TESTVALUE(vY, 283.15); // conversion
+	// L'unité source et destination n'existent pas, pas de conversion
+	double vZ = UnitsConverter::Convert(10, "RT", "KT");
+	TESTVALUE(vZ, 10); // pas de conversion
+
 	return 0;
 }

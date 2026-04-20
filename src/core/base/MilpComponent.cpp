@@ -3,8 +3,8 @@
 #endif
 
 #include "MilpComponent.h"
-#include "SubModel.h"
 #include "TechnicalSubModel.h"
+#include "TecEcoAnalysis.h"
 #include "OptimProblem.h"
 #include "ModelTS.h"
 #include "CairnAPIUtils.h"
@@ -23,19 +23,13 @@ using Eigen::Map;
 
 MilpComponent::MilpComponent(CairnObject *aParent,
                              std::string aName,
-                             MilpData *aMilpData, TecEcoEnv &aTecEcoEnv,
+                             MilpData *aMilpData, TecEcoAnalysis* aTecEcoAnalysis,
                              const std::map<std::string, std::string> &aComponent,
                              const std::map < std::string, std::map<std::string, std::string> > &aPorts,
                              ModelFactory* aModelFactory) 
-    :  TecEcoEnv(aParent, 
-            aName,
-            aTecEcoEnv.DiscountRate(),
-            aTecEcoEnv.ImpactDiscountRate(),
-            aTecEcoEnv.NbYear(),
-            aTecEcoEnv.NbYearInput(),
-            aTecEcoEnv.LeapYearPos(),
-            aTecEcoEnv.ExtrapolationFactor(),
-            aTecEcoEnv.Range()),
+:  
+  CairnObject(aParent),
+  mTecEcoAnalysis(aTecEcoAnalysis),
   mException(Cairn_Exception()),
   mComponent(aComponent),
   mPorts(aPorts),
@@ -44,8 +38,10 @@ MilpComponent::MilpComponent(CairnObject *aParent,
   mCompoModelName(CairnUtils::getParam(aComponent,"Model")), //for GUI
   mCompoTechnoType(CairnUtils::getParam(aComponent,"ModelTechnoType")), //for GUI
   mCompoModelClassName(CairnUtils::getParam(aComponent,"ModelClass")),
-  mNports(0)
+   mHistNbHours(0),
+   mOptimalSize(0)
   {
+    this->setObjectName(aName);
     setObjectType("MilpComponent");
     mModelFactory = aModelFactory;
     mCompoModel = nullptr;
@@ -54,8 +50,6 @@ MilpComponent::MilpComponent(CairnObject *aParent,
     mInputParam = new InputParam (this, "InputParam"+aName) ;                   /** List of COMPONENT Input parameters (for link with PEGASE or OUTSIDE) */
     mPlugSubmodelIO = new InputParam (this, "PlugSubmodelIO"+aName) ;           /** List of COMPONENT Output data (for link with PEGASE or OUTSIDE) Used for timeShifting, IMPORT and EXPORT wrt PEGASE exchange Zone */
     mTimeSeriesSubmodel = new InputParam (this, "TimeSeriesSubmodel"+aName) ;   /** List of COMPONENT TimeSeries input data (for link with PEGASE) Used for timeShifting, IMPORT and EXPORT wrt PEGASE exchange Zone */
-
-    setTecEcoEnvSettings(aTecEcoEnv);
 
   /** mComponent is used for architecture and topological or constant data */
   /** mSettings is used for "constant" parameters that can be made variable and optimized from outside */
@@ -101,38 +95,38 @@ MilpComponent::~MilpComponent()
     mGUIData = nullptr;
 }
 
-void MilpComponent::setTecEcoEnvSettings(TecEcoEnv& aTecEcoEnv) 
-{
-    setRange(aTecEcoEnv.Range());
-    setCurrency(aTecEcoEnv.Currency());
-    if (mCompoModel) {
-        mCompoModel->setCurrency(aTecEcoEnv.Currency());
-    }
-    setExtrapolationFactor(aTecEcoEnv.ExtrapolationFactor());
-    setDiscountRate(aTecEcoEnv.DiscountRate());
-    setImpactDiscountRate(aTecEcoEnv.ImpactDiscountRate());
-    setInternalRateOfReturn(aTecEcoEnv.InternalRateOfReturn());
-    setNbYear(aTecEcoEnv.NbYear());
-    setNbYearOffset(aTecEcoEnv.NbYearOffset());
-    setNbYearInput(aTecEcoEnv.NbYearInput());
-    setLeapYearPos(aTecEcoEnv.LeapYearPos());
-    setEnvImpactsList(aTecEcoEnv.EnvImpactsList());
-    setEnvImpactsShortNamesList(aTecEcoEnv.EnvImpactsShortNamesList());
-    setEnvImpactUnitsList(aTecEcoEnv.EnvImpactUnitsList());
-    setEnvImpactCosts(aTecEcoEnv.EnvImpactCosts());
-    setExtrapolationFactor(aTecEcoEnv.ExtrapolationFactor());
-}
-
 void MilpComponent::setMIPModel (MIPModeler::MIPModel* aModel)
 {
-    this->setLevelizationTable();
-    this->setImpactLevelizationTable();
-    this->setTableYearsHours();
     mModel = aModel;
     if (mCompoModel != nullptr)
         mCompoModel->setMIPModel(aModel);
     else
         cCritical() << "Coding error : setMIPModel called with non MIPModeler model !! " ;
+}
+
+void MilpComponent::setTecEcoAnalysis(TecEcoAnalysis* aTecEcoAnalysis)
+{
+    mTecEcoAnalysis = aTecEcoAnalysis;
+}
+
+const std::string* MilpComponent::pCurrency() const  {
+    return mTecEcoAnalysis->pCurrency();
+}
+
+double& MilpComponent::ExtrapolationFactor() {
+    return mTecEcoAnalysis->ExtrapolationFactor();
+}
+
+std::vector<double>& MilpComponent::LevelizationTable() {
+    return mTecEcoAnalysis->LevelizationTable(); 
+}
+
+std::vector<double>& MilpComponent::ImpactLevelizationTable() {
+    return mTecEcoAnalysis->ImpactLevelizationTable(); 
+}
+
+std::vector<double>& MilpComponent::TableYearsHours() {
+    return mTecEcoAnalysis->TableYearsHours(); 
 }
 
 MIPModeler::MIPExpression* MilpComponent::getMIPExpression(std::string aExpressionName) {
@@ -259,13 +253,14 @@ void MilpComponent::createOnePort(const std::string& portId, const std::map<std:
 
     MilpPort* lptrport = new MilpPort(this, portId, portName, portParams);
     addPort(lptrport);
-    mNports++;
-    if (CairnUtils::getParam(portParams,"IsDefaultPort") == Yes()) {//For a default port, the linked component is not known at this point.
-        if(CairnUtils::getParam(portParams,portName) != "")
-            cInfo() << "Created port" << Name() +"."+portName << " linked to " << portParams.at(portName);
-        else
-            cInfo() << "Created default port" << Name() + "." + portName;
+
+    if (CairnUtils::getParam(portParams, "IsDefaultPort") == Yes()) {
+        const std::string linkedPort = CairnUtils::getParam(portParams, portName);
+        cInfo() << (linkedPort.empty() ? "Created default port " : "Created port ")
+            << Name() << "." << portName
+            << (linkedPort.empty() ? "" : " linked to " + linkedPort);
     }
+
     std::string vVar = lptrport->Variable();
     if (CairnUtils::contains(vVar, "INPUTFlux") || CairnUtils::contains(vVar, "OUTPUTFlux"))
     {
@@ -318,10 +313,6 @@ std::map<std::string, std::string> MilpComponent::portDataFromInputFile(const st
 
 void MilpComponent::createPorts()
 {
-    //clear port list if it is not empty!
-    mNports = 0;
-   // mCompoModel->clearPortList();
-
     //Create default ports first
     for (auto [portId, portParams] : mCompoModel->DefaultPorts()) {
         portParams["CompoName"] = Name();
@@ -334,8 +325,12 @@ void MilpComponent::createPorts()
         MilpPort* defaultPort = mapDefaultPort(portId, portParams);
         if (defaultPort != nullptr) {
             //At this point there is no problem if the carrier (EnergyVector) is not set yet (in particular for the default ports)
+
             defaultPort->completePortInfo(portParams);
-            cDebug() << "Created default port " << Name() << defaultPort->ID() << " linked to " << defaultPort->LinkedBusName();
+
+            const std::string linkedBus = defaultPort->LinkedBusName();
+            cInfo() << "Created default port " << Name() << "." << defaultPort->ID()
+                << (linkedBus.empty() ? "" : " linked to " + linkedBus);
         }
         else {
             portParams["CompoName"] = Name();
@@ -483,15 +478,14 @@ void MilpComponent::createImportListVars(t_mapExchange& a_Import)
     // import MPC   
     if (mControl == "MPC") {
         for (auto& [varName, ivar1D] : mCompoModel->getListControlIO()) {            
-            ivar1D->subscribeMPC(Name(), a_Import);
+            ivar1D->subscribeMPC(Name(), a_Import, npdtTot());
         }
     }
 }
 
 void MilpComponent::createExportListVars(t_mapExchange& a_Exchange)
 {    
-    if (mCompoModel != nullptr)
-    {
+    if (mCompoModel) {
         for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D)) {
             /* 
             * Note that, if the isUsed of an IO variables is modified after this point, then it will not be published 
@@ -554,6 +548,19 @@ void MilpComponent::readTSVariablesFromModel() {
     MilpComponent::readTSVariables(mModelDataTS); 
     mModelPortImpactParamTS = mCompoModel->getInputPortImpactsParamTS();
     MilpComponent::readTSVariables(mModelPortImpactParamTS);
+
+    // Read Time Series from related EnergyVectors
+    /*
+    * Should be updated when changing the port carrier (postpone TS creation until a buildProblem).
+    * Currently, it works properly thanks to initialize() before run()
+    */
+    for (MilpPort* port : PortList()) {
+        if (!port) continue;
+        EnergyVector* carrier = port->getCarrier();
+        if (!carrier) continue;
+        const InputParam* carrierTSParams = carrier->getTimeSeriesParam();
+        readEnergyVectorTS(carrier, carrierTSParams);
+    }
 }
 
 std::string MilpComponent::getTimeSeriesName(const std::string& ts_paramName)
@@ -608,38 +615,61 @@ void MilpComponent::setTimeSeriesName(const std::string& ts_paramName, const std
     }
 }
 
-void MilpComponent::cleanTimeSeries()
+bool MilpComponent::createModelTS(const std::string& varName, const std::string& tsName, ModelParam* aParamTS)
 {
-    m_timeSeries.clear();
-}
+    /** 
+    * varName : TS param name
+    * tsName : TS name inside input file
+    */
 
+    if (!aParamTS) {
+        return false;
+    }
+
+    // overwrite ?!
+    if (m_timeSeries.count(varName))
+    {
+        cDebug() << " -- " << varName << " already added.";
+        return false;
+    }
+
+    cDebug() << " -- Adding " << varName << " to the time series list";
+    m_timeSeries[varName] = ModelTS(tsName, aParamTS->pUnitParam(), aParamTS);
+
+    // Exception for Converter SetPoints
+    const bool isConverter = mCompoModelName == "Converter"
+        || CairnUtils::contains(mCompoModelClassName, ".Converter#");
+    const bool isSetPoint = CairnUtils::contains(varName, ".InputSetPoint#")
+        || CairnUtils::contains(varName, ".OutputSetPoint#");
+
+    if (isConverter && isSetPoint) {
+        ModelTS& ts = m_timeSeries[varName];
+        ts.setName(varName);
+    }
+
+    return true;
+}
 
 void MilpComponent::readTSVariables(InputParam* aMapParamTS)
 {
-    //Read time series variables
-    const InputParam::t_mapParams& vSrcParams = aMapParamTS->getMapParams();
-    for (auto const& [varName, val] : vSrcParams) {
-        if (val) {
-            if (val->getType() == eVectorDouble) {
-                if (m_timeSeries.find(varName) != m_timeSeries.end()) {
-                    cDebug() << " -- " << varName << " already added.";
-                }
-                else {
-                    cDebug() << " -- Adding " << varName << " to the time series list";
-
-                    m_timeSeries[varName] = ModelTS(mComponent[varName], val->pUnitParam(), val);
-
-                    //Exception for Converter SetPoints
-                    if (mCompoModelName == "Converter" || CairnUtils::contains(mCompoModelClassName,".Converter#")) {
-                        if (CairnUtils::contains(varName, ".InputSetPoint#") || CairnUtils::contains(varName,".OutputSetPoint#")) {
-                            m_timeSeries[varName].setName(varName);
-                        }
-                    }
-                }
-            }
+    for (auto const& [varName, param] : aMapParamTS->getMapParams()) {
+        if (param->getType() != eVectorDouble) {
+            continue;
         }
-	}
+        createModelTS(varName, mComponent[varName], param);
+    }
 }
+
+void MilpComponent::readEnergyVectorTS(const EnergyVector* carrier, const InputParam* aMapParamTS)
+{
+    for (auto const& [varName, param] : aMapParamTS->getMapParams()) {
+        if (!param->IsUsed()) {
+            continue;
+        }
+        createModelTS(carrier->tsProfileID(varName), param->toString(), param);
+    }
+}
+
 
 int MilpComponent::createHistFXLists()
 {
@@ -720,17 +750,28 @@ void MilpComponent::resetCompoModel()
     cleanTimeSeries();
 }
 
+void MilpComponent::cleanTimeSeries()
+{
+    m_timeSeries.clear();
+}
+
+
 void MilpComponent::setSubModelEnvImpacts()
 {
+    if (!mTecEcoAnalysis) return;
     // Pass the info related to selected EnvImpacts from MilpComponent to SubModel
-    mCompoModel->setEnvImpactsList(mEnvImpactsList);
-    mCompoModel->setEnvImpactsShortNamesList(mEnvImpactsShortNamesList);
-    mCompoModel->setEnvImpactUnitsList(mEnvImpactUnitsList);
-    mCompoModel->setEnvImpactCosts(mEnvImpactCosts);
+    mCompoModel->setEnvImpactsList(mTecEcoAnalysis->EnvImpactsList());
+    mCompoModel->setEnvImpactsShortNamesList(mTecEcoAnalysis->EnvImpactShortNamesList());
+    mCompoModel->setEnvImpactUnitsList(mTecEcoAnalysis->EnvImpactUnitsList());
+    mCompoModel->setEnvImpactCosts(mTecEcoAnalysis->EnvImpactCosts());
 }
 
 void MilpComponent::redeclareEnvImpactParameters()
 {
+    if (!allDefaultPortsHaveCarriers()) {
+        return;
+    }
+
     // Init the list of considered environmental impacts
     setSubModelEnvImpacts();
 
@@ -967,31 +1008,25 @@ int MilpComponent::initProblem(const bool& readParams)
 int MilpComponent::initPorts()
 {
     int ierr = 0;
+
     // define default variable names at ports
     ierr = defineDefaultVarNames();
+
     if (ierr < 0) {
         cCritical() << "ERROR in defining the port VarNames of component " + objectName();
         return ierr;
     }
     
-    int iIn = 0 ;
-    int iOut = 0;
-    int iHeatCarrierIn = 0 ;
-    int iHeatCarrierOut = 0;
-    int iData = 0;
-    int numport = 0;
-    for (MilpPort* port : PortList()) {
-
+    for (MilpPort* port : PortList()) 
+    {
        ierr = port->initProblem(npdt()) ;
-       if (ierr <0) return ierr ;      
+       if (ierr < 0) return ierr ;      
        
-        std::string varUse = port->Direction() ;
-        if (varUse != KCONS() && varUse != KPROD() && varUse != KDATA()) 
-        {
-            cCritical() << "Error : wrong Variable type  at " << (Name() + "." + port->Name()) << " found : " << varUse;
+        const std::string portDirection = port->Direction() ;
+        if (portDirection != KCONS() && portDirection != KPROD() && portDirection != KDATA()) {
+            cCritical() << "Error: unknown direction at " << (Name() + "." + port->Name()) << " - " << portDirection;
             return -1 ;
         }
-        numport++ ;
     }
     return ierr ;
 }
@@ -1004,13 +1039,12 @@ int MilpComponent::checkPorts()
     int ierr = 0 ;
     for (MilpPort* port : PortList()) {
        ierr = mCompoModel->checkUnit(port) ;
-       if (ierr <0)
-       {
+       if (ierr < 0) {
            cCritical() << ("Error checkUnit at port "+Name()+"."+port->Name());
            return ierr;
        }
-       if (ierr >0)
-       {
+
+       if (ierr > 0) {
            cWarning() << ("Warning checkUnit at port "+Name()+"."+port->Name());
            ierr = 0 ;
        }
@@ -1209,7 +1243,7 @@ void MilpComponent::prepareOptim()
 
     mCompoModel->decreaseOptimizationHorizon();
 
-    std::vector<InputParam::ModelParam*> vList;
+    std::vector<ModelParam*> vList;
     mPlugSubmodelIO->getParameters(vList, EParamType::eVectorEigen);
     for (auto& vParam : vList) {
         VectorXf* lptr = std::get< Eigen::VectorXf*>(vParam->getPtr());
@@ -1220,10 +1254,10 @@ void MilpComponent::prepareOptim()
     }    
 }
 
-void MilpComponent::exportResults(t_mapExchange& a_Export)
+void MilpComponent::populatePublishedVars(t_mapExchange& a_Export)
 {
     uint modinitTS = 0;
-    std::vector<InputParam::ModelParam*> vList;
+    std::vector<ModelParam*> vList;
     mPlugSubmodelIO->getParameters(vList, EParamType::eVectorEigen);
     for (auto& vParam : vList) {
         std::string varName = vParam->getName();
@@ -1240,12 +1274,12 @@ void MilpComponent::exportResults(t_mapExchange& a_Export)
     }
 
     // automatically publish variables at ports !
-    exportPortResults(a_Export, modinitTS);
+    populatePublishedPortVars(a_Export, modinitTS);
 
     if (modinitTS == 1) mFirstInitTS = 1;
 }
 
-void MilpComponent::exportPortResults(t_mapExchange& a_Export, uint modinitTS)
+void MilpComponent::populatePublishedPortVars(t_mapExchange& a_Export, uint modinitTS)
 {
     for (MilpPort* port : PortList()) {
         const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
@@ -1269,7 +1303,7 @@ void MilpComponent::exportPortResults(t_mapExchange& a_Export, uint modinitTS)
 void MilpComponent::setDefaultsResults()
 {
     // Write default value
-    std::vector<InputParam::ModelParam*> vList;
+    std::vector<ModelParam*> vList;
     mPlugSubmodelIO->getParameters(vList, EParamType::eVectorEigen);
     for (auto& vParam : vList) {
         VectorXf* lptr = std::get< Eigen::VectorXf*>(vParam->getPtr());            
@@ -1336,7 +1370,7 @@ void MilpComponent::exportSubmodelIO(Solver* aSolver, int aNsol)
                 continue; //skip IO variables whose expressions are not allocated
             }
 
-            InputParam::ModelParam* pParam = mPlugSubmodelIO->getParameter(ivar1D->getName());
+            ModelParam* pParam = mPlugSubmodelIO->getParameter(ivar1D->getName());
             if (pParam) {
                 Eigen::VectorXf* ptrSubmodelIO = std::get< Eigen::VectorXf*>(pParam->getPtr());
                 if (ptrExp1D != nullptr) {
@@ -1506,11 +1540,11 @@ void MilpComponent::jsonSaveGUINodePortsData(ojson &nodePortsArray, const std::s
     nodePortsArray.push_back(nodePortObject);
 }
 
-std::map<std::string, InputParam::ModelParam*> MilpComponent::getParameters(bool includePortParams)
+std::map<std::string, ModelParam*> MilpComponent::getParameters(bool includePortParams)
 {
-    std::map<std::string, InputParam::ModelParam*> paramMap;
+    std::map<std::string, ModelParam*> paramMap;
 
-    auto mergeParams = [&] (std::map<std::string, InputParam::ModelParam*> sourceMap) {
+    auto mergeParams = [&] (std::map<std::string, ModelParam*> sourceMap) {
         paramMap.insert(sourceMap.begin(), sourceMap.end());
     };
 
@@ -1554,6 +1588,7 @@ bool MilpComponent::EnvironmentModel() {
 
 
 }
+
 bool MilpComponent::EcoInvestModel() {
     TechnicalSubModel* TechnicalCompoModel = dynamic_cast<TechnicalSubModel*> (mCompoModel);
     if (TechnicalCompoModel != nullptr) {
@@ -1563,8 +1598,6 @@ bool MilpComponent::EcoInvestModel() {
         return false;
     }
 }
-
-
 
 std::vector<std::string> MilpComponent::get_ModelClassList()
 {
@@ -1626,15 +1659,21 @@ std::string MilpComponent::getAbsoluteFileName(const std::string& filename)
     return filename;
 }
 
+std::vector<std::string> MilpComponent::possibleModelClasses() const
+{
+    if (mCompoModel) {
+        return mCompoModel->possibleModelClasses();
+    }
+    return {};
+}
+
+
 std::vector<InputParam*> MilpComponent::get_InputParams()
 {
     // Check default port carriers
     if (!allDefaultPortsHaveCarriers()) {
-        CairnAPIUtils::setError(
-            errDefault,
-            "Please, configure the carriers of all default ports of component "
-            + objectName() + " first."
-        );
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
     }
 
     std::vector<InputParam*> result;
@@ -1658,4 +1697,112 @@ std::vector<InputParam*> MilpComponent::get_InputParams()
     }
 
     return result;
+}
+
+
+std::vector<InputParam*> MilpComponent::get_ParamInputParams()
+{
+    if (!allDefaultPortsHaveCarriers()) {
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
+    }
+
+    std::vector<InputParam*> result;
+    if (auto* model = compoModel()) {
+        result.push_back(model->getInputParam());
+    }
+    return result;
+}
+
+std::vector<InputParam*> MilpComponent::get_OptionInputParams()
+{
+    if (!allDefaultPortsHaveCarriers()) {
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
+    }
+
+    std::vector<InputParam*> result;
+    result.push_back(getCompoInputParam());
+    return result;
+}
+
+std::vector<InputParam*> MilpComponent::get_TimeSeriesInputParams()
+{
+    if (!allDefaultPortsHaveCarriers()) {
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
+    }
+
+    std::vector<InputParam*> result;
+    if (auto* model = compoModel()) {
+        result.push_back(model->getInputTimeSeries());
+    }
+    return result;
+}
+
+std::vector<InputParam*> MilpComponent::get_EnvImpactInputParams()
+{
+    if (!allDefaultPortsHaveCarriers()) {
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
+    }
+
+    std::vector<InputParam*> result;
+    if (auto* model = compoModel()) {
+        result.push_back(model->getInputEnvImpactsParam());
+    }
+    return result;
+}
+
+std::vector<InputParam*> MilpComponent::get_PortEnvImpactInputParams()
+{
+    if (!allDefaultPortsHaveCarriers()) {
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
+    }
+
+    std::vector<InputParam*> result;
+    if (auto* model = compoModel()) {
+        result.push_back(model->getInputPortImpactsParam());
+        result.push_back(model->getInputPortImpactsParamTS());
+    }
+    return result;
+}
+
+std::optional<double> MilpComponent::getIndicatorValue(const std::string& indicatorName, 
+    const std::string& range) const 
+{
+    if (!compoModel() || !compoModel()->getInputIndicators()) {
+        return std::nullopt;  
+    }
+
+    const auto& indicators = compoModel()->getInputIndicators()->getIndicators();
+
+    for (const auto* indicator : indicators) {
+        if (indicator && indicator->getName() == indicatorName) {
+            if (range == "HIST") {
+                return indicator->getValue(1);
+            }
+            else {
+                return indicator->getValue(0); // PLAN
+            }
+        }
+    }
+
+    return std::nullopt;  // Not found
+}
+
+bool MilpComponent::isInstalled() const {
+    return getIndicatorValue(IS_INSTALLED, "PLAN") != 0.0;
+}
+
+const std::vector<double>* MilpComponent::getTimeSeries(const std::string& varName) const
+{
+    const auto it = m_timeSeries.find(varName);
+    if (it == m_timeSeries.end())
+    {
+        cWarning() << "Time series not found:" << varName;
+        return nullptr;
+    }
+    return it->second.get_Values(npdtPast());
 }

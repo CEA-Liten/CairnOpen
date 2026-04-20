@@ -16,7 +16,7 @@ public:
 		std::string Unit;
 		int Index;
 	};
-	virtual bool open(const std::string& aTSfile) = 0;	
+	virtual bool open(const std::wstring& aTSfile) = 0;	
 	virtual bool readTimes(std::vector<double>& aTimes, const double& aStartTime, const double& aEndTime, const double& aTimeStep) = 0;
 	virtual void readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader) = 0;
 	virtual void readValues(int a_index, std::vector<double>& aTimes) = 0;

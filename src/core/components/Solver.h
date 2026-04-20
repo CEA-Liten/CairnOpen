@@ -10,6 +10,9 @@
 
 #include "Cairn_Exception.h"
 
+#include "GlobalSettings.h"
+using namespace GS;
+
 /**
  * \details
 * This component defines the solver to be used. \\
@@ -43,7 +46,7 @@ public:
     InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
     InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
 
-    std::map<std::string, InputParam::ModelParam*> getParameters();
+    std::map<std::string, ModelParam*> getParameters();
 
     Cairn_Exception getException() const { return mException; };
     GUIData* getGUIData() { return mGUIData; }
@@ -54,11 +57,25 @@ public:
     std::string SolverName() const { return mSolverName; }
     std::vector<InputParam*> get_InputParams();
 
+    std::vector<InputParam*> get_ParamInputParams();
+    std::vector<InputParam*> get_OptionInputParams();
+
+    std::vector<std::string> getProblemTypes() const {
+        return (mModelType == GS::GAMS()) ? mGAMSProblemTypes : std::vector<std::string>{};
+    }
+
+    std::vector<std::string> getPossibleModelTypes() const {
+        return mPossibleModelTypes;
+    }
+
 private:
     void doInit(const std::map<std::string, std::string>& aComponent);
     void declareCompoInputParam();
     bool setCompoInputParam(const std::map<std::string, std::string>& aComponent);
     void InitSolverParam();
+
+    static const std::vector<std::string> mPossibleModelTypes;
+    static const std::vector<std::string> mGAMSProblemTypes;
 
     Cairn_Exception mException;
 

@@ -23,7 +23,7 @@ using Eigen::Map;
 
 namespace GS
 {
-    static std::string Cairn_Release(PERSEE_VERSION) ;
+    static std::string Cairn_Release(CAIRN_VERSION) ;
     static uint IDCount ;
     static uint iVerbose ;
 
@@ -48,6 +48,9 @@ namespace GS
     static inline const std::string Electrical() { return "Electrical"; }
     static inline const std::string ThermalOrElectrical() { return "ThermalOrElectrical"; }
     static inline const std::string Material() { return "Material"; }
+
+    static inline const std::string ProfileLHV() { return"ProfileLHV"; }
+    static inline const std::string ProfileGHV() { return"ProfileGHV"; }
 
     inline Eigen::VectorXf uAverageQVector2Vecxf(std::vector<double> vFineIn, double aTimeStepIn, std::vector<double> aTimeStepsOut, uint aNpdtPast)
     {

@@ -51,7 +51,7 @@ void GridFree::computeModelContribution()
     }
 
     for (uint64_t t = 0; t < mHorizon; t++) {
-        addConstraint(mExpFlux[t] <= mMaxFlux * mExpState[t], "StateGrid", t);
+        addConstraint(mExpFlux[t] <= fabs(mMaxFlux) * mExpState[t], "StateGrid", t);
     }
 
     // 2 constraints: 1 for maximum value, the other one if Electrical power Imposed (constant or profile)

@@ -80,6 +80,12 @@ catch (std::exception& error) {} \
     cout << "--- Test " << name << endl; \
 	if (!code) { cout << "Error test " << name << endl; return errSet; }
 
+#define TESTVALUE(var, ref) \
+		if (fabsf(var - ref)>1e-6) return 1; \
+
+#define TESTVALUEFALSE(var, ref) \
+		if (fabsf(var - ref)<1e-6) return 1; \
+
 // Enum to represent log levels 
 enum LogLevel { DEBUG, INFO, WARNING, ERROR, CRITICAL };
 
@@ -98,7 +104,8 @@ public:
 	static string SearchValueInDict(const string& filePath, const string& PortName);
 	static int ComparePortValue(const std::string& a_ComponentName, const std::string& InputPortValue);
 	static void Display_Dict(std::map<std::string, std::string>& dict);
-	static int compare_dict(std::map<std::string, std::string> Inputdict, std::map<std::string, std::string> Refdict);
+	static int compare_dict(const t_dict& inputDict, const t_dict& refDict);
+    static std::string valueToString(const t_value& value);
 	static int ReadNameParamCsvFile(const std::string filename, t_list csvData);
 	static int Identify_Type(const std::string& str1);
 	static map<string, string> ParsingDictionaryFromFile(const string& cheminFichierDict);
@@ -112,6 +119,7 @@ public:
     static map<std::string, std::map<std::string, std::string>> ReadDataFileWithIndex(const std::string& filePath);
     static string GetDataWithIndex(const std::map<std::string, std::map<std::string, std::string>>& data, const std::string& section, const std::string& key);
     static t_dict PreparePortSettings(const std::map<std::string, std::map<std::string, std::string>>& data, const std::string& section);
+    static void skipUTF8BOM(std::istream& in);
 };
 
 class Logger 

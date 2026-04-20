@@ -1,8 +1,6 @@
-#include "Cairn_Exception.h"
-#include "MilpPort.h"
-#include "GlobalSettings.h"
 
-using namespace GS;
+#include "MilpPort.h"
+#include "BusCompo.h"
 
 MilpPort::MilpPort(CairnObject *aParent, std::string aID, std::string aName, const std::map<std::string, std::string> aPort): CairnObject(aParent),
     mID(aID),
@@ -142,7 +140,7 @@ void MilpPort::setVariable(std::string aVariable) {
 
 void MilpPort::setPortType(std::string aBusType)
 {
-    mBusType=aBusType;
+    mBusType = aBusType;
 }
 
 std::string MilpPort::FluxUnit() const 
@@ -159,6 +157,74 @@ std::string MilpPort::PotentialUnit() const
 {
     if (mPotentialUnit) return *mPotentialUnit;
     return "";
+}
+
+bool MilpPort::useProfileLHV() const
+{
+    if (!mCarrier) {
+        throw Cairn_Exception("useProfileLHV called on port (" + ID() + ", " + Name() + ") with no carrier", -1);
+    }
+    return mCarrier->useProfileLHV();
+}
+
+double MilpPort::LHV() const
+{
+    return mCarrier 
+        ? mCarrier->LHV() 
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+const std::vector<double>* MilpPort::LHVProfile() const
+{
+    return mCarrier ? getTimeSeries(mCarrier->LHVProfileID()) : nullptr;
+}
+
+const double MilpPort::LHV(const uint64_t t) const
+{
+    return mCarrier ?
+        mCarrier->useProfileLHV() ?
+        LHVProfile()->at(t) : mCarrier->LHV()
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+const double MilpPort::minLHV() const
+{
+    return mCarrier ?
+        mCarrier->useProfileLHV() ?
+        *std::min_element(LHVProfile()->begin(), LHVProfile()->end()) : mCarrier->LHV()
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+bool MilpPort::useProfileGHV() const
+{
+    if (!mCarrier) {
+        throw Cairn_Exception("useProfileGHV called on port (" + ID() + ", " + Name() + ") with no carrier", -1);
+    }
+    return mCarrier->useProfileGHV();
+}
+
+double MilpPort::GHV() const 
+{
+    return mCarrier
+        ? mCarrier->GHV()
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+const std::vector<double>* MilpPort::GHVProfile() const
+{
+    return mCarrier ? getTimeSeries(mCarrier->GHVProfileID()) : nullptr;
+}
+
+const std::vector<double>* MilpPort::getTimeSeries(const std::string& tsName) const
+{
+    if (!mCarrier)
+        return nullptr;
+
+    const MilpComponent* pParent = dynamic_cast<const MilpComponent*>(parent());
+    if (!pParent)
+        return nullptr;
+
+    return pParent->getTimeSeries(tsName);
 }
 
 void MilpPort::setCarrier(EnergyVector* aptrEnergyVector)
@@ -179,15 +245,8 @@ void MilpPort::setCarrier(EnergyVector* aptrEnergyVector)
     }
 }
 
-void MilpPort::setLinkedBus(MilpComponent* aLinkedBus) {
-    mLinkedBus = aLinkedBus;
-}
-
-void MilpPort::DeleteLinkedBus()
-{    
-    if (mLinkedBus) {
-        mLinkedBus = nullptr;
-    }
+void MilpPort::setLinkedBus(BusCompo* linkedBus) {
+    mLinkedBus = linkedBus;
 }
 
 void MilpPort::setFlux(const unsigned int &aTime, const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
@@ -206,16 +265,16 @@ void MilpPort::setPotential(const unsigned int &aTime, MIPModeler::MIPExpression
     mPotential[aTime] = mVarCoeff * aFluxExpression + mVarOffset ;
 }
 
-void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusPort)
+void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinkedPort)
 {  
     std::string portId = mID;
     std::string portName = Name();
     std::string position = mPosition;
     std::string defaultport = No();
     if (mIsDefaultPort) defaultport = Yes();
-    if (isBusPort) {
+    if (isBusLinkedPort) {
         /**
-        * Bus port is a copy of the linked component port
+        * A Bus linked port is a copy of the linked component port
         * Only change the port ID and port Name, 
         * and always define it as a non-default port
         */

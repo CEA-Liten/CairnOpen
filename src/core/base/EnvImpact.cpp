@@ -42,11 +42,13 @@ InputParam* EnvImpact::InputPortImpactsTS() { return mParentModel->getInputPortI
 InputParam* EnvImpact::InputPerfParam() { return mParentModel->getInputPerfParam(); }
 InputParam* EnvImpact::InputIndicators() { return mParentModel->getInputIndicators(); }
 
-std::vector<double>& EnvImpact::TimeSteps() { 
-    return mParentModel->timesteps(); 
+const std::vector<double>& EnvImpact::getTimeSteps() const {
+    assert(mParentModel && "Parent model must not be null");
+    return mParentModel->timesteps();
 }
 
-double EnvImpact::LifeTime() { 
+const double EnvImpact::getLifeTime() const { 
+    assert(mParentModel && "Parent model must not be null");
     return mParentModel->LifeTime(); 
 }
 
@@ -57,7 +59,7 @@ void EnvImpact::addConfigParameters(std::string aPortName, int j)
         InputEnvImpacts()->addParameter(mName + " PiecewiseEnvGreyContentCoeff_A", &mPiecewiseEnvGreyContentCoeff, false, false, mParentModel->pEnvironmentModel(), "If true use piecewise linear functionality for Grey environmental impacts", "", "EnvironmentModel");
     }
     // port parameters
-    InputPortImpacts()->addParameter(aPortName + "." + mName + " UseEnvContentTS_A", &mUseTSEnvContentCoeff[j], 0, false, mParentModel->pEnvironmentModel(), "Comment", "", "EnvironmentModel");
+    InputPortImpacts()->addParameter(aPortName + "." + mName + " UseEnvContentTS_A", &mUseTSEnvContentCoeff[j], false, false, mParentModel->pEnvironmentModel(), "Comment", "", "EnvironmentModel");
 }
 
 void EnvImpact::addGreyParameters()
@@ -120,31 +122,66 @@ void EnvImpact::addIndicators()
         "Env impact of replacement linked to future manufacturing for replacement", &mImpactUnit, mShortName + "Replacement"); 
 }
 
-void EnvImpact::computeEmbodiedEnvImpactContribution(MIPModeler::MIPExpression aExpSizeMax)
+void EnvImpact::computeEmbodiedEnvImpactContribution(
+    const MIPModeler::MIPExpression& aExpSizeMax,
+    const MIPModeler::MIPExpression& aExpInstalled)
 {
-    mExpEmbodiedEnvImpact += mEnvGreyContentCoefficient * aExpSizeMax + mEnvGreyContentOffset;
+    mExpEmbodiedEnvImpact = mEnvGreyContentCoefficient * aExpSizeMax + mEnvGreyContentOffset * aExpInstalled;
 }
 
-void EnvImpact::computeReplacementEnvImpactContribution(MIPModeler::MIPExpression aExpSizeMax)
+void EnvImpact::computeReplacementEnvImpactContribution(
+    const MIPModeler::MIPExpression& aExpSizeMax,   
+    const MIPModeler::MIPExpression& aExpInstalled)
 {
-    for (uint64_t t = 0; t < Horizon(); ++t){
-        if (LifeTime() > 0) {
-            mExpReplacementEnvImpact[t] = (mEnvGreyReplacement * aExpSizeMax + mEnvGreyReplacementConstant) / (LifeTime() * 8760.);
-        }
+    constexpr double EPSILON = 1.e-6;
+    constexpr double HOURS_PER_YEAR = 8760.0;
+
+    const double lifeTime = getLifeTime();
+
+    // Validate lifetime
+    if (lifeTime <= EPSILON) {
+        const std::string compoName = mParentModel ? " for component " + mParentModel->Name() : "";
+        throw Cairn_Exception(
+            "Invalid LifeTime" + compoName +
+            ": must be positive (got " + std::to_string(lifeTime) + ")");
+    }
+
+    // Pre-compute the constant part
+    const MIPModeler::MIPExpression replacementImpact =
+        (mEnvGreyReplacement * aExpSizeMax + mEnvGreyReplacementConstant * aExpInstalled)
+        / (lifeTime * HOURS_PER_YEAR);
+
+    // Assign to all time steps
+    const auto& timeSteps = getTimeSteps();
+    const size_t horizon = timeSteps.size();
+    for (size_t t = 0; t < horizon; ++t) {
+        mExpReplacementEnvImpact[t] = timeSteps[t] * replacementImpact;
     }
 }
 
-void EnvImpact::computeEnvImpactContribution(const int j, const MIPModeler::MIPExpression1D* aFlux)
+void EnvImpact::computeEnvImpactContribution(
+    const size_t j, 
+    const MIPModeler::MIPExpression1D* aFlux,
+    const MIPModeler::MIPExpression& aExpInstalled)
 {
-    for (uint64_t t = 0; t < Horizon(); ++t) {
-        if (mUseTSEnvContentCoeff[j]) {
-            mExpOpEnvImpact[t] += (mTSEnvContentCoeff[j][t] * aFlux->at(t) + mEnvContentOffsets[j]) * TimeSteps().at(t);
-            mExpFlowEnvImpact[t] += (mTSEnvContentCoeff[j][t] * aFlux->at(t) + mEnvContentOffsets[j]);
-        }
-        else {
-            mExpOpEnvImpact[t] += (mEnvContentCoefficients[j] * aFlux->at(t) + mEnvContentOffsets[j]) * TimeSteps().at(t);
-            mExpFlowEnvImpact[t] += (mEnvContentCoefficients[j] * aFlux->at(t) + mEnvContentOffsets[j]);
-        }
+    const auto& timeSteps = getTimeSteps();
+    const size_t horizon = timeSteps.size();
+    const bool useTimeSeries = mUseTSEnvContentCoeff[j];
+    const double offset = mEnvContentOffsets[j];
+
+    for (size_t t = 0; t < horizon; ++t) {
+        // Compute coefficient (timeseries or constant)
+        const double coefficient = useTimeSeries
+            ? mTSEnvContentCoeff[j][t]
+            : mEnvContentCoefficients[j];
+
+        // Compute impact contribution
+        const MIPModeler::MIPExpression impactContribution =
+            coefficient * aFlux->at(t) + offset * aExpInstalled;
+
+        // Add to mass and flow
+        mExpOpEnvImpact[t] += impactContribution * timeSteps[t];
+        mExpFlowEnvImpact[t] += impactContribution;
     }
 }
 
@@ -152,7 +189,8 @@ void EnvImpact::computeEnvImpactContributionCost()
 {
     mExpEmbodiedEnvImpactCost += mEnvImpactCost * mExpEmbodiedEnvImpact;
     
-    for (uint64_t t = 0; t < Horizon(); ++t) {
+    const size_t horizon = getTimeSteps().size();
+    for (size_t t = 0; t < horizon; ++t) {
         mExpOpEnvImpactCost[t] += mEnvImpactCost * mExpOpEnvImpact[t];
     }
 }

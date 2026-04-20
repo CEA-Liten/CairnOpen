@@ -15,12 +15,14 @@ set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11
 
 set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 
+# doc
+set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE INTERNAL "Python virtual environment")
+
 # ================================================================
 # --------- User-defined options ---------
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
 option(WITH_TESTING "Build tests. Default = OFF" ON)
-option(WITH_PYBIND "Cairn python binding" ON)
 option(BUILD_WHEEL "build python wheel of cairn" ON)
 
 # TODO!!
@@ -42,7 +44,9 @@ set(CAIRN_HOME ${CMAKE_SOURCE_DIR}/src CACHE INTERNAL "Cairn installation path")
 set(CAIRNTESTS_HOME ${CMAKE_SOURCE_DIR}/tests CACHE INTERNAL "Cairn tests path")
 set(CAIRNMODELINTERFACE_HOME ${CAIRN_HOME}/modelInterface CACHE INTERNAL "Cairn Model interface installation path")
 set(CAIRN_DEFAULTSOLVER Highs CACHE INTERNAL "Cairn default solver")
+set(CAIRNDOC_HOME ${CMAKE_SOURCE_DIR}/doc/user CACHE INTERNAL "Cairn doc path")
 
 # installation of API python
 option(INSTALL_WHEEL "install python wheel of cairn" ON)
 set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/virtualPy CACHE INTERNAL "Cairn wheel installation path")
+

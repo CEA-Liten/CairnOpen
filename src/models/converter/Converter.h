@@ -29,13 +29,15 @@ System may be ON or OFF and gives acccess to its States variable for combined co
 Power in is limited to MaxPower value. 
 This MaxPower can be optimized if the corresponding given parameter is negative. 
 
-The efficiency can follow three models:
+The efficiency can follow four models:
 
 - simple (by default): the parameter Efficiency is constant
 
 - given by a timeseries: the parameter Efficiency is multiplied by the timeseries UseProfilConverterUse
 
-- given by a performance map. See the dedicated part in the documentation for more information.
+- given by a performance map. See the dedicated part :ref:`cairn_map_file` in the documentation for more information.
+
+- given by a time dependant performance map. 
 
 .. caution::
 
@@ -93,7 +95,7 @@ public:
         // InputData instance for input data coming from Persee/PEGASE memory : time series (coming from PEGASE), state variables...
 
         //double
-        addParameter("Efficiency", &mEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency} }), true, "", ""); /** Total constant Converter efficiency*/
+        addParameter("Efficiency", &mEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency} }), true, "Total constant Converter efficiency", "");  
         addParameter("Offset", &mOffset, 0., false, true, " Offset of consumption to add to PowerIn (PowerIn is then an affine function of PowerOut)", mMainCarrier->pFluxUnit());
         addParameter("MaxPower",&mMaxPower, INFINITY_VAL, true, true, "maximum input flux through converter", mMainCarrier->pFluxUnit());
         addParameter("MinPower", &mMinPower, 0., false, true, "optional minimum flux through converter - 0 by default.Relative value to MaxPower", "%MaxPower");

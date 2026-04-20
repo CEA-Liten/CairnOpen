@@ -48,6 +48,48 @@ std::string CairnAPI::BusAPI::get_ModelClass() const
 	return "";
 }
 
+t_list CairnAPI::BusAPI::get_PossibleModelClasses() const
+{
+	t_list vRet = {};
+
+	const BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		vRet = pBus->possibleModelClasses();
+	}
+
+	const std::string model = get_ModelClass();
+	if (!model.empty() && std::find(vRet.cbegin(), vRet.cend(), model) == vRet.cend()) {
+		vRet.insert(vRet.begin(), model);
+	}
+
+	return vRet;
+}
+
+t_list CairnAPI::BusAPI::get_PossibleControlValues() const
+{
+	t_list vRet = {};
+
+	const BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		vRet = pBus->getPossibleControlValues();
+	}
+
+	return vRet;
+}
+
+t_list CairnAPI::BusAPI::get_PossibleObjectiveTypes() const
+{
+	t_list vRet = {};
+
+	const BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		vRet = pBus->getPossibleObjectiveTypes();
+	}
+
+	return vRet;
+}
+
+
 std::string CairnAPI::BusAPI::get_CarrierName() const
 {
 	BusCompo* pBus = get_BusCompo();
@@ -55,6 +97,14 @@ std::string CairnAPI::BusAPI::get_CarrierName() const
 		return pBus->getMainCarrier()->Name();
 	}
 	return "";
+}
+
+EnergyVector* CairnAPI::BusAPI::get_Carrier() const
+{
+	BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		return pBus->getMainCarrier();
+	}
 }
 
 void CairnAPI::BusAPI::set_Carrier(const std::string& a_CarrierName) 
@@ -118,9 +168,9 @@ std::string CairnAPI::BusAPI::get_LabelValue(const std::string& a_Label) const
 	return vRet;
 }
 
-std::map<std::string, std::string> CairnAPI::BusAPI::get_LabelValues() const
+t_dict CairnAPI::BusAPI::get_LabelValues() const
 {
-	std::map<std::string, std::string> vRet = {};
+	t_dict vRet = {};
 	BusCompo* pBus = get_BusCompo();
 	if (pBus)
 	{
@@ -154,7 +204,7 @@ void CairnAPI::BusAPI::set_LabelValue(const std::string& a_Label, const std::str
 	}
 }
 
-void CairnAPI::BusAPI::set_LabelValues(const std::map<std::string, std::string>& a_Labels)
+void CairnAPI::BusAPI::set_LabelValues(const t_dict& a_Labels)
 {
 	BusCompo* pBus = get_BusCompo();
 	if (pBus)
@@ -163,7 +213,11 @@ void CairnAPI::BusAPI::set_LabelValues(const std::map<std::string, std::string>&
 		* No need to verify that all the labels are valid. It is ok!
 		* Labels are filtered when using get_method and when writing to json file
 		*/
-		pBus->compoModel()->setLabelMap(a_Labels);
+		std::map<std::string, std::string> labels;
+		for (const auto& [key, value] : a_Labels) {
+			labels[key] = CairnAPIUtils::valueToString(value);
+		}
+		pBus->compoModel()->setLabelMap(labels);
 	}
 }
 
@@ -199,6 +253,206 @@ void CairnAPI::BusAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
 	for (auto& vParam : a_SettingValues) {
 		set_SettingValue(vParam.first, vParam.second);
+	}
+}
+
+// -- Ports ---
+std::map<std::string, std::string>
+CairnAPI::BusAPI::get_DefaultPortData(const std::string& portId) const
+{
+	const BusCompo* pBus = get_BusCompo();
+	if (!pBus)
+		return {};
+
+	const SubModel* subModel = pBus->compoModel();
+	if (!subModel)
+		return {};
+
+	return subModel->getDefaultPortData(portId);
+}
+
+t_list CairnAPI::BusAPI::get_DefaultPortIDs() const
+{
+	t_list vRet = {};
+	BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		for (MilpPort* vPort : pBus->PortList())
+		{
+			if (vPort->IsDefaultPort()) {
+				vRet.push_back(vPort->ID());
+			}
+		}
+	}
+	return vRet;
+}
+
+t_list CairnAPI::BusAPI::get_DefaultPorts() const 
+{
+	t_list vRet = {};
+	BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		for (MilpPort* vPort : pBus->PortList())
+		{
+			if (vPort->IsDefaultPort()) {
+				vRet.push_back(vPort->Name());
+			}
+		}
+	}
+	return vRet;
+}
+
+t_list CairnAPI::BusAPI::get_Ports() const
+{
+	t_list vRet = {};
+	BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		for (MilpPort* vPort : pBus->PortList())
+		{
+			vRet.push_back(vPort->Name());
+		}
+	}
+	return vRet;
+}
+
+CairnAPI::MilpPortAPI CairnAPI::BusAPI::get_Port(const std::string& a_Name)
+{
+	MilpPortAPI vRet;
+	BusCompo* pBus = get_BusCompo();
+	std::string vPortName = std::string(a_Name.c_str());
+	if (pBus) {
+		// Get port by Id
+		MilpPort* vPort = pBus->getPort(vPortName);
+
+		if (!vPort) {
+			// Get port by name
+			vPort = pBus->getPortByName(vPortName);
+		}
+
+		if (vPort) {
+			vRet.set_MilpPort(vPort);
+		}
+		else {
+			CairnAPIUtils::setError(errNotFound, "port " + a_Name);
+		}
+	}
+	return vRet;
+}
+
+CairnAPI::MilpPortAPI CairnAPI::BusAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
+	const std::string& a_Direction, const std::string& a_Variable, const std::string& a_PortId)
+{
+	EnergyVector* pCarrier = get_Carrier();
+
+	const EnergyVector* pVector = a_EnergyVector.get_EnergyVector();
+	if (pVector && pVector != pCarrier) {
+		cWarning() << "The provided carrier " + pVector->Name() + " is different from the Bus carrier" + pCarrier->Name()
+			+ ". The bus carrier will be used!";
+	}
+	
+	MilpPortAPI vPort;
+	BusCompo* pBus = get_BusCompo();
+	ECodeError vErr = noError;
+	std::string vErrMsg = "";
+	if (pBus) {
+		//check if the port with the same name already exist		
+		MilpPort* vMilpPort = pBus->getPortByName(a_PortName);
+		if (vMilpPort) {
+			vErr = errAlreadyExist;
+			vErrMsg = "port " + a_PortName;
+		}
+		else {
+			std::string vComponentName(get_Name());
+			std::string vPortId = a_PortId;
+			if (vPortId.empty()) vPortId = pBus->getUniquePortID();
+			std::map<std::string, std::string> vPortParams;
+			vPortParams["CompoName"] = vComponentName;
+			vPortParams["Name"] = a_PortName;
+			vPortParams["Carrier"] = pCarrier->Name();
+			vPortParams["Direction"] = CairnUtils::toUpper(a_Direction);
+			vPortParams["Variable"] = a_Variable;
+
+			//create port
+			pBus->createOnePort(vPortId, vPortParams);
+			vMilpPort = pBus->getPort(vPortId);
+			if (vMilpPort) {
+				vPort.set_MilpPort(vMilpPort);
+				vPort.set_EnergyCarrier(pCarrier);
+			}
+			else {
+				vErr = errAdd;
+				vErrMsg = "port " + a_PortName;
+			}
+		}
+	}
+	else {
+		vErr = errDefault;
+		vErrMsg = "The component doesn't exist!";
+	}
+	CairnAPIUtils::setError(vErr, vErrMsg);
+	return vPort;
+}
+
+bool CairnAPI::BusAPI::remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo)
+{
+	ECodeError vErr = noError;
+	std::string vErrMsg = "";
+	BusCompo* pBus = get_BusCompo();
+	if (pBus) {
+		std::string vPortName(a_Port.get_Name());
+		MilpPort* pMilpPort = pBus->getPortByName(vPortName);
+		if (pMilpPort) {
+			//check if it is a default port
+			if (!isDeleteCompo && pMilpPort->IsDefaultPort()) {
+				cInfo() << "Port " + vPortName + " of component " + pBus->Name() + " is a default port."
+					+ " It is not possible to delete default ports!";
+				return false;
+			}
+			else {
+				//check if there is a link or Not
+				BusCompo* vBus = pMilpPort->getLinkedBus();
+				if (vBus) {
+					vBus->removeLink(pBus, pMilpPort);
+				}
+				pBus->removePort(pMilpPort);
+			}
+		}
+		else {
+			vErr = errNotFound;
+			vErrMsg = a_Port.get_Name();
+		}
+	}
+	else {
+		vErr = errDefault;
+		vErrMsg = "The component doesn't exist!";
+	}
+	CairnAPIUtils::setError(vErr, vErrMsg);
+	return true;
+}
+
+//bool CairnAPI::BusAPI::useEnergyVector(const std::string& a_EnergyCarrierName)
+//{
+//	bool vRet = false;
+//	t_list vPorts = get_Ports();
+//	for (auto& vPort : vPorts) {
+//		if (get_Port(vPort).get_CarrierName() == a_EnergyCarrierName) {
+//			vRet = true;
+//			break;
+//		}
+//	}
+//	return vRet;
+//}
+
+void CairnAPI::BusAPI::get_Links(t_dict& a_Links)
+{
+	t_list vPorts = get_Ports();
+	for (auto& vPortName : vPorts) {
+		MilpPort* vPort = get_Port(vPortName).get_MilpPort();
+		if (vPort) {
+			BusCompo* vBus = vPort->getLinkedBus();
+			if (vBus) {
+				a_Links[get_Name() + "." + vPortName] = vBus->Name();
+			}
+		}
 	}
 }
 
@@ -306,42 +560,48 @@ t_list CairnAPI::BusAPI::get_IndicatorShortNames()
 	return vRet;
 }
 
-t_dict CairnAPI::BusAPI::get_IndicatorValues(const std::string range)
+t_dict CairnAPI::BusAPI::get_IndicatorValues(const std::string& range) const
 {
-	t_dict vRet = {};
-	BusCompo* pBus = get_BusCompo();
-	if (pBus) {
-		InputParam::t_Indicators vectIndicators = pBus->compoModel()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++)
-		{
-			if (range == "PLAN") {
-				vRet.insert({ vectIndicators[i]->getName(), vectIndicators[i]->getValue(0) });
-			}
-			else if (range == "HIST") {
-				vRet.insert({ vectIndicators[i]->getName(), vectIndicators[i]->getValue(1) });
-			}
+	t_dict result;
+
+	MilpComponent* pBus = get_BusCompo();
+	if (!pBus) {
+		CairnAPIUtils::setError(noCairn, "Component not available");
+		return result;  // Return empty dict
+	}
+
+	// Get all indicators
+	const auto& indicatorList = pBus->compoModel()->getInputIndicators()->getIndicators();
+
+	// Get value for each indicator 
+	for (const auto* indicator : indicatorList) {
+		if (!indicator) continue;
+
+		std::string name = indicator->getName();
+		double value = get_IndicatorValue(name, range);
+
+		// Only add if not NaN (i.e., found)
+		if (!std::isnan(value)) {
+			result[name] = value;
 		}
 	}
-	else
-		CairnAPIUtils::setError(noCairn);
-	return vRet;
+
+	return result;
 }
 
-double CairnAPI::BusAPI::get_IndicatorValue(const std::string& name, const std::string range)
+double CairnAPI::BusAPI::get_IndicatorValue(const std::string& name, const std::string& range) const
 {
-	double vRet = NAN;
-	BusCompo* pBus = get_BusCompo();
-	if (pBus) {
-		InputParam::t_Indicators vectIndicators = pBus->compoModel()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++) {
-			if (vectIndicators[i]->getName() == name) {
-				if (range == "PLAN") vRet = vectIndicators[i]->getValue(0);
-				else if (range == "HIST") vRet = vectIndicators[i]->getValue(1);
-			}
-		}
-		if (isnan(vRet)) CairnAPIUtils::setError(errGet, "Indicator name not found");
+	MilpComponent* pBus = get_BusCompo();
+	if (!pBus) {
+		CairnAPIUtils::setError(noCairn, "Bus not available");
+		return std::numeric_limits<double>::quiet_NaN();
 	}
-	else
-		CairnAPIUtils::setError(noCairn);
-	return vRet;
+
+	auto value = pBus->getIndicatorValue(name, range);
+	if (value) {
+		return *value;
+	}
+
+	CairnAPIUtils::setError(errGet, "Indicator '" + name + "' not found");
+	return std::numeric_limits<double>::quiet_NaN();
 }

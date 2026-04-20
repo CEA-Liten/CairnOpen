@@ -11,31 +11,20 @@ class InputParam;
 #include <string>
 #endif
 #include "CairnAPI.h"
-#include "FlagParam.h"
-#include "UnitParam.h"
+
+
 #include "IndicatorName.h"
+#include "ModelParam.h"
+
 #include <cmath>
+#include <optional>
 
 inline constexpr double INFINITY_VAL = 1.e12;
 
-enum TriState {
-    False = 0,
-    True = 1,
-    Undefined = 2
-};
-
-enum EParamType {
-    eUndefined = -1,  
-    eDouble = 0,
-    eInt,    
-    eBool,
-    eString,
-    eStringList,
-    eVectorDouble,
-    //eVectorInt,
-    eVectorEigen    
-};
-typedef std::variant<double*, int*, bool*, std::string*, std::vector<std::string>*, std::vector<double>*, Eigen::VectorXf*> t_pvalue;
+namespace IndicatorNames {
+    inline const std::string IS_INSTALLED = "is installed";
+    // ... other indicator names
+}
 
 /**
  * \brief The InputParam class defines MilpComponent & MilpModel Input Parameter variables
@@ -144,94 +133,7 @@ public:
 
     void jsonSaveGUIInputParam(ojson& paramArray);
 
-    class ModelParam
-    {
-    public:
-        // default contractor  
-        ModelParam(const std::string& a_Name = "",
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const std::string& a_Comment = "",
-            const t_unit& aUnit = "",
-            const std::string& a_ShowConfig = "");
-
-        // t_pvalue (scalar and vector of string parameters) 
-        ModelParam(const std::string& a_Name,
-            const t_pvalue &ap_Value,
-            t_value a_defaultValue,
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const std::string& a_Comment = "",
-            const t_unit& aUnit = "",
-            const std::string& a_ShowConfig = "");
-
-        // vector double (used for timeseries and performance parameters)
-        ModelParam(const std::string& a_Name,
-            std::vector<double>* ap_Value,
-            double a_default = 1.0,
-            double a_min = std::nan("1"),
-            double a_max = std::nan("1"),
-            t_flag a_IsBlocking = false,
-            t_flag a_IsUsed = true,
-            const std::string& a_Comment = "",
-            const t_unit& aUnit = "",
-            const std::string& a_ShowConfig = "");
-
-        // publish IO var name
-        ModelParam(const std::string& a_Name, int aSize, double aDefault);
-
-        ~ModelParam();
-
-        virtual std::string toString();
-        virtual bool setValue(const std::string& a_Value);
-        virtual bool setValue(const t_value& a_Value);
-        virtual t_value getValue();
-        bool getNumValue(double &a_Value); // return if possible a double value
-        bool copyValues(const ModelParam& aSrc, size_t aSize, size_t aOffset = 0);
-        bool copyValues(const std::vector<double> &aSrc, size_t aOffset = 0);
-        bool setValues(const double& aValue, size_t aSize);
-
-        bool readParameter(const std::map<std::string, std::string>& aSettings); 
-        bool IsBlocking();
-        bool IsUsed();
-        bool isDependent(); /* whether m_IsBlocking is a scalr or depends on other parameetrs */
-        TriState isModified();
-
-        const std::string& getName() const { return m_Name; };
-        const std::string& getDescription() const { return m_Comment; };
-        const std::string& getShowConfig() const { return m_ShowConfig; };
-        const EParamType& getType() const { return m_Type; };
-        std::string getUnit() const;
-        const UnitParam* pUnitParam() const { return &m_Unit; }; /* Used to dynamically pass the unit e.g. from a timeseries ModelParam to the corresponding ModelTS */
-
-        const t_value& getDefault() const { return m_default; };
-        const t_value& getMin() const { return m_min; };
-        const t_value& getMax() const { return m_max; };
-
-        bool isPValue() const;
-        const t_pvalue& getPtr() const { return p_Value; };
-        size_t  size();
-        t_value operator[](size_t i);
-
-    protected:
-        std::string m_Name;
-        EParamType m_Type;
-        std::string m_Comment;
-        UnitParam m_Unit; 
-        std::string m_ShowConfig; // In GUI, the parameter is displayed only if m_ShowConfig is selected from DataFilter
-
-        t_pvalue p_Value;
-        bool m_create{ false }; 
-
-        t_value m_default; // cas particulier pour vector<double>, le type peut �tre double
-        t_value m_min;
-        t_value m_max;
-       
-        FlagParam m_IsBlocking;
-        FlagParam m_IsUsed;
-        
-        virtual void readParam(const std::string& aParamName, const std::map<std::string, std::string>& a_Settings);
-    };
+    
     class ModelIndicator {
     public:
         ModelIndicator(CairnObject* aParent = nullptr,
@@ -245,13 +147,13 @@ public:
         std::string getName() const;
         std::string getShortName() const;
         std::string getUnit() const;
-        bool IsExported();
-        void Export(std::fstream& out, const std::string& aComponentName, const std::string&range, bool aForceExport, 
-            const bool showDescription, const std::vector<std::string>& labels = {});
+        bool IsExported() const;
+        void Export(std::fstream& out, const std::string& aComponentName, const std::string& range, bool aForceExport, 
+            bool showDescription, const std::vector<std::string>& labels = {}) const;
         void Export(std::fstream& out, const std::string& aComponentName, const std::string& range, bool aForceExport, bool aIsSizeOptimized, 
             bool aIsPriceOptimized, bool isRollingHorizon, const std::vector<double> &aOptimalSizeAllCycles, const bool showDescription, 
-            const std::vector<std::string>& labels = {});
-        double getValue(size_t aIndex=0);
+            const std::vector<std::string>& labels = {}) const;
+        double getValue(size_t aIndex=0) const;
         void resetValue(); //reset indicator value to 0
     protected:
         SubModel* pModel;

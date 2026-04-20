@@ -55,7 +55,7 @@
                     "rsyncCommandArgs": [ "-t", "--delete" ],
                     "copySourcesOptions": {
                         "method": "rsync",
-                        "exclusionList": [ ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "tests/apicpp/src/TEST_CairnCore.h" ]
+                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h" ]
                     },
                     "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
                 }
@@ -66,7 +66,16 @@
             "inherits": "linux-base",
             "displayName": "Linux Debug",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "TEST_WITH_COVERAGE":  "ON"
+            }
+        },
+        {
+            "name": "linux-release",
+            "inherits": "linux-base",
+            "displayName": "Linux Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
@@ -111,8 +120,23 @@
             "inherits": "release",
             "installDir": "${sourceDir}/bin/release",
             "cacheVariables": {
-                "BUILD_WHEEL": "ON",
+                "BUILD_WHEEL": "ON",                
                 "INSTALL_WHEEL": "ON",
+                "BUILD_MIPMODELER": "OFF",
+                "BUILD_MODULECAIRN": "OFF",
+                "BUILD_CAIRNGUI": "OFF",
+                "BUILD_CAIRN": "OFF"
+            }
+        },
+        {
+            "name": "buildDoc",
+            "displayName": "Doc",
+            "inherits": "release",
+            "installDir": "${sourceDir}/bin/release",
+            "cacheVariables": {
+                "BUILD_DOC": "ON",         
+                "BUILD_WHEEL": "OFF",
+                "INSTALL_WHEEL": "OFF",
                 "BUILD_MIPMODELER": "OFF",
                 "BUILD_MODULECAIRN": "OFF",
                 "BUILD_CAIRNGUI": "OFF",
@@ -190,7 +214,12 @@
             "name": "fulldebug",
             "displayName": "Full-Debug",
             "configurePreset": "fulldebug",
-            "configuration": "debug"
+            "configuration": "debug",
+            "environment": {
+                "GUI_HOME": "${sourceDir}/gui",
+                "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
+                "PATH": "${sourceDir}/bin/${presetName}/bin;${sourceDir}/bin/${presetName}/bin/QuickUtilities;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
+            }
         },
         {
             "name": "linux-debug",
@@ -199,7 +228,8 @@
             "configuration": "debug",
             "environment": {
                 "CAIRN_BIN": "${sourceDir}/bin/${presetName}/lib",
-                "LD_LIBRARY_PATH": "${sourceDir}/bin/${presetName}/lib:$penv{LD_LIBRARY_PATH}"
+                "LD_LIBRARY_PATH": "${sourceDir}/bin/${presetName}/lib:$penv{LD_LIBRARY_PATH}",
+                "PATH": "${sourceDir}/bin/${presetName}/lib;$penv{PATH}"
             }
         }
     ]

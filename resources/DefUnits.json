@@ -9,11 +9,11 @@
     { "name": "unit"}
    ],
    "kind": "Miscellaneous",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "°K",
@@ -22,11 +22,11 @@
     { "name": "K"}
    ],
    "kind": "Temperature",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "°C",
@@ -35,11 +35,11 @@
     { "name": "DegC"}
    ],
    "kind": "Temperature",
-   "A": "1",
-   "B": "1",
-   "C": "273.15",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 273.15,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "°F",
@@ -47,11 +47,11 @@
     { "name": "°F"}
    ],
    "kind": "Temperature",
-   "A": "5",
-   "B": "9",
-   "C": "2298.35",
-   "D": "9",
-   "inverse": "0"
+   "A": 5,
+   "B": 9,
+   "C": 2298.35,
+   "D": 9,
+   "inverse": 0
   },
   {
    "name": "°R",
@@ -59,11 +59,11 @@
     { "name": "°R"}
    ],
    "kind": "Temperature",
-   "A": "5",
-   "B": "9",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 5,
+   "B": 9,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "_K",
@@ -71,11 +71,11 @@
     { "name": "°K"}
    ],
    "kind": "Delta_Temperature",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "_C",
@@ -84,11 +84,11 @@
     { "name": "DegC"}
    ],
    "kind": "Delta_Temperature",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "_R",
@@ -96,11 +96,11 @@
     { "name": "°R"}
    ],
    "kind": "Delta_Temperature",
-   "A": "5",
-   "B": "9",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 5,
+   "B": 9,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "_F",
@@ -108,11 +108,11 @@
     { "name": "°F"}
    ],
    "kind": "Delta_Temperature",
-   "A": "5",
-   "B": "9",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 5,
+   "B": 9,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "EUR/Wh",
@@ -123,11 +123,11 @@
     { "name": "euros/Wh"}
    ],
    "kind": "StorageCost",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "EUR/kWh",
@@ -138,11 +138,11 @@
     { "name": "euros/kWh"}
    ],
    "kind": "StorageCost",
-   "A": "1",
-   "B": "1000",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "EUR/MWh",
@@ -153,11 +153,11 @@
     { "name": "euros/MWh"}
    ],
    "kind": "StorageCost",
-   "A": "1",
-   "B": "1000000",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "W",
@@ -167,11 +167,11 @@
     { "name": "J/s"}
    ],
    "kind": "Power",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kW",
@@ -179,11 +179,11 @@
     { "name": "kW"}
    ],
    "kind": "Power",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "MW",
@@ -191,11 +191,35 @@
     { "name": "MW"}
    ],
    "kind": "Power",
-   "A": "1000000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "GW",
+   "alias": [
+    { "name": "GW"}
+   ],
+   "kind": "Power",
+   "A": 1000000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "J",
+   "alias": [
+    { "name": "J"}
+   ],
+   "kind": "Energy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "Wh",
@@ -203,11 +227,35 @@
     { "name": "Wh"}
    ],
    "kind": "Energy",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 3600,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "kJ",
+   "alias": [
+    { "name": "kJ"}
+   ],
+   "kind": "Energy",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "MJ",
+   "alias": [
+    { "name": "MJ"}
+   ],
+   "kind": "Energy",
+   "A": 1000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kWh",
@@ -215,11 +263,11 @@
     { "name": "kWh"}
    ],
    "kind": "Energy",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 3600000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "MWh",
@@ -227,11 +275,23 @@
     { "name": "MWh"}
    ],
    "kind": "Energy",
-   "A": "1000000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 3600000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "GWh",
+   "alias": [
+    { "name": "GWh"}
+   ],
+   "kind": "Energy",
+   "A": 3600000000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "Wc",
@@ -241,11 +301,11 @@
     { "name": "watt-crete"}
    ],
    "kind": "Peak",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kWc",
@@ -253,11 +313,11 @@
     { "name": "kWc"}
    ],
    "kind": "Peak",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "MWc",
@@ -265,11 +325,11 @@
     { "name": "MWc"}
    ],
    "kind": "Peak",
-   "A": "1000000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "EUR",
@@ -283,11 +343,11 @@
     { "name": "€"}
    ],
    "kind": "Cost",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kEUR",
@@ -295,11 +355,11 @@
     { "name": "kEUR"}
    ],
    "kind": "Cost",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "W/m2",
@@ -307,11 +367,11 @@
     { "name": "W/m2"}
    ],
    "kind": "PowerDensity",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kW/m2",
@@ -319,11 +379,11 @@
     { "name": "kW/m2"}
    ],
    "kind": "PowerDensity",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "MW/m2",
@@ -331,11 +391,11 @@
     { "name": "MW/m2"}
    ],
    "kind": "PowerDensity",
-   "A": "1000000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg",
@@ -343,11 +403,11 @@
     { "name": "kg"}
    ],
    "kind": "Mass",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "g",
@@ -355,11 +415,11 @@
     { "name": "g"}
    ],
    "kind": "Mass",
-   "A": "0.001",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 0.001,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "t",
@@ -367,11 +427,11 @@
     { "name": "t"}
    ],
    "kind": "Mass",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/s",
@@ -379,11 +439,11 @@
     { "name": "kg/s"}
    ],
    "kind": "MassFlow",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/h",
@@ -391,11 +451,11 @@
     { "name": "kg/h"}
    ],
    "kind": "MassFlow",
-   "A": "1",
-   "B": "3600",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 3600,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "t/h",
@@ -403,11 +463,11 @@
     { "name": "t/h"}
    ],
    "kind": "MassFlow",
-   "A": "1000",
-   "B": "3600",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 3600,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/d",
@@ -415,11 +475,11 @@
     { "name": "kg/d"}
    ],
    "kind": "MassFlow",
-   "A": "0.0000115741",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 0.0000115741,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/min",
@@ -427,11 +487,11 @@
     { "name": "kg/min"}
    ],
    "kind": "MassFlow",
-   "A": "1",
-   "B": "60",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 60,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/s/m2",
@@ -439,11 +499,11 @@
     { "name": "kg/s/m2"}
    ],
    "kind": "MassFlowDensity",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/h/m2",
@@ -451,11 +511,11 @@
     { "name": "kg/h/m2"}
    ],
    "kind": "MassFlowDensity",
-   "A": "1",
-   "B": "3600",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 3600,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "t/h/m2",
@@ -463,11 +523,11 @@
     { "name": "t/h/m2"}
    ],
    "kind": "MassFlowDensity",
-   "A": "1000",
-   "B": "3600",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1000,
+   "B": 3600,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/d/m2",
@@ -475,11 +535,11 @@
     { "name": "kg/d/m2"}
    ],
    "kind": "MassFlowDensity",
-   "A": "0.0000115741",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 0.0000115741,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "kg/min/m2",
@@ -487,11 +547,11 @@
     { "name": "kg/min/m2"}
    ],
    "kind": "MassFlowDensity",
-   "A": "1",
-   "B": "60",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 60,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "m2",
@@ -500,11 +560,11 @@
     { "name": "m²"}
    ],
    "kind": "Surface",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "are",
@@ -512,11 +572,11 @@
     { "name": "are"}
    ],
    "kind": "Surface",
-   "A": "100",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 100,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "ha",
@@ -524,11 +584,11 @@
     { "name": "ha"}
    ],
    "kind": "Surface",
-   "A": "10000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 10000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "acre",
@@ -536,11 +596,28 @@
     { "name": "acre"}
    ],
    "kind": "Surface",
-   "A": "4046.8564",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 4046.8564,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "GWP",
+   "alias": [
+    { "name": "kg CO2 eq"},
+    { "name": "kg eq CO2"},
+    { "name": "kg CO2"},
+    { "name": "kgCO2eq"},
+    { "name": "kgCO2"},
+    { "name": "kgCO2e"}
+   ],
+   "kind": "ImpactUnit1",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "GWPkg",
@@ -552,12 +629,12 @@
     { "name": "kgCO2"},
     { "name": "kgCO2e"}
    ],
-   "kind": "ImpactUnit1",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "kind": "ImpactUnit1ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "GWPt",
@@ -568,167 +645,12 @@
     { "name": "t CO2"},
     { "name": "tCO2"}
    ],
-   "kind": "ImpactUnit1",
-   "A": "1000",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "ODP",
-   "alias": [
-    { "name": "kg CFC-11 eq"},
-    { "name": "kgCFC-11eq"},
-    { "name": "kg CFC-11"},
-    { "name": "kg CFC"}
-   ],
-   "kind": "ImpactUnit2",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "Htox",
-   "alias": [
-    { "name": "CTUh"}
-   ],
-   "kind": "ImpactUnit3",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "IRP",
-   "alias": [
-    { "name": "kBq U"}
-   ],
-   "kind": "ImpactUnit4",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "POCP",
-   "alias": [
-    { "name": "kg NMVOC eq"},
-    { "name": "kgNM"}
-   ],
-   "kind": "ImpactUnit5",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "AP",
-   "alias": [
-    { "name": "mol H+ eq"},
-    { "name": "molH+"}
-   ],
-   "kind": "ImpactUnit6",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "EP-t",
-   "alias": [
-    { "name": "mol N eq"},
-    { "name": "molN"}
-   ],
-   "kind": "ImpactUnit7",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "EP-fw",
-   "alias": [
-    { "name": "kg P eq"},
-    { "name": "kgPeq"},
-    { "name": "kg P"}
-   ],
-   "kind": "ImpactUnit8",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "EP-m",
-   "alias": [
-    { "name": "kg N eq"},
-    { "name": "kgNeq"}
-   ],
-   "kind": "ImpactUnit9",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "Ecotox",
-   "alias": [
-    { "name": "CTUe"}
-   ],
-   "kind": "ImpactUnit10",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "WU",
-   "alias": [
-    { "name": "kg world eq deprived"}
-   ],
-   "kind": "ImpactUnit11",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "ADP-mm",
-   "alias": [
-    { "name": "kg Sb eq:kgSbeq"},
-    { "name": "kg Sb"},
-    { "name": "kgSb"}
-   ],
-   "kind": "ImpactUnit12",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
-  },
-  {
-   "name": "ADP-f",
-   "alias": [
-    { "name": "MJ"}
-   ],
-   "kind": "ImpactUnit13",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "kind": "ImpactUnit1Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "GWPkg/Wh",
@@ -741,11 +663,11 @@
     { "name": "kgCO2e/Wh"}
    ],
    "kind": "ImpactUnit1ParEnergy",
-   "A": "1",
-   "B": "1",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "GWPkg/kWh",
@@ -758,11 +680,11 @@
     { "name": "kgCO2e/kWh"}
    ],
    "kind": "ImpactUnit1ParEnergy",
-   "A": "1",
-   "B": "1000",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
   },
   {
    "name": "GWPkg/MWh",
@@ -775,11 +697,1313 @@
     { "name": "kgCO2e/MWh"}
    ],
    "kind": "ImpactUnit1ParEnergy",
-   "A": "1",
-   "B": "1000000",
-   "C": "0",
-   "D": "1",
-   "inverse": "0"
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ODP",
+   "alias": [
+    { "name": "kg CFC-11 eq"},
+    { "name": "kgCFC-11eq"},
+    { "name": "kg CFC-11"},
+    { "name": "kg CFC"},
+    { "name": "kgCFC"},
+    { "name": "kgCFC11"}
+   ],
+   "kind": "ImpactUnit2",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ODPkg",
+   "alias": [
+    { "name": "kg CFC-11 eq"},
+    { "name": "kgCFC-11eq"},
+    { "name": "kg CFC-11"},
+    { "name": "kg CFC"},
+    { "name": "kgCFC"},
+    { "name": "kgCFC11"}
+   ],
+   "kind": "ImpactUnit2ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ODPt",
+   "alias": [
+    { "name": "t CFC-11 eq"},
+    { "name": "tCFC-11eq"},
+    { "name": "t CFC-11"},
+    { "name": "t CFC"},
+    { "name": "tCFC"},
+    { "name": "tCFC11"}
+   ],
+   "kind": "ImpactUnit2Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ODPkg/Wh",
+   "alias": [
+    { "name": "kg CFC-11 eq/Wh"},
+    { "name": "kgCFC-11eq/Wh"},
+    { "name": "kg CFC-11/Wh"},
+    { "name": "kg CFC/Wh"},
+    { "name": "kgCFC/Wh"},
+    { "name": "kgCFC11/Wh"}
+   ],
+   "kind": "ImpactUnit2ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ODPkg/kWh",
+   "alias": [
+    { "name": "kg CFC-11 eq/kWh"},
+    { "name": "kgCFC-11eq/kWh"},
+    { "name": "kg CFC-11/kWh"},
+    { "name": "kg CFC/kWh"},
+    { "name": "kgCFC/kWh"},
+    { "name": "kgCFC11/kWh"}
+   ],
+   "kind": "ImpactUnit2ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ODPkg/MWh",
+   "alias": [
+    { "name": "kg CFC-11 eq/MWh"},
+    { "name": "kgCFC-11eq/MWh"},
+    { "name": "kg CFC-11/MWh"},
+    { "name": "kg CFC/MWh"},
+    { "name": "kgCFC/MWh"},
+    { "name": "kgCFC11/MWh"}
+   ],
+   "kind": "ImpactUnit2ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Htox",
+   "alias": [
+    { "name": "CTUh"}
+   ],
+   "kind": "ImpactUnit3",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Htox/Wh",
+   "alias": [
+    { "name": "CTUh/Wh"}
+   ],
+   "kind": "ImpactUnit3ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Htox/kWh",
+   "alias": [
+    { "name": "CTUh/kWh"}
+   ],
+   "kind": "ImpactUnit3ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Htox/MWh",
+   "alias": [
+    { "name": "CTUh/MWh"}
+   ],
+   "kind": "ImpactUnit3ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "IRP",
+   "alias": [
+    { "name": "kBq U"},
+    { "name": "kBq U-235 eq"},
+    { "name": "kBq U-235"},
+    { "name": "kBqU"}
+   ],
+   "kind": "ImpactUnit4",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "IRPkg/Wh",
+   "alias": [
+    { "name": "kBq U/Wh"},
+    { "name": "kBq U-235 eq/Wh"},
+    { "name": "kBq U-235/Wh"},
+    { "name": "kBqU/Wh"}
+   ],
+   "kind": "ImpactUnit4ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "IRPkg/kWh",
+   "alias": [
+    { "name": "kBq U/kWh"},
+    { "name": "kBq U-235 eq/kWh"},
+    { "name": "kBq U-235/kWh"},
+    { "name": "kBqU/kWh"}
+   ],
+   "kind": "ImpactUnit4ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "IRPkg/MWh",
+   "alias": [
+    { "name": "kBq U/MWh"},
+    { "name": "kBq U-235 eq/MWh"},
+    { "name": "kBq U-235/MWh"},
+    { "name": "kBqU/MWh"}
+   ],
+   "kind": "ImpactUnit4ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "POCP",
+   "alias": [
+    { "name": "kg NMVOC eq"},
+    { "name": "kgNM"},
+    { "name": "kgNMVOC eq"},
+    { "name": "kgNMVOCeq"}
+   ],
+   "kind": "ImpactUnit5",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "POCPkg",
+   "alias": [
+    { "name": "kg NMVOC eq"},
+    { "name": "kgNM"},
+    { "name": "kgNMVOC eq"},
+    { "name": "kgNMVOCeq"}
+   ],
+   "kind": "ImpactUnit5ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "POCPt",
+   "alias": [
+    { "name": "t NMVOC eq"},
+    { "name": "tNM"},
+    { "name": "tNMVOC eq"},
+    { "name": "tNMVOCeq"}
+   ],
+   "kind": "ImpactUnit5Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "POCPkg/Wh",
+   "alias": [
+    { "name": "kg NMVOC eq/Wh"},
+    { "name": "kgNM/Wh"},
+    { "name": "kgNMVOC eq/Wh"},
+    { "name": "kgNMVOCeq/Wh"}
+   ],
+   "kind": "ImpactUnit5ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "POCPkg/kWh",
+   "alias": [
+    { "name": "kg NMVOC eq/kWh"},
+    { "name": "kgNM/KWh"},
+    { "name": "kgNMVOC eq/kWh"},
+    { "name": "kgNMVOCeq/kWh"}
+   ],
+   "kind": "ImpactUnit5ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "POCPkg/MWh",
+   "alias": [
+    { "name": "kg NMVOC eq/MWh"},
+    { "name": "kgNM/MWh"},
+    { "name": "kgNMVOC eq/MWh"},
+    { "name": "kgNMVOCeq/MWh"}
+   ],
+   "kind": "ImpactUnit5ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "AP",
+   "alias": [
+    { "name": "mol H+ eq"},
+    { "name": "molH+"}
+   ],
+   "kind": "ImpactUnit6",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "APkg/Wh",
+   "alias": [
+    { "name": "mol H+ eq/Wh"},
+    { "name": "molH+/Wh"}
+   ],
+   "kind": "ImpactUnit6ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "APkg/kWh",
+   "alias": [
+    { "name": "mol H+ eq/kWh"},
+    { "name": "molH+/kWh"}
+   ],
+   "kind": "ImpactUnit6ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "APkg/MWh",
+   "alias": [
+    { "name": "mol H+ eq/MWh"},
+    { "name": "molH+/MWh"}
+   ],
+   "kind": "ImpactUnit6ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-t",
+   "alias": [
+    { "name": "mol N eq"},
+    { "name": "molN"}
+   ],
+   "kind": "ImpactUnit7",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-tkg/Wh",
+   "alias": [
+    { "name": "mol N eq/Wh"},
+    { "name": "molN/Wh"}
+   ],
+   "kind": "ImpactUnit7ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-tkg/kWh",
+   "alias": [
+    { "name": "mol N eq/kWh"},
+    { "name": "molN/kWh"}
+   ],
+   "kind": "ImpactUnit7ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-tkg/MWh",
+   "alias": [
+    { "name": "mol N eq/MWh"},
+    { "name": "molN/MWh"}
+   ],
+   "kind": "ImpactUnit7ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-fw",
+   "alias": [
+    { "name": "kg P eq"},
+    { "name": "kgPeq"},
+    { "name": "kg P"},
+    { "name": "kgP"}
+   ],
+   "kind": "ImpactUnit8",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-fwkg",
+   "alias": [
+    { "name": "kg P eq"},
+    { "name": "kgPeq"},
+    { "name": "kg P"},
+    { "name": "kgP"}
+   ],
+   "kind": "ImpactUnit8ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-fwt",
+   "alias": [
+    { "name": "t P eq"},
+    { "name": "tPeq"},
+    { "name": "t P"},
+    { "name": "tP"}
+   ],
+   "kind": "ImpactUnit8Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-fwkg/Wh",
+   "alias": [
+    { "name": "kg P eq/Wh"},
+    { "name": "kgPeq/Wh"},
+    { "name": "kg P/Wh"},
+    { "name": "kgP/Wh"}
+   ],
+   "kind": "ImpactUnit8ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-fwkg/kWh",
+   "alias": [
+    { "name": "kg P eq/kWh"},
+    { "name": "kgPeq/kWh"},
+    { "name": "kg P/kWh"},
+    { "name": "kgP/kWh"}
+   ],
+   "kind": "ImpactUnit8ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-fwkg/MWh",
+   "alias": [
+    { "name": "kg P eq/MWh"},
+    { "name": "kgPeq/MWh"},
+    { "name": "kg P/MWh"},
+    { "name": "kgP/MWh"}
+   ],
+   "kind": "ImpactUnit8ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-m",
+   "alias": [
+    { "name": "kg N eq"},
+    { "name": "kgNeq"},
+    { "name": "kgN"},
+    { "name": "kg N"}
+   ],
+   "kind": "ImpactUnit9",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-mkg",
+   "alias": [
+    { "name": "kg N eq"},
+    { "name": "kgNeq"},
+    { "name": "kgN"},
+    { "name": "kg N"}
+   ],
+   "kind": "ImpactUnit9ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-mt",
+   "alias": [
+    { "name": "t N eq"},
+    { "name": "tNeq"},
+    { "name": "tN"},
+    { "name": "t N"}
+   ],
+   "kind": "ImpactUnit9Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-mkg/Wh",
+   "alias": [
+    { "name": "kg N eq/Wh"},
+    { "name": "kgNeq/Wh"},
+    { "name": "kgN/Wh"},
+    { "name": "kg N/Wh"}
+   ],
+   "kind": "ImpactUnit9ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-mkg/kWh",
+   "alias": [
+    { "name": "kg N eq/kWh"},
+    { "name": "kgNeq/kWh"},
+    { "name": "kgN/kWh"},
+    { "name": "kg N/kWh"}
+   ],
+   "kind": "ImpactUnit9ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "EP-mkg/MWh",
+   "alias": [
+    { "name": "kg N eq/MWh"},
+    { "name": "kgNeq/MWh"},
+    { "name": "kgN/MWh"},
+    { "name": "kg N/MWh"}
+   ],
+   "kind": "ImpactUnit9ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Ecotox",
+   "alias": [
+    { "name": "CTUe"}
+   ],
+   "kind": "ImpactUnit10",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Ecotoxkg/Wh",
+   "alias": [
+    { "name": "CTUe/Wh"}
+   ],
+   "kind": "ImpactUnit10ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Ecotoxkg/kWh",
+   "alias": [
+    { "name": "CTUe/kWh"}
+   ],
+   "kind": "ImpactUnit10ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "Ecotoxkg/MWh",
+   "alias": [
+    { "name": "CTUe/MWh"}
+   ],
+   "kind": "ImpactUnit10ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "WU",
+   "alias": [
+    { "name": "m3 world eq"},
+    { "name": "m3 water eq of deprived water"},
+    { "name": "m3"}
+   ],
+   "kind": "ImpactUnit11",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "WUkg/Wh",
+   "alias": [
+    { "name": "m3 world eq/Wh"},
+    { "name": "m3 water eq of deprived water/Wh"},
+    { "name": "m3/Wh"}
+   ],
+   "kind": "ImpactUnit11ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "WUkg/kWh",
+   "alias": [
+    { "name": "m3 world eq/kWh"},
+    { "name": "m3 water eq of deprived water/kWh"},
+    { "name": "m3/kWh"}
+   ],
+   "kind": "ImpactUnit11ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "WUkg/MWh",
+   "alias": [
+    { "name": "m3 world eq/MWh"},
+    { "name": "m3 water eq of deprived water/MWh"},
+    { "name": "m3/MWh"}
+   ],
+   "kind": "ImpactUnit11ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-mm",
+   "alias": [
+    { "name": "kg Sb eq:kgSbeq"},
+    { "name": "kg Sb"},
+    { "name": "kgSb"}
+   ],
+   "kind": "ImpactUnit12",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-mmkg",
+   "alias": [
+    { "name": "kg Sb eq:kgSbeq"},
+    { "name": "kg Sb"},
+    { "name": "kgSb"}
+   ],
+   "kind": "ImpactUnit12ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-mmt",
+   "alias": [
+    { "name": "t Sb eq:tSbeq"},
+    { "name": "t Sb"},
+    { "name": "tSb"}
+   ],
+   "kind": "ImpactUnit12Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-mmkg/Wh",
+   "alias": [
+    { "name": "kg Sb eq/Wh:kgSbeq/Wh"},
+    { "name": "kg Sb/Wh"},
+    { "name": "kgSb/Wh"}
+   ],
+   "kind": "ImpactUnit12ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-mmkg/kWh",
+   "alias": [
+    { "name": "kg Sb eq/kWh:kgSbeq/kWh"},
+    { "name": "kg Sb/kWh"},
+    { "name": "kgSb/kWh"}
+   ],
+   "kind": "ImpactUnit12ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-mmkg/MWh",
+   "alias": [
+    { "name": "kg Sb eq/MWh"},
+    { "name": "kgSbeq/MWh"},
+    { "name": "kg Sb/MWh"},
+    { "name": "kgSb/MWh"}
+   ],
+   "kind": "ImpactUnit12ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-f",
+   "alias": [
+    { "name": "MJ"}
+   ],
+   "kind": "ImpactUnit13",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-fkg",
+   "alias": [
+    { "name": "MJ/kg"}
+   ],
+   "kind": "ImpactUnit13ParMass",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-ft",
+   "alias": [
+    { "name": "MJ/t"}
+   ],
+   "kind": "ImpactUnit13Parmass",
+   "A": 1000,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-fkg/Wh",
+   "alias": [
+    { "name": "MJ/Wh"}
+   ],
+   "kind": "ImpactUnit13ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-fkg/kWh",
+   "alias": [
+    { "name": "MJ/kWh"}
+   ],
+   "kind": "ImpactUnit13ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "ADP-fkg/MWh",
+   "alias": [
+    { "name": "MJ/MWh"}
+   ],
+   "kind": "ImpactUnit13ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "PM",
+   "alias": [
+    { "name": "disease incidences"}
+   ],
+   "kind": "ImpactUnit14",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "PMkg/Wh",
+   "alias": [
+    { "name": "disease incidences/Wh"}
+   ],
+   "kind": "ImpactUnit14ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "PMkg/kWh",
+   "alias": [
+    { "name": "disease incidences/kWh"}
+   ],
+   "kind": "ImpactUnit14ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "PMkg/MWh",
+   "alias": [
+    { "name": "disease incidences/MWh"}
+   ],
+   "kind": "ImpactUnit14ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "LU",
+   "alias": [
+    { "name": "pt"},
+    { "name": "pts"},
+    { "name": "Pts"},
+    { "name": "PTS"},
+    { "name": "points"},
+    { "name": "point"}
+   ],
+   "kind": "ImpactUnit15",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "LUkg/Wh",
+   "alias": [
+    { "name": "pt/Wh"},
+    { "name": "pts/Wh"},
+    { "name": "PTS/Wh"},
+    { "name": "points/Wh"},
+    { "name": "point/Wh"}
+   ],
+   "kind": "ImpactUnit15ParEnergy",
+   "A": 1,
+   "B": 1,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "LUkg/kWh",
+   "alias": [
+    { "name": "pt/kWh"},
+    { "name": "pts/kWh"},
+    { "name": "PTS/kWh"},
+    { "name": "points/kWh"},
+    { "name": "point/kWh"}
+   ],
+   "kind": "ImpactUnit15ParEnergy",
+   "A": 1,
+   "B": 1000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  },
+  {
+   "name": "LUkg/MWh",
+   "alias": [
+    { "name": "pt/MWh"},
+    { "name": "pts/MWh"},
+    { "name": "PTS/MWh"},
+    { "name": "points/MWh"},
+    { "name": "point/MWh"}
+   ],
+   "kind": "ImpactUnit15ParEnergy",
+   "A": 1,
+   "B": 1000000,
+   "C": 0,
+   "D": 1,
+   "inverse": 0
+  }
+ ],
+ "carriers":[
+  {
+   "name": "FluidH2",
+   "LHV": 0.3332,
+   "CP": 14300,
+   "RHO": 0.0899,
+   "Specific_Heat_Ratio": 1.41,
+   "Molar_Mass": 0.0020159,
+   "a1": 2.93286579,
+   "a2": 0.000826607967,
+   "a3": -0.000000146402335,
+   "a4": 1.54100359E-11,
+   "a5": -6.88804432E-16,
+   "Cp_0": 27.6716,
+   "Cp_1": 0.0033858,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidO2",
+   "LHV": 1,
+   "CP": 0,
+   "RHO": 1.4269,
+   "Specific_Heat_Ratio": 1.4,
+   "Molar_Mass": 0.0319989,
+   "a1": 3.66096083,
+   "a2": 0.000656365523,
+   "a3": -0.000000141149485,
+   "a4": 2.05797658E-11,
+   "a5": -1.29913248E-15,
+   "Cp_0": 25.9996,
+   "Cp_1": 0.0113278,
+   "Cp_2": -0.0000015466,
+   "Cp_3": -0.0000000009196,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidAir",
+   "LHV": 1,
+   "CP": 1.293,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 1.4,
+   "Molar_Mass": 0.02897,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 29.116,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidCH4",
+   "LHV": 0.138486948056,
+   "CP": 2226,
+   "RHO": 0.71568,
+   "Specific_Heat_Ratio": 1.304,
+   "Molar_Mass": 0.01604,
+   "a1": 1.63552643,
+   "a2": 0.0100842795,
+   "a3": -0.00000336916254,
+   "a4": 5.34958667E-10,
+   "a5": -3.15518833E-14,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidCH4_H2",
+   "LHV": 1,
+   "CP": 0,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidH2OLiq",
+   "LHV": 1,
+   "CP": 0,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 1.33,
+   "Molar_Mass": 0.0180153,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 3003.4,
+   "Cp_1": -43.17,
+   "Cp_2": 0.2544,
+   "Cp_3": -0.00074892,
+   "Cp_4": 0.000001101,
+   "Cp_5": -0.00000000064633
+  },
+  {
+   "name": "FluidSteam",
+   "LHV": 1,
+   "CP": 0,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 1.33,
+   "Molar_Mass": 0.0180153,
+   "a1": 2.67703787,
+   "a2": 0.00297318329,
+   "a3": -0.00000077376969,
+   "a4": 9.44336689E-11,
+   "a5": -4.26900959E-15,
+   "Cp_0": 31.76,
+   "Cp_1": 0.0038273,
+   "Cp_2": 0.0000096739,
+   "Cp_3": -0.0000000049411,
+   "Cp_4": 8.9524E-13,
+   "Cp_5": -5.6056E-17
+  },
+  {
+   "name": "FluidLOX",
+   "LHV": 212.9,
+   "CP": 0,
+   "RHO": 1.4269,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0.031999,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 1700,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidLIN",
+   "LHV": 198.3,
+   "CP": 0,
+   "RHO": 1.25125,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0.028013,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 2040,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidCO2",
+   "LHV": 1,
+   "CP": 0,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 1.3083,
+   "Molar_Mass": 0.04401,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 826.84,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidFuel",
+   "LHV": 0.01186,
+   "CP": 3000,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "FluidH2O",
+   "LHV": 0,
+   "CP": 4186,
+   "RHO": 1000,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "DryWood",
+   "LHV": 0.004,
+   "CP": 1300,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "WetWood",
+   "LHV": 0.002,
+   "CP": 2400,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "BioMass",
+   "LHV": 0.006,
+   "CP": 2400,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "Thermal",
+   "LHV": 1,
+   "CP": 4186,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "Electrical",
+   "LHV": 1,
+   "CP": 0,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
+  },
+  {
+   "name": "Material",
+   "LHV": 0,
+   "CP": 0,
+   "RHO": 0,
+   "Specific_Heat_Ratio": 0,
+   "Molar_Mass": 0,
+   "a1": 0,
+   "a2": 0,
+   "a3": 0,
+   "a4": 0,
+   "a5": 0,
+   "Cp_0": 0,
+   "Cp_1": 0,
+   "Cp_2": 0,
+   "Cp_3": 0,
+   "Cp_4": 0,
+   "Cp_5": 0
   }
  ]
 }

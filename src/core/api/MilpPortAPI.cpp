@@ -116,26 +116,42 @@ CairnAPI::EnergyVectorAPI CairnAPI::MilpPortAPI::get_EnergyCarrier()
 	return vEnergyCarrier;
 }
 
-void CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector)
+bool CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector)
 {
+	bool configured = false;
 	MilpPort* pPort = get_MilpPort();
 	if (pPort) {
 		pPort->setCarrier(a_EnergyVector.get_EnergyVector());
-		if (pPort->IsDefaultPort()) {
-			MilpComponent* lptrCompo = (MilpComponent*)pPort->parent();
-			if (lptrCompo && lptrCompo->allDefaultPortsHaveCarriers()
-				&& lptrCompo->compoModel() 
-				&& lptrCompo->compoModel()->getInputParam()->getMapParams().size() == 0 //only once. TODO: use a more robust condition
-				&& !lptrCompo->getMainCarrier())
-			{
-				/*
-				* Declare parametersand IOs only after EnergyVectors of all default ports are set
-				* Should be called only once (first EnergyVector set). 
-				* Should not be called if the EnergyVector is changed later on.
-				* Otherwise, parameter values should be saved.
-				*/
-				lptrCompo->initSubModelConfiguration(false);
-			}
-		}
+		configured = configureParentComponent();
 	}
+	return configured; // Might be confusing because the return value might be false even if the carrier is correctly set!
+}
+
+bool CairnAPI::MilpPortAPI::configureParentComponent() {
+	MilpPort* pPort = get_MilpPort();
+	if (!pPort) return false;
+
+	if (!pPort->IsDefaultPort()) return false;
+
+	MilpComponent* lptrCompo = (MilpComponent*)pPort->parent();
+	if (lptrCompo && lptrCompo->allDefaultPortsHaveCarriers()
+		&& lptrCompo->compoModel()
+		&& lptrCompo->compoModel()->getInputParam()->getMapParams().size() == 0 //only once. TODO: use a more robust condition
+		&& !lptrCompo->getMainCarrier())
+	{
+		/*
+		* Declare parametersand IOs only after EnergyVectors of all default ports are set
+		* Should be called only once (first EnergyVector set).
+		* Should not be called if the EnergyVector is changed later on.
+		* Otherwise, parameter values should be saved.
+		*/
+		try {
+			lptrCompo->initSubModelConfiguration(false);
+		}
+		catch (...) {
+			return false;
+		}
+		return true;
+	}
+	return false;
 }

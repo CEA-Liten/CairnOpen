@@ -1,0 +1,73 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;52.1429;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;5.88706e+08;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);-1.12903e+07;EUR;NPV
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;0;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total project discounted operation cost;1.12903e+07;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total project income;-7.29409e-08;EUR;DiscountedSellPart
+TecEcoAnalysis;Total project buying costs;1.12903e+07;EUR;DiscountedBuyPart
+TecEcoAnalysis;Annual operation cost;996000;EUR;NetOPEX
+TecEcoAnalysis;Annual OPEX;0;EUR;PureOPEX
+TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis;Annual income;-6.43468e-09;EUR;SellPart
+TecEcoAnalysis;Annual buying costs;996000;EUR;BuyPart
+Elec_Bus;Integrated bus balance;0;MWh;BusBalance
+Elec_Grid;is installed;1;-;IsInstalled
+Elec_Grid;Annual operation cost;0;EUR;OPEX
+Elec_Grid;Annual variable OPEX;0;EUR;VariableOPEX
+Elec_Grid;Grid extraction time;283;h;extractionTime
+Elec_Grid;Grid extraction ElectricalEnergy GridFlow;8847.57;MWh;TotGridFlow
+Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;100292;MWh;LvlzdTotGridFlow
+Elec_Grid;Mean extraction ElectricalPower GridFlow;31.2635;MW;MeanGridFlow
+Electrolyzer;CAPEX;0;EUR;CAPEX
+Electrolyzer;is installed;1;-;IsInstalled
+Electrolyzer;Annual operation cost;0;EUR;OPEX
+Electrolyzer;Annual fixed OPEX;0;EUR;PureOPEX
+Electrolyzer;Annual variable OPEX;0;EUR;VariableOPEX
+Electrolyzer;Annual replacement costs;0;EUR;Replacement
+Electrolyzer;Installed Size;50;MW;Size
+Electrolyzer;Running time at power >0.;283;h;RunningTime
+Electrolyzer;Running time availability;0.561508;-;RunningTimeAvailable
+Electrolyzer;Annual production of FluidH2Mass H2MassFlowRate;159320;kg;TotProdH2MassFlowRate
+Electrolyzer;Mean production of FluidH2Flowrate H2MassFlowRate;562.968;kg/h;MeanProdH2MassFlowRate
+Electrolyzer;Annual consumption of ElectricalEnergy UsedPower;-8847.57;MWh;TotConsUsedPower
+Electrolyzer;Mean consumption of ElectricalPower UsedPower;-31.2635;MW;MeanConsUsedPower
+Electrolyzer;Load factor UsedPower;0.351094;-;UseRateUsedPower
+Electrolyzer;Data Port published State - data computed;-283;MWh;DataPortState
+H2_Bus;Integrated bus balance;0;kg;BusBalance
+H2_Grid;CAPEX;0;EUR;CAPEX
+H2_Grid;is installed;1;-;IsInstalled
+H2_Grid;Annual operation cost;996000;EUR;OPEX
+H2_Grid;Annual fixed OPEX;0;EUR;PureOPEX
+H2_Grid;Annual variable OPEX;0;EUR;VariableOPEX
+H2_Grid;Annual replacement costs;0;EUR;Replacement
+H2_Grid;Grid extraction time;15;h;extractionTime
+H2_Grid;Grid extraction FluidH2Mass GridFlow;9960;kg;TotGridFlow
+H2_Grid;Levelized Grid extraction FluidH2Mass GridFlow;112903;kg;LvlzdTotGridFlow
+H2_Grid;Mean extraction FluidH2Flowrate GridFlow;664;kg/h;MeanGridFlow
+H2_Load;is installed;1;-;IsInstalled
+H2_Load;Annual operation cost;0;EUR;OPEX
+H2_Load;Annual variable OPEX;0;EUR;VariableOPEX
+H2_Load;Component Weight;1;Unit;Weight
+H2_Load;ImposedProfile load time;298;h;ImposedProfileTime
+H2_Load;ImposedProfile FluidH2Mass SourceLoadFlow;-169280;kg;TotImposedProfileSourceLoadFlow
+H2_Load;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-1.91889e+06;kg;LvlzdTotImposedProfileSourceLoadFlow
+H2_Load;Mean FluidH2Flowrate SourceLoadFlow;-568.054;kg/h;MeanImposedProfileSourceLoadFlow
+MinStateTime;Opex part;0;EUR;Opex
+MinStateTime;Undiscounted number of startups;8;-;NbStartUps
+MinStateTime;Undiscounted number of shutdowns;3;-;NbShutDowns
+MinStateTime;Levelized cost of startups;0;EUR;LevStartUpsCost
+MinStateTime;Levelized cost of shutdowns;0;EUR;LevShutDownsCost
+NodeEquality#1;Mean value during time period;0;;Mean

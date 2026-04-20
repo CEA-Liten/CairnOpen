@@ -1,0 +1,102 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;1;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;4.35231e+07;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);-1.70731e+07;EUR;NPV
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;1.70716e+07;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total project discounted operation cost;1454.51;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total project discounted OPEX;1454.51;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total project buying costs;0;EUR;DiscountedBuyPart
+TecEcoAnalysis;Annual operation cost;128.313;EUR;NetOPEX
+TecEcoAnalysis;Annual OPEX;128.313;EUR;PureOPEX
+TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis;Annual income;0;EUR;SellPart
+TecEcoAnalysis;Annual buying costs;0;EUR;BuyPart
+Demande_H2;is installed;1;-;IsInstalled
+Demande_H2;Annual operation cost;0;EUR;OPEX
+Demande_H2;Annual variable OPEX;0;EUR;VariableOPEX
+Demande_H2;Component Weight;1;Unit;Weight
+Demande_H2;ImposedProfile load time;0;h;ImposedProfileTime
+Demande_H2;ImposedProfile FluidH2Mass SourceLoadFlow;0;kg;TotImposedProfileSourceLoadFlow
+Demande_H2;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;0;kg;LvlzdTotImposedProfileSourceLoadFlow
+Demande_H2;Mean FluidH2Flowrate SourceLoadFlow;0;kg/h;MeanImposedProfileSourceLoadFlow
+Electrolyzer#1;CAPEX;9.2266e+06;EUR;CAPEX
+Electrolyzer#1;is installed;1;-;IsInstalled
+Electrolyzer#1;Annual operation cost;52.6632;EUR;OPEX
+Electrolyzer#1;Annual fixed OPEX;52.6632;EUR;PureOPEX
+Electrolyzer#1;Annual variable OPEX;0;EUR;VariableOPEX
+Electrolyzer#1;Annual replacement costs;0;EUR;Replacement
+Electrolyzer#1;Installed Optimal Size;4.6133;MW;Size
+Electrolyzer#1;Running time at power >0.;0;h;RunningTime
+Electrolyzer#1;Running time availability;0;-;RunningTimeAvailable
+Electrolyzer#1;Annual production of FluidH2Mass H2MassFlowRate;0;kg;TotProdH2MassFlowRate
+Electrolyzer#1;Mean production of FluidH2Flowrate H2MassFlowRate;0;kg/h;MeanProdH2MassFlowRate
+Electrolyzer#1;Annual consumption of ElectricalEnergy UsedPower;0;MWh;TotConsUsedPower
+Electrolyzer#1;Mean consumption of ElectricalPower UsedPower;0;MW;MeanConsUsedPower
+Electrolyzer#1;Load factor UsedPower;0;-;UseRateUsedPower
+GridFree#4;is installed;1;-;IsInstalled
+GridFree#4;Annual operation cost;0;EUR;OPEX
+GridFree#4;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#4;Grid extraction time;0;h;extractionTime
+GridFree#4;Grid extraction ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+GridFree#4;Levelized Grid extraction ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+GridFree#4;Mean extraction ElectricalPower GridFlow;0;MW;MeanGridFlow
+GridFree#5;is installed;1;-;IsInstalled
+GridFree#5;Annual operation cost;0;EUR;OPEX
+GridFree#5;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#5;Grid injection time;1;h;injectionTime
+GridFree#5;Grid injection ElectricalEnergy GridFlow;-0.283719;MWh;TotGridFlow
+GridFree#5;Levelized Grid injection ElectricalEnergy GridFlow;-3.21612;MWh;LvlzdTotGridFlow
+GridFree#5;Mean injection ElectricalPower GridFlow;-0.283719;MW;MeanGridFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;kg;BusBalance
+Solar;CAPEX;5.76844e+06;EUR;CAPEX
+Solar;is installed;1;-;IsInstalled
+Solar;Annual operation cost;32.9249;EUR;OPEX
+Solar;Annual fixed OPEX;32.9249;EUR;PureOPEX
+Solar;Annual variable OPEX;0;EUR;VariableOPEX
+Solar;Annual replacement costs;0;EUR;Replacement
+Solar;Component Optimal Weight;7.21055;Unit;Weight
+Solar;ImposedProfile source time;0;h;ImposedProfileTime
+Solar;ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;TotImposedProfileSourceLoadFlow
+Solar;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Solar;Mean ElectricalPower SourceLoadFlow;0;MW;MeanImposedProfileSourceLoadFlow
+StorageGen#1;CAPEX;600985;EUR;CAPEX
+StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;Annual operation cost;34.3028;EUR;OPEX
+StorageGen#1;Annual fixed OPEX;34.3028;EUR;PureOPEX
+StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX
+StorageGen#1;Annual replacement costs;0;EUR;Replacement
+StorageGen#1;Storage Optimal Capacity;6009.85;kg;Capacity
+StorageGen#1;Charging time;0;h;ChargingTime
+StorageGen#1;Discharging time;0;h;DischargingTime
+StorageGen#1;Charged FluidH2Mass Flow;0;kg;TotChargedFlow
+StorageGen#1;Discharged FluidH2Mass Flow;0;kg;TotDischargedFlow
+StorageGen#1;Levelized Charged FluidH2Mass Flow;0;kg;LvlzdTotChargedFlow
+StorageGen#1;Levelized Discharged FluidH2Mass Flow;0;kg;LvlzdDischargedFlow
+StorageGen#1;Mean Charged FluidH2Flowrate Flow;0;kg/h;MeanChargedFlow
+StorageGen#1;Mean Discharged FluidH2Flowrate Flow;0;kg/h;MeanDischargedFlow
+StorageGen#1;Equivalent number of cycles FluidH2Flowrate Flow;0;-;NbCycles
+StorageGen#1;Cumulated losses;0;kg;CumulatedLosses
+Wind;CAPEX;1.47561e+06;EUR;CAPEX
+Wind;is installed;1;-;IsInstalled
+Wind;Annual operation cost;8.42241;EUR;OPEX
+Wind;Annual fixed OPEX;8.42241;EUR;PureOPEX
+Wind;Annual variable OPEX;0;EUR;VariableOPEX
+Wind;Annual replacement costs;0;EUR;Replacement
+Wind;Component Optimal Weight;1.22967;Unit;Weight
+Wind;ImposedProfile source time;1;h;ImposedProfileTime
+Wind;ImposedProfile ElectricalEnergy SourceLoadFlow;0.283719;MWh;TotImposedProfileSourceLoadFlow
+Wind;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;3.21612;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Wind;Mean ElectricalPower SourceLoadFlow;0.283719;MW;MeanImposedProfileSourceLoadFlow

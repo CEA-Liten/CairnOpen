@@ -2,16 +2,32 @@ import os
 import re
 from re import X
 import sys
-import pandas as pd
 import glob
 import copy
+import pandas as pd
+from sys import platform
 
-cairnBin =  os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bin')
+cairnBin =  os.path.join(os.path.dirname(os.path.realpath(__file__)), '@CAIRN_INSTALL_BINDIR@')
+if platform == "win32":
+    os.add_dll_directory(cairnBin)
+else:
+    old = os.environ.get("PATH")
+    if old:
+        os.environ["PATH"] = cairnBin + ":" + old
+    else:
+        os.environ["PATH"] = cairnBin
+    cairnLib =  os.path.join(os.path.dirname(os.path.realpath(__file__)), '@CMAKE_INSTALL_LIBDIR@')
+    old = os.environ.get("LD_LIBRARY_PATH")
+    if old:
+        os.environ["LD_LIBRARY_PATH"] = cairnLib + ":" + old
+    else:
+        os.environ["LD_LIBRARY_PATH"] = cairnLib
+
 sys.path.append( cairnBin )
 os.environ["CAIRN_BIN"] = cairnBin
 
-from .bin.cairn import *
-
+from .@CAIRN_INSTALL_BINDIR@.cairn import *
+#from cairn.fmiInterface.fmi_interface import FMI2Interface
 
 
 
@@ -77,7 +93,8 @@ def get_element(problem,name):
                 energy_carrier = problem.get_energy_carrier(name)
                 return energy_carrier
             except RuntimeError:
-                return problem #TecEco
+                tecEco = problem.get_tech_eco_analysis()
+                return tecEco
                         
 def run_sensitivity(problem, df_sens, max_time=-1,indicators = pd.DataFrame()):
     """ runs sensitivity study of a given problem with a given input dataframe (2 header rows: 1st row: name of the component, 
@@ -252,7 +269,7 @@ def generate_report_list(projects_path, prefix, scenario_list, file_ext):
             all_filenames = list(set([i for i in glob.glob(strs)]))
 
         for f in range(len(all_filenames)):
-            m = re.search(scenario + '([\d _a-zA-Z]+)', all_filenames[f])
+            m = re.search(scenario + r'([\d _a-zA-Z]+)', all_filenames[f])
             if type(m) is not type(None):
                 matchTest = m.group()
                 list_report.append(matchTest)

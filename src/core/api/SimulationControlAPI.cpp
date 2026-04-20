@@ -52,7 +52,7 @@ void CairnAPI::SimulationControlAPI::updateMilpData()
 			MilpData* pMilpData = pProblem->getMilpData();
 			SimulationControl* vSimulationControl = (SimulationControl*)m_Object;
 			bool vOk = pMilpData->setMilpDataFromSettings(vSimulationControl->getParameters());
-			pProblem->setExtrapolationFactor();
+			pProblem->computeExtrapolationFactor();
 			vRet = (vOk) ? noError : errParam;
 			vErrMsg = (vOk) ? "" : "parameter";
 		}

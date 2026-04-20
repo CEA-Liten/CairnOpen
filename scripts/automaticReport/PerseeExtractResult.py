@@ -9,6 +9,7 @@ import shutil
 import sys
 from os import path
 import pandas as pd
+
 import datetime
 import Utilities as ut
 
@@ -18,14 +19,18 @@ import HTMLWriter as hw
 sys.path.append(os.path.dirname(sys.argv[0]))
 script_auto_report_dir = os.path.dirname(__file__)
 
-def saveStudyFiles(projectsPath, TestCase, folder_report, UseCopyMode=True, Name_scenario="", config_extract_name="config_Extract.xml"):
+def saveStudyFiles(projectsPath, TestCase, folder_report, UseCopyMode=True, Name_scenario="",dataseries_name="", config_extract_name="config_Extract.xml"):
     #TODO: why not providing ScenarioName when calling persee (so no need to copy files) ?!
+    # TODO: check if it's not used for Uranie (PerseeSensParam1)
     list_files = ["_results_PLAN.csv", "_results_HIST.csv", "_results_multiObj.csv",
-                  "_model.lp", ".xml", ".json", "_self.json", "_cplex.log", 
+                  "_model.lp", ".xml", ".json", "_cplex.log", 
                   "_to_change.csv", "_optim.log", "_Results.csv", "_results_SAVE.csv","_results_rollinghorizon.csv", 
                   "_results_EnvImpactMass.csv", "_PortEnvImpactParameters.csv", "_EnvImpactParameters.csv", "_Parameters.csv", 
                   "_solverRunningTime.csv", "_optimalSize.csv"]
-
+    if dataseries_name == "":
+        list_files.append("_dataseries.csv")
+    else:
+        list_files.append(dataseries_name)
     extract_files = ["config_Colors.csv", config_extract_name]  #edited
     # file_name_mst = projectsPath+ut.getOSsep()+TestCase+"_mipstart.mst"
     if os.path.isfile(folder_report):
@@ -87,6 +92,7 @@ def moveFile(file_name, folder_report):
 
 
 def ExtractResult(projectsPath, TestCase, ConfigCase, folder_report, saveStudy=1, dynamic_csv='', config_extract_name="config_Extract.xml"):
+    # TODO: delete if not used in Uranie
     print("projectsPath  :", projectsPath)
     file_confidential_png = os.path.dirname(path.realpath(__file__)) + ut.getOSsep() + "PerseeDocGen\\confidentiel.PNG"
     file_liten_sty = os.path.dirname(path.realpath(__file__)) + ut.getOSsep() + "PerseeDocGen\\liten.sty"
@@ -215,25 +221,19 @@ def GenerateReport(projectsPath, TestCase, ConfigCase, folder_report, saveStudy=
 
 
 def GenerateHTMLReport(app_home, TestCase, prefix, scenarioList=[], config_file_name="", historplan="PLAN", tab_echantillonnage=""):
-    scenarioName = "_".join(scenarioList)
     file_name_desc = app_home + ut.getOSsep() + TestCase + ".json"
     print("Read graph properties ... ")
     if config_file_name == "":
         config_file = app_home + ut.getOSsep() + 'config_Extract.xml'
     else:
         config_file = config_file_name
-    xml, sankey_overwrite, sankey_name, liste_graphes_types = hw.readGraphProperties(config_file)
+    xml, sankey_overwrite, sankey_name, liste_graphes_types, reportProperties = hw.readGraphProperties(config_file)
 
     print("Write Sankey...")
-    if sankey_overwrite:
-        if sankey_name == "":
-            sankey_name = ut.sankey_xml_from_json(file_name_desc, app_home + ut.getOSsep() + scenarioName + 'sankey.xml',
-                                                  overwrite=sankey_overwrite, aggregate=True)
-            print("Sankey generated in ", sankey_name)
-        else:
-            sankey_name = ut.sankey_xml_from_json(file_name_desc, app_home + ut.getOSsep() + sankey_name,
-                                                  overwrite=sankey_overwrite, aggregate=True)
-            print("Sankey generated in ", sankey_name)
+    if sankey_overwrite!="":
+        ut.sankey_xml_from_json(file_name_desc, app_home + ut.getOSsep() + sankey_overwrite,
+                                              overwrite=True, aggregate=True)
+        print("Sankey generated in ", sankey_overwrite)
     print("liste_graphes_types", liste_graphes_types)
 
     #Create data dictionary 
@@ -287,7 +287,9 @@ def GenerateHTMLReport(app_home, TestCase, prefix, scenarioList=[], config_file_
         table["XYGraphMultiStudy"] = df_all
 
     print("Extract dataseries ...", sankey_name)
-    graphProperties = [config_file_name.split('\\')[-1], sankey_name.split('\\')[-1]]  #edited
+    graphProperties = [config_file_name.split('\\')[-1]]  #edited
+    for sn in sankey_name:
+        graphProperties.append(sn.split('\\')[-1])
     ppr.PasteSortieFromGraphProperties(app_home, TestCase, scenarioList, prefix, graphProperties, list_order=list_report)
     print(app_home + ut.getOSsep() + 'SUMUP_TS_' + prefix + '.csv')
     try:
@@ -308,8 +310,12 @@ def GenerateHTMLReport(app_home, TestCase, prefix, scenarioList=[], config_file_
     else:
         shutil.copy(os.getenv('CAIRN_APP') + ut.getOSsep() + 'Scripts' + ut.getOSsep() + 'PerseeDocGen' + ut.getOSsep() + 'plotly.min.js',
                     html_report_dir + ut.getOSsep() + "plotly.min.js")
-    name_html = html_report_dir + ut.getOSsep() + 'report' + timestamp + '.html'
-    hw.to_HTML(figures, name_html)
+    name_html = html_report_dir + ut.getOSsep() + 'report' 
+    if (reportProperties.get("file") == "separate"):
+        for f in figures:
+            hw.to_HTML_singlegraph(f,name_html + f.getgp("title", default=f.getgp("type")) + ".html")
+    else:
+        hw.to_HTML(figures, name_html + '.html')
     return name_html
 
 
@@ -352,8 +358,8 @@ if __name__ == '__main__':
             openHTMLReport = int(sys.argv[7])
 
     else:
-        app_home = r"D:\Users\PP265749\git\PerseeGui\Test_Persee\formation_persee"
-        testcase = "formation_persee" 
+        app_home = r"D:\Users\PP265749\git\cairnopen\tests\integration\\cairn_training"
+        testcase = "cairn_training" 
         prefix = "Report_s"
         scenarioList = []       
         #saveStudy = 1
@@ -365,6 +371,7 @@ if __name__ == '__main__':
         configFile = "config_Extract.xml"
         configFileName = "config_Extract.xml"
         colorfile = "config_Colors.csv"
+        tab_echantillonnage_file="sampling.csv"
 
     print("Module sys searching Path is ", sys.path)
     config_file = os.path.join(app_home, configFileName) 

@@ -13,6 +13,8 @@ struct SEnvImpact {
     std::string Unit = "";  
 };
 
+using namespace IndicatorNames;
+
 class CAIRNCORESHARED_EXPORT TechnicalSubModel : public SubModel
 {
 public:
@@ -43,17 +45,16 @@ public:
     {
         SubModel::declareDefaultModelConfigurationParameters();
         //bool
-        addParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");    /** Use EcoInvestModel - ie Use Capex and Opex if true */
-        addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel - ie Use EnvEmissionCost if true", "", "EnvironmentModel"); /** Use EnvironmentModel - ie Use EnvEmissionCost if true  */
-        addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "GeometryModel");    /** Use GeometryModel */
-        addParameter("UseWeightOptimization", &mUseWeightOptimization, false, false, true, "Use sizing based on Weight if true", ""); /** Use sizing based on Weight if true - default is false*/
-        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");          /** Use LP Model - ie binary variable imposed if true */
-        addParameter("AddMinimumCapacity", &mAddMinimumCapacity, false, false, true, "Give a minimal size for the component", "");
+        addParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");  
+        addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel", "", "EnvironmentModel");  
+        addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "GeometryModel");     
+        addParameter("UseWeightOptimization", &mUseWeightOptimization, false, false, true, "Use sizing based on Weight if true", "");  
+        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");    
         addParameter("PiecewiseCapex", &mPiecewiseCapex, false, false, true, "Provide a map of capex and sizes - see performances maps in doc", "", "EcoInvestModel");
         addParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", "GeometryModel");
         addParameter("PiecewiseVolume", &mPiecewiseVolume, false, false, true, "Provide a map of volumes and sizes - see performances maps in doc", "", "GeometryModel");
         addParameter("PiecewiseMass", &mPiecewiseMass, false, false, true, "Provide a map of masses and sizes - see performances maps in doc", "", "GeometryModel");
-        addParameter("CondenseVariablesOnTP", &mCondenseVariablesOnTP, false, false, true, "", "", "AddOperationConstraints"); /** to condense variables on the typical periods definition except for the storage state : allows storage between typical periods, not available for constraints linking several time steps for the moment */
+        addParameter("CondenseVariablesOnTP", &mCondenseVariablesOnTP, false, false, true, "To condense variables on the typical periods definition except for the storage state : allows storage between typical periods", "", "AddOperationConstraints"); 
         addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Use long term time series forecasts", "", "TimeSeriesForecast");
 
         //int
@@ -99,7 +100,7 @@ public:
         addParameter("VariableOpex", &mVariableOpex, 0., false, true, "Variable Opex", "Currency/EnergyUnit", "EcoInvestModel");
         addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", "%CAPEX", "EcoInvestModel");   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
         addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", pCurrency(), "EcoInvestModel");   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
-        addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", mMainCarrier->StorageUnit(), "EcoInvestModel"); /** Minimum capacity  */
+        addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", pOptimalSizeUnit()); /** Minimum capacity  */
 
         //bool
         addParameter("TryRelaxationCapex", &mTryRelaxationCapex, true, SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), SFunctionFlag({ eFTypeNotAnd, {}, { &mEcoInvestModel,&mPiecewiseCapex} }), "If the CAPEX is a convex function of size the linearization variables will be continuous", "bool", "EcoInvestModel");
@@ -153,7 +154,7 @@ public:
         //General
         addIO("isInstalled", &mExpInstalled, true, "bool");  /** Binary equals 1 if installed */
 
-        addIO("VariableCosts", &mExpVariableCosts, true, mCurrency);    /** Computed variable costs resulting from material/fuel consumption */
+        addIO("VariableCosts", &mExpVariableCosts, true, pCurrency());    /** Computed variable costs resulting from material/fuel consumption */
         setVariableCostsExpression("VariableCosts");  // defines default expression to be used for VariableCosts computation and use in Economic analysis
 
         //EcoInvestModel
@@ -202,7 +203,7 @@ public:
     virtual void declareDefaultModelIndicators() 
     {
         mInputIndicators->addIndicator("CAPEX", &mCapexContribution, &mEcoInvestModel, "Investment cost", pCurrency(), "CAPEX"); 
-        mInputIndicators->addIndicator("is installed", &mExistence, &mExportIndicators, "Component installed", "-", "IsInstalled");
+        mInputIndicators->addIndicator(IS_INSTALLED, &mExistence, &mExportIndicators, "Component installed", "-", "IsInstalled");
         mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "OPEX + replacement + buying cost + other cost - income", pCurrency(), "OPEX"); 
         mInputIndicators->addIndicator("Annual fixed OPEX", &mFixedOpexContribution, &mEcoInvestModel, "Opex part excluding energy costs", pCurrency(), "PureOPEX");
         mInputIndicators->addIndicator("Annual variable OPEX", &mVariableOpexContribution, &mExportIndicators, "Opex part linked to Variable OPEX parameter", pCurrency(), "VariableOPEX");
@@ -270,7 +271,6 @@ protected:
     MIPModeler::MIPData1D mCapexSetPoint;
     bool mPiecewiseCapex;
     bool mTryRelaxationCapex;
-    bool mAddMinimumCapacity;
     double mMinSize;            /**  minimum storage capacity for size optimization (kg mass on fluid vectors, MWh energy for electrical and thermal vectors) */
 
     /** Expressions */

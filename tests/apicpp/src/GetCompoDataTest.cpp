@@ -21,7 +21,8 @@ int main()
 	CairnAPI m_Cairn;
 	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.create_Study(StudyRoot + StudyName);
 
-	t_list vTecEcoIndicators = m_Problem.get_TecEco_IndicatorNames();
+	CairnAPI::TecEcoAnalysisAPI tecEco = m_Problem.get_TecEcoAnalysis();
+	t_list vTecEcoIndicators = tecEco.get_IndicatorNames();
 	TESTAPI2("Check that Total CAPEX is in list of indicators", TestUtils::contains(vTecEcoIndicators, "Total CAPEX"))
 
 	//Create EnergyVectors
@@ -66,7 +67,7 @@ int main()
 		})
 	)
 
-	vTecEcoIndicators = m_Problem.get_TecEco_IndicatorNames();
+	vTecEcoIndicators = tecEco.get_IndicatorNames();
 	TESTAPI2("Check that Total Project env impact of GWP is in list of indicators",
 		TestUtils::contains(vTecEcoIndicators, "Total Project env impact of Climate change#Global Warming Potential 100")
 	)
@@ -87,7 +88,7 @@ int main()
 		})
 	)
 
-	vTecEcoIndicators = m_Problem.get_TecEco_IndicatorNames();
+	vTecEcoIndicators = tecEco.get_IndicatorNames();
 	TESTAPI2("Check that Total Project env impact of GWP is in list of indicators",
 		TestUtils::contains(vTecEcoIndicators, "Total Project env impact of Climate change#Global Warming Potential 100")
 	)

@@ -53,71 +53,13 @@ set(${COMPONENT}_RESOURCES_DIR
   )
 
 include(ComponentSetup)
-create_component(${COMPONENT})
-
-target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
-target_compile_definitions(${COMPONENT} PRIVATE -DCAIRNCORE_LIBRARY)
-target_compile_definitions(${COMPONENT} PRIVATE -DMILPCOMPONENT_LIBRARY)
-
-if (WITH_PRIVATEMODELS)
-	target_compile_definitions(${COMPONENT} PRIVATE -DPRIVATE_MODELS)
-endif()
-
-if(MSVC)
-  target_compile_options(${COMPONENT} PRIVATE "/bigobj")
-endif()
-
+include(EigenSetup)
+include(SpdlogSetup)
 find_package(MIPModeler REQUIRED ModelerInterface MIPSolver)
 find_package(Cairn REQUIRED CairnModelInterface)
 
-target_link_libraries(${COMPONENT} PRIVATE CAIRN::CAIRN)
-target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPModeler)
-target_link_libraries(${COMPONENT} PRIVATE mipmodeler::ModelerInterface)
-target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPSolver)
-
-# -- Eigen to Cairn
-include(EigenSetup)
-target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
-
-include(SpdlogSetup)
-target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
-
-# ---- Installation ----
-# Call component_install_setup(<COMPONENT>)
-# to prepare installation of the current target.
-#
-# Before, it's necessary to set:
-# 
-# - <COMPONENT>_INSTALL_INTERFACE_INCLUDE_DIRECTORIES with all directories
-#    that contain headers files that must be installed.
-# 
-set(${COMPONENT}_INSTALL_INTERFACE_INCLUDE_DIRECTORIES
-  ${${COMPONENT}_DIRS} # All .h are installed
-  )
-
-# List header files (in dir above) that must not be installed 
-#set(${COMPONENT}_HDRS_EXCLUDE)
-if (DEPS_INSTALL AND EXISTS ${DEPS_ROOT})	
-	if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")	
-		set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlogd${CMAKE_SHARED_LIBRARY_SUFFIX})
-	else()
-		set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlog${CMAKE_SHARED_LIBRARY_SUFFIX})
-	endif()		
-endif()
-component_install_setup(${COMPONENT})
-
-if(WITH_TESTING)	
-	include(CTestTools)	
-	add_tests(${CAIRNTESTS_HOME}/apicpp/src 
-	DATA ${CAIRNTESTS_HOME}/apicpp/data 
-	RESULTS ${CAIRNTESTS_HOME}/apicpp/results 
-	DEPS CairnCore CairnModelInterface spdlog::spdlog
-	EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils)	
-endif()
-
-
 if (WITH_PYBIND)
-	
+	# --- build package for python
 	set(COMPONENT cairn)
 	message("-- Set up for ${PROJECT_NAME}_${COMPONENT} python binding ...")
 	message(STATUS "Python: ${Python_EXECUTABLE}")
@@ -131,6 +73,9 @@ if (WITH_PYBIND)
 	set(${COMPONENT}_INTERFACE_INCLUDE_DIRECTORIES
 	 ${${COMPONENT}_DIRS}	
 	)
+	set(${COMPONENT}_RESOURCES_DIR
+		${CairnCore_RESOURCES_DIR}
+	)
 	# find python 
 	message("Python_ROOT_DIR: ${Python_ROOT_DIR}")
 	set(Python_DIR ${Python_ROOT_DIR})
@@ -140,11 +85,9 @@ if (WITH_PYBIND)
     message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 		
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 
-	# virtual environment with pybind11
-	if (NOT EXISTS ${PYTHON_VENV})
-		python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
-	endif()
-
+	# virtual environment with pybind11	
+	python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+	
 	set(PYBIND11_FINDPYTHON ${Python_FOUND})
 	find_package(pybind11 CONFIG REQUIRED)
 	
@@ -163,21 +106,100 @@ if (WITH_PYBIND)
 	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::ModelerInterface)
 	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPSolver)
 	
-	target_link_libraries(${COMPONENT} PRIVATE CAIRN::CAIRN)
+	target_link_libraries(${COMPONENT} PRIVATE cairn::CairnModelInterface)
 
 	# -- Eigen to Cairn
 	target_compile_definitions(${COMPONENT} PRIVATE -DEIGEN_MPL2_ONLY)
 	target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
 	target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
-
-	if (DEPS_INSTALL AND EXISTS ${DEPS_ROOT})
-		set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/highs${CMAKE_SHARED_LIBRARY_SUFFIX})
-		if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")	
-			set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlogd${CMAKE_SHARED_LIBRARY_SUFFIX})
-		else()
-			set(${COMPONENT}_EXTRA_FILES ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin/spdlog${CMAKE_SHARED_LIBRARY_SUFFIX})
-		endif()		
+	
+	if(CMAKE_SYSTEM_NAME MATCHES Windows)
+		set(CAIRN_INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR})
+	else()
+		set(CAIRN_INSTALL_BINDIR ${CMAKE_INSTALL_LIBDIR})
 	endif()
+	configure_file(${CMAKE_SOURCE_DIR}/cmake/__init__.py.in ${CMAKE_BINARY_DIR}/__init__.py @ONLY)
+
+	# --- install package for python	
 	component_install_setup(${COMPONENT})
 	
+	install(
+            FILES ${CMAKE_BINARY_DIR}/__init__.py
+            DESTINATION .
+            )
+
+	install(
+            DIRECTORY ${CAIRN_HOME}/fmiInterface
+            DESTINATION .
+            )
+
+	#install MIPModeler
+	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPModeler)
+	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::ModelerInterface)
+	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPSolver)
+	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPHiGHSSolver)
+	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPCpxSolver)
+
+	install(IMPORTED_RUNTIME_ARTIFACTS cairn::CairnCore)
+	
+	if (DEPS_INSTALL AND EXISTS ${DEPS_ROOT})
+		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin DESTINATION .)
+		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/lib DESTINATION .)		
+	endif()
+else()
+	#build for C++
+	create_component(${COMPONENT})
+
+	target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
+	target_compile_definitions(${COMPONENT} PRIVATE -DCAIRNCORE_LIBRARY)
+	target_compile_definitions(${COMPONENT} PRIVATE -DMILPCOMPONENT_LIBRARY)
+	target_compile_definitions(${COMPONENT} PRIVATE -DEIGEN_MPL2_ONLY)
+
+	if (WITH_PRIVATEMODELS)
+		target_compile_definitions(${COMPONENT} PRIVATE -DPRIVATE_MODELS)
+	endif()
+
+	if(MSVC)
+	  target_compile_options(${COMPONENT} PRIVATE "/bigobj")
+	endif()
+
+	target_link_libraries(${COMPONENT} PRIVATE CAIRN::CAIRN)
+	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPModeler)
+	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::ModelerInterface)
+	target_link_libraries(${COMPONENT} PRIVATE mipmodeler::MIPSolver)
+
+	# -- Eigen to Cairn
+	target_link_libraries(${COMPONENT} PRIVATE Eigen3::Eigen)
+	target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
+
+	# ---- Installation ----	
+	set(${COMPONENT}_INSTALL_INTERFACE_INCLUDE_DIRECTORIES
+	  ${${COMPONENT}_DIRS} # All .h are installed
+	  )
+	
+	component_install_setup(${COMPONENT})
+	if (DEPS_INSTALL AND EXISTS ${DEPS_ROOT})
+		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin DESTINATION .)
+		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/lib DESTINATION .)
+		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/include DESTINATION .)
+		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/share DESTINATION .)
+	endif()
+	
+endif()
+
+if(WITH_TESTING)	
+	include(CTestTools)
+	if (NOT WITH_PRIVATEMODELS)
+		set(${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/ChangeModelClassTest.cpp)
+	endif()
+	if (NOT TEST_WITH_COVERAGE)
+		list(APPEND ${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/OpenModelsTest.cpp)
+	endif()
+
+	add_tests(${CAIRNTESTS_HOME}/apicpp/src 
+	DATA ${CAIRNTESTS_HOME}/apicpp/data 
+	RESULTS ${CAIRNTESTS_HOME}/apicpp/results 
+	DEPS CairnCore CairnModelInterface spdlog::spdlog
+	EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils
+	EXCLUDE_TESTS ${${COMPONENT}_EXCLUDE_TESTS})	
 endif()

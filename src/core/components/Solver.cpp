@@ -1,7 +1,6 @@
 #define NOMINMAX
 #include "Solver.h"
 #include "MilpComponent.h"
-#include "GlobalSettings.h"
 #include "CairnDefine.h"
 #include "CairnUtils.h"
 
@@ -27,7 +26,13 @@ static inline double CoinCpuTime()
     return cpu_temp;
 }
 
-using namespace GS ;
+const std::vector<std::string> Solver::mGAMSProblemTypes = {
+    "LP", "MIP", "NLP", "MINLP", "DNLP", "QCP", "MIQCP"
+};
+
+const std::vector<std::string> Solver::mPossibleModelTypes = {
+    "MIPModeler"
+};
 
 //Default Solver (used for API)
 Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const std::map<std::string, std::string>& aComponent):
@@ -81,9 +86,9 @@ void Solver::declareCompoInputParam()
 
     mCompoInputParam = new InputParam(this, "CompoInputParam" + Name());
     //std::string
-    mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used");
-    mCompoInputParam->addParameter("Solver", &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc or Cplex or Highs ..");
-    mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Model type");
+    mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used: MIPModeler, GAMS, etc.");
+    mCompoInputParam->addParameter("Solver", &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc, Cplex, Highs, etc.");
+    mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Problem type: MIP, LP, etc. Note, this parameter is not important for Cplex, and Highs");
     mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default NO");
     mCompoInputParam->addParameter("ReadParamFile", &mReadParamFile, "NO", false, true, "Read a study_cplexParam.prm file to parameter cplex solving");
     mCompoInputParam->addParameter("WriteMipStart", &mWriteMipStart, "NO", false, true, "Write mst cplex file");
@@ -135,25 +140,21 @@ void Solver::InitSolverParam() {
 
         // Does the solver exist among the list of possible solvers?
         if (!CairnUtils::contains(vSolverLoaded, mSolverName)) {
-            mException = Cairn_Exception("Error: solver asked " + mSolverName + ", possible solver names are " + std::string(CairnUtils::join(vSolverLoaded).c_str()), -1);            
+            mException = Cairn_Exception("Error: solver asked " + mSolverName + ", possible solver names are " + std::string(CairnUtils::joinStrings(vSolverLoaded).c_str()), -1);            
         }
     }
-    else if (CairnUtils::contains(vModelerLoaded, mModelType)) {
-        if (mModelType == GS::GAMS()) {
-            if (mProblemType != "LP" &&
-                mProblemType != "MIP" &&
-                mProblemType != "NLP" &&
-                mProblemType != "MINLP" &&
-                mProblemType != "DNLP" &&
-                mProblemType != "QCP" &&
-                mProblemType != "MIQCP") {
-                mException = Cairn_Exception((std::string)"Error: possible problem types are \"LP\", \"MIP\", \"NLP\", \"MINLP\", \"DNLP\", \"QCP\" or \"MIQCP\".", -1);                
-            }
+    else if (CairnUtils::contains(vModelerLoaded, mModelType))
+    {
+        if (mModelType == GS::GAMS() && !CairnUtils::contains(mGAMSProblemTypes, mProblemType))
+        {
+            const std::string validTypes = CairnUtils::joinStrings(mGAMSProblemTypes, ", ");
+            mException = Cairn_Exception(
+                "Error: possible problem types are: " + validTypes, -1);
         }
         mExternalModeler = mModelers.getModeler(mModelType);
     }
     else {
-        mException = Cairn_Exception("Error: Modeler asked " + mModelType + ", possible modeler names are MIPModeler are " + std::string(CairnUtils::join(vModelerLoaded).c_str()), -1);        
+        mException = Cairn_Exception("Error: Modeler asked " + mModelType + ", possible modeler names are MIPModeler are " + std::string(CairnUtils::joinStrings(vModelerLoaded).c_str()), -1);
     }
 }
 
@@ -355,9 +356,9 @@ void Solver::setStopSignal(int *stopSignal){
     mTerminateSignal = stopSignal;
 }
 
-std::map<std::string, InputParam::ModelParam*> Solver::getParameters()
+std::map<std::string, ModelParam*> Solver::getParameters()
 {
-    std::map<std::string, InputParam::ModelParam*> paramMap;
+    std::map<std::string, ModelParam*> paramMap;
 
     paramMap.insert(getCompoInputParam()->getMapParams().begin(), getCompoInputParam()->getMapParams().end());
     paramMap.insert(getCompoInputSettings()->getMapParams().begin(), getCompoInputSettings()->getMapParams().end());
@@ -379,5 +380,19 @@ std::vector<InputParam*> Solver::get_InputParams()
         result.push_back(gui->getGuiInputParam());
     }
 
+    return result;
+}
+
+std::vector<InputParam*> Solver::get_ParamInputParams()
+{
+    std::vector<InputParam*> result;
+    result.push_back(getCompoInputSettings());
+    return result;
+}
+
+std::vector<InputParam*> Solver::get_OptionInputParams()
+{
+    std::vector<InputParam*> result;
+    result.push_back(getCompoInputParam());
     return result;
 }

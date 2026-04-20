@@ -68,7 +68,7 @@ public:
     void declareModelConfigurationParameters() {
         ConverterSubModel::declareDefaultModelConfigurationParameters();
         //bool 
-        addParameter("EfficiencyLHVbased", &mEfficiencyLHVbased, true, false, true, "efficiency type for electrolyzer", "bool"); /** Add a control imposed (to test different controls with the same parameters) (todo)*/
+        addParameter("EfficiencyLHVbased", &mEfficiencyLHVbased, true, false, true, "efficiency type for electrolyzer", "bool"); /** TODO: Add a control imposed (to test different controls with the same parameters) */
         addParameter("AddAuxConso", &mAddAuxConso, false, false, true, "Constant elec consumption in proportion of maxpower: ", "bool", "AddOperationConstraints");
         addParameter("AddStdByConso", &mAddStdByConso, false, false, true, "Constant elec consumption in proportion of maxpower: equals to 0 if converterUse =0 but not when state = 0", "bool", "AddOperationConstraints");
     }

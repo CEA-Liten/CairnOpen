@@ -30,8 +30,7 @@ void CairnAPI::OptimProblemAPI::set_Problem(class OptimProblem* ap_Problem)
 
 	// Default TecEcoAnalysis
 	cInfo() << "Init default TecEcoAnalysis...";
-	TecEcoAnalysis* vTecEcoAnalysis = m_Problem->getTecEcoAnalysis();
-	TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*> (vTecEcoAnalysis->parent());
+	TecEcoCompo* pTecEco = m_Problem->findChild<TecEcoCompo>();
 	if (pTecEco) {
 		pTecEco->initSubModelConfiguration();
 	}
@@ -47,34 +46,65 @@ void CairnAPI::OptimProblemAPI::set_StudyName(const std::string& a_Name)
 		CairnAPIUtils::setError(noCairn);
 }
 
-
 void CairnAPI::OptimProblemAPI::save_Study(const std::string& a_filename, const std::string& a_posAlgorithm)
 {
 	ECodeError vErr = noCairn;
-	if (m_Problem)	{
-		CairnCore* vCairn = (CairnCore*)m_Problem->parent();
-		std::string filename(a_filename);
-		if (filename == "") {
+
+	if (m_Problem) {
+		CairnCore* vCairn = static_cast<CairnCore*>(m_Problem->parent());
+
+		std::string filename = a_filename;
+
+		// If empty => use archFile()
+		if (filename.empty()) {
 			filename = vCairn->archFile();
 		}
+		else {
+			// If relative => resolve relative to archFile() directory
+			fs::path inputPath(filename);
+			if (!inputPath.is_absolute()) {
+				fs::path archPath(vCairn->archFile());
+				fs::path baseDir = archPath.parent_path();
+				inputPath = baseDir / inputPath;
+			}
+			// Normalize the final path
+			filename = fs::weakly_canonical(inputPath).string();
+		}
 
+		// Ensure the directory exists
+		fs::path studyPath(filename);
+		fs::path dir = studyPath.parent_path();
+		if (!dir.empty() && !fs::exists(dir)) {
+			std::error_code ec;
+			fs::create_directories(dir, ec);
+			if (ec) {
+				CairnAPIUtils::setError(errWrite, dir.string());
+				return;
+			}
+		}
+
+		// Save
 		int iErr = m_Problem->SaveFullArchitecture(filename, a_posAlgorithm);
 
-		if(iErr == -1) {
+		if (iErr == -1) {
 			CairnAPIUtils::setError(errWrite, filename);
 		}
 		else {
 			vErr = noError;
 		}
 	}
+
 	CairnAPIUtils::setError(vErr);
 }
 
-void CairnAPI::OptimProblemAPI::export_Parameters(const std::string& fileName, const std::map<std::string, bool>& optionsMap)
+
+void CairnAPI::OptimProblemAPI::export_Parameters(const std::string& fileName, const std::string& encoding,
+	const std::map<std::string, bool>& optionsMap,
+	const std::map< std::string, std::vector<ExtraParameterData> >& extraData)
 {
 	if (m_Problem) {
 		try {
-			m_Problem->exportParameters_all_files(fileName, optionsMap);
+			m_Problem->exportParameters_all_files(fileName, encoding, optionsMap, extraData);
 		}
 		catch (const Cairn_Exception& cairn_error) {
 			CairnAPIUtils::setError(CairnAPIUtils::errDefault, cairn_error.message());
@@ -216,39 +246,57 @@ CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::create_EnergyCarrier(const 
 	return vCarrier;
 }
 
-void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(const std::string& a_Name)
+void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(const std::string& a_Name, bool forceDeletion)
 {
 	EnergyVectorAPI vVector = get_EnergyCarrier(a_Name); 
-	remove_EnergyCarrier(vVector);
+	remove_EnergyCarrier(vVector, forceDeletion);
 }
 
 void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector)
 {
+	remove_EnergyCarrier(a_EnergyVector, false);
+}
+
+void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector, bool forceDeletion)
+{
 	if (m_Problem) {
-		// L'EnergyVector ne doit pas �tre utilis� par d'autres composants du probl�me
-		// V�rification dans les Bus
-		t_list vBuses = get_Buses();
-		std::string vEVName = a_EnergyVector.get_Name();
-		bool vFound = false;
-		for (auto& vBus : vBuses) {
-			if (get_Bus(vBus).get_CarrierName() == vEVName) {
-				vFound = true;
-				break;
+		bool used = false;
+		const std::string vEVName = a_EnergyVector.get_Name();
+
+		if (!forceDeletion) {
+			// The EnergyVector must not be used by other components of the problem
+			
+			// Verification in TecEcoAnalysis
+			if (get_TecEcoAnalysis().useEnergyVector(vEVName)) {
+				used = true;
 			}
-		}
-		// V�rification dans les ports des composants
-		if (!vFound) {
-			t_list vComps = get_Components();
-			for (auto& vComp : vComps) {
-				if (get_Component(vComp).useEnergyVector(vEVName)) {
-					vFound = true;
-					break;
+
+			// Verification in the Buses
+			if (!used) {
+				t_list vBuses = get_Buses();
+				for (auto& vBus : vBuses) {
+					if (get_Bus(vBus).get_CarrierName() == vEVName)
+					{
+						used = true;
+						break;
+					}
+				}
+			}
+
+			// Verification in the component ports
+			if (!used) {
+				t_list vComps = get_Components();
+				for (auto& vComp : vComps) {
+					if (get_Component(vComp).useEnergyVector(vEVName)) {
+						used = true;
+						break;
+					}
 				}
 			}
 		}
 
-		if (!vFound) {
-			// Suppression
+		if (!used) {
+			// Deletion
 			for (auto vEV : m_Problem->EnergyVectors()) {
 				if (vEV->Name() == vEVName) {
 					delete vEV;
@@ -264,7 +312,7 @@ void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVe
 }
 
 //Returns the list of all energy carrier in the problem
-t_list CairnAPI::OptimProblemAPI::get_EnergyCarriers()
+t_list CairnAPI::OptimProblemAPI::get_EnergyCarriers() const
 {
 	t_list vRet;
 	if (m_Problem) {
@@ -277,7 +325,7 @@ t_list CairnAPI::OptimProblemAPI::get_EnergyCarriers()
 }
 
 //Returns the energy carrier of a given name 
-CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std::string &a_Name)
+CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std::string &a_Name) const
 {
 	EnergyVectorAPI vCarrier;
 	if (m_Problem) {
@@ -296,7 +344,12 @@ CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std
 }
 
 // -------------------------- Components -----------------------
-t_list CairnAPI::OptimProblemAPI::get_Components(const std::string &a_Category)
+t_list CairnAPI::OptimProblemAPI::get_Components() const
+{
+	return get_ComponentsByCategory();
+}
+
+t_list CairnAPI::OptimProblemAPI::get_ComponentsByCategory(const std::string &a_Category) const
 {
 	t_list vRet;	
 	if (m_Problem) {
@@ -320,124 +373,41 @@ t_list CairnAPI::OptimProblemAPI::get_Components(const std::string &a_Category)
 	return vRet;
 }
 
-// -- Indicators ---
-t_list CairnAPI::OptimProblemAPI::get_TecEco_IndicatorNames()
+// -- Indicators --
+t_dict CairnAPI::OptimProblemAPI::get_All_IndicatorValues(const std::string& range) const
 {
-	t_list vRet = {};
-	if (m_Problem) {
-		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++)
-		{
-			vRet.push_back(vectIndicators[i]->getName());
-		}
+	t_dict vRet;
+
+	if (!m_Problem) {
+		CairnAPIUtils::setError(noCairn, "Problem not available");
+		return vRet;
 	}
-	else {
-		CairnAPIUtils::setError(noCairn);
+
+	// TecEco indicators
+	TecEcoAnalysisAPI tecEco = get_TecEcoAnalysis();
+	t_dict tecEcoIndicators = tecEco.get_IndicatorValues(range);
+	vRet.insert(tecEcoIndicators.begin(), tecEcoIndicators.end());
+
+	// Component indicators
+	const t_list& compoNames = get_Components();
+	for (const auto& name : compoNames) {
+		MilpComponentAPI compo = get_Component(name);
+		t_dict compoIndicators = compo.get_IndicatorValues(range);
+		vRet.insert(compoIndicators.begin(), compoIndicators.end());
 	}
+
+	// Bus indicators
+	const t_list& busNames = get_Buses();
+	for (const auto& name : busNames) {
+		BusAPI bus = get_Bus(name);
+		t_dict busIndicators = bus.get_IndicatorValues(range);
+		vRet.insert(busIndicators.begin(), busIndicators.end());
+	}
+
 	return vRet;
 }
 
-t_list CairnAPI::OptimProblemAPI::get_TecEco_IndicatorUnits()
-{
-	t_list vRet = {};
-	if (m_Problem) {
-		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++)
-		{
-			vRet.push_back(vectIndicators[i]->getUnit());
-		}
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
-}
-
-t_list CairnAPI::OptimProblemAPI::get_TecEco_IndicatorShortNames()
-{
-	t_list vRet = {};
-	if (m_Problem) {
-		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++)
-		{
-			vRet.push_back(vectIndicators[i]->getShortName());
-		}
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
-}
-
-t_dict CairnAPI::OptimProblemAPI::get_TecEco_IndicatorValues(const std::string range)
-{
-	t_dict vRet = {};
-	if (m_Problem) {
-		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++)
-		{
-			if (range == "PLAN") {
-				vRet.insert({ vectIndicators[i]->getName(), vectIndicators[i]->getValue(0) });
-			}
-			else if (range == "HIST") {
-				vRet.insert({ vectIndicators[i]->getName(), vectIndicators[i]->getValue(1) });
-			}
-		}
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
-}
-
-double CairnAPI::OptimProblemAPI::get_TecEco_IndicatorValue(const std::string& name, const std::string range)
-{
-	double vRet = NAN;
-	if (m_Problem) {
-		InputParam::t_Indicators vectIndicators = m_Problem->getTecEcoAnalysis()->getInputIndicators()->getIndicators();
-		for (int i = 0; i < vectIndicators.size(); i++) {
-			if (vectIndicators[i]->getName() == name) {
-				if (range == "PLAN") vRet = vectIndicators[i]->getValue(0);
-				else if (range == "HIST") vRet = vectIndicators[i]->getValue(1);
-			}
-		}
-		if (isnan(vRet)) CairnAPIUtils::setError(errGet, "Indicator name not found");
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
-}
-
-t_dict CairnAPI::OptimProblemAPI::get_All_IndicatorValues(const std::string range)
-{
-	t_dict vRet = {};
-	if (m_Problem) {
-		//TecEco indicators
-		t_dict tecEco_indicators = get_TecEco_IndicatorValues(range);
-		std::string tecEcoName = m_Problem->getTecEcoAnalysis()->Name();
-		for (auto& [key, value] : tecEco_indicators) {
-			vRet.insert({tecEcoName+"."+key, value});
-		}
-
-		//Component indicators (including Bus)
-		std::map<std::string, MilpComponent*> milpComponents = m_Problem->MilpComponents();
-		for (auto& [key, value] : milpComponents) {		
-			InputParam::t_Indicators vectIndicators = value->compoModel()->getInputIndicators()->getIndicators();
-			std:string compoName = value->Name();
-			for (int i = 0;i < vectIndicators.size();i++) {
-				if (range == "PLAN") vRet.insert({ compoName+"."+vectIndicators[i]->getName(), vectIndicators[i]->getValue(0) });
-				else if (range == "HIST") vRet.insert({ compoName+"."+vectIndicators[i]->getName(), vectIndicators[i]->getValue(1) });
-			}
-		}
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
-}
-
-t_list CairnAPI::OptimProblemAPI::get_optimized_components()
+t_list CairnAPI::OptimProblemAPI::get_optimized_components() const
 {
 	t_list vRet = {};
 	if (m_Problem) {
@@ -454,7 +424,7 @@ t_list CairnAPI::OptimProblemAPI::get_optimized_components()
 	return vRet;
 }
 
-CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::get_Component(const std::string &a_Name)
+CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::get_Component(const std::string &a_Name) const
 {
 	MilpComponentAPI vRet;
 	if (m_Problem) {		
@@ -501,7 +471,6 @@ CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::create_Component(const std
 						int ierr = vComponent->initProblem(false);
 						if (ierr >= 0) {
 							vRetCompo.set_MilpComponent(vComponent);
-							vRetCompo.set_ModelClass(vComponent->ModelClassName());
 						}
 						else {
 							vErr = errParam;
@@ -568,7 +537,7 @@ void CairnAPI::OptimProblemAPI::remove_Component(MilpComponentAPI& a_Component)
 
 
 // ----------------------- Bus -----------------------
-t_list CairnAPI::OptimProblemAPI::get_Buses()
+t_list CairnAPI::OptimProblemAPI::get_Buses() const
 {
 	t_list vRet;
 	if (m_Problem) {
@@ -584,7 +553,7 @@ t_list CairnAPI::OptimProblemAPI::get_Buses()
 	return vRet;
 }
 
-CairnAPI::BusAPI CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name)
+CairnAPI::BusAPI CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name) const
 {
 	BusAPI vRet;
 	if (m_Problem) {
@@ -678,7 +647,7 @@ void CairnAPI::OptimProblemAPI::remove_Bus(BusAPI& a_Bus)
 		BusCompo* vBus = a_Bus.get_BusCompo();
 		if (vBus) {			
 			for (auto& vPort : vBus->PortList()) {
-				vPort->DeleteLinkedBus();
+				vPort->setLinkedBus(nullptr);
 			}
 		}		
 		// Suppression du composant		
@@ -702,49 +671,84 @@ t_dict CairnAPI::OptimProblemAPI::get_Links()
 {
 	t_dict vRet;
 	// retourne liste de paires : <componantName>.<PortName> , <BusName>
+	
+	// Use get_Objects() ?!
+
 	t_list vComps = get_Components();
 	for (auto& vComp : vComps) {
 		get_Component(vComp).get_Links(vRet);
 	}
+
+	// Add TecEcoAnalysis links
+	get_TecEcoAnalysis().get_Links(vRet);
+
 	return vRet;
 }
 
 void CairnAPI::OptimProblemAPI::add(MilpPortAPI& a_port, BusAPI& a_bus)
-{	
-	ECodeError vErr = noCairn;
-	std::string vErrMsg = "";
-	if (m_Problem) {
-		vErr = errLink;
-		if (a_port.get_Variable() == "") {
-			vErrMsg = "Cannot connect a port before configuring its variable";
-		}
-		else if (a_port.get_CarrierName() != a_bus.get_CarrierName()) {
-			vErrMsg = "Bus and port must have the same carrier";
-		}
-		else {
-			MilpPort* vPort = a_port.get_MilpPort();
-			BusCompo* vBus = a_bus.get_BusCompo();
-			if (vPort && vBus) {
-				vPort->setLinkedBus(vBus);
-				vBus->addPort(vPort);
+{
+	if (!m_Problem) {
+		CairnAPIUtils::setError(noCairn, "");
+		return;
+	}
 
-				MilpComponentAPI vCompAPI = get_Component(vPort->CompoName());
-				MilpComponent* vComp = vCompAPI.get_MilpComponent();
-				if (vComp) {
-					vBus->addComponent(vComp);
-					vErr = noError;
-				}
-				else {
-					vErrMsg = "Component null pointer";
-				}
-			}						
-			else {
-				vErrMsg = "Port or Bus null pointer";
-			}
+	// --- Validate port configuration ---
+	if (a_port.get_Variable().empty()) {
+		CairnAPIUtils::setError(errLink, "Cannot connect a port before configuring its variable");
+		return;
+	}
+
+	// --- Validate carrier compatibility ---
+	if (a_port.get_CarrierName() != a_bus.get_CarrierName()) {
+		CairnAPIUtils::setError(errLink, "Bus and port must have the same carrier");
+		return;
+	}
+
+	// --- Retrieve underlying objects ---
+	MilpPort* vPort = a_port.get_MilpPort();
+	BusCompo* vBus = a_bus.get_BusCompo();
+
+	if (!vPort || !vBus) {
+		CairnAPIUtils::setError(errLink, "Port or Bus null pointer");
+		return;
+	}
+
+	// --- Resolve component owning the port ---
+	const std::string& compName = vPort->CompoName();
+	MilpComponent* vComp = nullptr;
+
+	// Use get_Object() ?!
+
+	// Direct MilpComponent
+	vComp = m_Problem->findChild<MilpComponent>(compName);
+
+	// TecEcoCompo 
+	if (!vComp) {
+		if (auto* vTecEco = m_Problem->findChild<TecEcoCompo>();
+			vTecEco && vTecEco->Name() == compName)
+		{
+			vComp = dynamic_cast<MilpComponent*>(vTecEco);
 		}
 	}
-	CairnAPIUtils::setError(vErr, vErrMsg);
+
+	// BusCompo  
+	if (!vComp) {
+		if (auto* bus = m_Problem->findChild<BusCompo>(compName)) {
+			vComp = static_cast<MilpComponent*>(bus);
+		}
+	}
+
+	if (!vComp) {
+		CairnAPIUtils::setError(errLink, "Component null pointer");
+		return;
+	}
+
+	// --- Create the link ---
+	vBus->addLink(vComp, vPort);
+
+	CairnAPIUtils::setError(noError, "");
 }
+
 
 void CairnAPI::OptimProblemAPI::add(BusAPI& a_bus, MilpPortAPI& a_port)
 {
@@ -753,34 +757,60 @@ void CairnAPI::OptimProblemAPI::add(BusAPI& a_bus, MilpPortAPI& a_port)
 
 void CairnAPI::OptimProblemAPI::remove(MilpPortAPI& a_port, BusAPI& a_bus)
 {
-	ECodeError vErr = noCairn;
-	std::string vErrMsg = "";
-	if (m_Problem) {
-		vErr = errLink;		
-		if (a_port.get_CarrierName() == a_bus.get_CarrierName()) {
-			MilpPort* vPort = a_port.get_MilpPort();
-			BusCompo* vBus = a_bus.get_BusCompo();
-			if (vPort && vBus) {
-				vPort->DeleteLinkedBus();
-				vBus->DeleteBusPort(vPort);
-				MilpComponentAPI vCompAPI = get_Component(vPort->CompoName());
-				MilpComponent* vComp = vCompAPI.get_MilpComponent();
-				if (vComp) {
-					vBus->RemoveLinkComponent(vComp);
-					vErr = noError;
-				}
-				else
-					vErrMsg = "Component null pointer";			
-			}
-			else {
-				vErrMsg = "Port or Bus null pointer";
-			}
-		}
-		else {
-			vErrMsg = "Energy vector must be the same in bus and port";
+	if (!m_Problem) {
+		CairnAPIUtils::setError(noCairn, "");
+		return;
+	}
+
+	// --- Validate carrier compatibility ---
+	if (a_port.get_CarrierName() != a_bus.get_CarrierName()) {
+		CairnAPIUtils::setError(errLink, "Bus and port must have the same carrier");
+		return;
+	}
+
+	// --- Retrieve underlying objects ---
+	MilpPort* vPort = a_port.get_MilpPort();
+	BusCompo* vBus = a_bus.get_BusCompo();
+
+	if (!vPort || !vBus) {
+		CairnAPIUtils::setError(errLink, "Port or Bus null pointer");
+		return;
+	}
+
+	// --- Resolve component owning the port ---
+	const std::string& compName = vPort->CompoName();
+	MilpComponent* vComp = nullptr;
+
+	// Use get_Object() ?!
+
+	// Direct MilpComponent
+	vComp = m_Problem->findChild<MilpComponent>(compName);
+
+	// TecEcoCompo 
+	if (!vComp) {
+		if (auto* vTecEco = m_Problem->findChild<TecEcoCompo>();
+			vTecEco && vTecEco->Name() == compName)
+		{
+			vComp = dynamic_cast<MilpComponent*>(vTecEco);
 		}
 	}
-	CairnAPIUtils::setError(vErr, vErrMsg);
+
+	// BusCompo  
+	if (!vComp) {
+		if (auto* bus = m_Problem->findChild<BusCompo>(compName)) {
+			vComp = static_cast<MilpComponent*>(bus);
+		}
+	}
+
+	if (!vComp) {
+		CairnAPIUtils::setError(errLink, "Component null pointer");
+		return;
+	}
+
+	// --- Remove the link ---
+	vBus->removeLink(vComp, vPort);
+
+	CairnAPIUtils::setError(noError, "");
 }
 
 void CairnAPI::OptimProblemAPI::remove(BusAPI& a_bus, MilpPortAPI& a_port)
@@ -788,16 +818,14 @@ void CairnAPI::OptimProblemAPI::remove(BusAPI& a_bus, MilpPortAPI& a_port)
 	remove(a_port, a_bus);
 }
 
-
-
 // -- TecEcoAnalysis ---
-CairnAPI::TecEcoAnalysisAPI CairnAPI::OptimProblemAPI::get_TecEcoAnalysis()
+CairnAPI::TecEcoAnalysisAPI CairnAPI::OptimProblemAPI::get_TecEcoAnalysis() const
 {
 	TecEcoAnalysisAPI vRet;
 	if (m_Problem) {
-		TecEcoCompo* vTecEcoAnalysis = m_Problem->findChild<TecEcoCompo>();
-		if (vTecEcoAnalysis) {
-			vRet.set_Object(vTecEcoAnalysis);
+		TecEcoCompo* pTecEco = m_Problem->findChild<TecEcoCompo>();
+		if (pTecEco) {
+			vRet.set_Object(pTecEco);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "TecEcoAnalysis");
@@ -809,7 +837,7 @@ CairnAPI::TecEcoAnalysisAPI CairnAPI::OptimProblemAPI::get_TecEcoAnalysis()
 }
 
 //----------- Solver ---------
-CairnAPI::SolverAPI  CairnAPI::OptimProblemAPI::get_Solver()
+CairnAPI::SolverAPI  CairnAPI::OptimProblemAPI::get_Solver() const
 {
 	SolverAPI vRet;
 	if (m_Problem) {
@@ -827,7 +855,7 @@ CairnAPI::SolverAPI  CairnAPI::OptimProblemAPI::get_Solver()
 }
 
 //------------ SimulationControl ---------
-CairnAPI::SimulationControlAPI CairnAPI::OptimProblemAPI::get_SimulationControl()
+CairnAPI::SimulationControlAPI CairnAPI::OptimProblemAPI::get_SimulationControl() const
 {
 	SimulationControlAPI vRet;
 	if (m_Problem) {
@@ -879,36 +907,46 @@ void CairnAPI::OptimProblemAPI::initialize()
 	CairnAPIUtils::setError(vErr);
 }
 
-CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_resultsPath)
+CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_resultsPath, const bool& a_coSim)
 {	
-	//initialize problem
-	initialize();
+	if (!a_coSim) {
+		//initialize problem
+		initialize();
+	}
 
 	//Solve
 	SolutionAPI vRet;
 	ECodeError vErr = noCairn;
 	std::string vErrMsg = "";
-
-	// il faut au moins un fichier timeseries
-	if (!m_timestepfileList.size()) {
-		CairnAPIUtils::setError(errDefault, "Please, load at least one timeseries file before running");
-	}
-	else {
-		// v�rification des fichiers
-		for (auto& vFileName : m_timestepfileList) {
-			fs::path vTimeStepFile(vFileName);
-			std::error_code vErrFile;
-			if (!fs::exists(vTimeStepFile, vErrFile)) {			
-				CairnAPIUtils::setError(errDefault, "Error : timeseries file: "  + vFileName + " does not exist");
+	
+	if (!a_coSim) {
+		if (!m_timestepfileList.size()) {
+			CairnAPIUtils::setError(errDefault, "Please, load at least one timeseries file before running");
+		}
+		else {
+			// Verify timeseries files
+			for (auto& vFileName : m_timestepfileList) {
+				fs::path vTimeStepFile(vFileName);
+				std::error_code vErrFile;
+				if (!fs::exists(vTimeStepFile, vErrFile)) {
+					CairnAPIUtils::setError(errDefault, "Error : timeseries file: " + vFileName + " does not exist");
+				}
 			}
 		}
 	}
 
 	if (m_Problem) {
-		m_Problem->closeExpressions();
-		m_Problem->resetFlags();
 		vRet.set_Problem(m_Problem);
+
 		CairnCore* vCairn = (CairnCore*)m_Problem->parent();
+		int numCycle = vCairn->getNumCycle();
+		if (numCycle < 0) {
+			//init
+			m_Problem->closeExpressions();
+			m_Problem->resetFlags();
+			if (a_coSim) vCairn->setStdAloneMode(false);
+		}						
+		
 		int iShift = 0;		
 		int ierr = 0;
 		int timeShift = vCairn->npdtTimeshift();
@@ -932,16 +970,18 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 		optimLogFile.open(optimLogFileName.string(), std::ofstream::out | std::ofstream::trunc);
 		optimLogFile.close();
 			
-		int vNbCycle = vCairn->nbcycle();
+		int vNbCycle = a_coSim ? 1 : vCairn->nbcycle();
 		for (int icycle = 0; icycle < vNbCycle; icycle++)
 		{
-			try {
-				vCairn->importTS(m_timestepfileList, iShift);
-			}
-			catch (Cairn_Exception cairn_error) {
-				vErr = errRun;				
-				ierr = -1;
-				break;
+			if (!a_coSim) {
+				try {
+					vCairn->importTS(m_timestepfileList, iShift);
+				}
+				catch (Cairn_Exception cairn_error) {
+					vErr = errRun;
+					ierr = -1;
+					break;
+				}
 			}
 			try {
 				ierr = vCairn->doStep();
@@ -952,15 +992,16 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 				ierr = -1;
 				break;
 			}
+			numCycle = vCairn->getNumCycle();
 			if (ierr < 0) {
-				vErrMsg = "Error in doStep of Cairn at cycle #" + std::to_string(icycle);				
+				vErrMsg = "Error in doStep of Cairn at cycle #" + std::to_string(numCycle);
 				break;
 			}
 			if (ierr == 2 && !(vCairn->runUntilEnd()))	{
-				cCritical() << "Error : No solution found by Cairn in cycle # " << icycle;
+				cCritical() << "Error : No solution found by Cairn in cycle # " << numCycle;
 				break;
 			}
-			cInfo() << "Cycle" << icycle << "has finished.";
+			cInfo() << "Cycle" << numCycle << "has finished.";
 			CairnLogger::Flush();
 			if (!persistent) iShift += timeShift;
 
@@ -988,3 +1029,89 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 	return vRet;
 }
 
+
+// -- Interfaces --
+t_list CairnAPI::OptimProblemAPI::getSubscribedVariables()
+{
+	ECodeError vErr = noCairn;
+	std::vector<string> varNames;
+	if (m_Problem) {
+		const t_mapExchange& sub = m_Problem->ListSubscribedVariables();
+
+		for (const auto& elem : sub) {
+			varNames.push_back(elem.first);
+		}
+		vErr = noError;
+	}
+	CairnAPIUtils::setError(vErr);
+	return varNames;
+}
+
+t_list CairnAPI::OptimProblemAPI::getPublishedVariables()
+{
+	ECodeError vErr = noCairn;
+	std::vector<string> varNames;
+	if (m_Problem) {
+		const t_mapExchange &sub = m_Problem->ListPublishedVariables();
+	
+		for (const auto& elem : sub) {
+			varNames.push_back(elem.first);
+		}
+		vErr = noError;
+	}
+	CairnAPIUtils::setError(vErr);
+	return varNames;
+}
+
+void CairnAPI::OptimProblemAPI::setSubscribedVariableValue(const std::string& a_name, const std::vector<double>& a_values)
+{	
+	if (m_Problem) {
+		const t_mapExchange& sub = m_Problem->ListSubscribedVariables();
+		t_mapExchange::const_iterator vIter = sub.find(a_name);
+		if (vIter != sub.end()) {
+			vector<double>& vVar = *vIter->second->ptrVariable();
+			if (vVar.size() == a_values.size()) {
+				vVar = a_values;
+			}
+			else {
+				cWarning() << "Set Subscribed variable " << a_name
+					<< ", bad size of input values (" << a_values.size() << "), expected size = " << vVar.size();
+
+				if (vVar.size() > a_values.size()) {
+					size_t vStart = vVar.size() - a_values.size();
+					for (size_t i = 0; i < a_values.size(); i++) {
+						vVar[i+vStart] = a_values[i];
+					}
+				}
+				else {
+					size_t vStart = a_values.size() - vVar.size();
+					for (size_t i = 0; i < vVar.size(); i++) {
+						vVar[i] = a_values[i + vStart];
+					}
+				}				
+			}			
+		}
+		else
+			CairnAPIUtils::setError(errNotFound, "Subscribed variable " + a_name);				
+	}
+	else
+		CairnAPIUtils::setError(noCairn);
+}
+
+std::vector<double> CairnAPI::OptimProblemAPI::getPublishedVariableValue(const std::string& a_name)
+{
+	std::vector<double> vRet;
+	if (m_Problem) {
+		const t_mapExchange& sub = m_Problem->ListPublishedVariables();
+		t_mapExchange::const_iterator vIter = sub.find(a_name);
+		if (vIter != sub.end()) {
+			vector<double>& vVar = *vIter->second->ptrVariable();
+			vRet = vVar;
+		}
+		else
+			CairnAPIUtils::setError(errNotFound, "Published variable " + a_name);
+	}
+	else
+		CairnAPIUtils::setError(noCairn);
+	return vRet;
+}

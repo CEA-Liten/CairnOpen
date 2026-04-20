@@ -5,7 +5,7 @@ TimeSeriesReaderPegase::TimeSeriesReaderPegase()
 {
 }
 
-bool TimeSeriesReaderPegase::open(const std::string& aTSfile)
+bool TimeSeriesReaderPegase::open(const std::wstring& aTSfile)
 {    
     return true;
 }

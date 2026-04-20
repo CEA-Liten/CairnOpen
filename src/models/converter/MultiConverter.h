@@ -111,8 +111,8 @@ public:
     {
         ConverterSubModel::declareDefaultModelConfigurationParameters();
         //int
-        addParameter("NbInputFlux", &mNbInputFlux, 1);  /** Number of first Inputs dedicated to Fluxes - <= NbInputPorts declared in component definition */
-        addParameter("NbOutputFlux", &mNbOutputFlux, 1); /** Number of first outputs dedicated to Fluxes - <= NbOutputPorts declared in component definition */
+        addParameter("NbInputFlux", &mNbInputFlux, 1, true, true, "Number of first Inputs dedicated to Fluxes  <= NbInputPorts declared in component definition");  
+        addParameter("NbOutputFlux", &mNbOutputFlux, 1, true, true, "Number of first outputs dedicated to Fluxes <= NbOutputPorts declared in component definition");  
         addParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false");
     }
     
@@ -158,7 +158,7 @@ public:
         ConverterSubModel::declareDefaultModelParameters();
 
         //double
-        addParameter("MaxPower", &mMaxPower, INFINITY_VAL);	/** Maximum output of OUTPUTFlux1 */
+        addParameter("MaxPower", &mMaxPower, INFINITY_VAL, true, true, "Maximum output of OUTPUTFlux1");	 
         //std::string
         addParameter("MatrixA", &mMatrixA, "", true, true, "CSV file of the matrix A in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string");
         addParameter("MatrixB", &mMatrixB, "", true, true, "CSV file of the matrix B in the formula : A * [Input Output] = B  of size NbInput + NbOutput", "string");

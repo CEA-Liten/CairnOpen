@@ -52,13 +52,15 @@ ControlVar::~ControlVar()
     if (p_ZEVariable) delete p_ZEVariable;
 }
 
-void ControlVar::subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Import)
+void ControlVar::subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Import, size_t a_npdtTot)
 {
     if (m_IsMPC) {
         std::string exName = a_CompName + "." + m_Prefix + m_Name;
         // TODO: vérif init coeff A et B
         p_ZEVariable = new ZEVariables(exName, &m_Unit, m_Name, "1", "0", true);
         a_Import[exName] = p_ZEVariable;
+        std::vector<double>& vZEHist = *p_ZEVariable->ptrVariable();
+        vZEHist.resize(a_npdtTot, 0.0);       
     }
 }
 
@@ -144,6 +146,16 @@ void ControlVar::ComputeValue(int aNpdtPast)
         else {
             *m_Value = get_DefaultValue();
         }
+    }
+}
+
+std::vector<double> ControlVar::getValues()
+{
+    if (p_Hist) {
+        return (*p_Hist);
+    }
+    else {
+        return m_Hist;
     }
 }
 

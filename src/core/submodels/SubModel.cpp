@@ -1,5 +1,4 @@
 #include "SubModel.h"
-#include "MilpComponent.h"
 #include "MilpPort.h"
 #include "CairnUtils.h"
 using namespace CairnUtils;
@@ -31,7 +30,6 @@ SubModel::SubModel(CairnObject* aParent) :
     mTypicalPeriods(false),
     mAbsInitialState(0),
     mHistVariableCostsDiscounted(0.),
-    mCurrency("EUR"),
     m_OptimalSizeUnit("OptimalSizeUnit"),
     p_OptimalSizeUnit(nullptr),
     mSubObjectiveExpression("N/A"),
@@ -148,6 +146,19 @@ void SubModel::resetIndicators()
     resetHistStoredVaues();
 }
 
+const std::string* SubModel::pCurrency() const {
+    return mParentCompo->pCurrency(); 
+}
+
+std::map<std::string, std::string> SubModel::getDefaultPortData(const std::string& portId) const
+{
+    const auto it = mDefaultPorts.find(portId);
+    if (it != mDefaultPorts.end())
+        return it->second;
+
+    cWarning() << "Default port not found:" << portId;
+    return {};
+}
 
 MilpPort* SubModel::getPort(const std::string& aPortId) 
 {
@@ -962,7 +973,7 @@ void SubModel::computeDiscounted(uint aNpdt, uint aShift, MIPModeler::MIPExpress
 bool SubModel::isSizeOptimized()
 {
     if (getOptimalSizeExpression() == "") return false;
-    InputParam::ModelParam *pParam = getInputParam()->getParameter(getOptimalSizeExpression());
+    ModelParam *pParam = getInputParam()->getParameter(getOptimalSizeExpression());
     if (pParam == nullptr) return false;
     else {
         double vValue;

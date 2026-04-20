@@ -1,0 +1,4 @@
+;Case;TecEco.OBJECTIVE
+0;minConstraint;-1.0
+1;maxConstraintintegrate;0.0
+2;maxConstraint;-1.0

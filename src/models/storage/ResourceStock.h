@@ -3,7 +3,6 @@
 
 #include "globalModel.h"
 #include "StorageSubModel.h"
-//linkPerseeModelClass ResourceStock.h StorageLinearBounds.h StorageThermal.h Battery_V1.h StorageSeasonal.h 
 
 /**
  * \details
@@ -62,6 +61,7 @@ public:
         //PortFlux - left
         std::map<std::string, std::string> portFlux;
         portFlux["Name"] = "PortL0";
+        portFlux["Position"] = "top";
         portFlux["Direction"] = KDATA();
         portFlux["Variable"] = "ResourceUsed";
         mDefaultPorts["PortFlux"] = portFlux;

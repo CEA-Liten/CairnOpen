@@ -6,15 +6,15 @@ rem	 		 [<empty>=all|open]					: all=with private models, open=without
 rem			 [<empty>|wheel|wheel-noinstall]	: wheel=build and install wheel, wheel-noinstall=build but no install
 rem			 [<empty>|deps]			: deps=use dependencies installed in the directory D:/Tools/DepsCairn
 rem			 [<empty>|envCairn]		: envCairn=use env python enCairn<Number> else use defaultoption
+rem			 [<empty>|buildDoc]		: buildDoc=buil cairn documentation
 rem		
 rem ========================================================= 
 SET STARTTIME=%TIME%
+call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
+set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin
 if exist "cmakepath.bat" (	
 	call cmakepath.bat
-) else (
-	call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 )
 echo %CMAKEPATH%
 
@@ -65,6 +65,8 @@ if "%USE_ENVCAIRN%"=="envCairn" (
 )
 echo %OPTION_ENVCAIRN%
 
+rem ========================================================= 
+
 rem remove build directory
 set BUILD_PATH=out\%CONFIGURATION%
 if exist %BUILD_PATH% (
@@ -72,11 +74,13 @@ if exist %BUILD_PATH% (
 )
 mkdir "%BUILD_PATH%"
 
+rem ========================================================= 
+
 rem Generate config
-"%CMAKEPATH%" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
+"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
 
 rem build 
-"%CMAKEPATH%" --build --preset %CONFIGURATION%  
+"%CMAKEPATH%\cmake.exe" --build --preset %CONFIGURATION%  
 
 rem remove previous install directory
 set BIN_PATH=bin\%CONFIGURATION%
@@ -85,5 +89,14 @@ if exist %BIN_PATH% (
 )
 	
 rem Install
-"%CMAKEPATH%" --install %BUILD_PATH% --prefix %BIN_PATH%
+"%CMAKEPATH%\cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+
+rem ========================================================= 
+rem Input parameter: buildDoc
+set BUILD_DOCCAIRN=%6
+if "%BUILD_DOCCAIRN%"=="buildDoc" (	
+	"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=buildDoc %OPTION_PRIVATE% -S . 
+)
+
+
 

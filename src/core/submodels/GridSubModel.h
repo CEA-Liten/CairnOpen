@@ -22,7 +22,7 @@ public:
         TechnicalSubModel::declareDefaultModelConfigurationParameters();
 
         //Re-declare parameter "EcoInvestModel" in order to set its default value to false in case of Grid
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "");    /** Use EcoInvestModel - ie Use Capex and Opex if true */
+        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", ""); 
         addParameter("AddVariableMaxFlow", &mAddVariableMaxFlow, false, false, true, "If true: use time variable maximum flow limitation defined by <UseGridVariableMaxFlow> if true - Default is false");
     }
     
@@ -34,7 +34,7 @@ public:
 
         addTimeSeries("UseProfileSellPrice", &mSellPrice, SExtFunctionFlag({ &isInjection, this }), SExtFunctionFlag({ &isInjection, this }), "Grid specific profile sell price overwriting EnergyVector default value or profile", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }) );
         addTimeSeries("UseProfileBuyPrice", &mBuyPrice, SExtFunctionFlag({ &isExtraction, this }), SExtFunctionFlag({ &isExtraction, this }), "Grid specific Profile buy price overwriting EnergyVector default value or profile", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
-        addTimeSeries("UseProfileBuyPriceSeasonal", &mBuyPriceSeasonal, SFunctionFlag({ eFTypeNotAnd, {}, { &mSeasonalPrevisions}, SExtFunctionFlag({ &isExtraction, this }) }), SExtFunctionFlag({ &isExtraction, this }), "Time Series of Purchase 'Extraction' price of energy - See energy vector", SFunctionUnit({ eFTypeDivision, { &mCurrency, mMainCarrier->pStorageUnit()} }), "TimeSeriesForecast");
+        addTimeSeries("UseProfileBuyPriceSeasonal", &mBuyPriceSeasonal, SFunctionFlag({ eFTypeNotAnd, {}, { &mSeasonalPrevisions}, SExtFunctionFlag({ &isExtraction, this }) }), SExtFunctionFlag({ &isExtraction, this }), "Time Series of Purchase 'Extraction' price of energy - See energy vector", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }), "TimeSeriesForecast");
         addTimeSeries("UseVariableMaximumGridFlow", &mGridVariableMaxFlow, false, true, "Time Series of grid maximum flow extraction or injection", mMainCarrier->pFluxUnit());
     }
 
@@ -66,6 +66,8 @@ public:
         );
 
         for (const auto &port : mListPort) {
+            if (!port->getCarrier())
+                continue;
             const std::string portId = port->ID();
             const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
             if (ptrExp1D) {

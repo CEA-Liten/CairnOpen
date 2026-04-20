@@ -1,0 +1,119 @@
+Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis#1;NbYear;20;year;NbYear
+TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis#1;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis#1;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis#1;Extrapolation Factor;438;-;ExtrapolationFactor
+TecEcoAnalysis#1;OBJECTIVE;1.08753e+08;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-28989.6;EUR;NPV
+TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis#1;Total CAPEX;16520;EUR;CAPEX
+TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis#1;Total project discounted operation cost;12469.6;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted OPEX;0.414086;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis#1;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis#1;Total project buying costs;12469.2;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total project cost of env impact of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Project env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total project cost of env impact of Water use#User Deprivation Potential;0;EUR;WUDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Project env impact of Water use#User Deprivation Potential;0;kg world eq deprived;WUDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total project cost of env impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;EUR;EP-fwDiscountedEnvImpactPart
+TecEcoAnalysis#1;Total Project env impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Water use#User Deprivation Potential;0;kg world eq deprived;WUGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedFlowEnvImpactCost
+TecEcoAnalysis#1;Total Project Operational impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact cost of Water use#User Deprivation Potential;0;EUR;WUDiscountedFlowEnvImpactCost
+TecEcoAnalysis#1;Total Project Operational impact of Water use#User Deprivation Potential;0;kg world eq deprived;WUDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact cost of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;EUR;EP-fwDiscountedFlowEnvImpactCost
+TecEcoAnalysis#1;Total Project Operational impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Annual operation cost;1100.04;EUR;NetOPEX
+TecEcoAnalysis#1;Annual OPEX;0.0365297;EUR;PureOPEX
+TecEcoAnalysis#1;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis#1;Annual income;0;EUR;SellPart
+TecEcoAnalysis#1;Annual buying costs;1100;EUR;BuyPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPFlowEnvImpactMass
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Water use#User Deprivation Potential;0;EUR;WUFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Water use#User Deprivation Potential;0;kg world eq deprived;WUFlowEnvImpactMass
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;EUR;EP-fwFlowEnvImpactPart
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwFlowEnvImpactMass
+Converter;CAPEX;16000;EUR;CAPEX
+Converter;is installed;1;-;IsInstalled
+Converter;Annual operation cost;0.0365297;EUR;OPEX
+Converter;Annual fixed OPEX;0.0365297;EUR;PureOPEX
+Converter;Annual variable OPEX;0;EUR;VariableOPEX
+Converter;Annual replacement costs;0;EUR;Replacement
+Converter;Climate change#Global Warming Potential 100 Env impact penalty part;0;EUR;GWPDirectCost
+Converter;Climate change#Global Warming Potential 100 Env impact mass;0;kg CO2 eq;GWPDirectMass
+Converter;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
+Converter;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
+Converter;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
+Converter;Water use#User Deprivation Potential Env impact penalty part;0;EUR;WUDirectCost
+Converter;Water use#User Deprivation Potential Env impact mass;0;kg world eq deprived;WUDirectMass
+Converter;Water use#User Deprivation Potential EnvGrey impact cost;0;EUR;WUGreyCost
+Converter;Water use#User Deprivation Potential EnvGrey impact mass;0;kg world eq deprived;WUGreyMass
+Converter;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
+Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment Env impact penalty part;0;EUR;EP-fwDirectCost
+Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment Env impact mass;0;kg P eq;EP-fwDirectMass
+Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EnvGrey impact cost;0;EUR;EP-fwGreyCost
+Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EnvGrey impact mass;0;kg P eq;EP-fwGreyMass
+Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment Env impact replacement;0;kg P eq;EP-fwReplacement
+Converter;Installed Optimal Size;16;MW;Size
+Converter;Running time at power >0.;1;h;RunningTime
+Converter;Running time availability;1;-;RunningTimeAvailable
+Converter;Annual consumption of ElectricalEnergy PowerIn;-11;MWh;TotConsPowerIn
+Converter;Mean consumption of ElectricalPower PowerIn;-11;MW;MeanConsPowerIn
+Converter;Load factor PowerIn;0.6875;-;UseRatePowerIn
+Converter;Annual production of ElectricalEnergy PowerOut;11;MWh;TotProdPowerOut
+Converter;Mean production of ElectricalPower PowerOut;11;MW;MeanProdPowerOut
+GridFree#1;is installed;1;-;IsInstalled
+GridFree#1;Annual operation cost;1100;EUR;OPEX
+GridFree#1;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#1;Grid extraction time;1;h;extractionTime
+GridFree#1;Grid extraction ElectricalEnergy GridFlow;11;MWh;TotGridFlow
+GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;124.692;MWh;LvlzdTotGridFlow
+GridFree#1;Mean extraction ElectricalPower GridFlow;11;MW;MeanGridFlow
+NodeEquality#1;Mean value during time period;0;;Mean
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;MWh;BusBalance
+ResourceStock1;CAPEX;520;EUR;CAPEX
+ResourceStock1;is installed;1;-;IsInstalled
+ResourceStock1;Annual operation cost;0;EUR;OPEX
+ResourceStock1;Annual fixed OPEX;0;EUR;PureOPEX
+ResourceStock1;Annual variable OPEX;0;EUR;VariableOPEX
+ResourceStock1;Annual replacement costs;0;EUR;Replacement
+ResourceStock1;Storage Capacity;16;kg;Capacity
+ResourceStock1;Charging time;0;h;ChargingTime
+ResourceStock1;Discharging time;0;h;DischargingTime
+SourceLoad#1;is installed;1;-;IsInstalled
+SourceLoad#1;Annual operation cost;0;EUR;OPEX
+SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX
+SourceLoad#1;Component Weight;1;Unit;Weight
+SourceLoad#1;ImposedProfile load time;1;h;ImposedProfileTime
+SourceLoad#1;ImposedProfile ElectricalEnergy SourceLoadFlow;-11;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#1;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-124.692;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#1;Mean ElectricalPower SourceLoadFlow;-11;MW;MeanImposedProfileSourceLoadFlow
+StorageGen#1;CAPEX;0;EUR;CAPEX
+StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;Annual operation cost;0;EUR;OPEX
+StorageGen#1;Annual fixed OPEX;0;EUR;PureOPEX
+StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX
+StorageGen#1;Annual replacement costs;0;EUR;Replacement
+StorageGen#1;Storage Optimal Capacity;0;MWh;Capacity
+StorageGen#1;Charging time;0;h;ChargingTime
+StorageGen#1;Discharging time;0;h;DischargingTime
+StorageGen#1;Charged ElectricalEnergy Flow;0;MWh;TotChargedFlow
+StorageGen#1;Discharged ElectricalEnergy Flow;0;MWh;TotDischargedFlow
+StorageGen#1;Levelized Charged ElectricalEnergy Flow;0;MWh;LvlzdTotChargedFlow
+StorageGen#1;Levelized Discharged ElectricalEnergy Flow;0;MWh;LvlzdDischargedFlow
+StorageGen#1;Mean Charged ElectricalPower Flow;0;MW;MeanChargedFlow
+StorageGen#1;Mean Discharged ElectricalPower Flow;0;MW;MeanDischargedFlow
+StorageGen#1;Equivalent number of cycles ElectricalPower Flow;0;-;NbCycles
+StorageGen#1;Cumulated losses;0;MWh;CumulatedLosses

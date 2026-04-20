@@ -22,6 +22,19 @@ std::vector< t_mapParams > JsonDescription::parseJsonDescription(const std::stri
     return mComponents ;
 }
 
+std::string JsonDescription::extractComponentType(const json& comp) const
+{
+    std::string type;
+    if (comp.contains("componentPERSEEType")) {
+        type = (std::string)comp["componentPERSEEType"];
+    }
+    else {
+        type = (std::string)comp["componentType"];
+
+    }
+    return type;
+}
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //Extract the data of ports for a given componenet 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,143 +61,188 @@ std::map < std::string, std::map<std::string, std::string> > JsonDescription::ge
 
     cInfo() << compoName << " getCompoPortData :";
 
+    std::string type = extractComponentType(comp);
+    const bool isBus = (CairnUtils::contains(type, "Bus") || CairnUtils::contains(type, "MultiObj")) ? true : false;
+
     const json& posList = comp["nodePortsData"];
     uint i = 0;
     for (auto & pos : posList)
     {
-        bool isBus = false;
-        if (CairnUtils::contains((std::string)comp["componentPERSEEType"], "Bus") || CairnUtils::contains((std::string)comp["componentPERSEEType"], "MultiObj")) {
-            isBus = true;
-        }
-            
         const json &portList = pos["ports"];
         for(auto & port : portList)
         {
             i++;
-            std::string portname = port["name"];
-            std::string portuse = read(port, "direction", "DATAEXCHANGE");
-            cInfo() << "\t - Insert port\t" << std::to_string(i);
-            cInfo() << "\t\t - name\t\t\t" << portname;
-            cInfo() << "\t\t - type\t\t\t" << read(port, "type") << read(port, "carrier");
-            cInfo() << "\t\t - use\t\t\t" << portuse;
-            cInfo() << "\t\t - variable\t\t" << read(port, "variable");
+
+            const std::string portName = read(port, "name", "");
+            const std::string portID = read(port, "id", compoName + "." + portName);
+            const std::string portDirection = read(port, "direction", "DATAEXCHANGE");
+            const std::string portVariable = read(port, "variable", "");
+            const std::string portCarrier = read(port, "carrier");
+
+            cInfo() << "\t - Port\t" << std::to_string(i);
+            cInfo() << "\t\t - id\t\t\t" << portID;
+            cInfo() << "\t\t - name\t\t\t" << portName;
+            cInfo() << "\t\t - carrier\t\t\t" << portCarrier;
+            cInfo() << "\t\t - direction\t\t\t" << portDirection;
+            cInfo() << "\t\t - variable\t\t" << portVariable;
             cInfo() << "\t\t - coeff\t\t" << read(port, "coeff");
             cInfo() << "\t\t - offset\t\t" << read(port, "offset");
             cInfo() << "\t\t - checkunit\t\t" << read(port, "checkunit");
             
-            //Do not add Bus links
-            bool insertPort = false;
-            if (!isBus) {
-                insertPort = true;
-            }
+            const std::string portLabel = compoName + " port " + portName + " (" + portID + ")";
 
-            if (portuse == "") {
-                cWarning() << "The direction of " + (std::string)comp["nodeName"] + " port " + portname + " (" + (std::string)port["variable"] + ")" + " is not set!";
+            if (portVariable.empty()) //Only add ports that have variables
+            {
+                if (!isBus) { //A Bus port has a variable only if it is the master port in the case of a Bus-Bus link
+                    cWarning() << "Variable not defined for" << portLabel;
+                }
                 continue;
             }
 
+            if (portDirection.empty()) {
+                cWarning() << "Direction not defined for" << portLabel;
+                continue;
+            }
+
+            if (portCarrier.empty() || portCarrier == "NO_CARRIER") {
+                cWarning() << "Carrier not defined for" << portLabel;
+                continue;
+            }
+
+            bool insertPort = true;  // insert port even if it is not connected
+
+            // Add port to map  
             t_mapParams portMap; //contains the data of one port
             for(auto & link : mLinksList)
             {
-                // Add Port to map IF AND ONLY IF it is not a component-to-bus port that will be automatically built by PERSEE/core.
-                std::string identifier;
-                if (read(link, "tailNodeId") == "" || read(link,"headNodeId") == "") {
-                    //new format
-                    identifier = "Name";
-                }
-                else {
-                    //old format
-                    identifier = "Id";
-
-                }
+                const std::string identifier = (read(link, "tailNodeId") == "" || read(link, "headNodeId") == "")
+                    ? "Name" : "Id"; // new format : old format
 
                 //supports two format : socketName and nodeName + "." + socketName
-                std::vector<std::string> headSocketList = CairnUtils::split(read(link, "headSocket" + identifier), '.');
-                std::vector<std::string> tailSocketList = CairnUtils::split(read(link, "tailSocket" + identifier), '.');
+                const std::string headSocket = read(link, "headSocket" + identifier);
+                const std::string tailSocket = read(link, "tailSocket" + identifier);
+                std::vector<std::string> headSocketList = CairnUtils::split(headSocket, '.');
+                std::vector<std::string> tailSocketList = CairnUtils::split(tailSocket, '.');
                                 
                 std::string headSocketName = headSocketList[headSocketList.size()-1]; 
                 std::string tailSocketName = tailSocketList[tailSocketList.size() - 1];
 
-                //port is a link headSocket
-                if (read(comp, "node" + identifier) == read(link, "headNode" + identifier) && portname == headSocketName)
+                const std::string compNode = read(comp, "node" + identifier); //nodeId or nodeName
+                const std::string headNode = read(link, "headNode" + identifier);
+                const std::string tailNode = read(link, "tailNode" + identifier);
+
+                const bool isHeadSocket = (compNode == headNode && portName == headSocketName);
+                const bool isTailSocket = (compNode == tailNode && portName == tailSocketName);
+
+                if (!isHeadSocket && !isTailSocket) {
+                    // A link that is not related to the current port!
+                    continue;
+                }
+
+                // Filter Bus ports that have variables in case of Bus-Componenet links (old studies)
+                if (isBus)
                 {
-                    if(isBus && CairnUtils::contains(getcomponentCategoryFromId(read(link,"tailNode" + identifier)), "Bus")) {
-                        //Bus-Bus link
-                        Cairn_Exception cairn_error("Error: Bus-Bus links are not allowed : "+ read(link, "headSocket" + identifier) +" to "+ read(link, "tailSocket" + identifier), -1);
-                        throw cairn_error;
-                    }
-                        
-                    if (insertPort)
+                    const std::string& otherNode = isHeadSocket ? tailNode : headNode;
+                    const std::string& otherSocketName = isHeadSocket ? tailSocketName : headSocketName;
+
+                    if (getPortVariable(otherNode, otherSocketName) != "")
                     {
-                        portMap["LinkedComponent"] = getNodeFromId(read(link, "tailNode" + identifier));
-                        portMap["BusPortName"] = tailSocketName; //name of the linked bus port
+                        if (CairnUtils::contains(getcomponentCategoryFromId(otherNode), "Bus")) {
+                            throw Cairn_Exception("Only one Bus should have a variable in case of a Bus-Bus link!", -1);
+                        }
+                        // else: Bus-Component link => Bus port which has a variable in an old study
 
-                        cInfo() << "\t\t - " << read(comp, "node" + identifier) + "." + portname
-                            << "==" << getNodeFromId(read(link, "headNode" + identifier)) + "." + portname
-                            << " category " << getcomponentCategoryFromId(read(link, "headNode" + identifier))
-                            << " connected to " << getNodeFromId(read(link, "tailNode" + identifier))
-                            << " category " << getcomponentCategoryFromId(read(link, "tailNode" + identifier));
-
-                        break;
+                        insertPort = false; // don't insert port!
+                        break; 
                     }
                 }
 
-                //port is a link tailSocket
-                if (read(comp, "node" + identifier) == read(link, "tailNode" + identifier) && portname == tailSocketName)
+                const std::string headNodeName = getNodeFromId(headNode);
+                const std::string tailNodeName = getNodeFromId(tailNode);
+                if (isHeadSocket)
                 {
-                    if (isBus && CairnUtils::contains(getcomponentCategoryFromId(read(link, "headNode" + identifier)), "Bus")) {
-                        //Bus-Bus link
-                        Cairn_Exception cairn_error("Error: Bus-Bus links are not allowed: " + read(link, "headSocket" + identifier) +" to "+ read(link, "tailSocket" + identifier), -1);
-                        throw cairn_error;
-                    }
-                    
-                    if (insertPort)
-                    {
-                        portMap["LinkedComponent"] = getNodeFromId(read(link, "headNode" + identifier));
-                        portMap["BusPortName"] =  headSocketName; //name of the linked bus port
-
-                        cInfo() << "\t\t - " << read(comp, "node" + identifier) + "." + portname
-                            << "==" << getNodeFromId(read(link, "headNode" + identifier)) + "." + portname
-                            << " category " << getcomponentCategoryFromId((std::string)link["headNode" + identifier])
-                            << " connected to " << getNodeFromId(read(link, "tailNode" + identifier))
-                            << " category " << getcomponentCategoryFromId(read(link, "tailNode" + identifier));
-
-                        break;
-                    }
+                    portMap["LinkedComponent"] = tailNodeName;
+                    portMap["BusPortName"] = tailSocketName;
+                    cInfo() << "\t\t - " << compNode << "." << portName
+                        << " ==" << tailNodeName << "." << portName
+                        << " category " << getcomponentCategoryFromId(headNode)
+                        << " connected to " << tailNodeName
+                        << " category " << getcomponentCategoryFromId(tailNode);
                 }
+                else // isTailSocket
+                {
+                    portMap["LinkedComponent"] = headNodeName;
+                    portMap["BusPortName"] = headSocketName;
+                    cInfo() << "\t\t - " << compNode << "." << portName
+                        << " ==" << headNodeName << "." << portName
+                        << " category " << getcomponentCategoryFromId(headNode)
+                        << " connected to " << headNodeName
+                        << " category " << getcomponentCategoryFromId(tailNode);
+                }
+
+                break; // found!  
             }
 
             if (insertPort)
             {
-                std::string portId = read(port, "id");
-                if (portId == "") {
-                    portId = compoName + "." + portname;
-                }
-
                 std::string position = read(port, "position");
                 if (position == "") {
                     position = read(pos, "pos");
                 }
 
                 portMap["CompoName"] = compoName;
-                portMap["Name"] = portname; 
+                portMap["Name"] = portName;
                 portMap["Position"] = position;
                 portMap["IsDefaultPort"] = read(port, "defaultport");
                 portMap["Enabled"] = read(port, "enabled");
                 portMap["CarrierType"] = read(port, "carrierType");
                 portMap["Carrier"] = read(port, "carrier");
                 portMap["Direction"] =  CairnUtils::toUpper(read(port, "direction"));
-                portMap["Variable"] = read(port, "variable");
+                portMap["Variable"] = portVariable;
                 portMap["Coeff"] = read(port,"coeff") ;
                 portMap["Offset"] = read(port, "offset");
                 portMap["CheckUnit"] = read(port, "checkunit");
 
                 //Add a port to the map
-                ports[portId] = portMap;
+                ports[portID] = portMap;
             }
         }
     }
     return ports;
+}
+
+std::string JsonDescription::getPortVariable(const std::string& compoName, const std::string& portName) const
+{
+    // Find the component by name
+    const auto compIt = std::find_if(mComponentsList.cbegin(), mComponentsList.cend(),
+        [&compoName](const json& component)
+        {
+            return (std::string)component["nodeName"] == compoName || (std::string)component["nodeId"] == compoName;
+        });
+
+    if (compIt == mComponentsList.cend())
+    {
+        cWarning() << "Component not found:" << compoName;
+        return "";
+    }
+
+    // Search for the port in all port groups
+    const json& posList = (*compIt)["nodePortsData"];
+    for (const auto& pos : posList)
+    {
+        const json& portList = pos["ports"];
+        for (const auto& port : portList)
+        {
+            if (read(port, "name", "") == portName)
+            {
+                return read(port, "variable", "");
+            }
+        }
+    }
+
+    cWarning() << "Port not found:" << portName
+        << "in component:" << compoName;
+    return "";
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -269,7 +327,7 @@ std::string JsonDescription::read(const json& in, const std::string& id, const s
     if (in.contains(id)) {
         const json &value = in[id];
         if (value.is_string())
-            vRet = value;
+            vRet = CairnUtils::trim(value.get<std::string>()); // explicit UTF-8 string
         else if (value.is_number_unsigned())
             vRet = std::to_string(value.get<uint64_t>());
         else if (value.is_number_integer())
@@ -300,7 +358,8 @@ void JsonDescription::extractComponentData(const json &comp)
     t_mapParams component;
     t_mapParams compoLabels;
 
-    component["type"] = read(comp, "componentPERSEEType");
+    std::string type = extractComponentType(comp);
+    component["type"] = type;
     component["nodeId"] = comp["nodeId"];
     component["Model"] = comp["nodeType"]; // TecEcoAnalysis and Solver has an option named "Model" which will overwrite the value
     component["ModelTechnoType"] = comp["nodeTechnoType"];   
@@ -317,7 +376,7 @@ void JsonDescription::extractComponentData(const json &comp)
     cInfo() << "\t - nodeType \t\t" << comp.value("nodeType", "");
     cInfo() << "\t - nodeId  \t\t" << comp.value("nodeId", "");
     cInfo() << "\t - nodeTechnoType \t\t" << comp.value("nodeTechnoType", "");
-    cInfo() << "\t - type \t\t" << comp.value("componentPERSEEType", "");
+    cInfo() << "\t - type \t\t" << type;
     cInfo() << "\t - componentCarrier \t\t" << comp.value("componentCarrier", "");
 
     if (component["type"] == "SimulationControl") {
@@ -385,10 +444,11 @@ std::string JsonDescription::getcomponentCategoryFromId(const std::string & node
     {
         if ((std::string)comp["nodeId"] == nodeId || (std::string)comp["nodeName"] == nodeId)
         {
-            if (CairnUtils::contains((std::string)comp["componentPERSEEType"], "MultiObjCompo"))
+            const std::string type = extractComponentType(comp);
+            if (CairnUtils::contains(type, "MultiObjCompo")) 
                 return "BusMultiObjCompo"; // to comply with JsonDescription treatment 
-            else
-                return (std::string)comp["componentPERSEEType"];
+            else 
+                return type;
         }
     }
     return "nodeId_Not_Found_"+nodeId;
@@ -408,7 +468,6 @@ void JsonDescription::extractParamData(const json& comp, const std::string& a_ke
             if (vIter != a_excludedKeys.end())
                 continue;
 
-           
             switch (p["value"].type())
             {
             case nlohmann::detail::value_t::number_float:  
@@ -437,21 +496,30 @@ void JsonDescription::extractParamData(const json& comp, const std::string& a_ke
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 json JsonDescription::readJSONFile(const std::string& aFileName)
 {
-    json vRet;
-    fs::path vPath(aFileName);
-    if (!fs::exists(vPath)) {
-        cCritical() << "Couldn't open read file: " << aFileName;
+    // Check file existence before opening
+    if (!fs::exists(aFileName)) {
+        throw Cairn_Exception("JSON file not found: " + aFileName, -1);
     }
-    std::ifstream file(aFileName);
-    if (file.is_open()) {
-        try
-        {
-            vRet = json::parse(file);            
-        }
-        catch (const std::exception& e)
-        {
-            cCritical() << e.what();
-        }
+
+    // Open in binary mode to preserve UTF-8 encoding
+    std::ifstream file(aFileName, std::ios::binary);
+    if (!file.is_open()) {
+        throw Cairn_Exception("JSON file could not be opened: " + aFileName, -1);
     }
-    return vRet;
+
+    try
+    {
+        return json::parse(file);
+    }
+    catch (const json::parse_error& e)
+    {
+        throw Cairn_Exception("JSON parse error in file: " + aFileName
+            + "\n  at byte " + std::to_string(e.byte)
+            + "\n  " + e.what(), -1);
+    }
+    catch (const std::exception& e)
+    {
+        throw Cairn_Exception("Error reading JSON file: " + aFileName
+            + "\n  " + e.what(), -1);
+    }
 }

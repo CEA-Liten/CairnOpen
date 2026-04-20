@@ -18,12 +18,14 @@ set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11
 
 set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 
+# doc
+set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE INTERNAL "Python virtual environment")
+
 # ================================================================
 # --------- User-defined options ---------
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
 option(WITH_TESTING "Build tests. Default = OFF" ON)
-option(WITH_PYBIND "Cairn python binding" ON)
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" ON)
 option(WITH_PRIVATEMODELS "Generate private models" ON)
 set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/virtualPy CACHE INTERNAL "Cairn wheel installation path")
@@ -50,6 +52,7 @@ set(CAIRN_HOME ${CMAKE_SOURCE_DIR}/src CACHE INTERNAL "Cairn installation path")
 set(CAIRNTESTS_HOME ${CMAKE_SOURCE_DIR}/tests CACHE INTERNAL "Cairn tests path")
 set(CAIRNMODELINTERFACE_HOME ${CAIRN_HOME}/modelInterface CACHE INTERNAL "Cairn Model interface installation path")
 set(CAIRN_DEFAULTSOLVER Cplex CACHE STRING "Cairn default solver")
+set(CAIRNDOC_HOME ${CMAKE_SOURCE_DIR}/doc/user CACHE INTERNAL "Cairn doc path")
 
 # Compilation of module for Pegase (needs to install Pegase in lib/PegaseInstall)
 option(BUILD_MODULECAIRN "build ModuleCairn if ON" ON)

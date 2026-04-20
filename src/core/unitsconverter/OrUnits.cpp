@@ -1,5 +1,6 @@
 #include "OrUnits.h"
 #include "OrUnit.h"
+#include "CairnLogger.h"
 
 OrUnits::OrUnits(long a_Key, OrObject* ap_Parent)
 	: OrObject(a_Key, ap_Parent)
@@ -51,6 +52,8 @@ OrObject* OrUnits::get_Unit(const OrUnitsConverter::OrDefUnit& a_Unit)
 				}
 			}
 		}
+		if (!vRet)
+			cError() << "cannot find unit " << a_Unit.DispName;
 	}
 	else if (a_Unit.Key >=0) {
 		vRet = get_ElemByKey(a_Unit.Key);

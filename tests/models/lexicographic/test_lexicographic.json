@@ -1,0 +1,1024 @@
+{
+	"Saved with Cairn version": "5.3.49",
+	"numberPages": 1,
+	"studyComment": "",
+	"mapParameters": {
+		"latitude": 45.06964,
+		"longitude": 6.0108203,
+		"zoomlevel": 13.5
+	},
+	"DynamicIndicators": [],
+	"Page1": {
+		"PageId": "Page1",
+		"Components": [
+			{
+				"nodeId": "3372789953",
+				"nodeName": "TecEcoAnalysis",
+				"nodeType": "TecEcoAnalysis",
+				"nodeTechnoType": "TecEcoAnalysis",
+				"componentPERSEEType": "TecEcoAnalysis",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 50,
+				"y": 2,
+				"componentCarrier": "NO_CARRIER",
+				"optionListJson": [
+					{
+						"key": "Model",
+						"value": "OptimNPV"
+					},
+					{
+						"key": "Currency",
+						"value": "EUR"
+					},
+					{
+						"key": "DiscountRate",
+						"value": 0.07
+					}
+				],
+				"labelList": []
+			},
+			{
+				"nodeId": "3372789954",
+				"nodeName": "Cairn",
+				"nodeType": "SimulationControl",
+				"nodeTechnoType": "SimulationControl",
+				"componentPERSEEType": "SimulationControl",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 190,
+				"y": 2,
+				"paramListJson": [
+					{
+						"key": "TimeStep",
+						"value": 3600
+					},
+					{
+						"key": "FutureSize",
+						"value": 15
+					},
+					{
+						"key": "NbCycle",
+						"value": 1
+					},
+					{
+						"key": "TimeShift",
+						"value": 1
+					},
+					{
+						"key": "PastSize",
+						"value": 1
+					},
+					{
+						"key": "FutureVariableTimestep",
+						"value": 8760
+					}
+				],
+				"filterConfigListJson": [
+					"Base",
+					"Global_Optim",
+					"RH_MPC_Optim"
+				]
+			},
+			{
+				"nodeId": "3372789952",
+				"nodeName": "Solver",
+				"nodeType": "Solver",
+				"nodeTechnoType": "Solver",
+				"componentPERSEEType": "Solver",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 330,
+				"y": 2,
+				"optionListJson": [
+					{
+						"key": "Model",
+						"value": "MIPModeler"
+					},
+					{
+						"key": "Solver",
+						"value": "Cplex"
+					},
+					{
+						"key": "Category",
+						"value": "MIP"
+					}
+				]
+			},
+			{
+				"nodeId": "3372804333",
+				"nodeName": "Electricity#1",
+				"nodeType": "Electricity",
+				"nodeTechnoType": "Electricity",
+				"componentPERSEEType": "EnergyVector",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 470,
+				"y": 2,
+				"energyTypeColor": "#E8A317",
+				"paramListJson": [
+					{
+						"key": "Potential",
+						"value": 230
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "Type",
+						"value": "Electrical"
+					},
+					{
+						"key": "FlowrateUnit",
+						"value": "MW"
+					}
+				]
+			},
+			{
+				"nodeId": "3372810358",
+				"nodeName": "ManualObjective#1",
+				"nodeType": "ManualObjective",
+				"nodeTechnoType": "ManualObjective",
+				"componentPERSEEType": "MultiObjCompo",
+				"nodeComment": "",
+				"componentWidth": 20,
+				"x": 102,
+				"y": 236,
+				"componentCarrier": "Electricity#1",
+				"paramListJson": [
+					{
+						"key": "ExportIndicators",
+						"value": true
+					},
+					{
+						"key": "WeightUnit",
+						"value": ""
+					},
+					{
+						"key": "StrictConstraint",
+						"value": false
+					},
+					{
+						"key": "MinConstraint",
+						"value": false
+					},
+					{
+						"key": "MaxConstraint",
+						"value": false
+					},
+					{
+						"key": "CommonMinVariable",
+						"value": false
+					},
+					{
+						"key": "CommonMaxVariable",
+						"value": false
+					},
+					{
+						"key": "ObjectiveType",
+						"value": "Lexicographic"
+					},
+					{
+						"key": "UseExtrapolationFactor",
+						"value": false
+					},
+					{
+						"key": "ObjectiveLevel",
+						"value": 0
+					},
+					{
+						"key": "StrictConstraintBusValue",
+						"value": 0
+					},
+					{
+						"key": "MinConstraintBusValue",
+						"value": 0
+					},
+					{
+						"key": "MaxConstraintBusValue",
+						"value": 1000000000000
+					},
+					{
+						"key": "ObjectiveCoefficient",
+						"value": 1
+					},
+					{
+						"key": "AbsTol",
+						"value": 0.1
+					},
+					{
+						"key": "RelTol",
+						"value": 0
+					},
+					{
+						"key": "TimeIntegration",
+						"value": false
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "ManualObjective"
+					},
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					},
+					{
+						"key": "submodelfile",
+						"value": ""
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileObjectiveCoeff",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"Constraints",
+					"CommonVariables",
+					"LexicographicObjective"
+				]
+			},
+			{
+				"nodeId": "3372885527",
+				"nodeName": "ManualObjective#2",
+				"nodeType": "ManualObjective",
+				"nodeTechnoType": "ManualObjective",
+				"componentPERSEEType": "MultiObjCompo",
+				"nodeComment": "",
+				"componentWidth": 20,
+				"x": 68,
+				"y": 378,
+				"componentCarrier": "Electricity#1",
+				"paramListJson": [
+					{
+						"key": "ObjectiveType",
+						"value": "Lexicographic"
+					},
+					{
+						"key": "ObjectiveLevel",
+						"value": 1
+					},
+					{
+						"key": "RelTol",
+						"value": 0.1
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "ManualObjective"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileObjectiveCoeff",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"Constraints",
+					"CommonVariables",
+					"LexicographicObjective"
+				]
+			},
+			{
+				"nodeId": "3372838752",
+				"nodeName": "NodeLaw#1",
+				"nodeType": "NodeLaw",
+				"nodeTechnoType": "NodeLaw",
+				"componentPERSEEType": "BusFlowBalance",
+				"nodeComment": "",
+				"componentWidth": 20,
+				"x": 536,
+				"y": 252,
+				"componentCarrier": "Electricity#1",
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					}
+				],
+				"nodePorts": {
+					"left": 2,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							},
+							{
+								"id": "port3",
+								"name": "PortL1",
+								"position": "left",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "3372796296",
+				"nodeName": "GridFree#1",
+				"nodeType": "GridFree",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 226,
+				"y": 200,
+				"componentCarrier": "Electricity#1",
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ozone depletion#Ozone Depletion Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Human toxicity-cancer effects#Comparative Toxic Unit for humans UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Human toxicity-noncancer effects#Comparative Toxic Unit for humans UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Particulate matter-Respiratory inorganics#Human health effects associated with exposure to PM UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Photochemical ozone formation#Tropospheric ozone concentration increase UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Acidification#Accumulated Exceedance UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-terrestrial#Accumulated Exceedance UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-aquatic marine#Fraction of nutrients reaching marine and compartment UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ecotoxicity freshwater#Comparative Toxic Unit for ecosystems UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Land use#Soil quality index UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Resource use-Minerals and metals#Abiotic Resource Depletion UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Resource use-Energy carriers#Abiotic Resource Depletion UseEnvContentTS_A",
+						"value": false
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"right": 1,
+					"bottom": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "PortGridFlow",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortB0",
+								"position": "bottom",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "3372891782",
+				"nodeName": "GridFree#2",
+				"nodeType": "GridFree",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 236,
+				"y": 328,
+				"componentCarrier": "Electricity#1",
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ozone depletion#Ozone Depletion Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Human toxicity-cancer effects#Comparative Toxic Unit for humans UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Human toxicity-noncancer effects#Comparative Toxic Unit for humans UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Particulate matter-Respiratory inorganics#Human health effects associated with exposure to PM UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Photochemical ozone formation#Tropospheric ozone concentration increase UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Acidification#Accumulated Exceedance UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-terrestrial#Accumulated Exceedance UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-aquatic marine#Fraction of nutrients reaching marine and compartment UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ecotoxicity freshwater#Comparative Toxic Unit for ecosystems UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Land use#Soil quality index UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Resource use-Minerals and metals#Abiotic Resource Depletion UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Resource use-Energy carriers#Abiotic Resource Depletion UseEnvContentTS_A",
+						"value": false
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"right": 1,
+					"bottom": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "PortGridFlow",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					},
+					{
+						"pos": "bottom",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortB0",
+								"position": "bottom",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "DATAEXCHANGE",
+								"variable": "GridFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "3372834043",
+				"nodeName": "SourceLoad#1",
+				"nodeType": "SourceLoad",
+				"nodeTechnoType": "SourceLoad",
+				"componentPERSEEType": "SourceLoad",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 804,
+				"y": 236,
+				"componentCarrier": "Electricity#1",
+				"paramListJson": [
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": true
+					},
+					{
+						"key": "LPModelONLY",
+						"value": true
+					},
+					{
+						"key": "Weight",
+						"value": 1
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "Climate change#Global Warming Potential 100 UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ozone depletion#Ozone Depletion Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Human toxicity-cancer effects#Comparative Toxic Unit for humans UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Human toxicity-noncancer effects#Comparative Toxic Unit for humans UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Particulate matter-Respiratory inorganics#Human health effects associated with exposure to PM UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Photochemical ozone formation#Tropospheric ozone concentration increase UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Acidification#Accumulated Exceedance UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-terrestrial#Accumulated Exceedance UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Eutrophication-aquatic marine#Fraction of nutrients reaching marine and compartment UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Ecotoxicity freshwater#Comparative Toxic Unit for ecosystems UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Land use#Soil quality index UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Water use#User Deprivation Potential UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Resource use-Minerals and metals#Abiotic Resource Depletion UseEnvContentTS_A",
+						"value": false
+					},
+					{
+						"key": "Resource use-Energy carriers#Abiotic Resource Depletion UseEnvContentTS_A",
+						"value": false
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "Direction",
+						"value": "Load"
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseProfileLoadFlux",
+						"value": "PVProduction"
+					}
+				],
+				"nodePorts": {
+					"left": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "PortSourceLoadFlow",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "Electricity#1",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "SourceLoadFlow",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "Yes",
+								"enabled": "true"
+							}
+						]
+					}
+				],
+				"labelListJson": [],
+				"filterConfigListJson": [
+					"Base",
+					"EcoInvestModel",
+					"EnvironmentModel"
+				]
+			}
+		],
+		"DuplicateComponents": [],
+		"Links": [
+			{
+				"linkType": "straight",
+				"tailNodeName": "GridFree#1",
+				"tailSocketName": "PortB0",
+				"headNodeName": "ManualObjective#1",
+				"headSocketName": "PortR0",
+				"listPoint": [
+					{
+						"x": 246,
+						"y": 246
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "GridFree#2",
+				"tailSocketName": "PortR0",
+				"headNodeName": "NodeLaw#1",
+				"headSocketName": "PortL1",
+				"listPoint": [
+					{
+						"x": 406,
+						"y": 348
+					},
+					{
+						"x": 406,
+						"y": 270
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "ManualObjective#2",
+				"tailSocketName": "PortR0",
+				"headNodeName": "GridFree#2",
+				"headSocketName": "PortB0",
+				"listPoint": [
+					{
+						"x": 256,
+						"y": 388
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "NodeLaw#1",
+				"tailSocketName": "PortL0",
+				"headNodeName": "GridFree#1",
+				"headSocketName": "PortR0",
+				"listPoint": [
+					{
+						"x": 400,
+						"y": 258
+					},
+					{
+						"x": 400,
+						"y": 220
+					}
+				]
+			},
+			{
+				"linkType": "straight",
+				"tailNodeName": "NodeLaw#1",
+				"tailSocketName": "PortR0",
+				"headNodeName": "SourceLoad#1",
+				"headSocketName": "PortL0",
+				"listPoint": [
+					{
+						"x": 682,
+						"y": 264
+					},
+					{
+						"x": 682,
+						"y": 256
+					}
+				]
+			}
+		],
+		"Groups": []
+	}
+}

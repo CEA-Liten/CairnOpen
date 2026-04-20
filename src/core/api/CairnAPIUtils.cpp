@@ -7,6 +7,8 @@
 #include <fstream>
 #include <map>
 
+class ModelParam;
+
 namespace CairnAPIUtils {
 	
 	t_list lookupSubDirectories(const std::string& dirPath)
@@ -62,6 +64,7 @@ namespace CairnAPIUtils {
 		while (std::getline(iDataStream, line))
 		{
 			// Parse line with seperator ','			
+			line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 			std::string cell;
 			std::istringstream iLineStream(line);
 			t_list lineVec;
@@ -123,7 +126,7 @@ namespace CairnAPIUtils {
 
 	std::string get_Bus_Type(const std::string& a_Model) 
 	{
-		if (a_Model == "NodeLaw") return "BusFlowBalance";
+		if (a_Model == "NodeLaw" || a_Model == "ManualConstraint") return "BusFlowBalance";
 		else if (a_Model == "NodeEquality") return "BusSameValue";
 		else if (a_Model == "ManualObjective") return "MultiObjCompo";
 		else return "Unknown";
@@ -134,9 +137,9 @@ namespace CairnAPIUtils {
 		t_list vRet;
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				std::vector<std::string> vQList;
-				vInput->getParameters(vQList, a_setLimited);
-				for (auto& vParam : vQList) {
+				std::vector<std::string> vList;
+				vInput->getParameters(vList, a_setLimited);
+				for (auto& vParam : vList) {
 					vRet.push_back(vParam);
 				}
 			}
@@ -179,10 +182,9 @@ namespace CairnAPIUtils {
 
 	t_value getParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name) {
 		t_value vRet = "parameter doesn't exist";
-		std::string vQName = std::string(a_Name.c_str());
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {				
-				if (vInput->getParameterValue(vQName, vRet))
+				if (vInput->getParameterValue(a_Name, vRet)) 
 					break;				
 			}
 		}
@@ -192,9 +194,9 @@ namespace CairnAPIUtils {
 	void getParameters(std::vector<InputParam*> a_Inputs, t_dict& a_Params) {
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				std::vector<std::string> vQList;
-				vInput->getParameters(vQList);
-				for (auto& vParamName : vQList) {
+				std::vector<std::string> vList;
+				vInput->getParameters(vList);
+				for (auto& vParamName : vList) {
 					// mettre les valeurs vide ?					
 					t_value vRet;
 					if (vInput->getParameterValue(vParamName, vRet))
@@ -206,7 +208,6 @@ namespace CairnAPIUtils {
 
 	bool setParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const t_value& a_Value) {
 		bool vOk = true;
-		std::string vQName = a_Name;
 		std::string vQValue = getParamValue(a_Value);
 		std::vector<double> vVectValue;
 		if (vQValue == "NON_COMPATIBLE") {
@@ -217,10 +218,10 @@ namespace CairnAPIUtils {
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
 				if (vQValue != "NON_COMPATIBLE") {
-					vFind = vInput->setParameterValue(vQName, vQValue);
+					vFind = vInput->setParameterValue(a_Name, vQValue);
 				}
 				else {
-					vFind = vInput->setParameterValue(vQName, vVectValue);
+					vFind = vInput->setParameterValue(a_Name, vVectValue);
 				}
 				if (vFind) break;
 			}
@@ -237,15 +238,14 @@ namespace CairnAPIUtils {
 		return vOk;
 	}
 
-	std::string getParamShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	std::string getParamComment(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
 	{
-		std::string vRet = "parameter doesn't exist";
-		std::string vQName = std::string(a_Name.c_str());
+		std::string vRet = "";
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				if (vInput->getParameter(vQName))
+				if (vInput->getParameter(a_Name))
 				{
-					vRet = vInput->getParameter(vQName)->getShowConfig();
+					vRet = vInput->getParameter(a_Name)->getComment();
 					break;
 				}
 			}
@@ -253,32 +253,50 @@ namespace CairnAPIUtils {
 		return vRet;
 	}
 
-	t_list getShowConfigList(std::vector<InputParam*> a_Inputs)
-	{
-		t_list vRet;
+	void getParamComments(std::vector<InputParam*> a_Inputs, t_dictComment& a_Params) {
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				std::vector <std::string> vList = vInput->getShowConfigList();
-				for (auto& vConfig : vList) {
-					if (find(vRet.begin(), vRet.end(), vConfig) == vRet.end())
-					{
-						vRet.push_back(vConfig);
+				std::vector<std::string> vList;
+				vInput->getParameters(vList);
+				for (auto& vParamName : vList) {
+					if (vInput->getParameter(vParamName)) {
+						a_Params[vParamName] = vInput->getParameter(vParamName)->getComment();
 					}
 				}
 			}
 		}
-		return vRet;
 	}
 
-	bool getParamMandatoryValue(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	bool setParamComment(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const std::string& a_Comment) 
 	{
-		bool vRet = true;
-		std::string vQName = std::string(a_Name.c_str());
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				if (vInput->getParameter(vQName))
+				if (vInput->getParameter(a_Name))
 				{
-					vRet = vInput->getParameter(vQName)->IsBlocking();
+					vInput->getParameter(a_Name)->setComment(a_Comment);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	bool setParamComments(std::vector<InputParam*> a_Inputs, const t_dictComment& a_Params) {
+		bool vOk = true;
+		for (auto& vParam : a_Params) {
+			vOk &= setParamComment(a_Inputs, vParam.first, vParam.second);
+		}
+		return vOk;
+	}
+
+	bool isMandatoryParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	{
+		bool vRet = true;
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vInput->getParameter(a_Name))
+				{
+					vRet = vInput->getParameter(a_Name)->IsBlocking();
 					break;
 				}
 			}
@@ -286,15 +304,14 @@ namespace CairnAPIUtils {
 		return vRet;
 	}
 
-	bool isDependentParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	bool isUsedParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
 	{
 		bool vRet = false;
-		std::string vQName = std::string(a_Name.c_str());
 		for (auto& vInput : a_Inputs) {
 			if (vInput) {
-				if (vInput->getParameter(vQName))
+				if (vInput->getParameter(a_Name))
 				{
-					vRet = vInput->getParameter(vQName)->isDependent();
+					vRet = vInput->getParameter(a_Name)->IsUsed();
 					break;
 				}
 			}
@@ -311,6 +328,39 @@ namespace CairnAPIUtils {
 				{
 					vRet = vInput->getParameter(a_Name)->getUnit();
 					break;
+				}
+			}
+		}
+		return vRet;
+	}
+
+	std::string getParamShowConfig(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
+	{
+		std::string vRet = "parameter doesn't exist";
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				if (vInput->getParameter(a_Name))
+				{
+					vRet = vInput->getParameter(a_Name)->getShowConfig();
+					break;
+				}
+			}
+		}
+		return vRet;
+	}
+
+	// Returns a list of ShowConfigs of several parameters
+	t_list getShowConfigList(std::vector<InputParam*> a_Inputs)
+	{
+		t_list vRet;
+		for (auto& vInput : a_Inputs) {
+			if (vInput) {
+				std::vector <std::string> vList = vInput->getShowConfigList();
+				for (auto& vConfig : vList) {
+					if (find(vRet.begin(), vRet.end(), vConfig) == vRet.end())
+					{
+						vRet.push_back(vConfig);
+					}
 				}
 			}
 		}
@@ -365,4 +415,50 @@ namespace CairnAPIUtils {
 			throw std::runtime_error(cairn_error.message());
 		}
 	}
+
+	std::string valueToString(const t_value& value)
+	{
+		return std::visit([](const auto& val) -> std::string {
+			using T = std::decay_t<decltype(val)>;
+
+			if constexpr (std::is_same_v<T, double>) {
+				return std::to_string(val);
+			}
+			else if constexpr (std::is_same_v<T, int>) {
+				return std::to_string(val);
+			}
+			else if constexpr (std::is_same_v<T, std::string>) {
+				return val;
+			}
+			else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+				std::string result = "[";
+				for (size_t i = 0; i < val.size(); ++i) {
+					result += val[i];
+					if (i < val.size() - 1) result += ", ";
+				}
+				result += "]";
+				return result;
+			}
+			else if constexpr (std::is_same_v<T, std::vector<double>>) {
+				std::string result = "[";
+				for (size_t i = 0; i < val.size(); ++i) {
+					result += std::to_string(val[i]);
+					if (i < val.size() - 1) result += ", ";
+				}
+				result += "]";
+				return result;
+			}
+			else if constexpr (std::is_same_v<T, std::vector<int>>) {
+				std::string result = "[";
+				for (size_t i = 0; i < val.size(); ++i) {
+					result += std::to_string(val[i]);
+					if (i < val.size() - 1) result += ", ";
+				}
+				result += "]";
+				return result;
+			}
+			return "unknown";
+			}, value);
+	}
 }
+

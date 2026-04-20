@@ -9,11 +9,11 @@ TimeSeriesReaderCSV::TimeSeriesReaderCSV()
 {
 }
 
-bool TimeSeriesReaderCSV::open(const std::string& aTSfile)
+bool TimeSeriesReaderCSV::open(const std::wstring& aTSfile)
 {
-    m_Data = CairnUtils::readFromCsvFile(aTSfile, ";");
+    m_Data = CairnUtils::readFromCsvFile_W(aTSfile, ";");
 
-    return m_Data.size()>0;
+    return m_Data.size() > 0;
 }
 
 void TimeSeriesReaderCSV::readHeader(const t_mapExchange& aListSubscribedVariables, std::vector<TimeSeriesDescrp>& aHeader)

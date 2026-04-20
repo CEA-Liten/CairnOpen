@@ -321,26 +321,16 @@ Subject To
                                  - vQCStorageGen#1(8) + vQDStorageGen#1(8)  = 0
  cSElec_Bus9#185:                vPowOutConverter(9) - 200 vWeightElec_Load
                                  - vQCStorageGen#1(9) + vQDStorageGen#1(9)  = 0
- cSHeat_Bus0#186:                - vPowInConverter(0) + vGFxHeat_Grid(0)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus1#187:                - vPowInConverter(1) + vGFxHeat_Grid(1)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus2#188:                - vPowInConverter(2) + vGFxHeat_Grid(2)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus3#189:                - vPowInConverter(3) + vGFxHeat_Grid(3)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus4#190:                - vPowInConverter(4) + vGFxHeat_Grid(4)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus5#191:                - vPowInConverter(5) + vGFxHeat_Grid(5)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus6#192:                - vPowInConverter(6) + vGFxHeat_Grid(6)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus7#193:                - vPowInConverter(7) + vGFxHeat_Grid(7)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus8#194:                - vPowInConverter(8) + vGFxHeat_Grid(8)
-                                 + vWeightSourceLoad#1  = 0
- cSHeat_Bus9#195:                - vPowInConverter(9) + vGFxHeat_Grid(9)
-                                 + vWeightSourceLoad#1  = 0
+ cSHeat_Bus0#186:                - vPowInConverter(0) + vGFxHeat_Grid(0)  = 0
+ cSHeat_Bus1#187:                - vPowInConverter(1) + vGFxHeat_Grid(1)  = 0
+ cSHeat_Bus2#188:                - vPowInConverter(2) + vGFxHeat_Grid(2)  = 0
+ cSHeat_Bus3#189:                - vPowInConverter(3) + vGFxHeat_Grid(3)  = 0
+ cSHeat_Bus4#190:                - vPowInConverter(4) + vGFxHeat_Grid(4)  = 0
+ cSHeat_Bus5#191:                - vPowInConverter(5) + vGFxHeat_Grid(5)  = 0
+ cSHeat_Bus6#192:                - vPowInConverter(6) + vGFxHeat_Grid(6)  = 0
+ cSHeat_Bus7#193:                - vPowInConverter(7) + vGFxHeat_Grid(7)  = 0
+ cSHeat_Bus8#194:                - vPowInConverter(8) + vGFxHeat_Grid(8)  = 0
+ cSHeat_Bus9#195:                - vPowInConverter(9) + vGFxHeat_Grid(9)  = 0
  cENodeEquality#10#196:          - 300 vMaxPowerConverter
                                  - 100 vWeightSourceLoad#1
                                  + vBusValueNodeEquality#1(0)  = 0

@@ -10,7 +10,7 @@ ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit)
     if(a_Unit) m_Unit = *a_Unit; /* Case of timeseries where the unit of corresponding ModelTS is a copy of that from ModelParam */
 }
 
-ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, InputParam::ModelParam* ap_Variable)
+ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, ModelParam* ap_Variable)
     : ModelTS(aName, a_Unit)
 {
     if (ap_Variable) {
@@ -49,31 +49,80 @@ void ModelTS::setDefault(double a_Value)
     m_default = a_Value;
 }
 
+const std::vector<double>* ModelTS::get_Values(size_t aNpdtPast) const
+{
+    // Standard timeseries (type == eVectorDouble)
+    if (p_Variable && p_Variable->getType() == EParamType::eVectorDouble)
+    {
+        const t_pvalue ptr = p_Variable->getPtr();
+        if (auto* vec = std::get_if<eVectorDouble>(&ptr))
+            return *vec;
+
+        cWarning() << "ModelTS::get_Values() called on a vector parameter with non-defined values";
+        return nullptr;
+    }
+
+    // Implicit timeseries (type == eString); e.g. an EnergyVector timeseries 
+    if (p_ZEVariable)
+    {
+        const std::vector<double>* srcValue = p_ZEVariable->ptrOutVariable();
+        if (!srcValue || srcValue->size() <= aNpdtPast)
+            return nullptr;
+
+        // Return cached result if still valid
+        if (m_cachedSrc == srcValue &&
+            m_cachedOffset == aNpdtPast &&
+            m_cachedValues.size() == srcValue->size() - aNpdtPast)
+        {
+            return &m_cachedValues;
+        }
+
+        // Cache is invalid -> recompute
+        m_cachedValues.resize(srcValue->size() - aNpdtPast);
+
+        for (size_t i = 0; i < m_cachedValues.size(); ++i)
+            m_cachedValues[i] = (*srcValue)[i + aNpdtPast];
+
+        // Update cache metadata
+        m_cachedSrc = srcValue;
+        m_cachedOffset = aNpdtPast;
+
+        return &m_cachedValues;
+    }
+
+    return nullptr;
+}
+
+
 void ModelTS::set_Values(uint aNpdtPast)
 {
+    if (p_Variable->getType() != eVectorDouble) {
+        return;
+    }
+
     // recopier les valeurs de la ZE: 
     // décalage nptPast 
     if (p_ZEVariable && p_Variable) {
         bool vFill = false;
         bool isBlocking = p_Variable->IsBlocking();
         std::vector<double>& vZEHist = *p_ZEVariable->ptrOutVariable();
-        if (p_Variable->getType() == eVectorDouble) {
-            if (p_Variable->isPValue()) {
-                size_t vDestSize = p_Variable->size();
-                if (vDestSize > 0) {
-                    try
-                    {
-                        p_Variable->copyValues(vZEHist, aNpdtPast);
-                        vFill = true;
-                    }
-                    catch (const std::exception& e)
-                    {
-                        cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name << ", size of " << vDestSize;
-                        cCritical() << e.what();                        
-                    }
-                }                
-            }
+
+        if (p_Variable->isPValue()) {
+            size_t vDestSize = p_Variable->size();
+            if (vDestSize > 0) {
+                try
+                {
+                    p_Variable->copyValues(vZEHist, aNpdtPast);
+                    vFill = true;
+                }
+                catch (const std::exception& e)
+                {
+                    cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name << ", size of " << vDestSize;
+                    cCritical() << e.what();                        
+                }
+            }                
         }
+
         if (!vFill) {
             if (isBlocking) {
                 cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name;

@@ -1,28 +1,28 @@
-Model;Indicator;Value;Unit;Alias
-;NbYear;20;year;NbYear
-;Discount Rate;0.07;-;DiscountRate
-;Impact Discount Rate;0.07;-;ImpactDiscountRate
-;NbYears in TS;1;year;NbYearsinTS
-;Leap Year Position;0;-;LeapYearPosition
-;Payback period offset;0;-;PaybackPeriodOffset
-;Discount Factor;11.3356;-;DiscountFactor
-;Impact Discount Factor;11.3356;-;ImpactDiscountFactor
-;Extrapolation Factor;8.76;-;ExtrapolationFactor
-;OBJECTIVE;163935;EUR;Objective
-;Net Present Value (Levelized Profit);-163935;EUR;NPV
-;Total SubObjective (Type Add);0;EUR;SubObjective
-;Total CAPEX;81998.7;EUR;CAPEX
-;Total PenaltyConstraintContribution;0;-;PenaltyPart
-;Total project discounted operation cost;81936.1;EUR;DiscountedNetOPEX
-;Total project discounted OPEX;81444.3;EUR;DiscountedPureOPEX
-;Total project replacement costs;0;EUR;DiscountedReplacement
-;Total project income;0;EUR;DiscountedSellPart
-;Total project buying costs;491.808;EUR;DiscountedBuyPart
-;Annual operation cost;7228.21;EUR;NetOPEX
-;Annual OPEX;7184.83;EUR;PureOPEX
-;Annual replacement costs;0;EUR;ReplacementPart
-;Annual income;0;EUR;SellPart
-;Annual buying costs;43.3862;EUR;BuyPart
+﻿Model;Indicator;Value;Unit;Alias
+TecEco;NbYear;20;year;NbYear
+TecEco;Discount Rate;0.07;-;DiscountRate
+TecEco;Impact Discount Rate;0.07;-;ImpactDiscountRate
+TecEco;NbYears in TS;1;year;NbYearsinTS
+TecEco;Leap Year Position;0;-;LeapYearPosition
+TecEco;Payback period offset;0;-;PaybackPeriodOffset
+TecEco;Discount Factor;11.3356;-;DiscountFactor
+TecEco;Impact Discount Factor;11.3356;-;ImpactDiscountFactor
+TecEco;Extrapolation Factor;8.76;-;ExtrapolationFactor
+TecEco;OBJECTIVE;7.25685e+06;EUR;Objective
+TecEco;Net Present Value (Levelized Profit);-7.25685e+06;EUR;NPV
+TecEco;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEco;Total CAPEX;10150.4;EUR;CAPEX
+TecEco;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEco;Total project discounted operation cost;7.2467e+06;EUR;DiscountedNetOPEX
+TecEco;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEco;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEco;Total project income;0;EUR;DiscountedSellPart
+TecEco;Total project buying costs;7.2467e+06;EUR;DiscountedBuyPart
+TecEco;Annual operation cost;639287;EUR;NetOPEX
+TecEco;Annual OPEX;0;EUR;PureOPEX
+TecEco;Annual replacement costs;0;EUR;ReplacementPart
+TecEco;Annual income;0;EUR;SellPart
+TecEco;Annual buying costs;639287;EUR;BuyPart
 Electrolyzer#1;CAPEX;10150.4;EUR;CAPEX
 Electrolyzer#1;is installed;1;-;IsInstalled
 Electrolyzer#1;Annual operation cost;0;EUR;OPEX
@@ -41,22 +41,22 @@ Electrolyzer#1;Annual consumption of ElectricalEnergy UsedPower;-9250.13;MWh;Tot
 Electrolyzer#1;Mean consumption of ElectricalPower UsedPower;-4.14098;MW;MeanConsUsedPower
 Electrolyzer#1;Load factor UsedPower;0.145642;-;UseRateUsedPower
 GridFree#1;is installed;1;-;IsInstalled
-GridFree#1;Annual operation cost;43.3862;EUR;OPEX
+GridFree#1;Annual operation cost;639287;EUR;OPEX
 GridFree#1;Annual variable OPEX;0;EUR;VariableOPEX
-GridFree#1;Grid extraction time;17.52;h;extraction Time
-GridFree#1;Grid extraction ElectricalEnergy GridFlow;0.600085;MWh;TotGridFlow
-GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;6.80232;MWh;LvlzdTotGridFlow
-GridFree#1;Mean extraction ElectricalPower GridFlow;0.0342514;MW;MeanGridFlow
+GridFree#1;Grid extraction time;2233.8;h;extractionTime
+GridFree#1;Grid extraction ElectricalEnergy GridFlow;9250.13;MWh;TotGridFlow
+GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;104856;MWh;LvlzdTotGridFlow
+GridFree#1;Mean extraction ElectricalPower GridFlow;4.14098;MW;MeanGridFlow
 GridFree#2;is installed;1;-;IsInstalled
 GridFree#2;Annual operation cost;0;EUR;OPEX
 GridFree#2;Annual variable OPEX;0;EUR;VariableOPEX
-GridFree#2;Grid injection time;8733.72;h;injection Time
-GridFree#2;Grid injection ElectricalEnergy GridFlow;-53689.6;MWh;TotGridFlow
-GridFree#2;Levelized Grid injection ElectricalEnergy GridFlow;-608603;MWh;LvlzdTotGridFlow
-GridFree#2;Mean injection ElectricalPower GridFlow;-6.14739;MW;MeanGridFlow
+GridFree#2;Grid injection time;0;h;injectionTime
+GridFree#2;Grid injection ElectricalEnergy GridFlow;0;MWh;TotGridFlow
+GridFree#2;Levelized Grid injection ElectricalEnergy GridFlow;0;MWh;LvlzdTotGridFlow
+GridFree#2;Mean injection ElectricalPower GridFlow;0;MW;MeanGridFlow
 NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
 NodeLaw#2;Integrated bus balance;0;kg;BusBalance
-NodeLaw#3;Integrated bus balance;3.23858e+06;MWh;BusBalance
+NodeLaw#3;Integrated bus balance;3.17564e+06;MWh;BusBalance
 SourceLoad#1;is installed;1;-;IsInstalled
 SourceLoad#1;Annual operation cost;0;EUR;OPEX
 SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX
@@ -65,21 +65,21 @@ SourceLoad#1;ImposedProfile load time;2233.8;h;ImposedProfileTime
 SourceLoad#1;ImposedProfile FluidH2Mass SourceLoadFlow;-166569;kg;TotImposedProfileSourceLoadFlow
 SourceLoad#1;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-1.88816e+06;kg;LvlzdTotImposedProfileSourceLoadFlow
 SourceLoad#1;Mean FluidH2Flowrate SourceLoadFlow;-74.5675;kg/h;MeanImposedProfileSourceLoadFlow
-SourceLoad#2;CAPEX;71848.3;EUR;CAPEX
+SourceLoad#2;CAPEX;0;EUR;CAPEX
 SourceLoad#2;is installed;1;-;IsInstalled
-SourceLoad#2;Annual operation cost;7184.83;EUR;OPEX
-SourceLoad#2;Annual fixed OPEX;7184.83;EUR;PureOPEX
+SourceLoad#2;Annual operation cost;0;EUR;OPEX
+SourceLoad#2;Annual fixed OPEX;0;EUR;PureOPEX
 SourceLoad#2;Annual variable OPEX;0;EUR;VariableOPEX
 SourceLoad#2;Annual replacement costs;0;EUR;Replacement
-SourceLoad#2;Mass;71.8483;kg;Mass
+SourceLoad#2;Mass;0;kg;Mass
 SourceLoad#2;Area;0;m2;Area
 SourceLoad#2;Volume;0;m3;Volume
-SourceLoad#2;Component Optimal Weight;7.18483;Unit;Weight
-SourceLoad#2;ImposedProfile source time;8760;h;ImposedProfileTime
-SourceLoad#2;ImposedProfile ElectricalEnergy SourceLoadFlow;62939.1;MWh;TotImposedProfileSourceLoadFlow
-SourceLoad#2;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;713452;MWh;LvlzdTotImposedProfileSourceLoadFlow
-SourceLoad#2;Mean ElectricalPower SourceLoadFlow;7.18483;MW;MeanImposedProfileSourceLoadFlow
-SourceLoad#2;Data Port published SourceLoadFlow - data computed;62939.1;MWh;DataPortSourceLoadFlow
+SourceLoad#2;Component Optimal Weight;0;Unit;Weight
+SourceLoad#2;ImposedProfile source time;0;h;ImposedProfileTime
+SourceLoad#2;ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#2;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#2;Mean ElectricalPower SourceLoadFlow;0;MW;MeanImposedProfileSourceLoadFlow
+SourceLoad#2;Data Port published SourceLoadFlow - data computed;0;MWh;DataPortSourceLoadFlow
 StorageGen#1;CAPEX;0;EUR;CAPEX
 StorageGen#1;is installed;1;-;IsInstalled
 StorageGen#1;Annual operation cost;0;EUR;OPEX
@@ -92,9 +92,9 @@ StorageGen#1;Volume;0;m3;Volume
 StorageGen#1;Storage Optimal Capacity;0;kg;Capacity
 StorageGen#1;Charging time;0;h;ChargingTime
 StorageGen#1;Discharging time;0;h;DischargingTime
-StorageGen#1;Charged  FluidH2Mass Flow;0;kg;TotChargedFlow
+StorageGen#1;Charged FluidH2Mass Flow;0;kg;TotChargedFlow
 StorageGen#1;Discharged FluidH2Mass Flow;0;kg;TotDischargedFlow
-StorageGen#1;Levelized Charged  FluidH2Mass Flow;0;kg;LvlzdTotChargedFlow
+StorageGen#1;Levelized Charged FluidH2Mass Flow;0;kg;LvlzdTotChargedFlow
 StorageGen#1;Levelized Discharged FluidH2Mass Flow;0;kg;LvlzdDischargedFlow
 StorageGen#1;Mean Charged FluidH2Flowrate Flow;0;kg/h;MeanChargedFlow
 StorageGen#1;Mean Discharged FluidH2Flowrate Flow;0;kg/h;MeanDischargedFlow

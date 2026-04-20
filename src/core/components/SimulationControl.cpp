@@ -122,9 +122,9 @@ void SimulationControl::jsonSaveGuiComponent(ojson &componentsArray)
     componentsArray.push_back(compoObject) ;
 }
 
-std::map<std::string, InputParam::ModelParam*> SimulationControl::getParameters()
+std::map<std::string, ModelParam*> SimulationControl::getParameters()
 {
-    std::map<std::string, InputParam::ModelParam*> paramMap;
+    std::map<std::string, ModelParam*> paramMap;
 
     paramMap.insert(getCompoInputParam()->getMapParams().begin(), getCompoInputParam()->getMapParams().end());
     paramMap.insert(getCompoInputSettings()->getMapParams().begin(), getCompoInputSettings()->getMapParams().end());
@@ -146,5 +146,19 @@ std::vector<InputParam*> SimulationControl::get_InputParams()
         result.push_back(gui->getGuiInputParam());
     }
 
+    return result;
+}
+
+std::vector<InputParam*> SimulationControl::get_ParamInputParams()
+{
+    std::vector<InputParam*> result;
+    result.push_back(getCompoInputSettings());
+    return result;
+}
+
+std::vector<InputParam*> SimulationControl::get_OptionInputParams()
+{
+    std::vector<InputParam*> result;
+    result.push_back(getCompoInputParam());
     return result;
 }

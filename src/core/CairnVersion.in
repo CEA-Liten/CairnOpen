@@ -1,1 +1,1 @@
-#define PERSEE_VERSION " Cairn Release : @PROJECT_VERSION@ - "
+#define CAIRN_VERSION " Cairn Release : @PROJECT_VERSION@ - "

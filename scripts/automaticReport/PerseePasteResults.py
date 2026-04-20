@@ -242,15 +242,15 @@ def PasteResultsMonoLoc(projectsPath, prefix, hist_plan, scenarioList=[], lines_
         return(x.replace("#",''))
     def import_sumup():
         try:
-            perf_data = [pd.read_csv(f, sep=";",header=None, usecols=[0,1,2], on_bad_lines='warn', encoding = "utf-8")  for f in all_filenames]
+            perf_data = [pd.read_csv(f, sep=";",header=None, usecols=[0,4,2], on_bad_lines='warn', encoding = "utf-8")  for f in all_filenames]
         except UnicodeDecodeError:
-            perf_data = [pd.read_csv(f, sep=";",header=None, usecols=[0,1,2], on_bad_lines='warn', encoding = "ISO-8859-1")  for f in all_filenames]
+            perf_data = [pd.read_csv(f, sep=";",header=None, usecols=[0,4,2], on_bad_lines='warn', encoding = "ISO-8859-1")  for f in all_filenames]
         for i in range(len(perf_data)):
             perf_data[i].dropna(how="all", inplace=True)
             #for j in range(len(perf_data[i][0])):
-            ndc =perf_data[i][1].str.contains("no data computed").index
+            ndc =perf_data[i][4].str.contains("no data computed").index
             perf_data[i].drop(ndc)
-            perf_data[i]["Component.Variable"]=perf_data[i][0]+"."+perf_data[i][1]
+            perf_data[i]["Component.Variable"]=perf_data[i][0]+"."+perf_data[i][4]
             for li in lines_to_delete:
                 ndc = perf_data[i][perf_data[i]["Component.Variable"].str.contains(li)].index
             perf_data[i] = perf_data[i].drop(ndc)
@@ -258,7 +258,7 @@ def PasteResultsMonoLoc(projectsPath, prefix, hist_plan, scenarioList=[], lines_
             perf_data[i]=perf_data[i].set_index("Component.Variable")
             perf_data[i]=perf_data[i].rename(columns={2:list_report[i]})
             del perf_data[i][0]
-            del perf_data[i][1]
+            del perf_data[i][4]
         return(perf_data)
     
     def sumup_file():
@@ -452,6 +452,13 @@ def gatherParamInJson(projectsPath, prefix, scenarioList=[], tab_echantillonnage
     result = pd.concat(df_list, ignore_index=True)
     return result, list_report
 
+def redef_columns(data: pd.DataFrame):
+    new_col = []
+    new_data = data.copy()
+    for c in data.columns:
+        new_col.append((c.split('.')[0],c.split('.')[-1]))
+    new_data.columns = pd.MultiIndex.from_tuples(new_col, names=['Component','Parameter'])
+    return(new_data)
 def compare_json(data: pd.DataFrame):
     datafiltre = data
     for c in data.columns:
@@ -470,7 +477,7 @@ def compare_json(data: pd.DataFrame):
                 del datafiltre[c]
             else:
                 continue
-    return (datafiltre)
+    return (redef_columns(datafiltre))
 
 def getCplexInfo(projectsPath, prefix, scenarioList=[], tab_echantillonnage=""):
 

@@ -36,6 +36,8 @@ public:
         mInputIndicators->addIndicator("Discharging time ", &mDischargingTime, exp, "Discharging time", "h", "DischargingTime");
 
         for (const auto& port : mListPort) {
+            if (!port->getCarrier())
+                continue;
             const std::string portId = port->ID();
             const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
             if (ptrExp1D) {

@@ -1,6 +1,8 @@
 #include "CairnAPI.h"
 #include "CairnObject.h"
 #include "CairnAPIUtils.h"
+#include "InputParam.h"
+#include "ModelParam.h"
 using namespace CairnAPIUtils;
 
 CairnAPI::ObjectAPI::ObjectAPI(CairnObject* ap_Object)
@@ -55,6 +57,45 @@ std::vector<InputParam*> CairnAPI::ObjectAPI::get_InputParams()
 		return{};
 }
 
+std::vector<InputParam*> CairnAPI::ObjectAPI::get_InputParams(ESettingsCategory category)
+{
+	if (!m_Object)
+		return {};
+
+	std::vector<InputParam*> vInputParams;
+
+	switch (category)
+	{
+	case eAll:
+		vInputParams = m_Object->get_InputParams();
+		break;
+	case eParameters:
+		vInputParams = m_Object->get_ParamInputParams();
+		break;
+	case eOptions:
+		vInputParams = m_Object->get_OptionInputParams();
+		break;
+	case eTimeSeries:
+		vInputParams = m_Object->get_TimeSeriesInputParams();
+		break;
+	case eEnvImpacts:
+		vInputParams = m_Object->get_EnvImpactInputParams();
+		break;
+	case ePortEnvImpacts:
+		vInputParams = m_Object->get_PortEnvImpactInputParams();
+		break;
+	}
+
+	// Remove null pointers
+	vInputParams.erase(
+		std::remove(vInputParams.begin(), vInputParams.end(), nullptr),
+		vInputParams.end()
+	);
+
+	return vInputParams;
+}
+
+
 // Returns the list of parameter names 
 t_list CairnAPI::ObjectAPI::get_SettingsList()
 {
@@ -66,6 +107,27 @@ t_list CairnAPI::ObjectAPI::get_SettingsList()
 t_list CairnAPI::ObjectAPI::get_SettingsListByType(ESettingsLimited a_setLimited)
 {	
 	return CairnAPIUtils::getParametersName(get_InputParams(), a_setLimited);
+}
+
+t_list CairnAPI::ObjectAPI::get_SettingsListByCategory(ESettingsCategory category)
+{
+	return CairnAPIUtils::getParametersName(get_InputParams(category), ESettingsLimited::all);
+}
+
+// Return a parameter
+CairnAPI::ParamAPI CairnAPI::ObjectAPI::get_Setting(const std::string& a_SettingName)
+{
+	ParamAPI vRet;	
+	for (auto& vInput : get_InputParams()) {
+		if (vInput) {
+			ModelParam* vParam = vInput->getParameter(a_SettingName);
+			if (vParam) {
+				return ParamAPI(this, vParam);
+				break;
+			}				
+		}
+	}
+	return vRet;
 }
 
 // Returns the value of a parameter 
@@ -104,14 +166,50 @@ void CairnAPI::ObjectAPI::set_SettingValues(const t_dict& a_SettingValues)
 	CairnAPIUtils::setError(vRet);
 }
 
-bool CairnAPI::ObjectAPI::get_SettingMandatoryValue(const std::string& a_SettingName)
+// Returns the comment of a parameter 
+std::string CairnAPI::ObjectAPI::get_SettingComment(const std::string& a_SettingName)
 {
-	return CairnAPIUtils::getParamMandatoryValue(get_InputParams(), a_SettingName);
+	return CairnAPIUtils::getParamComment(get_InputParams(), a_SettingName);
 }
 
-bool CairnAPI::ObjectAPI::is_DependentSetting(const std::string& a_SettingName)
+// Returns a dict of all parameter comments
+t_dictComment CairnAPI::ObjectAPI::get_SettingComments()
 {
-	return CairnAPIUtils::isDependentParam(get_InputParams(), a_SettingName);	
+	t_dictComment vRet = {};
+	CairnAPIUtils::getParamComments(get_InputParams(), vRet);
+	return vRet;
+}
+
+// Set the comment of a parameter
+void CairnAPI::ObjectAPI::set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment)
+{
+	ECodeError vRet = noError;
+	if (m_Object) {
+		bool vOk = CairnAPIUtils::setParamComment(get_InputParams(), a_SettingName, a_SettingComment);
+		vRet = (vOk) ? noError : errParam;
+	}
+	CairnAPIUtils::setError(vRet);
+}
+
+// Set the comments of several parameters
+void CairnAPI::ObjectAPI::set_SettingComments(const t_dictComment& a_SettingComments)
+{
+	ECodeError vRet = noError;
+	if (m_Object) {
+		bool vOk = CairnAPIUtils::setParamComments(get_InputParams(), a_SettingComments);
+		vRet = (vOk) ? noError : errParam;
+	}
+	CairnAPIUtils::setError(vRet);
+}
+
+bool CairnAPI::ObjectAPI::is_MandatorySetting(const std::string& a_SettingName)
+{
+	return CairnAPIUtils::isMandatoryParam(get_InputParams(), a_SettingName);
+}
+
+bool CairnAPI::ObjectAPI::is_UsedSetting(const std::string& a_SettingName)
+{
+	return CairnAPIUtils::isUsedParam(get_InputParams(), a_SettingName);
 }
 
 std::string CairnAPI::ObjectAPI::get_SettingUnit(const std::string& a_SettingName)

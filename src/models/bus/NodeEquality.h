@@ -36,7 +36,7 @@ public:
     {
         SubModel::declareDefaultModelConfigurationParameters() ;
         //bool
-        addParameter("ImposedBusValue", &mImposedBusValue, false, false, true);     /** If true: enforce ImposedBusValue value to node connected to the bus - Default is false*/
+        addParameter("ImposedBusValue", &mImposedBusValue, false, false, true, "If true: enforce ImposedBusValue value to node connected to the bus - Default is false");  
     }
 
 //----------------------------------------------------------------------------------------------------
@@ -44,9 +44,9 @@ public:
     {
         declareDefaultModelParameters();
         //double
-        addParameter("BusValue", &mBusValue, -1.e33, &mImposedBusValue, &mImposedBusValue);     /** Optionnal imposed value at ValueNode Bus if ImposedBusValue = true */
-        addParameter("MaxBusValue", &mMaxBusValue, 1.e15, true, true);            /** Mandatory maximum value at ValueNode Bus n */
-        addParameter("MinBusValue", &mMinBusValue, 0., false, true);  /** Optional minimal value for the bus potential */
+        addParameter("BusValue", &mBusValue, -1.e33, &mImposedBusValue, &mImposedBusValue, " Optionnal imposed value at ValueNode Bus if ImposedBusValue = true");     
+        addParameter("MaxBusValue", &mMaxBusValue, 1.e15, true, true, "Mandatory maximum value at ValueNode Bus n");  
+        addParameter("MinBusValue", &mMinBusValue, 0., false, true, "Optional minimal value for the bus potential"); 
     }
 //----------------------------------------------------------------------------------------------------
     void declareModelInterface()

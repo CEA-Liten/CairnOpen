@@ -1,0 +1,70 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEcoAnalysis;NbYear;20;year;NbYear
+TecEcoAnalysis;Discount Rate;0.07;-;DiscountRate
+TecEcoAnalysis;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEcoAnalysis;NbYears in TS;1;year;NbYearsinTS
+TecEcoAnalysis;Leap Year Position;0;-;LeapYearPosition
+TecEcoAnalysis;Payback period offset;0;-;PaybackPeriodOffset
+TecEcoAnalysis;Discount Factor;11.3356;-;DiscountFactor
+TecEcoAnalysis;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEcoAnalysis;Extrapolation Factor;365;-;ExtrapolationFactor
+TecEcoAnalysis;OBJECTIVE;507690;EUR;Objective
+TecEcoAnalysis;Net Present Value (Levelized Profit);-507690;EUR;NPV
+TecEcoAnalysis;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEcoAnalysis;Total CAPEX;456000;EUR;CAPEX
+TecEcoAnalysis;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEcoAnalysis;Total project discounted operation cost;51690.3;EUR;DiscountedNetOPEX
+TecEcoAnalysis;Total project discounted OPEX;51690.3;EUR;DiscountedPureOPEX
+TecEcoAnalysis;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEcoAnalysis;Total project income;0;EUR;DiscountedSellPart
+TecEcoAnalysis;Total project buying costs;0;EUR;DiscountedBuyPart
+TecEcoAnalysis;Annual operation cost;4560;EUR;NetOPEX
+TecEcoAnalysis;Annual OPEX;4560;EUR;PureOPEX
+TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
+TecEcoAnalysis;Annual income;0;EUR;SellPart
+TecEcoAnalysis;Annual buying costs;0;EUR;BuyPart
+Converter;CAPEX;0;EUR;CAPEX
+Converter;is installed;1;-;IsInstalled
+Converter;Annual operation cost;0;EUR;OPEX
+Converter;Annual fixed OPEX;0;EUR;PureOPEX
+Converter;Annual variable OPEX;0;EUR;VariableOPEX
+Converter;Annual replacement costs;0;EUR;Replacement
+Converter;Installed Size;0;MW;Size
+Converter;Running time at power >0.;0;h;RunningTime
+Converter;Running time availability;0;-;RunningTimeAvailable
+Converter;Annual consumption of ElectricalEnergy PowerIn;0;MWh;TotConsPowerIn
+Converter;Mean consumption of ElectricalPower PowerIn;0;MW;MeanConsPowerIn
+Converter;Load factor PowerIn;0;-;UseRatePowerIn
+Converter;Annual production of ElectricalEnergy PowerOut;0;MWh;TotProdPowerOut
+Converter;Mean production of ElectricalPower PowerOut;0;MW;MeanProdPowerOut
+Elec_Bus;Integrated bus balance;0;MWh;BusBalance
+Elec_Grid;is installed;1;-;IsInstalled
+Elec_Grid;Annual operation cost;0;EUR;OPEX
+Elec_Grid;Annual variable OPEX;0;EUR;VariableOPEX
+Elec_Grid;Grid extraction time;7300;h;extractionTime
+Elec_Grid;Grid extraction ElectricalEnergy GridFlow;4.47989e+06;MWh;TotGridFlow
+Elec_Grid;Levelized Grid extraction ElectricalEnergy GridFlow;5.07823e+07;MWh;LvlzdTotGridFlow
+Elec_Grid;Mean extraction ElectricalPower GridFlow;613.684;MW;MeanGridFlow
+Elec_Load;is installed;1;-;IsInstalled
+Elec_Load;Annual operation cost;0;EUR;OPEX
+Elec_Load;Annual variable OPEX;0;EUR;VariableOPEX
+Elec_Load;Component Weight;1;Unit;Weight
+Elec_Load;ImposedProfile load time;7300;h;ImposedProfileTime
+Elec_Load;ImposedProfile ElectricalEnergy SourceLoadFlow;-4.2559e+06;MWh;TotImposedProfileSourceLoadFlow
+Elec_Load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-4.82432e+07;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Elec_Load;Mean ElectricalPower SourceLoadFlow;-583;MW;MeanImposedProfileSourceLoadFlow
+MultiConverter;CAPEX;456000;EUR;CAPEX
+MultiConverter;is installed;1;-;IsInstalled
+MultiConverter;Annual operation cost;4560;EUR;OPEX
+MultiConverter;Annual fixed OPEX;4560;EUR;PureOPEX
+MultiConverter;Annual variable OPEX;0;EUR;VariableOPEX
+MultiConverter;Annual replacement costs;0;EUR;Replacement
+MultiConverter;Installed Size;1140;MW;Size
+MultiConverter;Running time at power >0.;7300;h;RunningTime
+MultiConverter;Running time availability;0.833333;-;RunningTimeAvailable
+MultiConverter;Annual consumption of ElectricalEnergy INPUTFlux1;-4.47989e+06;MWh;TotConsINPUTFlux1
+MultiConverter;Mean consumption of ElectricalPower INPUTFlux1;-613.684;MW;MeanConsINPUTFlux1
+MultiConverter;Load factor INPUTFlux1;0.4486;-;UseRateINPUTFlux1
+MultiConverter;Annual production of ElectricalEnergy OUTPUTFlux1;4.2559e+06;MWh;TotProdOUTPUTFlux1
+MultiConverter;Mean production of ElectricalPower OUTPUTFlux1;583;MW;MeanProdOUTPUTFlux1
+NodeLaw#2;Integrated bus balance;0;MWh;BusBalance

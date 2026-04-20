@@ -1,3 +1,4 @@
+#include "CairnAPI.h"
 #include "CairnAPIUtils.h"
 #include "CairnCore.h"
 #include "Cairn_Exception.h"
@@ -6,10 +7,25 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+CairnAPI::CairnAPI()
+{	
+	CairnLogger::CreateLogger();
+
+	//create a map of model types	
+	CairnAPIUtils::initModelTypesMap();
+}
+
 CairnAPI::CairnAPI(bool a_Log)
 {	
-	m_LogConsole = a_Log;
 	CairnLogger::CreateLogger(a_Log);
+
+	//create a map of model types	
+	CairnAPIUtils::initModelTypesMap();
+}
+
+CairnAPI::CairnAPI(t_dict a_DefLogs)
+{
+	CairnLogger::CreateLogger(a_DefLogs);
 
 	//create a map of model types	
 	CairnAPIUtils::initModelTypesMap();
@@ -107,7 +123,7 @@ t_value CairnAPI::get_DefaultParameter(const std::string& a_ModelClass, const st
 	return t_value();
 }
 
-t_list CairnAPI::get_Solvers()
+t_list CairnAPI::get_Solvers() const
 {
 	t_list vRet;
 	MIPSolverFactory vSolvers;	
@@ -128,7 +144,7 @@ CairnAPI::OptimProblemAPI CairnAPI::create_Study(const std::string& a_StudyName)
 	
 		fs::path vLogFile(a_StudyName);
 		vLogFile.replace_extension("log");
-		CairnLogger::CreateLogger(m_LogConsole, vLogFile.string());
+		CairnLogger::ChangeFileLogger(vLogFile.string());
 		m_Cairn = new CairnCore("Cairn", vQStudyName);
 		
 		vRet.set_Problem(m_Cairn->getProblem());
@@ -166,4 +182,15 @@ void CairnAPI::close_Study()
 		delete m_Cairn;
 		m_Cairn = nullptr;
 	}
+}
+
+CairnAPI::OptimProblemAPI CairnAPI::get_Study()
+{
+	OptimProblemAPI vRet;
+	if (!m_Cairn)
+		CairnAPIUtils::setError(CairnAPIUtils::errDefault, "No study exists!");
+	else {
+		vRet.set_Problem(m_Cairn->getProblem());
+	}
+	return vRet;
 }

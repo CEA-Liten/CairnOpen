@@ -17,7 +17,7 @@ public:
     void declareDefaultModelConfigurationParameters() { 
         SubModel::declareDefaultModelConfigurationParameters();  
         //bool
-        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");          /** Use LP Model - ie binary variable imposed if true */
+        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");  
     }
 
     void declareDefaultModelParameters() 
@@ -27,7 +27,7 @@ public:
     void declareDefaultModelInterface()
     {
         SubModel::declareDefaultModelInterface();
-        addIO("VariableCosts", &mExpVariableCosts, true, mCurrency);    /** Computed variable costs resulting from ramp cost */
+        addIO("VariableCosts", &mExpVariableCosts, true, pCurrency());    /** Computed variable costs resulting from ramp cost */
         addIO("State", &mExpState, &mAddStateVariable, "bool");  /** ON OFF state of the element connected to ramp */
         addControlIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool", &mHistStartUp);
         addControlIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool", &mHistShutDown);

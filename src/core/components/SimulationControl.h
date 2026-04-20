@@ -41,9 +41,12 @@ public:
     bool isExportParameters();
     bool isCheckTimeSeriesUnits();
 
-    std::map<std::string, InputParam::ModelParam*> getParameters();
+    std::map<std::string, ModelParam*> getParameters();
     GUIData* getGUIData() { return mGUIData; }
     std::vector<InputParam*> get_InputParams();
+
+    std::vector<InputParam*> get_ParamInputParams();
+    std::vector<InputParam*> get_OptionInputParams();
 
 private:
     void declareCompoInputParam();

@@ -19,9 +19,14 @@ endif()
   
 # extra files
 if (WITH_GENERICAPPENV)
-    set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envCairn${PROJECT_VERSION})
+    set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envs/envCairn${PROJECT_VERSION})
     if (INSTALL_WHEEL)
-        set(PYTHON_VENV_PROJECT ${INSTALL_WHEEL_VENV})    
+        if (USE_ENVCAIRN) 
+            # force use on envCairn
+            set(INSTALL_WHEEL_VENV ${PYTHON_VENV_PROJECT})    
+        else()
+            set(PYTHON_VENV_PROJECT ${INSTALL_WHEEL_VENV})    
+        endif() 
     endif()
     if(CMAKE_SYSTEM_NAME MATCHES Windows)
         msys_to_win_path( ${Qt5_HOME} Qt5_HOME)
@@ -45,57 +50,41 @@ if (BUILD_CAIRN)
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts)
 endif()
 
+# ============= Doc configuration =============
+if (BUILD_DOC)
+    # find python 	
+	set(Python_DIR ${Python_ROOT_DIR})
+	find_package(Python REQUIRED COMPONENTS Interpreter Development)	
+	
+    # get whl file    
+    file(GLOB FILES_LIST ${CMAKE_INSTALL_PREFIX}/../cairn-${PROJECT_VERSION}*.whl)
 
-if (WITH_PYBIND)
-    if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)
-        set(CAIRN_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})   
-        if(CMAKE_SYSTEM_NAME MATCHES Windows)
-            set(CAIRN_INSTALL_LIBDIR ${CMAKE_INSTALL_BINDIR})   
-        endif()
-        configure_file(${CMAKE_SOURCE_DIR}/cmake/__init__.py.in ${CMAKE_BINARY_DIR}/__init__.py @ONLY)
-
-        string(JOIN , PROJECT_OPTIONS
-             "'-DWITH_PRIVATEMODELS:BOOL=${WITH_PRIVATEMODELS}'"
-             "'-DCPLEX_ROOT:STRING=${CPLEX_ROOT}'"
-             "'-DPYTHON_HOME:STRING=${PYTHON_HOME}'"
-             "'-DPYTHON_VENV:STRING=${PYTHON_VENV}'"
-             "'-Dpybind11_DIR:STRING=${pybind11_DIR}'"
-             "'-DPYTHON_PACKAGES:STRING=${PYTHON_PACKAGES}'")  
-        
-        if (DEFINED DEPS_ROOT)
-            string(JOIN , PROJECT_OPTIONS ${PROJECT_OPTIONS}
-                "'-DDEPS_INSTALL:BOOL=ON'"
-                "'-DDEPS_ROOT:STRING=${DEPS_ROOT}'")  
-        else()
-            string(JOIN , PROJECT_OPTIONS ${PROJECT_OPTIONS}
-                "'-DDEPS_INSTALL:BOOL=OFF'"  )              
-        endif()
-
-        message("PROJECT_OPTIONS: ${PROJECT_OPTIONS}")
-        set(PYTHON_INSTALL_PACKAGE ${PYTHON_PACKAGES}/${PROJECT_NAME})
-	    configure_file(${CMAKE_SOURCE_DIR}/cmake/setup.py.in ${CMAKE_HOME_DIRECTORY}/setup.py @ONLY)
-	    configure_file(${CMAKE_SOURCE_DIR}/cmake/pyproject.toml.in ${CMAKE_HOME_DIRECTORY}/pyproject.toml @ONLY)      
-	    install(
-              FILES ${CMAKE_BINARY_DIR}/__init__.py
-              DESTINATION .
-              )
-        string(TOLOWER ${CMAKE_BUILD_TYPE} CAIRN_BUILD_TYPE)
-        if (BUILD_WHEEL AND (CAIRN_BUILD_TYPE STREQUAL release))         
-            set(Python_DIR ${Python_ROOT_DIR})
-	        find_package(Python REQUIRED COMPONENTS Interpreter Development)
-            message(STATUS "Python: ${Python_EXECUTABLE}")
-
-            file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/_skbuild/)
-            message("-- Build Wheel in ${CMAKE_HOME_DIRECTORY}/${CMAKE_INSTALL_BINDIR}")           
-            install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} -m pip wheel ${CMAKE_HOME_DIRECTORY} -w ${CMAKE_HOME_DIRECTORY}/${CMAKE_INSTALL_BINDIR})")
-        endif()
-        
-        if (INSTALL_WHEEL)
-            configure_file(${CMAKE_SOURCE_DIR}/cmake/installWheel_options.in  ${CMAKE_CURRENT_BINARY_DIR}/cmake/installWheel_options.cmake @ONLY)            
-            install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cmake/installWheel_options.cmake DESTINATION lib/cmake)
-            install(SCRIPT ${CMAKE_SOURCE_DIR}/cmake/installWheel.cmake)
-        endif()
+    # install cairn with the wheel file
+    list(LENGTH FILES_LIST nbWhl)
+    if (nbWhl GREATER 0)
+	    # take the first elem
+	    list(GET FILES_LIST 0 CAIRN_WHL)	    
+    else()
+        message(FATAL_ERROR "Cannot find cairn-${PROJECT_VERSION} wheel, build it before.")
     endif()
+
+    # virtual environment 	
+	python_venv(${PYTHON_VENVDOC} ${Python_EXECUTABLE} REQS ${CAIRNDOC_HOME}/requirements.txt PCK ${CAIRN_WHL} FORCE ON)		
+	
+    # Extracting RST parts from Cairn source code...   
+    set(DOC_CEA FALSE)
+    if (${WITH_PRIVATEMODELS})
+        set(DOC_CEA TRUE)
+    endif()
+
+    execute_process(COMMAND ${Python_EXECUTABLE} userDocGenRST.py ${DOC_CEA}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc)
+          
+    # Build htmlSphinx   
+    configure_file(${CAIRNDOC_HOME}/confDoc.py.in ${CAIRNDOC_HOME}/conf.py @ONLY)
+
+    execute_process(COMMAND ${PYTHON_VENVDOC}/scripts/sphinx-build -M html . ./_build
+        WORKING_DIRECTORY ${CAIRNDOC_HOME})
 endif()
 
 # ============= Package configuration =============

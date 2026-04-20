@@ -132,23 +132,22 @@ public:
         SourceLoadSubModel::declareDefaultModelConfigurationParameters();
 
         //re-declare these parameters to change their default values
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");    /** Use EcoInvestModel - ie Use Capex and Opex if true */
-        addParameter("UseWeightOptimization", &mUseWeightOptimization, true, false, true, "Use sizing based on Weight if true", ""); // this way weight will be considered flat by default allowing for upward compatibility with previous computations
-        addParameter("LPModelONLY", &mLPModelOnly, true, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");          /** Use LP Model - ie binary variable imposed if true */
-
-        //bool
-        addParameter("UseControlledFlux", &mUseControlledFlux, false, false, true, "", "", "ControlOptions");   /** Optional parameter - If true: SourceLoadFlow will be set from another component using equality bus constraint instead of imposing SourceLoad flow from timeSeries - False by default */
-        addParameter("UseWeightedFlux", &mUseWeightedFlux, false, false, true, "", "", "ControlOptions");       /** Optional parameter - If true: SourceLoad flow imposed by timeSeries will be weighted by another component variable using equality bus constraint - False by default */
-        addParameter("AddHeatConsumerModel", &mAddHeatConsumerModel, false, false, true, "", "bool"); 	/** Optional parameter - If true model fluid flowrate corresponding to power source or load - default = false */
-        addParameter("AddVariableCostModel", &mAddVariableCostModel, false, false, true); 	/** Optional parameter - If true add precomputed costs or revenues from timeseries UseProfileBuyPrice or UseProfileSellPrice or AddShedding - It can be used to account for variable costs in addition to or in subsitution of Capex and Opex contributions - default = false */
-        addParameter("AddSheddingTS", &mAddSheddingTS, false, false, true); /** Optional parameter - If true compute the volume of power to be removed from the imposed profile for shedding - default = false */
-        addParameter("ComputeOptimalPrice", &mComputeOptimalPrice, false, false, true); 	/** Optional parameter - If true compute constant optimal price - default = false */
-        addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "", "", "TimeSeriesForecast"); /** Optional parameter - If true: use forecast time series instead of historical timeseries - default = false */
-        addParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "", "", "TimeSeriesForecast");/** Optional parameter - If true compute SeasonalCosts - default = false */
-        addParameter("AddSheddingDetailed", &mAddSheddingDetailed, false, false, true); 	/** Optional parameter - If true compute the volume of power to be removed from the imposed profile for shedding - default = false */
-        addParameter("AddPeakShavingDetailed", &mAddPeakShavingDetailed, false, false, true); 	/** Optional parameter - If true compute the volume of power to be smooth from the imposed profile for shaving - default = false */
-        addParameter("AddStaticCompensation", &mAddStaticCompensation, false, false, true, "", "", "CompensationConstraints"); /** In the cases where reactive power in taken into account, this can compensate the reactive power of the components  */
-        addParameter("FixedStaticCompensation", &mFixedStaticCompensation, false, false, true, "", "", "CompensationConstraints"); /** Choose id static compensation is free or not (default=false)*/
+        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - i.e. use Capex and Opex if true", "", "EcoInvestModel");
+        addParameter("UseWeightOptimization", &mUseWeightOptimization, true, false, true, "Use sizing based on Weight if true - weight will be considered flat by default allowing for upward compatibility with previous computations", "");
+        addParameter("LPModelONLY", &mLPModelOnly, true, false, true, "Use LP Model - i.e. integer variables imposed or relaxed to real variables if true", "");
+        // bool
+        addParameter("UseControlledFlux", &mUseControlledFlux, false, false, true, "Optional - If true: SourceLoadFlow will be set from another component using equality bus constraint instead of imposing SourceLoad flow from timeSeries - default = false", "", "ControlOptions");
+        addParameter("UseWeightedFlux", &mUseWeightedFlux, false, false, true, "Optional - If true: SourceLoad flow imposed by timeSeries will be weighted by another component variable using equality bus constraint - default = false", "", "ControlOptions");
+        addParameter("AddHeatConsumerModel", &mAddHeatConsumerModel, false, false, true, "Optional - If true model fluid flowrate corresponding to power source or load - default = false", "bool");
+        addParameter("AddVariableCostModel", &mAddVariableCostModel, false, false, true, "Optional - If true add precomputed costs or revenues from timeseries UseProfileBuyPrice or UseProfileSellPrice or AddShedding - can be used to account for variable costs in addition to or in substitution of Capex and Opex contributions - default = false");
+        addParameter("AddSheddingTS", &mAddSheddingTS, false, false, true, "Optional - If true compute the volume of power to be removed from the imposed profile for shedding - default = false");
+        addParameter("ComputeOptimalPrice", &mComputeOptimalPrice, false, false, true, "Optional - If true compute constant optimal price - default = false");
+        addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Optional - If true: use forecast time series instead of historical timeseries - default = false", "", "TimeSeriesForecast");
+        addParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "Optional - If true compute SeasonalCosts - default = false", "", "TimeSeriesForecast");
+        addParameter("AddSheddingDetailed", &mAddSheddingDetailed, false, false, true, "Optional - If true compute the volume of power to be removed from the imposed profile for shedding - default = false");
+        addParameter("AddPeakShavingDetailed", &mAddPeakShavingDetailed, false, false, true, "Optional - If true compute the volume of power to be smoothed from the imposed profile for shaving - default = false");
+        addParameter("AddStaticCompensation", &mAddStaticCompensation, false, false, true, "Optional - In cases where reactive power is taken into account, this can compensate the reactive power of the components", "", "CompensationConstraints");
+        addParameter("FixedStaticCompensation", &mFixedStaticCompensation, false, false, true, "Optional - Choose if static compensation is free or not - default = false", "", "CompensationConstraints");
     }
 
     //----------------------------------------------------------------------------------------------------
@@ -161,15 +160,15 @@ public:
         
         //bool
         //re-declare this parameter to change its default value
-        addParameter("LPWeightOptimization", &mLPWeightOptimization, true, false, true, "Use integer Weight if false ", ""); /** Use sizing based on Weight if true - default is false*/
+        addParameter("LPWeightOptimization", &mLPWeightOptimization, true, false, true, "Use integer Weight if false ", ""); 
 
         //int
-        addParameter("MaxTimeShedding", &mMaxTimeShedding, 0, &mAddSheddingDetailed, &mAddSheddingDetailed, "Time shedding will be on. Put LPmodelonly on false and EcoInvest model on true", "Time"); /** Minimum shedding time period, in number of timesteps */
-        addParameter("MinSheddingStandBy", &mMinSheddingStandBy, 0, &mAddSheddingDetailed, &mAddSheddingDetailed, "Time before a new power cut happen", "Time");	/** Minimum stand-by time period, in number of timesteps */
-        addParameter("TimeSpan", &mTimeSpan, 1, &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "TimeSpan number of timesteps periods to be used for flexibility."); 	/** */
+        addParameter("MaxTimeShedding", &mMaxTimeShedding, 0, &mAddSheddingDetailed, &mAddSheddingDetailed, "Minimum shedding time period, in number of timesteps. Put LPmodelonly on false and EcoInvest model on true", "Time"); /** Minimum shedding time period, in number of timesteps */
+        addParameter("MinSheddingStandBy", &mMinSheddingStandBy, 0, &mAddSheddingDetailed, &mAddSheddingDetailed, "Minimum stand-by time period before a new power cut happen, in number of timesteps. Time ", "Time");	 
+        addParameter("TimeSpan", &mTimeSpan, 1, &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "TimeSpan number of timesteps periods to be used for flexibility."); 	 
 
         //double
-        addParameter("CostShedding", &mCostShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Penalty Cost associated to the shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} })); /* Penalty introduced when power shedding is activated*/
+        addParameter("CostShedding", &mCostShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Penalty Cost associated to the shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} }));  
         addParameter("MaxShedding", &mMaxShedding, 0., &mAddSheddingDetailed, &mAddSheddingDetailed, "Maximum shedding power on the imposed flow", mMainCarrier->pPowerUnit());  
         addParameter("MaxFlow", &mMaxFlux, 1.e4, true, true, "Maximum injected or extracted flow", mMainCarrier->pFluxUnit());		 
         addParameter("MaxPrice", &mMaxOptimalPrice, 100, &mComputeOptimalPrice, &mComputeOptimalPrice, "Maximum price", pCurrency());
@@ -182,12 +181,12 @@ public:
         addParameter("MaxEffectOpex", &mMaxEffectOpex, 0., &mAddPeakShavingDetailed, &mAddPeakShavingDetailed, "used for computing a contribution to the objective function. Applies proportionally on the product of  mMaxEffect and MaxEffectCapex (%MaxEffectCapex/year).", "-");
     
         //vector
-        addTimeSeries("UseProfileLoadFlux", &mImposedFlux, SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), "", SFunctionUnit({ eFTypeDivision, { mMainCarrier->pFluxUnit(), &mWeightUnit} }) );	/** External Time series of Imposed flow injected (source) or extracted (sink) if UseControlledFlux not activated*/
-        addTimeSeries("UseProfileEnergyPrice", &mEnergyPrice, &mAddVariableCostModel, &mAddVariableCostModel, " External TimeSeries of energy price defining variable cost for positive value or revenue if negative ", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
-        addTimeSeries("UseStartStopProfile", &mStartStopProfile, &mUseWeightedFlux, &mUseWeightedFlux, "Add imposed startstop profile weight from External Time series if mUseWeightedFlux activated", "", "ControlOptions", 0);	 
-        addTimeSeries("UseProfileLoadFluxSeasonal", &mImposedFluxSeasonal, &mSeasonalPrevisions, &mSeasonalPrevisions, "", SFunctionUnit({ eFTypeDivision, { mMainCarrier->pFluxUnit(), &mWeightUnit} }) );
-        addTimeSeries("UseProfileMaxShedding", &mMaxSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External time series of power shedding giving the max that can be substracted to the imposed flux", mMainCarrier->pPowerUnit());  
-        addTimeSeries("UseProfileCostShedding", &mCostSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External TimeSeries defining the cost of shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} }) );
+        addTimeSeries("UseProfileLoadFlux", &mImposedFlux, SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), SFunctionFlag({ eFTypeNotAnd, { &mUseControlledFlux} }), "External Time series of Imposed flow injected (source) or extracted (load) if UseControlledFlux not activated", SFunctionUnit({ eFTypeDivision, { mMainCarrier->pFluxUnit(), &mWeightUnit} }), "Base", 0.0);	
+        addTimeSeries("UseProfileEnergyPrice", &mEnergyPrice, &mAddVariableCostModel, &mAddVariableCostModel, " External TimeSeries of energy price defining variable cost for positive value or revenue if negative ", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }), "Base", 0.0);
+        addTimeSeries("UseStartStopProfile", &mStartStopProfile, &mUseWeightedFlux, &mUseWeightedFlux, "Add imposed startstop profile weight from External Time series if mUseWeightedFlux activated", "", "ControlOptions", 0.0);
+        addTimeSeries("UseProfileLoadFluxSeasonal", &mImposedFluxSeasonal, &mSeasonalPrevisions, &mSeasonalPrevisions, "", SFunctionUnit({ eFTypeDivision, { mMainCarrier->pFluxUnit(), &mWeightUnit} }), "Base", 0.0);
+        addTimeSeries("UseProfileMaxShedding", &mMaxSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External time series of power shedding giving the max that can be substracted to the imposed flux", mMainCarrier->pPowerUnit(), "Base", 0.0);
+        addTimeSeries("UseProfileCostShedding", &mCostSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External TimeSeries defining the cost of shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} }), "Base", 0.0);
     }
 
     inline void declareModelInterface()
@@ -199,7 +198,7 @@ public:
         */
         
         if (mComputeOptimalPrice) {
-            addSizeMaxIO("OptimalPrice", &mExpSizeMax, true, mCurrency);	/** Computed optimal price used by component, if optimized else equals input weight */
+            addSizeMaxIO("OptimalPrice", &mExpSizeMax, true, pCurrency());	/** Computed optimal price used by component, if optimized else equals input weight */
         }
         else {
             addSizeMaxIO("Weight", &mExpSizeMax, true, "Unit");	/** Computed weight of identical component, if optimized else equals input weight */

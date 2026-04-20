@@ -1,7 +1,8 @@
 #ifndef MilpComponent_H
 #define MilpComponent_H
-class MilpComponent;
+
 class SubModel;
+class TecEcoAnalysis;
 
 #include <Eigen/Dense>
 #include <map>
@@ -9,13 +10,14 @@ class SubModel;
 #include "CairnCore_global.h"
 #include "Cairn_Exception.h"
 
+#include "Solver.h"
 #include "EnergyVector.h"
-#include "TecEcoEnv.h"
+
 #include "JsonDescription.h"
 #include "MilpData.h"
 #include "MilpPort.h"
 #include "GUIData.h"
-#include "Solver.h"
+
 #include "GlobalSettings.h"
 
 using Eigen::VectorXf;
@@ -26,8 +28,9 @@ using Eigen::MatrixXf;
 #include "ModelVar.h"
 #include "ModelTS.h"
 
-using namespace std;
+#include <optional>
 
+using namespace std;
 
 /**
  * \brief The MilpComponent class is the virtual class of every component of global MILP OptimProblem
@@ -36,14 +39,17 @@ using namespace std;
  */
 typedef SubModel* (*f_submodel)(CairnObject* aParent);
 
-class CAIRNCORESHARED_EXPORT MilpComponent : public TecEcoEnv
+class CAIRNCORESHARED_EXPORT MilpComponent : public CairnObject
 {
 public:
-    MilpComponent(CairnObject* aParent, std::string aName, MilpData *aMilpData, TecEcoEnv &aTecEcoEnv,  
-                  const std::map<std::string, std::string> &aComponent, const std::map < std::string, std::map<std::string, std::string> > &aPorts={}, class ModelFactory* aModelFactory=nullptr);
+    MilpComponent(CairnObject* aParent, std::string aName, MilpData *aMilpData, TecEcoAnalysis *aTecEcoAnalysis,
+        const std::map<std::string, std::string> &aComponent, 
+        const std::map < std::string, std::map<std::string, std::string> > &aPorts={}, 
+        class ModelFactory* aModelFactory=nullptr);
 
     virtual ~MilpComponent();
-    virtual void initMilpComponent();
+    
+    void initMilpComponent();
 
     std::string Name() const {return std::string(this->objectName().c_str()); }
     void setName(const std::string& name) { this->setObjectName(name); }
@@ -59,8 +65,8 @@ public:
     int  createHistFXLists();
 
     virtual void prepareOptim();                                                                /** pre-treatment of PEGASE exchange Zone */
-    virtual void exportResults(t_mapExchange& a_Export);                                                             /** export results to PEGASE exchange Zone */
-    virtual void exportPortResults(t_mapExchange& a_Export, uint modinitTS);
+    virtual void populatePublishedVars(t_mapExchange& a_Export);                                                             /** export results to PEGASE exchange Zone */
+    virtual void populatePublishedPortVars(t_mapExchange& a_Export, uint modinitTS);
     virtual void setDefaultsResults();                                                        /** define default values in case optimization fails */
 
     // Utility functions for PEGASE IO management
@@ -70,7 +76,7 @@ public:
     virtual int initSubModelConfiguration(const bool& readParams = true) ;      /** Read model Input parameters from SettingsFile and Input timeseries from Pegase Exchange Zone */
     virtual void redeclareEnvImpactParameters(); /** when selected impacts get modified */
     virtual int initSubModelInput() ;              /** Read model Input parameters from SettingsFile and Input timeseries from simulation environment */
-    virtual int initPorts();                                                                        /** port Milp flux expression init (allocation) */
+    int initPorts();                                                                        /** port Milp flux expression init (allocation) */
     virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
     void setSubModelEnvImpacts();
 
@@ -83,15 +89,13 @@ public:
 
     void resetCompoModel();
     void cleanTimeSeries();
-    //void closeExpressions();      /** Clean expressions of the submodel */
-    //void resetFlags();
 
     void exportSubmodelIO(Solver* aSolver, int aNsol);  /** Output Data (for link with PEGASE or OUTSIDE) */
     void removeIOs();
     
-    virtual void setBusFluxPortExpression(); /** Fill in expression at BusSameValue port connexion */
-    virtual void setBusFluxPortExpression(MilpPort *port, const double &aSignedCoefficient);                                              /** Fill in expression at BusSameValue port connexion */
-    virtual void setBusSameValuePortExpression();  /** Fill in expression at BusSameValue port connexion */
+    void setBusFluxPortExpression(); /** Fill in expression at BusSameValue port connexion */
+    void setBusFluxPortExpression(MilpPort *port, const double &aSignedCoefficient);                                              /** Fill in expression at BusSameValue port connexion */
+    void setBusSameValuePortExpression();  /** Fill in expression at BusSameValue port connexion */
 
     /* Methods that calls a SubModel function */
     MIPModeler::MIPExpression* getMIPExpression(std::string aExpressionName);
@@ -104,7 +108,7 @@ public:
     void createOnePort(const std::string& portId, const std::map<std::string, std::string>& portParams);
     std::string getUniquePortID();
     const std::vector<MilpPort*> &PortList();
-    virtual void addPort(MilpPort* lptrport);
+    void addPort(MilpPort* lptrport);
     void removePort(MilpPort* lptrport);
     MilpPort* getPort(const std::string& portId);
     MilpPort* getPortByName(const std::string& aPortName);
@@ -158,15 +162,20 @@ public:
     Cairn_Exception getException() const {return mException;}
     void setException (const Cairn_Exception &aException) {mException = aException;}
     
+    bool createModelTS(const std::string& varName, const std::string& tsName, ModelParam* aParamTS);
+
     virtual void readTSVariablesFromModel();
-    void setTimeSeriesName(const std::string& ts_paramName, const std::string& ts_name);
-    std::string getTimeSeriesName(const std::string& ts_paramName);
+
     std::map<std::string, std::string> getTimeSeriesNames();
+    std::string getTimeSeriesName(const std::string& ts_paramName);
+    void setTimeSeriesName(const std::string& ts_paramName, const std::string& ts_name);
+
+    const std::vector<double>* getTimeSeries(const std::string& varName) const;
 
     void computeHistNbHours();
  
     virtual std::vector<std::string> get_ModelClassList();
-    std::map<std::string, InputParam::ModelParam*> getParameters(const bool includePortParams=false); //get all the parameters of the componenet
+    std::map<std::string, ModelParam*> getParameters(const bool includePortParams=false); //get all the parameters of the componenet
 
     bool EnvironmentModel();
     bool EcoInvestModel();
@@ -178,7 +187,6 @@ public:
     void setXpos(const int& aXpos);
     void setYpos(const int& aYpos);
 
-    void setTecEcoEnvSettings(TecEcoEnv& aTecEcoEnv);
     void updateCompoParamMap(const std::string& a_SettingName, const t_value& a_SettingValue);
     void updateCompoParamMap(const t_dict& a_SettingValues);
 
@@ -188,23 +196,52 @@ public:
 
     void createImportListVars(t_mapExchange& a_Import);
     void createExportListVars(t_mapExchange& a_Export);
-    virtual void createPortsExportListVars(t_mapExchange& a_Exchange);
+    void createPortsExportListVars(t_mapExchange& a_Exchange);
 
     std::map<std::string, std::string> portDataFromInputFile(const std::string& portId, const std::string& portName);
 
+    void setTecEcoAnalysis(TecEcoAnalysis* mTecEcoAnalysis);
+
+    const std::string* pCurrency() const;
+    double& ExtrapolationFactor();
+    std::vector<double>& LevelizationTable();
+    std::vector<double>& ImpactLevelizationTable();
+    std::vector<double>& TableYearsHours();
+
+    void setHistNbHours(const double& aHistTime) { mHistNbHours += aHistTime; };
+    double HistNbHours() { return mHistNbHours; }
+    void setOptimalSize(double aOptimalSize) { mOptimalSize = aOptimalSize; }
+
+    std::vector<std::string> possibleModelClasses() const;
+
     virtual std::vector<class InputParam*> get_InputParams();
 
-protected:
-    Cairn_Exception mException ;
-    MIPModeler::MIPModel* mModel ;                      /** Pointer to global Optimization Problem Model */
+    std::vector<InputParam*> get_ParamInputParams();
+    std::vector<InputParam*> get_OptionInputParams();
+    virtual std::vector<InputParam*> get_TimeSeriesInputParams();
+    virtual std::vector<InputParam*> get_EnvImpactInputParams();
+    virtual std::vector<InputParam*> get_PortEnvImpactInputParams();
 
-    GUIData* mGUIData{ nullptr };     /** Pointer to GUI Data */
+    std::optional<double> getIndicatorValue(const std::string& indicatorName, const std::string& range = "PLAN") const;
+    bool isInstalled() const;
+
+    inline t_list getPossibleControlValues() const { return { "", "RollingHorizon", "MPC" }; }
+
+protected:
+    Cairn_Exception mException;
+    MIPModeler::MIPModel* mModel;     /** Pointer to global Optimization Problem Model */
+    GUIData* mGUIData{ nullptr };      /** Pointer to GUI Data */
+
+    SubModel* mCompoModel{ nullptr };  /** Pointer to global component SubModel of name mCompoModelName*/
+    TecEcoAnalysis* mTecEcoAnalysis;
 
     // Component settings
     std::map<std::string, std::string> mComponent ;         /** Map of Topological data from .json */
     std::map < std::string, std::map<std::string, std::string> > mPorts;  /** Map of port data from .json, portName: std::map<std::string, std::string> */
 
-    SubModel* mCompoModel{ nullptr };                             /** Pointer to global component SubModel of name mCompoModelName*/
+    int mHistNbHours;          /** nombre d'heures déjà décompté par le passé (permet de faire la bonne actualisation) */
+    double mOptimalSize; //Not used anywhere!  /** Optimal size of component, if optimized eg Nominal power, storage capacity...*/
+
     InputParam* mCompoInputParam{ nullptr };      /** COMPONENT Input parameter List from XML File -> Options */
     InputParam* mInputParam{ nullptr };                           /** Pointer to COMPONENT Input Data List (for link with PEGASE or OUTSIDE) */
     InputParam* mModelParam{ nullptr };                           /** Pointer to SubModel Input parameter List (constant of the Milp submodel)*/
@@ -224,10 +261,6 @@ protected:
     std::string mCompoModelName ;                       /** Component Model Name to be used eg an Electrolyzer */ 
     std::string mCompoTechnoType;                       /** Component TechnoType Name to be used only by GUI for image eg an PVSource */
     std::string mCompoModelClassName ;                  /** Component Model Class Name to be used eg a Basic Electrolyzer or SOEC Electrolyzer */
-    int mNports ;                                       /** Component number of ports */
-    int mNbInputPorts ;                                       /** Component number of Input ports */
-    int mNbOutputPorts ;                                       /** Component number of Output ports */
-    int mNbDataPorts ;                                       /** Component number of Data exchange ports */
 
     //technical input
     bool  mIsImposedWeight ;                            /** if true: add constraint setting component weight to imposed value - if false, weight of component - useful to relax on load flux profiles */
@@ -245,6 +278,7 @@ protected:
     typedef std::map<std::string, ModelTS> t_mapTS;
     t_mapTS m_timeSeries = {};
     void readTSVariables(InputParam* aMapParamTS);
+    void readEnergyVectorTS(const EnergyVector* carrier, const InputParam* aMapParamTS);
 
     // compo model    
     class ModelFactory* mModelFactory;

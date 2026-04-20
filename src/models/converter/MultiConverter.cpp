@@ -117,10 +117,8 @@ void MultiConverter::computeModelContribution()
     }
 
     /** Add Sizing */
-    if (mMaxPower < 0) {
-        for (uint64_t t = 0; t < mHorizon; t++) {
-            addConstraint(mExpOutput[0][t] <= mVarSizeMax * mComponentAvailabilityTS[t], "cPowMax_" + std::to_string(0), t);
-        }
+    for (uint64_t t = 0; t < mHorizon; t++) {
+        addConstraint(mExpOutput[0][t] <= mExpSizeMax * mComponentAvailabilityTS[t], "cPowMax_" + std::to_string(0), t);
     }    
 }
 

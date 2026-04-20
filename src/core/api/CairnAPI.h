@@ -5,13 +5,27 @@
 #include <map>
 #include <vector>
 #include <variant>
+
 typedef std::vector<std::string> t_list;
 //Adding type bool to t_value will cause a problem for std::string being casted as bool
 typedef std::variant<double, int, std::string, std::vector<std::string>, std::vector<double>, std::vector<int>> t_value;
 typedef std::map<std::string, t_value> t_dict;
+typedef std::map<std::string, std::string> t_dictComment;
 
 typedef std::vector<t_value> t_values;
 typedef std::map<std::string, t_values> t_dictValues;
+
+struct ExtraParameterData {
+	std::string component;
+	std::string parameter;
+	std::string value;
+};
+
+enum class IndicatorProperty {
+	Name,
+	Unit,
+	ShortName
+};
 
 #if defined(_MSC_VER)
 #define EXPORT __declspec(dllexport)
@@ -38,8 +52,11 @@ class DECLSPEC CairnAPI
 public:    
 	class OptimProblemAPI;
 	class MilpComponentAPI;
+	class ObjectAPI;
 
-	CairnAPI(bool a_Log = true);
+	CairnAPI();
+	CairnAPI(bool a_Log);
+	CairnAPI(t_dict a_DefLogs);
 	~CairnAPI();
         
     enum ESettingsLimited
@@ -49,6 +66,15 @@ public:
         optional,
 		used
     };
+
+	enum ESettingsCategory {
+		eAll = -1,
+		eParameters = 0,
+		eOptions,
+		eTimeSeries,
+		eEnvImpacts,
+		ePortEnvImpacts
+	};
 
     // Return the list of the all possibles Component
     t_list get_PossibleModelNames(); // --> donne les noms des modèles nécessaires à la création de composants (liste des classes)
@@ -77,23 +103,56 @@ public:
 		const std::string& a_attributeName);
 
     // Return the list of the possibles Solver
-    t_list get_Solvers();
+    t_list get_Solvers() const;
+	// --------------------------------------------------------------------------------	
+	class DECLSPEC ParamAPI {
+	public:
+		ParamAPI(class ObjectAPI* ap_Parent = nullptr, class ModelParam* ap_Param = nullptr);
 
+		std::string get_Name() const;
+		std::string get_Type() const;
+		std::string get_Description() const;
+		std::string get_Unit() const;
+
+		t_value get_Value() const;
+		std::string get_StrValue() const;
+		void set_Value(const t_value& a_SettingValue);
+		t_value get_Default() const;
+		std::string get_StrDefaultValue() const;
+		t_value get_Min() const;
+		t_value get_Max() const;
+		bool isMandatory() const;
+		bool isDependent() const;
+		bool isUsed() const;
+		std::string getShowConfig() const;
+
+		std::string get_Comment() const;
+		void set_Comment(const std::string& a_SettingComment);
+
+	protected:
+		class ModelParam* m_Param{ nullptr };
+		class ObjectAPI* m_Parent{ nullptr };
+	};
 	// --------------------------------------------------------------------------------
 	class DECLSPEC ObjectAPI {
 	public:
 		ObjectAPI(class CairnObject* ap_Object = nullptr);
 	
-		std::string get_Name() const;
-		std::string get_ObjectType() const;
-		virtual void rename(const std::string& name);
-
 		class CairnObject* get_Object() const;
 		void set_Object(class CairnObject* ap_EnergyVector);
+
+		std::string get_ObjectType() const;
+		std::string get_Name() const;
+		virtual void rename(const std::string& name);
 
 		//returns a list of parameter names
 		t_list get_SettingsList();
 		t_list get_SettingsListByType(ESettingsLimited a_setLimited = ESettingsLimited::all);
+		
+		//returns the list of parameter names for a given category (required for GUI)
+		t_list get_SettingsListByCategory(ESettingsCategory category);
+
+		ParamAPI get_Setting(const std::string& a_SettingName);
 
 		virtual t_value get_SettingValue(const std::string& a_SettingName);
 		virtual t_dict get_SettingValues();
@@ -101,17 +160,24 @@ public:
 		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		virtual void set_SettingValues(const t_dict& a_SettingValues);
 
+		std::string get_SettingComment(const std::string& a_SettingName);
+		t_dictComment get_SettingComments();
+
+		void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment);
+		void set_SettingComments(const t_dictComment& a_SettingComments);
+
 		t_list get_ShowConfigList();
 		std::string get_SettingShowConfig(const std::string& a_SettingName);
 
-		bool get_SettingMandatoryValue(const std::string& a_SettingName);
-		bool is_DependentSetting(const std::string& a_SettingName);
+		bool is_MandatorySetting(const std::string& a_SettingName);
+		bool is_UsedSetting(const std::string& a_SettingName);
 
 		std::string get_SettingUnit(const std::string& a_SettingName);
 
 	protected:
 		class CairnObject* m_Object{ nullptr };
 		std::vector<class InputParam*> get_InputParams();
+		std::vector<class InputParam*> get_InputParams(ESettingsCategory category);
 	};
 
 	// --------------------------------------------------------------------------------
@@ -120,6 +186,11 @@ public:
 		SolverAPI();		
 		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		virtual void set_SettingValues(const t_dict& a_SettingValues);	
+
+		class Solver* get_Solver() const;
+
+		t_list get_ProblemTypes() const;
+		t_list get_PossibleModelTypes() const;
 	};
 
 	// --------------------------------------------------------------------------------
@@ -131,14 +202,6 @@ public:
 
 	protected:		
 		void updateMilpData();
-	};
-
-	// --------------------------------------------------------------------------------
-	class DECLSPEC TecEcoAnalysisAPI : public ObjectAPI {
-	public:
-		TecEcoAnalysisAPI();
-		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
-		virtual void set_SettingValues(const t_dict& a_SettingValues);	
 	};
 
 	// --------------------------------------------------------------------------------
@@ -174,7 +237,47 @@ public:
 		void set_SettingValues(const t_dict& a_SettingValues);
 
 		EnergyVectorAPI get_EnergyCarrier();
-		void set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector);
+		bool set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector);
+
+	private:
+		bool configureParentComponent();
+	};
+
+
+	// --------------------------------------------------------------------------------
+	class DECLSPEC TecEcoAnalysisAPI : public ObjectAPI {
+	public:
+		TecEcoAnalysisAPI();
+
+		class TecEcoCompo* get_TecEcoComponent() const;
+
+		t_list get_PossibleOptimModels();
+
+		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
+		virtual void set_SettingValues(const t_dict& a_SettingValues);
+
+		// -- Ports ---
+		std::map<std::string, std::string> get_DefaultPortData(const std::string& portId) const;
+		t_list get_DefaultPortIDs() const;
+		t_list get_DefaultPorts() const; //names
+		t_list get_Ports() const;
+		MilpPortAPI get_Port(const std::string& a_Name);
+		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
+			const std::string& a_Direction = "DATAEXCHANGE", const std::string& a_Variable = "", const std::string& a_PortId = "");
+		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo = false);
+
+		bool useEnergyVector(const std::string& a_EnergyCarrierName);
+		void get_Links(t_dict& a_Links);
+
+		// -- Indicators TODO: move to ObjectAPI?
+		t_list get_IndicatorNames() const;
+		t_list get_IndicatorUnits() const;
+		t_list get_IndicatorShortNames() const;
+		t_dict get_IndicatorValues(const std::string& range = "PLAN") const;
+		double get_IndicatorValue(const std::string& name, const std::string& range = "PLAN") const;
+
+	private:
+		t_list getIndicatorProperty(IndicatorProperty property) const;
 	};
 
 	// --------------------------------------------------------------------------------	
@@ -189,19 +292,38 @@ public:
 				
 		std::string get_Type() const;
 		std::string get_ModelClass() const;
+		t_list get_PossibleModelClasses() const;
+		t_list get_PossibleControlValues() const;
+		t_list get_PossibleObjectiveTypes() const;
+
 		std::string get_CarrierName() const;
+
+		class EnergyVector* get_Carrier() const;
 		void set_Carrier(const std::string& a_CarrierName);
+
 		void set_Carrier(const EnergyVectorAPI& EnergyCarrier);
 
 		std::string get_LabelValue(const std::string& a_Label) const;
 		void set_LabelValue(const std::string& a_Label, const std::string& a_Value);
-		//use t_dict ?!
-		std::map<std::string, std::string> get_LabelValues() const;
-		void set_LabelValues(const std::map<std::string, std::string>& a_Labels);
+		t_dict get_LabelValues() const; // only string values are used
+		void set_LabelValues(const t_dict& a_Labels);
 		
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
 		
+		// -- Ports ---
+		std::map<std::string, std::string> get_DefaultPortData(const std::string& portId) const;
+		t_list get_DefaultPortIDs() const;
+		t_list get_DefaultPorts() const; //names
+		t_list get_Ports() const;
+		MilpPortAPI get_Port(const std::string& a_Name);
+		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector = EnergyVectorAPI(),
+			const std::string& a_Direction = "DATAEXCHANGE", const std::string& a_Variable = "", const std::string& a_PortId = "");
+		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo = false);
+
+		//bool useEnergyVector(const std::string& a_EnergyCarrierName);
+		void get_Links(t_dict& a_Links);
+
 		// -- IOs ---
 		// Returns the list of variables contains the component
 		t_list get_VarList();
@@ -212,11 +334,11 @@ public:
 		t_list get_IndicatorNames();
 		t_list get_IndicatorUnits();
 		t_list get_IndicatorShortNames();
-		t_dict get_IndicatorValues(const std::string range = "PLAN");
-		double get_IndicatorValue(const std::string& name, const std::string range = "PLAN");
+		t_dict get_IndicatorValues(const std::string& range = "PLAN") const;
+		double get_IndicatorValue(const std::string& name, const std::string& range = "PLAN") const;
 
 	private:		
-		void configure_Carrier(EnergyVector* vEnergyVector);
+		void configure_Carrier(class EnergyVector* vEnergyVector);
 	};
 
 	// --------------------------------------------------------------------------------	
@@ -229,16 +351,16 @@ public:
 		void set_MilpComponent(class MilpComponent* ap_Component);
 
 		std::string get_Type() const;
-		const std::string get_ModelClass();
-		void set_ModelClass(const std::string& a_ModelClass) { m_ModelClass = a_ModelClass; }
+		std::string get_ModelClass() const;
+		t_list get_PossibleModelClasses() const;
+		t_list get_PossibleControlValues() const;
 
 		std::string get_Direction();
 		
 		std::string get_LabelValue(const std::string& a_Label) const;
 		void set_LabelValue(const std::string& a_Label, const std::string& a_Value);
-		//use t_dict ?!
-		std::map<std::string, std::string> get_LabelValues() const;
-		void set_LabelValues(const std::map<std::string, std::string>& a_Labels);
+		t_dict get_LabelValues() const; // only string values are used
+		void set_LabelValues(const t_dict& a_Labels);
 
 		// -- Parameters ---
 	
@@ -255,11 +377,13 @@ public:
 		void modify_ModelClass(const std::string& a_prevModelClass, const std::string& a_newModelClass);
 
 		// -- Ports ---
-		t_list get_Ports();
-		t_list get_DefaultPorts();
+		std::map<std::string, std::string> get_DefaultPortData(const std::string& portId) const;
+		t_list get_DefaultPortIDs() const;
+		t_list get_DefaultPorts() const; //names
+		t_list get_Ports() const;
 		MilpPortAPI get_Port(const std::string& a_Name);
-		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
-			const std::string& a_Direction="DATAEXCHANGE", const std::string& a_Variable = "", const bool& reinitializeCompo = true);
+		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector, const std::string& a_Direction = "DATAEXCHANGE", 
+			const std::string& a_Variable = "", const std::string& a_PortId = "",  const bool& reinitializeCompo = true);
 		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo=false);
 
 		bool useEnergyVector(const std::string& a_EnergyCarrierName);
@@ -271,13 +395,17 @@ public:
 		t_value get_varValue(const std::string& a_VarName); // , const SolutionAPI& a_solution, int a_numSol = 0);
 		t_dict get_varValues(); // (const SolutionAPI& a_solution, int a_numSol = 0);
 
+		// -- ControlVar ---
+		std::vector<double> getControlVarHistValues(const std::string& a_name);
 
 		// -- Indicators ---
 		t_list get_IndicatorNames();
 		t_list get_IndicatorUnits();
 		t_list get_IndicatorShortNames();
-		t_dict get_IndicatorValues(const std::string range = "PLAN");
-		double get_IndicatorValue(const std::string& name, const std::string range = "PLAN");
+		t_dict get_IndicatorValues(const std::string& range = "PLAN") const;
+		double get_IndicatorValue(const std::string& name, const std::string& range = "PLAN") const;
+
+		bool isInstalled() const;
 
 		//isOptimized
 		t_value isOptimized();
@@ -289,8 +417,7 @@ public:
 		t_value get_OptimalSizeExpression();
 
 	private:
-		void checkDefaultPortCarriers();		
-		std::string m_ModelClass;
+		void checkDefaultPortCarriers() const;		
 	};
 
 	// --------------------------------------------------------------------------------	
@@ -341,7 +468,9 @@ public:
 		void save_Study(const std::string& a_filename = "", const std::string& a_posAlgorithm = "");
 
 		// Export parameters to a file
-		void export_Parameters(const std::string& fileName = "", const std::map<std::string, bool>& optionsMap = {});
+		void export_Parameters(const std::string& fileName = "", const std::string& encoding = "UTF-8",
+			const std::map<std::string, bool>& optionsMap = {},
+			const std::map< std::string, std::vector<ExtraParameterData> >& extraData = {});
 
 		// Export results to a file
 		void export_PLAN(const std::string& fileName = "", const int& aNsol = 0);
@@ -356,22 +485,25 @@ public:
 		ObjectAPI get_Object(const std::string& a_Name);
 
 		// --------- EnergyCarriers ---------
-		t_list get_EnergyCarriers();
-		EnergyVectorAPI get_EnergyCarrier(const std::string& a_Name);
+		t_list get_EnergyCarriers() const;
+		EnergyVectorAPI get_EnergyCarrier(const std::string& a_Name) const;
 		EnergyVectorAPI create_EnergyCarrier(const std::string& a_Name, const std::string& a_Type) const;
-		void remove_EnergyCarrier(const std::string& a_Name);
-		void remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector);
+		//void remove_EnergyCarrier(const std::string& a_Name); 
+		void remove_EnergyCarrier(const std::string& a_Name, bool forceDeletion = false);
+		void remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector); // Expose to PythonAPI
+		void remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector, bool forceDeletion);
 
 		// --------- Components ---------
-		t_list get_Components(const std::string &a_Category = "");
-		MilpComponentAPI get_Component(const std::string &a_Name);
+		t_list get_Components() const;
+		t_list get_ComponentsByCategory(const std::string& a_Category = "") const;
+		MilpComponentAPI get_Component(const std::string &a_Name) const;
 		MilpComponentAPI create_Component(const std::string& a_Name, const std::string& a_ModelName) const;
 		void remove_Component(const std::string& a_Name);
 		void remove_Component(MilpComponentAPI& a_Component);
 
 		// --------- Bus ----------
-		t_list get_Buses(); // Returne the list of all bus names
-		BusAPI get_Bus(const std::string &a_Name);
+		t_list get_Buses() const; // Returne the list of all bus names
+		BusAPI get_Bus(const std::string &a_Name) const;
 		BusAPI create_Bus(const std::string& a_Name, const std::string& a_ModelName, 
 			const EnergyVectorAPI& a_EnergyVector) const;
 		void remove_Bus(const std::string& a_Name);
@@ -389,13 +521,13 @@ public:
 		void remove(BusAPI& a_bus, MilpPortAPI& a_port);
 
 		// --------- TecEcoAnalysis ---------
-		TecEcoAnalysisAPI get_TecEcoAnalysis();
+		TecEcoAnalysisAPI get_TecEcoAnalysis() const;
 
 		// --------- Solver ---------
-		SolverAPI get_Solver();
+		SolverAPI get_Solver() const;
 		
 		// --------- SimulationControl ---------
-		SimulationControlAPI get_SimulationControl();
+		SimulationControlAPI get_SimulationControl() const;
 		
 		// -- Run ---
 		 // Adds a time series file.
@@ -407,21 +539,21 @@ public:
 			const std::string& a_description, const std::string& a_unit, 
 			const t_values& a_times, const t_values& a_values);
 
+		// -- Interfaces --
+		t_list getSubscribedVariables();
+		t_list getPublishedVariables();
+		void setSubscribedVariableValue(const std::string& a_name, const std::vector<double>& a_values);
+		std::vector<double> getPublishedVariableValue(const std::string& a_name);
+
 		// run_Cairn
 		void initialize();		
-		SolutionAPI run(const std::string &a_resultsPath = "");
+		SolutionAPI run(const std::string &a_resultsPath = "", const bool& a_coSim = false);
 		
 		// Indicators
-		t_list get_TecEco_IndicatorNames();
-		t_list get_TecEco_IndicatorUnits();
-		t_list get_TecEco_IndicatorShortNames();
-		t_dict get_TecEco_IndicatorValues(const std::string range = "PLAN");
-		double get_TecEco_IndicatorValue(const std::string& name, const std::string range = "PLAN");
-
-		t_dict get_All_IndicatorValues(const std::string range = "PLAN"); //return the indicator values of all components
+		t_dict get_All_IndicatorValues(const std::string& range = "PLAN") const; //return the indicator values of all components
 
 		//optimized components (those that have negative VarSize)
-		t_list get_optimized_components();
+		t_list get_optimized_components() const;
 
 	private:
 		t_list m_timestepfileList;
@@ -434,12 +566,14 @@ public:
 	// Read a study specified by 'a_filename'
 	OptimProblemAPI read_Study(const std::string& a_filename);
 
+	// Get the current study
+	OptimProblemAPI get_Study();
+
 	// close the current Study
 	void close_Study();
 
 private:
     class CairnCore* m_Cairn{ nullptr };
-	bool m_LogConsole{ true };
 };
 
 #endif

@@ -1,4 +1,4 @@
-Model;Indicator;Value;Unit;Alias
+﻿Model;Indicator;Value;Unit;Alias
 TecEcoAnalysis#1;NbYear;20;year;NbYear
 TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
 TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
@@ -8,26 +8,26 @@ TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
 TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
 TecEcoAnalysis#1;Impact Discount Factor;20;-;ImpactDiscountFactor
 TecEcoAnalysis#1;Extrapolation Factor;365;-;ExtrapolationFactor
-TecEcoAnalysis#1;OBJECTIVE;4.26186e+09;EUR;Objective
-TecEcoAnalysis#1;Net Present Value (Levelized Profit);-4.26186e+09;EUR;NPV
+TecEcoAnalysis#1;OBJECTIVE;6.03062e+09;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-6.03062e+09;EUR;NPV
 TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
-TecEcoAnalysis#1;Total CAPEX;200000;EUR;CAPEX
+TecEcoAnalysis#1;Total CAPEX;182188;EUR;CAPEX
 TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
-TecEcoAnalysis#1;Total project discounted operation cost;4.26166e+09;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted operation cost;6.03044e+09;EUR;DiscountedNetOPEX
 TecEcoAnalysis#1;Total project discounted OPEX;41304.1;EUR;DiscountedPureOPEX
 TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
 TecEcoAnalysis#1;Total project income;0;EUR;DiscountedSellPart
-TecEcoAnalysis#1;Total project buying costs;4.26162e+09;EUR;DiscountedBuyPart
+TecEcoAnalysis#1;Total project buying costs;6.03039e+09;EUR;DiscountedBuyPart
 TecEcoAnalysis#1;Total project cost of env impact of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedEnvImpactPart
 TecEcoAnalysis#1;Total Project env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedEnvImpactMass
 TecEcoAnalysis#1;Total Project Embodied env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPGreyEnvImpactMass
-TecEcoAnalysis#1;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWP
+TecEcoAnalysis#1;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedFlowEnvImpactCost
 TecEcoAnalysis#1;Total Project Operational impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
-TecEcoAnalysis#1;Annual operation cost;3.75954e+08;EUR;NetOPEX
+TecEcoAnalysis#1;Annual operation cost;5.31991e+08;EUR;NetOPEX
 TecEcoAnalysis#1;Annual OPEX;3643.75;EUR;PureOPEX
 TecEcoAnalysis#1;Annual replacement costs;0;EUR;ReplacementPart
 TecEcoAnalysis#1;Annual income;0;EUR;SellPart
-TecEcoAnalysis#1;Annual buying costs;3.7595e+08;EUR;BuyPart
+TecEcoAnalysis#1;Annual buying costs;5.31987e+08;EUR;BuyPart
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPFlowEnvImpactPart
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPFlowEnvImpactMass
 Converter;CAPEX;182188;EUR;CAPEX
@@ -55,24 +55,24 @@ Elec_Load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-4.82432e+07;
 Elec_Load;Mean ElectricalPower SourceLoadFlow;-583;MW;MeanImposedProfileSourceLoadFlow
 Heat_Bus;Integrated bus balance;0;MWh;BusBalance
 Heat_Grid;is installed;1;-;IsInstalled
-Heat_Grid;Annual operation cost;3.7595e+08;EUR;OPEX
+Heat_Grid;Annual operation cost;5.31987e+08;EUR;OPEX
 Heat_Grid;Annual variable OPEX;0;EUR;VariableOPEX
-Heat_Grid;Grid extraction time;8760;h;extraction Time
-Heat_Grid;Grid extraction ThermalEnergy GridFlow;3.7595e+06;MWh;TotGridFlow
-Heat_Grid;Levelized Grid extraction ThermalEnergy GridFlow;4.26162e+07;MWh;LvlzdTotGridFlow
-Heat_Grid;Mean extraction ThermalPower GridFlow;429.167;MW;MeanGridFlow
+Heat_Grid;Grid extraction time;8760;h;extractionTime
+Heat_Grid;Grid extraction ThermalEnergy GridFlow;5.31988e+06;MWh;TotGridFlow
+Heat_Grid;Levelized Grid extraction ThermalEnergy GridFlow;6.03039e+07;MWh;LvlzdTotGridFlow
+Heat_Grid;Mean extraction ThermalPower GridFlow;607.292;MW;MeanGridFlow
 NodeEquality#1;Mean value during time period;0;;Mean
-SourceLoad#1;CAPEX;17812.5;EUR;CAPEX
+SourceLoad#1;CAPEX;0;EUR;CAPEX
 SourceLoad#1;is installed;1;-;IsInstalled
 SourceLoad#1;Annual operation cost;0;EUR;OPEX
 SourceLoad#1;Annual fixed OPEX;0;EUR;PureOPEX
 SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX
 SourceLoad#1;Annual replacement costs;0;EUR;Replacement
-SourceLoad#1;Component Optimal Weight;178.125;Unit;Weight
-SourceLoad#1;ImposedProfile source time;8760;h;ImposedProfileTime
-SourceLoad#1;ImposedProfile ThermalEnergy SourceLoadFlow;1.56037e+06;MWh;TotImposedProfileSourceLoadFlow
-SourceLoad#1;Levelized ImposedProfile ThermalEnergy SourceLoadFlow;1.76878e+07;MWh;LvlzdTotImposedProfileSourceLoadFlow
-SourceLoad#1;Mean ThermalPower SourceLoadFlow;178.125;MW;MeanImposedProfileSourceLoadFlow
+SourceLoad#1;Component Optimal Weight;0;Unit;Weight
+SourceLoad#1;ImposedProfile source time;0;h;ImposedProfileTime
+SourceLoad#1;ImposedProfile ThermalEnergy SourceLoadFlow;0;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#1;Levelized ImposedProfile ThermalEnergy SourceLoadFlow;0;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#1;Mean ThermalPower SourceLoadFlow;0;MW;MeanImposedProfileSourceLoadFlow
 StorageGen#1;CAPEX;0;EUR;CAPEX
 StorageGen#1;is installed;1;-;IsInstalled
 StorageGen#1;Annual operation cost;0;EUR;OPEX
@@ -82,9 +82,9 @@ StorageGen#1;Annual replacement costs;0;EUR;Replacement
 StorageGen#1;Storage Optimal Capacity;4126.67;MWh;Capacity
 StorageGen#1;Charging time;3285;h;ChargingTime
 StorageGen#1;Discharging time;5475;h;DischargingTime
-StorageGen#1;Charged  ElectricalEnergy Flow;-975463;MWh;TotChargedFlow
+StorageGen#1;Charged ElectricalEnergy Flow;-975463;MWh;TotChargedFlow
 StorageGen#1;Discharged ElectricalEnergy Flow;975462;MWh;TotDischargedFlow
-StorageGen#1;Levelized Charged  ElectricalEnergy Flow;-1.10574e+07;MWh;LvlzdTotChargedFlow
+StorageGen#1;Levelized Charged ElectricalEnergy Flow;-1.10574e+07;MWh;LvlzdTotChargedFlow
 StorageGen#1;Levelized Discharged ElectricalEnergy Flow;1.10574e+07;MWh;LvlzdDischargedFlow
 StorageGen#1;Mean Charged ElectricalPower Flow;-296.944;MW;MeanChargedFlow
 StorageGen#1;Mean Discharged ElectricalPower Flow;178.167;MW;MeanDischargedFlow

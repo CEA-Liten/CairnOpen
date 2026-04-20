@@ -11,10 +11,8 @@ import sys
 import re
 import pandas as pd
 sys.path.append(os.path.dirname(sys.argv[0]))
-cairn_path = os.path.dirname(sys.argv[0])+"//..//..//"
+cairn_path = os.path.dirname(os.path.realpath(__file__))+"/../../"
 sys.path.append(cairn_path)
-print(sys.path)
-print("Module sys searching Path is ",sys.path)
 
 from codeAnalyzer import extract_str
 from codeAnalyzer import extractComment
@@ -35,6 +33,9 @@ def write_title(title,underline_char,double_titre= False):
         return(underline_char*len(title) + "\n" +title + "\n" + underline_char*len(title)+"\n\n")
     else:
         return(title + "\n" + underline_char*len(title)+"\n\n")
+    
+def write_anchor(title):
+    return("\n.. _"+title + ":\n\n")
 
 def filter_lines_rst(f, modelname,folder_csv,list_param): # filtre le fichier .cpp
     lines = f.readlines()
@@ -52,23 +53,7 @@ def filter_lines_rst(f, modelname,folder_csv,list_param): # filtre le fichier .c
     yield "    :header-rows: 1"+"\n\n"
     
     methods = getMethods(lines)
-    """
-    yield write_title("Model equations of "+ modelnameUsed,"^")
-
-    #yield "\label{" + modelnameUsed + "Equations}\n"
-    # if 'gms' in modelnameUsed:
-    #     return
-    text = ''
-    if 'buildModel' in methods.keys():
-        yield write_title("Build model "+modelnameUsed, "*")
-        yield analyseBloc(methods['buildModel'],1,varDico,exprList,list_param,lines_to_ignore = lines_to_ignore)
-    for method in methods.keys():
-        if method!='buildModel':
-            yield write_title(method+ " method of "+modelnameUsed, "*")
-            yield analyseBloc(methods[method],1,varDico,exprList,list_param)
-    text += '\n'
-    yield text
-    """
+    
 
 def formatParamDeclarationLine(line):
 # Discard all lines up to and including the stop marker
@@ -116,7 +101,7 @@ def h_filter_lines(f, start_delete, stop_delete, modelname,folder_csv):
             line=line.replace("&&", "and")
             line=line.replace("||", "or")
             if ("DONOTSHOW" not in line):
-                if ("* \details" in line):
+                if ("* \\details" in line):
                     iHead=1
                 if (iHead==1 and "*/" in line) :
                     iHead=0
@@ -133,12 +118,12 @@ def h_filter_lines(f, start_delete, stop_delete, modelname,folder_csv):
                     line = format_HeadPart(line, list_Head)
                 if ("addIO" in line and not "addIOs" in line):
                     # Discard all lines up to and including the stop marker
-                    linedesc=extract_str(line, "\/\*\*", "\*\/")
+                    linedesc=extract_str(line, "\\/\\*\\*", "\\*\\/")
                     imode = 0
                     if ("addIO " in line or "addIO1d" in line):
                         imode=1
                         line=line.replace("addIO1d","addIO")
-                    line=extract_str(line, "addIO", "\;")
+                    line=extract_str(line, "addIO", "\\;")
                     line=line.replace("&","")
                     if (imode==1):
                         line=line.replace(",","& & ",1)
@@ -210,7 +195,7 @@ def write_table(tableName, table_description, modelnameUsed, list_Head, list_tab
 
         yield description + "\n\n"
 
-        yield "See also :ref:`"+table_description + " of TechnicalSubModel"+"` for generic options\n\n"
+        # "See also :ref:`"+table_description + " of TechnicalSubModel"+"` for generic options\n\n"
 
         yield ".. csv-table:: " + modelnameUsed +"\n"
         if modelnameUsed in ["TechnicalSubModel"]:
@@ -223,7 +208,7 @@ def write_table(tableName, table_description, modelnameUsed, list_Head, list_tab
 def format_HeadPart(line, list_Head):
     line = line.replace("/**", "")
     line = line.replace("*", "")
-    line = line.replace("\details", "")
+    line = line.replace("\\details", "")
     #line = line.replace("\\", "")
     #line = line.replace("begin{itemize}", "\\begin{itemize}")
     #line = line.replace("item ", "\\item ")
@@ -259,18 +244,20 @@ def nb_lines(f):
         return igrep
 
 
-def make_toc(directory,models_list):
+def make_toc(directory,models_list, private):
     "creates table of contents for all the models in each folder"
     for i in (models_list.keys()):
         rst_file = directory+i+"_toc.rst"
         with open( rst_file, 'w') as o:
-            o.write(write_title((i[0]).upper()+i[1:]+"s models","=",double_titre= False))
+            name_class = (i[0]).upper()+i[1:]
+            o.write(write_anchor(name_class+"_" + private + "_models"))
+            o.write(write_title(name_class+" " + private + " models","=",double_titre= False))
             o.write(".. toctree::\n")
             o.write("   :maxdepth: 1\n\n")
             for j in models_list[i]:
                 o.write("   "+i+"/"+j+"\n")
 
-def redact_files(perseegui_dir, directory_name0, dest_folder):
+def redact_files(perseegui_dir, directory_name0, dest_folder, private=""):
     """
     Write a documentation of all the models from the code .cpp and .h.
     """
@@ -303,6 +290,7 @@ def redact_files(perseegui_dir, directory_name0, dest_folder):
                 os.makedirs(dest_folder_path + "/models/" + sub_directory, exist_ok=True)				
                 with open( rst_file, 'w') as o:
                     total_files = total_files + 1
+                    o.write(write_anchor(subsection))
                     o.write(write_title(subsection,'~'))
                     ref = file.replace('.cpp','').replace('_','')
                     # o.write("\n\n.._"+ref+"\n\n")
@@ -346,7 +334,7 @@ def redact_files(perseegui_dir, directory_name0, dest_folder):
                         nb_files = nb_files + 1
                         o.writelines(filtered)
                         o.flush()
-    make_toc(dest_folder_path + "/models/",models_list)
+    make_toc(dest_folder_path + "/models/",models_list, private)
     if (total_files >0):
         print (" Handled ",nb_files," files over ", total_files, " total files exmined, that is ",100*nb_files/total_files,"%")
     if (total_lines >0):
@@ -416,18 +404,18 @@ def generate_components_documentation(directory_name,csv_folder):
     return
 
 if __name__ == '__main__':
-    print(len(sys.argv))
-    if len(sys.argv) == 2:
-        if (sys.argv[1] == "FALSE"):
-            redact_files(cairn_path, "//src//models", "//doc//user//")
-            redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//")
+    if len(sys.argv) == 2:        
+        if (sys.argv[1] == "TRUE"):
+            redact_files(cairn_path, "//src//models", "//doc//user//", " ")
+            redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//", "private")
         else:
-            redact_files(cairn_path, "//src//models", "//doc//user//")
-    if len(sys.argv) > 3:
+            print("Not Private")
+            redact_files(cairn_path, "//src//models", "//doc//user//")            
+    elif len(sys.argv) > 3:
         redact_files(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
         redact_files(cairn_path, "//src//models", "//doc//user//")
         try:
-            redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//")
+            redact_files(cairn_path, "//src//privateModels", "//doc//user//privateDoc//", "private")
         except:
             print("PrivateDoc not built")

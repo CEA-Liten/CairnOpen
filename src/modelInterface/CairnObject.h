@@ -50,6 +50,12 @@ public:
     const std::vector<CairnObject*>& children() const;
     virtual std::vector<class InputParam*> get_InputParams() { return {}; };
 
+    virtual std::vector<class InputParam*> get_ParamInputParams() { return {}; };
+    virtual std::vector<class InputParam*> get_OptionInputParams() { return {}; };
+    virtual std::vector<class InputParam*> get_TimeSeriesInputParams() { return {}; };
+    virtual std::vector<class InputParam*> get_EnvImpactInputParams() { return {}; };
+    virtual std::vector<class InputParam*> get_PortEnvImpactInputParams() { return {}; };
+
 private:
 	CairnObject* p_Parent{ nullptr };
     std::vector<CairnObject*> m_children;

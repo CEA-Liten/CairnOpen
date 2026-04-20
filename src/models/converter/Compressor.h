@@ -91,7 +91,7 @@ public:
         addParameter("POutletFixe", &mPOutletFixe, 0., false, true, "Allow the user to give a constant pressure out", "");
 
 
-        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow", mMainCarrier->pFlowrateUnit()) ;
+        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow", mMainCarrier->pFlowrateUnit()) ; // todo: give a percentage instead of abs. value
         addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor", mMainCarrier->pFlowrateUnit()) ;
         addParameter("MotorEfficiency", &mMotorEfficiency, 0., true, true, "Electrical Motor Efficiency", "-");
         addParameter("NbStages", &mNbStages, 0., true, true, "Number of compression stages", "");

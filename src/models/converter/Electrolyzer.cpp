@@ -10,6 +10,7 @@ Electrolyzer::Electrolyzer(CairnObject* aParent) :
     mPortH2MassFlowRate(nullptr),
     mPci_H2(1.)
 {
+    mPossibleModelClasses = { "Electrolyzer", "ElectrolyzerDetailed" };
 }
 
 Electrolyzer::~Electrolyzer()
@@ -19,6 +20,10 @@ Electrolyzer::~Electrolyzer()
 int Electrolyzer::checkConsistency()  
 {
     int ier = TechnicalSubModel::checkConsistency();
+    if (mPortH2MassFlowRate->useProfileLHV()) {
+        cCritical() << "ERROR: TS for LHV is not allowed for hydrogen ";
+        return -1;
+    }
     return ier;
 }
 
@@ -34,38 +39,32 @@ void Electrolyzer::computeInitialData()
 void Electrolyzer::computeModelContribution()
 {
     /**
-    * Assumes that the default port "PortH2MassFlowRate" is mandatory to be used and its variable cannot be changed from FluidH2.
-    * Otherwise, should loop over all ports and look for a connected output port whose variable is FluidH2.
-    */
-    if (mPortH2MassFlowRate->getCarrier() != nullptr) {
-        mPci_H2 = mPortH2MassFlowRate->getCarrier()->LHV();
-    }
-
-    /**
     * If use ageing is activated, a model is used to simulate a degradation of efficiency and/or capacity.
     * See :ref:`AgeingRunningHours`
     */
-    double efficiencyAgeing = Efficiency();
-    double capacityAgeing = CapacityAgeing();
-    if (mUseAgeing) {        
-        cInfo() << "Electrolyzer efficiency " << mEfficiency * efficiencyAgeing;
-        cInfo() << "Electrolyzer capcity ageing" << capacityAgeing;
+
+    /** Assumes that the default port "PortH2MassFlowRate" is mandatory to be used and its variable cannot be changed from FluidH2.
+    * Otherwise, should loop over all ports and look for a connected output port whose variable is FluidH2. */
+
+    if (!mPortH2MassFlowRate->useProfileLHV()) {
+        mPci_H2 = mPortH2MassFlowRate->LHV();
     }
-    
-    /**
-    * Computation of energy consumption for H2 production :
-    * `aConvertPowToMfr` is a factor of conversion built with H2 LHV, ageing coefficient and Efficiency.
-    * If the hydrogen is recorded in kg, the conversion is done with LHV.
-    */
-    double aConvertPowToMfr = 0.;
-    if (mEfficiencyLHVbased)
-        aConvertPowToMfr = mEfficiency / mPci_H2 * efficiencyAgeing; // conversion MWh -> kg/h
+
+    /**Computation of energy consumption for H2 production :
+    * `convertPowToMfr` is a factor of conversion built with H2 LHV, ageing coefficient and Efficiency.
+    * If the hydrogen is recorded in kg, the conversion is done with LHV. */
+    const double efficiencyAgeing = EfficiencyAgeing();
+
+    double convertPowToMfr = 0.;
+    if (mEfficiencyLHVbased) {
+        convertPowToMfr = mEfficiency / mPci_H2 * efficiencyAgeing; // conversion MWh -> kg/h
+    }
     else {
-        aConvertPowToMfr = mEfficiency_Global;
+        convertPowToMfr = mEfficiency_Global;
     }
-    
-    mMinFlow_H2 = mMinPower_H2 * getMaxBound() * aConvertPowToMfr;
-    mMaxFlow_H2 = getMaxBound() * aConvertPowToMfr;
+
+    mMinFlow_H2 = mMinPower_H2 * getMaxBound() * convertPowToMfr;
+    mMaxFlow_H2 = getMaxBound() * convertPowToMfr;
 
     // add variables to model
     // =========
@@ -103,13 +102,13 @@ void Electrolyzer::computeModelContribution()
     * The factor of conversion is then used to compute the energy consumption of the electrolyzer.
     */
     for (uint64_t t = 0; t < mHorizon; t++) {
-        addConstraint(mExpPower_H2[t] - mExpFlow_H2[t] / aConvertPowToMfr == 0, "PowFlow", t);
+        addConstraint(mExpPower_H2[t] - mExpFlow_H2[t] / convertPowToMfr == 0, "PowFlow", t);
     }
 
     /**
     * The maximum power is limited by usable power. Usable power is decreasing during the time by capacityAgeing.
     */
-
+    const double capacityAgeing = CapacityAgeing();
     addConstraint(mExpUsablePower - mExpSizeMax * capacityAgeing == 0, "UsePow");
     for (uint64_t t = 0; t < mHorizon; t++) {
         addConstraint(mExpTotalPower[t] <= mExpUsablePower, "MaxTotalPow", t);

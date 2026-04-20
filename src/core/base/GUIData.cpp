@@ -5,7 +5,7 @@
 GUIData::GUIData(CairnObject *aParent) : CairnObject(aParent)
 {
     mGuiNodeModelType = "" ;
-    mGuiComponentCairnType = "componentPERSEEType" ;
+    mGuiComponentType = "" ;
     mId = GS::GenerateID() ;
 
     mGuiInputParam = new InputParam(this, "GuiInputParam " + Name());
@@ -17,7 +17,8 @@ GUIData::~GUIData()
     if (mGuiInputParam) delete mGuiInputParam;
 } 
 
-void GUIData::doInit(const std::string aNodeType, const std::string aNodeTechnoType, const std::string aComponentCairnType, const std::map<std::string, std::string> paramMap)
+void GUIData::doInit(const std::string aNodeType, const std::string aNodeTechnoType, 
+    const std::string aComponentType, const std::map<std::string, std::string> paramMap)
 {
     if (aNodeType == "ElectrolyzerDetailed") {
         mGuiNodeModelType = "Electrolyzer";
@@ -57,7 +58,7 @@ void GUIData::doInit(const std::string aNodeType, const std::string aNodeTechnoT
         mGuiNodeTechnoType = aNodeTechnoType;
     }
 
-    mGuiComponentCairnType = aComponentCairnType;
+    mGuiComponentType = aComponentType;
 
     setGuiInputParam(paramMap);
 }
@@ -77,16 +78,16 @@ void GUIData::setGuiInputParam(const std::map<std::string, std::string> paramMap
     }
 
     if (mXpos == 0) {
-        if (mGuiComponentCairnType == "SimulationControl") setXpos(50);
-        else if (mGuiComponentCairnType == "TecEcoAnalysis") setXpos(150);
-        else if (mGuiComponentCairnType == "Solver") setXpos(250);
-        else if (mGuiComponentCairnType == "EnergyVector") setXpos(0.5 * mId);
+        if (mGuiComponentType == "SimulationControl") setXpos(50);
+        else if (mGuiComponentType == "TecEcoAnalysis") setXpos(150);
+        else if (mGuiComponentType == "Solver") setXpos(250);
+        else if (mGuiComponentType == "EnergyVector") setXpos(0.5 * mId);
     }
     if (mYpos == 0) {
-        if (mGuiComponentCairnType == "SimulationControl"
-            || mGuiComponentCairnType == "TecEcoAnalysis"
-            || mGuiComponentCairnType == "Solver"
-            || mGuiComponentCairnType == "EnergyVector")
+        if (mGuiComponentType == "SimulationControl"
+            || mGuiComponentType == "TecEcoAnalysis"
+            || mGuiComponentType == "Solver"
+            || mGuiComponentType == "EnergyVector")
             setXpos(10);
     }
 }
@@ -98,7 +99,7 @@ void GUIData::jsonSaveGUILine(ojson& componentObject, const std::string& compone
     componentObject = ojson{
         {"nodeId", nodeID},
         {"nodeName", Name()},
-        {"componentPERSEEType", mGuiComponentCairnType},
+        {"componentPERSEEType", mGuiComponentType},
         {"nodeType", mGuiNodeModelType},
         {"nodeTechnoType", mGuiNodeTechnoType},
         {"x", mXpos},

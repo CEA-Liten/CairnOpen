@@ -10,8 +10,8 @@ MultiObjCompo::MultiObjCompo(CairnObject *aParent,
     const std::map<std::string, std::string>& aComponent,
     const std::map < std::string, std::map<std::string, std::string> >& aPorts,
     MilpData* aMilpData,
-    TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory) :
-    BusCompo(aParent, aComponent, aPorts, aMilpData, aTecEcoEnv, aModelFactory)
+    TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory) :
+    BusCompo(aParent, aComponent, aPorts, aMilpData, aTecEcoAnalysis, aModelFactory)
 {       
 } 
 

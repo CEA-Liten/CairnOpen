@@ -19,8 +19,9 @@ class MultiObjCompo ;
 class CAIRNCORESHARED_EXPORT MultiObjCompo : public BusCompo
 {
 public:
-    MultiObjCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map < std::string, std::map<std::string, std::string> >& aPorts,
-        MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
+    MultiObjCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, 
+        const std::map < std::string, std::map<std::string, std::string> >& aPorts,
+        MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory);
 
     virtual ~MultiObjCompo();
     

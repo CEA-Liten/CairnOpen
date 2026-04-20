@@ -8,13 +8,14 @@
 
 #include "AgeingRunningHours.h"
 //-------------------------------------------------------------------------------------------
-AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam)
+AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam, bool* aUseAgeing)
     : OperationSubModel(),
     mHistRunningTime(0.),
     mHistRunningTime_save(0.),
     mLastReplacementTime(0.),
     mEfficiencyAgeing(1.),
-    mCapacityAgeing(1.)
+    mCapacityAgeing(1.),
+    mActivateAgeing(aUseAgeing)
 {
     mInputParam = aInputParam ;
 }

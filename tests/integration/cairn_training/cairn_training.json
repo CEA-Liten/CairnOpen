@@ -1740,7 +1740,7 @@
 						"pos": "left",
 						"ports": [
 							{
-								"id": "port1",
+								"id": "PortGridFlow",
 								"name": "PortL0",
 								"position": "left",
 								"carrier": "ElectricityDistrib",
@@ -2522,7 +2522,7 @@
 						"pos": "right",
 						"ports": [
 							{
-								"id": "port1",
+								"id": "PortSourceLoadFlow",
 								"name": "PortR0",
 								"position": "right",
 								"carrier": "ElectricityDistrib",

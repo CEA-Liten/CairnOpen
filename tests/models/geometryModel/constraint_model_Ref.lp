@@ -395,25 +395,25 @@ Subject To
  cMFDStorageGen#19:              vQDStorageGen#1(9)
                                  + 100000000 vsensStorageGen#1(9) <= 100000000
  cSNodeLaw#10:                   - vPowElectrolyzer#1(0) + vGFxGridFree#1(0)
-                                 - vGFxGridFree#2(0) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(0)  = 0
  cSNodeLaw#11:                   - vPowElectrolyzer#1(1) + vGFxGridFree#1(1)
-                                 - vGFxGridFree#2(1) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(1)  = 0
  cSNodeLaw#12:                   - vPowElectrolyzer#1(2) + vGFxGridFree#1(2)
-                                 - vGFxGridFree#2(2) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(2)  = 0
  cSNodeLaw#13:                   - vPowElectrolyzer#1(3) + vGFxGridFree#1(3)
-                                 - vGFxGridFree#2(3) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(3)  = 0
  cSNodeLaw#14:                   - vPowElectrolyzer#1(4) + vGFxGridFree#1(4)
-                                 - vGFxGridFree#2(4) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(4)  = 0
  cSNodeLaw#15:                   - vPowElectrolyzer#1(5) + vGFxGridFree#1(5)
-                                 - vGFxGridFree#2(5) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(5)  = 0
  cSNodeLaw#16:                   - vPowElectrolyzer#1(6) + vGFxGridFree#1(6)
-                                 - vGFxGridFree#2(6) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(6)  = 0
  cSNodeLaw#17:                   - vPowElectrolyzer#1(7) + vGFxGridFree#1(7)
-                                 - vGFxGridFree#2(7) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(7)  = 0
  cSNodeLaw#18:                   - vPowElectrolyzer#1(8) + vGFxGridFree#1(8)
-                                 - vGFxGridFree#2(8) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(8)  = 0
  cSNodeLaw#19:                   - vPowElectrolyzer#1(9) + vGFxGridFree#1(9)
-                                 - vGFxGridFree#2(9) + vWeightSourceLoad#2  = 0
+                                 - vGFxGridFree#2(9)  = 0
  cSNodeLaw#20:                   vFlowElectrolyzer#1(0) - vQCStorageGen#1(0)
                                  + vQDStorageGen#1(0)  = 0
  cSNodeLaw#21:                   vFlowElectrolyzer#1(1) - vQCStorageGen#1(1)
@@ -435,34 +435,24 @@ Subject To
  cSNodeLaw#29:                   vFlowElectrolyzer#1(9) - vQCStorageGen#1(9)
                                  + vQDStorageGen#1(9)  = 0
  cMNodeLaw#30:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#31:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#32:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#33:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#34:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#35:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#36:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#37:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#38:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
  cMNodeLaw#39:                   50 vMaxPowerElectrolyzer#1
-                                 + vWeightSourceLoad#2
                                  + 10 vMaxEstoStorageGen#1 <= 370
 Bounds
  0 <= vInstalledElectrolyzer#1 <= 1

@@ -656,9 +656,10 @@ def sankey_xml_from_json(json_file: str, output: str, overwrite: bool = False, a
     eStorages = []
     list_sto = []
     es = []
+    bus_types = ["BusFlowBalance", "BusSameValue"]
     other_types = ["Converter", "SourceLoad", "Grid", "Source","Storage"]
     for i in parser["Components"]:
-        if i["componentPERSEEType"] == "BusFlowBalance" or i["componentPERSEEType"] == "BusSameValue":
+        if i["componentPERSEEType"] in bus_types:
             eBus[i["nodeName"]] = i["componentCarrier"]
         if i["componentPERSEEType"] in other_types:
             es.append(i)
@@ -688,7 +689,8 @@ def sankey_xml_from_json(json_file: str, output: str, overwrite: bool = False, a
                 # entry = {'variable': id + '.' + p.get('Variable', default.get(e.tag, 'OUTPUTFlux1'))}
                 if p.get('coeff'):
                     entry['factor'] = float(p.get('coeff'))
-                if (e["componentPERSEEType"] == "Storage" and p.get('variable') == "Flow"):
+
+                if ("Storage" in ( e["componentPERSEEType"]) and p.get('variable') == "Flow"):
                     entry["variable"] = name + '.ChargeFlow'
                     d['conso'].append(entry)
                     entry2 = entry.copy()

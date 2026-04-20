@@ -68,3 +68,27 @@ void CairnAPI::SolverAPI::set_SettingValues(const t_dict& a_SettingValues)
 	}
 	CairnAPIUtils::setError(vRet);
 }
+
+Solver* CairnAPI::SolverAPI::get_Solver() const
+{
+	return (Solver*)get_Object();
+}
+
+t_list CairnAPI::SolverAPI::get_ProblemTypes() const
+{
+	const Solver* solver = get_Solver();
+	if (solver) {
+		return solver->getProblemTypes();
+	}
+	return {};
+}
+
+t_list CairnAPI::SolverAPI::get_PossibleModelTypes() const
+{
+	const Solver* solver = get_Solver();
+	if (solver) {
+		return solver->getPossibleModelTypes();
+	}
+	return {};
+}
+

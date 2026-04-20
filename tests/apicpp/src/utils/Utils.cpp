@@ -315,67 +315,94 @@ void TestUtils::Display_Dict(std::map<std::string, std::string>& dict)
 	}
 }
 
-int TestUtils::compare_dict(std::map<std::string, std::string> Inputdict, std::map<std::string, std::string> Refdict)
+int TestUtils::compare_dict(const t_dict& inputDict, const t_dict& refDict)
 {
-	bool lbFound = false;
-	int  liDiffSize = 0;
-
-	std::map <std::string, std::string>::iterator InputItrDict;
-	std::map <std::string, std::string>::iterator RefItrDict;
-
-
-	if (Inputdict.size() == Refdict.size())
-	{
-		for (InputItrDict = Inputdict.begin(); InputItrDict != Inputdict.end(); ++InputItrDict)
-		{
-			lbFound = false;
-
-			for (RefItrDict = Inputdict.begin(); RefItrDict != Inputdict.end(); ++RefItrDict)
-			{
-				if ((InputItrDict->first == RefItrDict->first) && (InputItrDict->second == RefItrDict->second))
-				{
-					lbFound = true;
-					break;
-				}
-				else if ((InputItrDict->first == RefItrDict->first) && (InputItrDict->second != RefItrDict->second))
-				{
-					//Test Not Ok - the Dict of component doesn't conforms to the expected list
-					cout << "Error in the compare - the Dict of component doesn't conforms to the expected list" << endl;
-					cout << "Please check the reference List file - the two lists have the same key but their values are different : " << endl;
-					cout << "This the Input element key : " << InputItrDict->first << endl;
-					cout << "This the Reference element key : " << RefItrDict->first << endl;
-					cout << endl;
-					cout << "This the Input element value : " << InputItrDict->second << endl;
-					cout << "This the Reference element value : " << RefItrDict->second << endl;
-					return errCompare;
-				}
-			}
-			if (lbFound != true)
-			{
-				//Test Not Ok - the Dict of component doesn't conforms to the expected list
-				cout << "Error in the compare - the Dict of component doesn't conforms to the expected list" << endl;
-				cout << "Please check the reference List file : " << endl;
-				cout << "This Input element : " << InputItrDict->first << " is not found in the reference list" << endl;
-				return errCompare;
-			}
+	// Check size compatibility
+	if (inputDict.size() != refDict.size()) {
+		int diffSize = static_cast<int>(inputDict.size()) - static_cast<int>(refDict.size());
+		std::cout << "There are " << std::abs(diffSize) << " elements different between the two dicts" << std::endl;
+		if (inputDict.size() > refDict.size()) {
+			std::cout << "missing in the reference dict" << std::endl;
 		}
-		//Test Ok - the Dict of component conforms to the expected dict
-		return noError;
+		else {
+			std::cout << "more in the reference dict" << std::endl;
+		}
+		return errSize;
 	}
-	//Dictionary's are Not Mutched - The Input Dict Size and the Ref Dict size are different
-	liDiffSize = Inputdict.size() - Refdict.size();
-	cout << "There are " << abs(liDiffSize) << " elements are differet between the twos lists" << endl;
-	if (Inputdict.size() > Refdict.size())
+
+	// Compare each key-value pair
+	for (const auto& [key, inputValue] : inputDict)
 	{
-		cout << "missing in the reference list" << endl;
+		// Check if key exists in reference dict
+		auto refIt = refDict.find(key);
+		if (refIt == refDict.end()) {
+			std::cout << "Error in the compare - the Dict of component doesn't conform to the expected dict" << std::endl;
+			std::cout << "Please check the reference dict file:" << std::endl;
+			std::cout << "This Input element: " << key << " is not found in the reference dict" << std::endl;
+			return errCompare;
+		}
+
+		// Compare values
+		const t_value& refValue = refIt->second;
+		if (inputValue != refValue) {
+			std::cout << "Error in the compare - the Dict of component doesn't conform to the expected dict" << std::endl;
+			std::cout << "Please check the reference dict file - the two dicts have the same key but their values are different:" << std::endl;
+			std::cout << "Key: " << key << std::endl;
+			std::cout << "Input value: " << valueToString(inputValue) << std::endl;
+			std::cout << "Reference value: " << valueToString(refValue) << std::endl;
+			return errCompare;
+		}
 	}
-	else if (Inputdict.size() < Refdict.size())
-	{
-		cout << "more in the reference list" << endl;
-	}
-	return errSize;
+
+	// All checks passed
+	return noError;
 }
 
+// Helper function to convert t_value to string 
+std::string TestUtils::valueToString(const t_value& value)
+{
+	return std::visit([](const auto& val) -> std::string {
+		using T = std::decay_t<decltype(val)>;
+
+		if constexpr (std::is_same_v<T, double>) {
+			return std::to_string(val);
+		}
+		else if constexpr (std::is_same_v<T, int>) {
+			return std::to_string(val);
+		}
+		else if constexpr (std::is_same_v<T, std::string>) {
+			return val;
+		}
+		else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+			std::string result = "[";
+			for (size_t i = 0; i < val.size(); ++i) {
+				result += val[i];
+				if (i < val.size() - 1) result += ", ";
+			}
+			result += "]";
+			return result;
+		}
+		else if constexpr (std::is_same_v<T, std::vector<double>>) {
+			std::string result = "[";
+			for (size_t i = 0; i < val.size(); ++i) {
+				result += std::to_string(val[i]);
+				if (i < val.size() - 1) result += ", ";
+			}
+			result += "]";
+			return result;
+		}
+		else if constexpr (std::is_same_v<T, std::vector<int>>) {
+			std::string result = "[";
+			for (size_t i = 0; i < val.size(); ++i) {
+				result += std::to_string(val[i]);
+				if (i < val.size() - 1) result += ", ";
+			}
+			result += "]";
+			return result;
+		}
+		return "unknown";
+		}, value);
+}
 
 int TestUtils::SearchAndDeleteFromDict(t_dict& TargetDict, const string& TargetKeyToBeDeleted)
 {
@@ -624,7 +651,8 @@ int TestUtils::ReadNameParamCsvFile(const std::string filename, t_list csvData)
 std::vector<std::string> TestUtils::readCSV(const std::string& filename)
 {
 	std::vector<std::string> lines;
-	std::ifstream file(filename);
+	std::ifstream file(filename, std::ios::binary);
+	skipUTF8BOM(file);
 
 	if (!file.is_open()) {
 		std::cerr << "Erreur Open file : " << filename << std::endl;
@@ -738,4 +766,22 @@ std::vector<std::string> TestUtils::str_to_vector(const std::string& str)
 	std::vector<std::string> vec(begin, end);
 	std::copy(vec.begin(), vec.end(), std::ostream_iterator<std::string>(std::cout, ";"));
 	return vec;
+}
+
+void TestUtils::skipUTF8BOM(std::istream& in)
+{
+	unsigned char bom[3];
+	std::streampos start = in.tellg();
+
+	in.read(reinterpret_cast<char*>(bom), 3);
+
+	if (in.gcount() == 3 &&
+		bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF)
+	{
+		return; // BOM consumed
+	}
+
+	// No BOM => rewind to start
+	in.clear();
+	in.seekg(start);
 }

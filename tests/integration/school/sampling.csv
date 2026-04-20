@@ -1,0 +1,9 @@
+Case;Defaillance;Imprimantes;PV;Converter;StorageGen#1
+;ConstantBuyPrice;UseProfileLoadFlux;Weight;MaxPower;MaxEsto
+Report_imp_adapte;0.05;conso_5_h_j;7.36;6;10
+Report_imp_adapte_11;0.05;conso_5_h_j;11.04;6;10
+Report_imp_adapte_15;0.05;conso_5_h_j;15.8;20;10
+Report_victron_min_we;0.05;conso hors cours;3.68;6;10
+Report_we;0.5;conso hors cours;-3000;6;-300
+Report_we_def005;0.05;conso hors cours;-3000;6;-300
+Report_we_def01;0.1;conso hors cours;-3000;6;-300

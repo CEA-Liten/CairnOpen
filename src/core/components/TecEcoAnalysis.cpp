@@ -11,7 +11,8 @@ TecEcoAnalysis::TecEcoAnalysis(CairnObject* aParent, const std::map<std::string,
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
     mCompoEnvImpactsParam(nullptr),
-    mSelectedEnvImpacts({})
+    mSelectedEnvImpacts({}),
+    mExtrapolationFactor(1.0)
 {    
     /*
     * TecEcoAnalysis is a TechnicalSubModel. 
@@ -27,7 +28,7 @@ TecEcoAnalysis::TecEcoAnalysis(CairnObject* aParent, const std::map<std::string,
     { "Ozone depletion#Ozone Depletion Potential","ODP","kg CFC-11 eq"},
     { "Human toxicity-cancer effects#Comparative Toxic Unit for humans","HTox-c","CTUh"},
     { "Human toxicity-noncancer effects#Comparative Toxic Unit for humans","HTox-nc","CTUh"},
-    { "Particulate matter-Respiratory inorganics#Human health effects associated with exposure to PM","PM","-"},
+    { "Particulate matter-Respiratory inorganics#Human health effects associated with exposure to PM","PM", "disease incidences"},
     { "Ionising radiation human health#Human exposure efficiency relative to U","IRP","kBq U"},
     { "Photochemical ozone formation#Tropospheric ozone concentration increase","POCP","kg NMVOC eq"},
     { "Acidification#Accumulated Exceedance","AP", "mol H+ eq"},
@@ -35,8 +36,8 @@ TecEcoAnalysis::TecEcoAnalysis(CairnObject* aParent, const std::map<std::string,
     { "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment", "EP-fw","kg P eq"},
     { "Eutrophication-aquatic marine#Fraction of nutrients reaching marine and compartment","EP-m","kg N eq"},
     { "Ecotoxicity freshwater#Comparative Toxic Unit for ecosystems", "Ecotox","CTUe"},
-    { "Land use#Soil quality index", "LU","-"},
-    { "Water use#User Deprivation Potential", "WU","kg world eq deprived"},
+    { "Land use#Soil quality index", "LU", "pts"},
+    { "Water use#User Deprivation Potential", "WU", "m3 world eq"},
     { "Resource use-Minerals and metals#Abiotic Resource Depletion","ADP-mm","kg Sb eq"},
     { "Resource use-Energy carriers#Abiotic Resource Depletion", "ADP-f","MJ" }
     };
@@ -96,17 +97,11 @@ void TecEcoAnalysis::doInit(const std::map<std::string, std::string>& aComponent
 
     //Declare and set configuration parameters
     declareConfigurationParameters();
-    int ierr1 = setConfigurationParameters(aComponent);
+    setConfigurationParameters(aComponent);
 
     //Declare and set non-configuration parameters
     declareCompoInputParam();
-    int ierr2 = setCompoInputParam(aComponent);
-
-    //TODO: Ensure that the mandatory parameters exist in TNR .json files ("type", "id", "Model", "Currency", "DiscountRate")
-    //if (ierr1 < 0 || ierr2 < 0) {
-    //    Cairn_Exception cairn_error("Error reading Parameters of TecEcoAnalysis " + Name(), -1);
-    //    throw cairn_error;
-    //}
+    setCompoInputParam(aComponent);
 }
 
 void TecEcoAnalysis::declareConfigurationParameters()
@@ -115,14 +110,17 @@ void TecEcoAnalysis::declareConfigurationParameters()
     //std::vector<std::string> (no default value)
     mConfigParam->addParameter("ConsideredEnvironmentalImpacts", &mSelectedEnvImpacts, {}, false, true, "Selected environmental impacts to be considered (EF method)", "-");
     //bool
-    mConfigParam->addParameter("MinConstraint", &mMinConstraint, false, false, true);   /** MinConstraint option enabling */
-    mConfigParam->addParameter("MaxConstraint", &mMaxConstraint, false, false, true);   /** MaxConstraint option enabling */
+    mConfigParam->addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling ");    
+    mConfigParam->addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling");  
 }
 
-int TecEcoAnalysis::setConfigurationParameters(const std::map<std::string, std::string>& aComponent)
+void TecEcoAnalysis::setConfigurationParameters(const std::map<std::string, std::string>& aComponent)
 {
-    int ierr = mConfigParam->readParameters(aComponent);
-    return ierr;
+    if (aComponent.empty()) {
+        return; // component creation
+    }
+
+    CairnUtils::checkRead(mConfigParam->readParameters(aComponent), Name());
 }
 
 void TecEcoAnalysis::declareCompoInputParam()
@@ -132,8 +130,8 @@ void TecEcoAnalysis::declareCompoInputParam()
     //bool
     mCompoInputSettings->addParameter("ForceExportAllIndicators", &mForceExportAllIndicators, false, false, true, "Force the export of all Indicators regardless of the values of EcoInvestModel and EnvironmentModel and ExportIndicators");
     //double
-    mCompoInputSettings->addParameter("MinConstraintValue", &mMinConstraintValue, 0., &mMinConstraint, &mMinConstraint); /**  NPV > Minconstraint value */
-    mCompoInputSettings->addParameter("MaxConstraintValue", &mMaxConstraintValue, INFINITY_VAL, &mMaxConstraint, &mMaxConstraint); /**  NPV < Maxconstraint value */
+    mCompoInputSettings->addParameter("MinConstraintValue", &mMinConstraintValue, 0., &mMinConstraint, &mMinConstraint, "NPV > MinConstraintValue"); 
+    mCompoInputSettings->addParameter("MaxConstraintValue", &mMaxConstraintValue, INFINITY_VAL, &mMaxConstraint, &mMaxConstraint, "NPV < MaxConstraintValue"); 
 
     //------------------------ options ----------------------------------
     mCompoInputParam = new InputParam(this, "CompoInputParam" + Name());
@@ -141,7 +139,6 @@ void TecEcoAnalysis::declareCompoInputParam()
     mCompoInputParam->addParameter("Model", &mModelName, "OptimNPV", true, true, "Model used");
     mCompoInputParam->addParameter("Currency", &mCurrency, "EUR", true, true, "Currency unit - default to EUR");
     mCompoInputParam->addParameter("ObjectiveUnit", &mObjectiveUnit, "EUR", false, true, "Objective unit - default to currency unit");
-    mCompoInputParam->addParameter("Range", &mRange, "HISTandPLAN", false, true, "Evaluation range used for TecEco analysis : HIST = past operation - PLAN = planned operation");
     //int
     mCompoInputParam->addParameter("NbYear", &mNbYear, 20, false, true,"Number of year for economic data extrapolation");
     mCompoInputParam->addParameter("NbYearOffset", &mNbYearOffset, 0, false, true,"Offset of nb of year for discount cost computation");
@@ -197,24 +194,54 @@ void TecEcoAnalysis::declareEnvImpactParam()
     }
 }
 
-int TecEcoAnalysis::setCompoInputParam(const std::map<std::string, std::string>& aComponent)
+void TecEcoAnalysis::setCompoInputParam(const std::map<std::string, std::string>& aComponent)
 {
-    //read non-configuration parameters
-    if (aComponent.size() != 0) {
-        int ierr1 = mCompoInputParam->readParameters(aComponent);
-        int ierr2 = mCompoInputSettings->readParameters(aComponent);
-        int ierr3 = mCompoEnvImpactsParam->readParameters(aComponent);
-        if (ierr1 < 0 || ierr2 < 0 || ierr3 < 0) { return -1; }
+    if (aComponent.empty()) {
+        return; // component creation
     }
+
+    //read non-configuration parameters
+    CairnUtils::checkRead(mCompoInputParam->readParameters(aComponent), Name());
+    CairnUtils::checkRead(mCompoInputSettings->readParameters(aComponent), Name());
+    CairnUtils::checkRead(mCompoEnvImpactsParam->readParameters(aComponent), Name());
     
+    if (mCurrency.empty()) {
+        mCurrency = "EUR";
+    }
+
     //set ObjectiveUnit to Currency if not provided
     if (CairnUtils::getParam(aComponent,"ObjectiveUnit") == "") {
         mObjectiveUnit = mCurrency;
     }
 
     if (mNbYearInput == 0) mNbYearInput = 1;
+}
 
-    return 0;
+void TecEcoAnalysis::computeExtrapolationFactor(const MilpData* aMilpData)
+{
+    const bool useFactor = aMilpData->UseExtrapolationFactor();
+    const bool singleYear = (mNbYearInput <= 1);
+    const bool leapFirst = (mLeapYearPos == 1);
+
+    mExtrapolationFactor = 1.0;
+
+    if (useFactor && singleYear) {
+        const double hours = leapFirst ? 8784.0 : 8760.0;
+        mExtrapolationFactor = hours / (aMilpData->npdt() * aMilpData->pdtHeure());
+    }
+
+    computeLevelizationTable();
+}
+
+void TecEcoAnalysis::computeLevelizationTable()
+{
+    mLevelizationTable = CairnUtils::levelizationTable(mDiscountRate, mNbYear, mNbYearInput, 
+        mLeapYearPos, mNbYearOffset, mExtrapolationFactor);
+
+    mImpactLevelizationTable = CairnUtils::levelizationTable(mImpactDiscountRate, mNbYear, mNbYearInput, 
+        mLeapYearPos, mNbYearOffset, mExtrapolationFactor);
+
+    mTableYearsHours = CairnUtils::yearHourTable(mNbYearInput, mLeapYearPos);
 }
 
 bool TecEcoAnalysis::isValidLabel(const std::string& aLabel) const
@@ -286,9 +313,9 @@ void TecEcoAnalysis::jsonSaveGuiComponent(ojson &componentsArray)
 }
 
 
-std::map<std::string, InputParam::ModelParam*> TecEcoAnalysis::getParameters()
+std::map<std::string, ModelParam*> TecEcoAnalysis::getParameters()
 {
-    std::map<std::string, InputParam::ModelParam*> paramMap;
+    std::map<std::string, ModelParam*> paramMap;
 
     paramMap.insert(getCompoInputParam()->getMapParams().begin(), getCompoInputParam()->getMapParams().end());
     paramMap.insert(getCompoInputSettings()->getMapParams().begin(), getCompoInputSettings()->getMapParams().end());
@@ -446,14 +473,27 @@ void TecEcoAnalysis::buildModel()
     //Objective
     if (CairnUtils::contains(mModelName, "OptimEnvImpact"))
     {
-        std::vector<std::string> vNames = CairnUtils::split(mModelName, '-');        
-        std::string impactShortName = vNames[vNames.size() - 1];
-        if (!CairnUtils::contains(getPossibleImpactShortNames(), impactShortName)) {
-            Cairn_Exception cairn_error("Error : unknown model name " + (mModelName)+" on component. Expected: OptimEnvImpact-$ImpactShortName" + (Name()), -1);
-            throw cairn_error;
+        // Find the impact short name by checking which one matches the suffix of mModelName
+        std::string impactShortName = "";
+
+        for (const auto& shortName : getPossibleImpactShortNames()) {
+            const std::string suffix = "-" + shortName;
+            if (mModelName.size() >= suffix.size() &&
+                mModelName.compare(mModelName.size() - suffix.size(), suffix.size(), suffix) == 0) {
+                impactShortName = shortName;
+                break;
+            }
         }
+
+        if (impactShortName.empty()) {
+            throw Cairn_Exception(
+                "Error: unknown model name " + mModelName + " on component " + Name() +
+                ". Expected: OptimEnvImpact-$ImpactShortName", -1);
+        }
+
         std::string impactName = EnvImpactLongName(impactShortName);
-        //
+
+        // Find and add the matching environmental impact
         for (int i = 0; i < mSelectedEnvImpacts.size(); i++) {
             if (mSelectedEnvImpacts[i] == impactName) {
                 mExpObjective += mExpCumulativeEnvImpact[i];
@@ -608,7 +648,7 @@ void TecEcoAnalysis::computeEconomicalContribution() {
             MIPModeler::MIPExpression expOpex_t;
 
             uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-            while (t_hour > mParentCompo->TableYearsHours().at(year) && year < mParentCompo->TableYearsHours().size() - 1) {
+            while (t_hour > mTableYearsHours.at(year) && year < mTableYearsHours.size() - 1) {
                 year += 1;
             }
 
@@ -643,7 +683,7 @@ void TecEcoAnalysis::computeEconomicalContribution() {
             mExpReplacement[t] += exReplacement_t;
             mExpOpex[t] += expOpex_t;
             //0D Discounted Opex Exp used to compute mExpObjective and add constraints in buildModel()
-            mExpOpexDiscounted += expOpex_t * mParentCompo->LevelizationTable().at(year);
+            mExpOpexDiscounted += expOpex_t * mLevelizationTable.at(year);
         }
     }
 }
@@ -669,19 +709,19 @@ void TecEcoAnalysis::computeEnvContribution()
                     MIPModeler::MIPExpression expImpactReplacement_i_t;
 
                     uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-                    while (t_hour > mParentCompo->TableYearsHours().at(year) && year < mParentCompo->TableYearsHours().size() - 1) {
+                    while (t_hour > mTableYearsHours.at(year) && year < mTableYearsHours.size() - 1) {
                         year += 1;
                     }
                     //operation
                     expImpactMass_i_t = lptr->getMIPExpression1D(t, lptr->compoModel()->getEnvImpactMassExpression(i));
                     mExpEnvImpactMassVec[i][t] += expImpactMass_i_t;
                     //0D Discounted Mass Exp used to add constraints in buildModel()
-                    mExpEnvImpactMassVecDiscounted[i] += expImpactMass_i_t * mParentCompo->ImpactLevelizationTable().at(year);
+                    mExpEnvImpactMassVecDiscounted[i] += expImpactMass_i_t * mImpactLevelizationTable.at(year);
                     
                     //replacement
                     expImpactReplacement_i_t = (lptr->compoModel()->getEnvImpacts()[i]->getExpEnvReplacement())->at(t);
                     mExpEnvImpactReplacementVec[i][t] += expImpactReplacement_i_t;
-                    mExpEnvImpactReplacementVecDiscounted[i] += expImpactReplacement_i_t * mParentCompo->ImpactLevelizationTable().at(year);
+                    mExpEnvImpactReplacementVecDiscounted[i] += expImpactReplacement_i_t * mImpactLevelizationTable.at(year);
 
                     //costs
                     mExpEnvImpactCostVec[i][t] += (lptr->compoModel()->getEnvImpacts()[i]->getExpEnvOpCost())->at(t);
@@ -734,24 +774,24 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
     //Evaluate TecEco expressions
     if (optSol) {
         //General Indicators (factors)
-        mNbYearIndicator.at(0) = mNbYearIndicator.at(1) = mParentCompo->NbYear();
-        mDiscountRateIndicator.at(0) = mDiscountRateIndicator.at(1) = mParentCompo->DiscountRate();
-        mImpactDiscountRateIndicator.at(0) = mImpactDiscountRateIndicator.at(1) = mParentCompo->ImpactDiscountRate();
-        mNbYearInputIndicator.at(0) = mNbYearInputIndicator.at(1) = mParentCompo->NbYearInput();
-        mLeapYearPosIndicator.at(0) = mLeapYearPosIndicator.at(1) = mParentCompo->LeapYearPos();
-        mNbYearOffsetIndicator.at(0) = mNbYearOffsetIndicator.at(1) = mParentCompo->NbYearOffset();
-        mDiscountFactorIndicator.at(0) = levelization(mParentCompo->DiscountRate(), mParentCompo->NbYear(), mParentCompo->NbYearOffset(), 1); //PLAN
-        mDiscountFactorIndicator.at(1) = levelization(mParentCompo->DiscountRate(), mParentCompo->NbYear(), mParentCompo->NbYearOffset(), 1); //HIST
-        if (mParentCompo->LevelizationTable().size() > 1) {
-            for (int i = 0; i < mParentCompo->LevelizationTable().size(); i++) {
-                mDiscountFactorListIndicator.at(i).at(0) = mDiscountFactorListIndicator.at(i).at(1) = mParentCompo->LevelizationTable().at(i);
+        mNbYearIndicator.at(0) = mNbYearIndicator.at(1) = mNbYear;
+        mDiscountRateIndicator.at(0) = mDiscountRateIndicator.at(1) = mDiscountRate;
+        mImpactDiscountRateIndicator.at(0) = mImpactDiscountRateIndicator.at(1) = mImpactDiscountRate;
+        mNbYearInputIndicator.at(0) = mNbYearInputIndicator.at(1) = mNbYearInput;
+        mLeapYearPosIndicator.at(0) = mLeapYearPosIndicator.at(1) = mLeapYearPos;
+        mNbYearOffsetIndicator.at(0) = mNbYearOffsetIndicator.at(1) = mNbYearOffset;
+        mDiscountFactorIndicator.at(0) = CairnUtils::levelization(mDiscountRate, mNbYear, mNbYearOffset, 1); //PLAN
+        mDiscountFactorIndicator.at(1) = CairnUtils::levelization(mDiscountRate, mNbYear, mNbYearOffset, 1); //HIST
+        if (mLevelizationTable.size() > 1) {
+            for (int i = 0; i < mLevelizationTable.size(); i++) {
+                mDiscountFactorListIndicator.at(i).at(0) = mDiscountFactorListIndicator.at(i).at(1) = mLevelizationTable.at(i);
             }
         }
-        mImpactDiscountFactorIndicator.at(0) = levelization(mParentCompo->ImpactDiscountRate(), mParentCompo->NbYear(), mParentCompo->NbYearOffset(), 1); //PLAN
-        mImpactDiscountFactorIndicator.at(1) = levelization(mParentCompo->ImpactDiscountRate(), mParentCompo->NbYear(), mParentCompo->NbYearOffset(), 1); //HIST
-        if (mParentCompo->ImpactLevelizationTable().size() > 1) {
-            for (int i = 0; i < mParentCompo->ImpactLevelizationTable().size(); i++) {
-                mImpactDiscountFactorListIndicator.at(i).at(0) = mImpactDiscountFactorListIndicator.at(i).at(1) = mParentCompo->ImpactLevelizationTable().at(i);
+        mImpactDiscountFactorIndicator.at(0) = CairnUtils::levelization(mImpactDiscountRate, mNbYear, mNbYearOffset, 1); //PLAN
+        mImpactDiscountFactorIndicator.at(1) = CairnUtils::levelization(mImpactDiscountRate, mNbYear, mNbYearOffset, 1); //HIST
+        if (mImpactLevelizationTable.size() > 1) {
+            for (int i = 0; i < mImpactLevelizationTable.size(); i++) {
+                mImpactDiscountFactorListIndicator.at(i).at(0) = mImpactDiscountFactorListIndicator.at(i).at(1) = mImpactLevelizationTable.at(i);
             }
         }
 
@@ -788,8 +828,8 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
         mNetPresentValue.at(1) = -mCapexContribution.at(1) - mOpexContributionDiscounted.at(1);
 
         //double opexDiscounted = mOpexContributionDiscounted(index);
-        if (mParentCompo->InternalRateOfReturn() >= 0.) {
-            mInternalRateOfReturnPerCent.at(0) = mInternalRateOfReturnPerCent.at(1) = mParentCompo->InternalRateOfReturn() * 100.;
+        if (mInternalRateOfReturn >= 0.) {
+            mInternalRateOfReturnPerCent.at(0) = mInternalRateOfReturnPerCent.at(1) = mInternalRateOfReturn * 100.;
             double RateOfReturnDiscountFactor = 0; // Why it is always 0 ?!!
             mInternalRateOfReturnFactor.at(0) = mInternalRateOfReturnFactor.at(1) = RateOfReturnDiscountFactor;
             mNetPresentValueAtIRR.at(0) = -mCapexContribution.at(0) + (mOpexContribution.at(0) * RateOfReturnDiscountFactor);
@@ -798,8 +838,8 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
 
         mAverageRateOfReturnFactor.at(0) = -mCapexContribution.at(0) / (mOpexContribution.at(0) / ExtrapolationFactor); //PLAN
         mAverageRateOfReturnFactor.at(1) = -mCapexContribution.at(1) / mOpexContribution.at(1); //HIST
-        mAverageRateOfReturnPerCent.at(0) = 100. * discountRate(mAverageRateOfReturnFactor.at(0), mParentCompo->NbYear(), mParentCompo->NbYearOffset(), ExtrapolationFactor); //PLAN
-        mAverageRateOfReturnPerCent.at(1) = 100. * discountRate(mAverageRateOfReturnFactor.at(1), mParentCompo->NbYear(), mParentCompo->NbYearOffset(), ExtrapolationFactor);  //HIST
+        mAverageRateOfReturnPerCent.at(0) = 100. * CairnUtils::discountRate(mAverageRateOfReturnFactor.at(0), mNbYear, mNbYearOffset, ExtrapolationFactor); //PLAN
+        mAverageRateOfReturnPerCent.at(1) = 100. * CairnUtils::discountRate(mAverageRateOfReturnFactor.at(1), mNbYear, mNbYearOffset, ExtrapolationFactor);  //HIST
         mCurrentRateOfReturnPerCent.at(0) = 100. * (-mCapexContribution.at(0) / mOpexContributionDiscounted.at(0)); //PLAN
         mCurrentRateOfReturnPerCent.at(1) = 100. * (-mCapexContribution.at(1) / (mOpexContributionDiscounted.at(1) * ExtrapolationFactor)); //HIST
 
@@ -852,23 +892,3 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
     }
 }
 
-std::vector<InputParam*> TecEcoAnalysis::get_InputParams()
-{
-    std::vector<InputParam*> result;
-    result.reserve(5);    // avoid reallocations
-
-    // Always available
-    result.push_back(getConfigParam());
-    result.push_back(getCompoInputParam());
-    result.push_back(getCompoInputSettings());
-    result.push_back(getCompoEnvImpactsParam());
-
-    // GUI data, if available
-    if (auto* pTecEco = dynamic_cast<TecEcoCompo*>(parent())) {
-        if (auto* gui = pTecEco->getGUIData()) {
-            result.push_back(gui->getGuiInputParam());
-        }
-    }
-
-    return result;
-}

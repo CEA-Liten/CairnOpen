@@ -67,7 +67,7 @@ public:
         addParameter("ConstantRampDownLimit", &mConstantRampDownLimit, 0., SFunctionFlag({ eFTypeNotAnd, {},  { &mConstantRamp, &mAddRampDown} }), SFunctionFlag({ eFTypeNotAnd, {},  { &mConstantRamp, &mAddRampDown} }), "Constant ramp down value (rate of MaxComponentSize)", "-/hour");
 
         addParameter("RampCost", &mRampCost, 0., &mAddRampCost, &mAddRampCost, "", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pFluxUnit()} }));
-        addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", mMainCarrier->pStorageUnit(), "EcoInvestModel"); /** Minimum capacity  */
+        addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", mMainCarrier->pStorageUnit(), "EcoInvestModel");  
 
 
         //vector

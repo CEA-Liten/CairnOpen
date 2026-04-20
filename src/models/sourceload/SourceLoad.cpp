@@ -18,6 +18,7 @@ SourceLoad::SourceLoad(CairnObject* aParent) :
     mTemperature_out1(0.),
     mHorizonTimeSpanRatio(1)
 {
+    mPossibleModelClasses = { "SourceLoad", "SourceLoadMinMax" };
 }
 
 SourceLoad::~SourceLoad()

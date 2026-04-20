@@ -31,11 +31,21 @@ public:
     ~CairnCore();
 
     void setStopSignal(int* stopSignal);
+    bool userStoppedSimu() const;
+
     void doInit(bool aLoad=true);
-    int doStep(const std::string& encoding = "UTF-8", const std::map<std::string, bool> paramMap=std::map<std::string, bool>());
+    int doStep(const std::string& encoding = "UTF-8", 
+        const std::map<std::string, bool>& paramMap = std::map<std::string, bool>());
     int doTerminate();
 
-    void importTS(const t_list &aTSfileList, const int &iShift) ;
+    void initExternalModeler(MIPModeler::MIPModel& mipModel);
+    void handleNoSolution(const std::string& status, bool isRollingHorizon, int& istat);
+    void processSolutions(int nbSol, const std::string& status, bool isRollingHorizon, int& istat);
+
+    void setStdAloneMode(const bool& abool);
+
+    void importTS(const std::vector<std::string>& aTSfileList, const int& iShift);
+    void importTS(const std::vector<std::wstring>&aTSfileList, const int& iShift);
 
     int exportTS(const std::string &aTSfile, int iter = 0, bool rh = false, const std::string& encoding = "UTF-8");
     int exportTS(const std::string& aTSfile, std::map<std::string, std::vector<double>>& resultats, const std::string& encoding = "UTF-8");
@@ -68,13 +78,12 @@ public:
     std::string projectDir()     const { return std::string(mStudy.projectDir().c_str());}
     std::string resultsDir()     const { return std::string(mStudy.resultsDir().c_str());}
 
-  
     OptimProblem* getProblem() {return mProblem ;}
     MilpComponent* getComponent(const std::string & aName) {return mProblem->findChild<MilpComponent>(aName); }
        
-    void exportTotalTimeResolutionAllCycles(const std::string& aFileName);
-    int exportResults(const int& aNsol, const bool& isRollingHorizon, const int& istat, const std::string& encoding = "UTF-8");
-    void exportAnalysis(const int& aNsol, const bool& isRollingHorizon, const std::string& encoding = "UTF-8");
+    void exportTotalTimeResolutionAllCycles(const std::string& aFileName, const std::string& encoding = "UTF-8");
+    int exportResults(int aNsol, bool isRollingHorizon, int istat, const std::string& encoding = "UTF-8");
+    void exportAnalysis(int aNsol, bool isRollingHorizon, const std::string& encoding = "UTF-8");
 
     void setStudyName(const std::string& aStudyName, const std::string& aResultFile="");
     void setResultFile(const std::string& aResultFile);
@@ -105,6 +114,8 @@ public:
     std::string getOptimLogFile() { return mOptimLogFile; }
     std::string getResultsTimeSeriesFileName(const int& aNsol) { return mStudy.getScenarioFile("_Results.csv", aNsol); }
     std::string getGlobalResultsFileName(const int& aNsol) { return mStudy.getScenarioFile("_PLAN.csv", aNsol); }
+
+    int getNumCycle() { return mIter; }
 
 private:
     OptimProblem* mProblem ;

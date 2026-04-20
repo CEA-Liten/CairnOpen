@@ -18,14 +18,15 @@ public:
     GUIData(CairnObject *aParent);
     ~GUIData();
 
-    void doInit(const std::string aType, const std::string aSubType, const std::string aCategory, const std::map<std::string, std::string> paramMap = {}) ;
+    void doInit(const std::string aNodeType, const std::string aNodeTechnoType, 
+        const std::string aComponentType, const std::map<std::string, std::string> paramMap = {}) ;
 
     int getXpos() const {return mXpos ;}
     int getYpos() const {return mYpos ;}
 
     std::string getGuiNodeClass() const {return mGuiNodeModelType ;}
     std::string getGuiNodeClassSubtype() const {return mGuiNodeTechnoType ;}
-    std::string getGuiComponentPERSEEType() const {return mGuiComponentCairnType ;}
+    std::string getGuiComponentType() const {return mGuiComponentType;}
 
     uint GetId() {return mId;}
 
@@ -35,7 +36,7 @@ public:
     std::string Name() { return std::string(this->parent()->objectName().c_str()); } /* component name */
     void setGuiNodeClass        (const std::string val) {mGuiNodeModelType = val;}
     void setGuiNodeClassSubtype (const std::string val) {mGuiNodeTechnoType = val;}
-    void setGuiComponentPERSEEType (const std::string val)      {mGuiComponentCairnType = val;}
+    void setGuiComponentType (const std::string val)      { mGuiComponentType = val;}
 
     void jsonSaveGUILine(ojson& componentObject, const std::string& componentCarrier="");
 
@@ -53,7 +54,7 @@ public:
 
     std::string mGuiNodeModelType ;  /** GuiClass on planteditor */
     std::string mGuiNodeTechnoType ;  /** GuiType on planteditor - models of the same GuiClass */
-    std::string mGuiComponentCairnType ;  /** mGuiCategory on planteditor */
+    std::string mGuiComponentType ;  /** mGuiCategory on planteditor */
     std::string mGuiCarrier ;  /** mGuiCarrier name on planteditor */
 };
 

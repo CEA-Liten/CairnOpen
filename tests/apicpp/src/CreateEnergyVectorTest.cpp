@@ -27,8 +27,12 @@ int main()
 	}
 
 	CairnAPI::EnergyVectorAPI vElec;
-	TESTAPI("create EV", vElec = m_Problem.create_EnergyCarrier("Elec2", "Electrical"))
-	TESTAPI("remove EV", m_Problem.remove_EnergyCarrier(vElec))
+	TESTAPI("create EV Elec", vElec = m_Problem.create_EnergyCarrier("Elec2", "Electrical"))
+	TESTAPI("remove EV Elec", m_Problem.remove_EnergyCarrier(vElec))
 	
+	CairnAPI::EnergyVectorAPI vFluid;
+	TESTAPI("create EV Fluid", vFluid = m_Problem.create_EnergyCarrier("Fluid", "FluidH2"))
+	TESTAPI("remove EV Fluid", m_Problem.remove_EnergyCarrier(vFluid))
+
 	return vErr;
 }

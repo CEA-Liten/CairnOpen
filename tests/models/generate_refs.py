@@ -1,6 +1,9 @@
 import json
 import pytest
 from os import path
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 from pathlib import Path
 import CairnNRT as CNRT
 import pandas as pd

@@ -18,10 +18,14 @@ set TESTED_DIR=%5
 if "%TESTED_DIR%" == "" set TESTED_DIR=%SCRIPT_DIR%\..\
 echo Using test dir "%TESTED_DIR%"
 
-set HTML_ARG=%6
+set SCRIPT_REPORT=%6 
+if "%SCRIPT_REPORT%" == "" set SCRIPT_REPORT=htmlReportLste.py
+echo %SCRIPT_REPORT%
+
+set HTML_ARG=%7
 if "%HTML_ARG%" == "" set HTML_ARG="tests\reports\Cairn-TNR"
 
-set HTML_REPORT=%7
+set HTML_REPORT=%8
 if "%HTML_REPORT%" == "" set HTML_REPORT="YES"
 
 set REPORT_OLD=%REPORT:~0,-4%_old.xml
@@ -46,20 +50,21 @@ cd /D %TESTED_DIR%
 echo Executing pytest in "%CD%"
 echo Using %PYTHON_VENV%
 
-if "%XDIST%" == "''" set XDIST=0
+if "%XDIST%" == "" set XDIST=0
 
 echo "%MARKER%"
 if "%MARKER%" == "" goto :no_marker
 if not "%MARKER%" == "" goto :marker
 
 :marker	
-if "%MARKER%" == "''" goto :no_marker
+if "%MARKER%" == "" goto :no_marker
 
 if %XDIST% == 0 (
-pytest -m "%MARKER%" --junitxml %REPORT% --ignore=%SCRIPT_DIR%\..\..\export\MIPModeler\external\HiGHS
+pytest -p no:faulthandler -m "%MARKER%" --junitxml %REPORT% 
 ) else (
-pytest -n %XDIST% -m "%MARKER%" --junitxml %REPORT% --ignore=%SCRIPT_DIR%\..\..\export\MIPModeler\external\HiGHS
+pytest -p no:faulthandler -n %XDIST% --dist=loadgroup -m "%MARKER%" --junitxml %REPORT% 
 )
+
 echo "in marker"
 echo "%HTML_REPORT%"
 if %HTML_REPORT% == "YES" goto :html
@@ -68,18 +73,23 @@ goto:end
 :no_marker
 
 if %XDIST% == 0 (
-pytest --junitxml %REPORT% --ignore=%SCRIPT_DIR%\..\..\export\MIPModeler\external\HiGHS
+pytest -p no:faulthandler --junitxml %REPORT% 
 ) else (
-pytest -n %XDIST% --junitxml %REPORT% --ignore=%SCRIPT_DIR%\..\..\export\MIPModeler\external\HiGHS
+pytest -p no:faulthandler -n %XDIST% --dist=loadgroup --junitxml %REPORT% 
 )
 if %HTML_REPORT% == "YES" goto :html
 goto:end
 
 :html
 
-echo "in html"
+echo "move"
 move %SCRIPT_DIR%\..\%REPORT_UPDATE% reports\
-python -u %SCRIPT_DIR%\htmlReportLste.py %HTML_ARG%
-	
+echo "in html"
+python -u %SCRIPT_DIR%\%SCRIPT_REPORT% %HTML_ARG%
+
+echo "junit2html"
+pip install junit2html
+junit2html %REPORT% reports\Cairn-TNR-log.html
+
 :end
 echo "ending"

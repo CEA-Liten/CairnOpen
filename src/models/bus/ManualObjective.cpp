@@ -72,9 +72,23 @@ void ManualObjective::buildModel()
     mExpCommonMaxVariable = mCommonMaxVariable;
     mExpCommonMinVariable = mCommonMinVariable;
 
+    std::vector<MIPModeler::MIPExpression> ExprIntegrate(mLinkedPorts.size());
+    float factorExp = 1;
+    if (mUseExtrapolationFactor) {
+        factorExp = mParentCompo->ExtrapolationFactor();
+    }
     if (mUseCommonMaxVariable) {
-        for (auto& port : mListPort) {        
-            if (port->FluxDim() == 1.) {
+        
+        for (std::size_t i = 0; i < mLinkedPorts.size(); ++i) {
+            auto& port = mLinkedPorts[i];
+            if (mTimeIntegration) {
+                for (unsigned int t = 0; t < mHorizon; ++t)
+                {
+                    ExprIntegrate[i] += port->Flux()[t];
+                }
+                addConstraint(mExpCommonMaxVariable >= ExprIntegrate[i]/factorExp, "MaxConstraintIntegrated");
+            }
+            else if (port->FluxDim() == 1.) {
                 for (unsigned int t = 0; t < mHorizon; ++t)
                 {
                     addConstraint(mExpCommonMaxVariable >= port->Flux()[t], "MaxConstraint");
@@ -88,7 +102,15 @@ void ManualObjective::buildModel()
     }
 
     else if (mUseCommonMinVariable) {
-        for (auto& port : mListPort) {        
+        for (std::size_t i = 0; i < mLinkedPorts.size(); ++i) {
+            auto& port = mLinkedPorts[i];
+            if (mTimeIntegration) {
+                for (unsigned int t = 0; t < mHorizon; ++t)
+                {
+                    ExprIntegrate[i] += port->Flux()[t];
+                }
+                addConstraint(mExpCommonMaxVariable <= ExprIntegrate[i]/factorExp, "MinConstraintIntegrated");
+            }
             if (port->FluxDim() == 1.) {
                 for (unsigned int t = 0; t < mHorizon; ++t)
                 {
@@ -102,8 +124,8 @@ void ManualObjective::buildModel()
         mSubObjective += mObjectiveCoefficient * mExpCommonMinVariable;
     }
     else {
-        /** Constraint linked to mListPort connected ports */
-        for (auto& port : mListPort) {        
+        /** Constraint related the bus connections */
+        for (auto& port : mLinkedPorts) {
             if (port->FluxDim() == 1.) {
                 addExpressionToBalance(port->Flux());
             }
@@ -127,7 +149,7 @@ void ManualObjective::buildModel()
 
     /** Compute all expressions */
     computeAllContribution() ;
-
+    addLexicographicObjective();
     mAllocate = false ;
 }
 //------------------------------------------------------------------------------
@@ -139,30 +161,23 @@ void ManualObjective::finalizeModelData() {
     }
 }
 //------------------------------------------------------------------------------
-void ManualObjective::computeEconomicalContribution()
-{
-    cInfo()<<"model type"<<mObjectiveType;
 
-    // Note: The "Add" case is handled directly at the Optim Problem level
-    if (mObjectiveType == "Lexicographic"){
-        cInfo() << "adding the objective " << parent()->objectName();
-        std::string name = parent()->objectName();
-        MIPModeler::MIPSubobjective subObjective(name);
-        subObjective.setSubObjective(mSubObjective,1,mObjectiveLevel,mAbsTol,mRelTol);
-        mModel->addSubobjective(subObjective);
-    }
-}
 
 void ManualObjective::computeSubObjectiveContribution()
 {
-    for (unsigned int t = 0; t < mHorizon ; ++t){
-        if (mTimeIntegration) {
-            mSubObjective += TimeStep(t) * mBusBalance1D[t] * mObjectiveCoefficient;
-        } else {
-            mSubObjective += mBusBalance1D[t] * mObjectiveCoefficient;
-        }
+    for (unsigned int t = 0; t < mHorizon; ++t) {
+        mSubObjective += TimeStep(t) * mBusBalance1D[t] * mObjectiveCoefficient;
     }
-    mSubObjective += mObjectiveCoefficient*mBusBalance;
+    mSubObjective += mObjectiveCoefficient * mBusBalance;
+}
+void ManualObjective::addLexicographicObjective() {
+    if (mObjectiveType == "Lexicographic") {
+        cInfo() << "adding the objective " << parent()->objectName();
+        std::string name = parent()->objectName();
+        MIPModeler::MIPSubobjective subObjective(name);
+        subObjective.setSubObjective(mSubObjective, 1, mObjectiveLevel, mAbsTol, mRelTol);
+        mModel->addSubobjective(subObjective);
+    }
 }
 //----------------Parts of buildProblem--------------------------------------------------------------
 

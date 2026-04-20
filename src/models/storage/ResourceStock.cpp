@@ -6,7 +6,6 @@ extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 
 ResourceStock::ResourceStock(CairnObject* aParent) : StorageSubModel(aParent)
 {
-
 }
 
 ResourceStock::~ResourceStock()

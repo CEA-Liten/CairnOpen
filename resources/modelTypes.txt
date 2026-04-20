@@ -1,3 +1,4 @@
+ManualConstraint,bus
 ManualObjective,bus
 NodeEquality,bus
 NodeLaw,bus
@@ -37,6 +38,7 @@ HeatExchangeEquation,physicalequation
 BuildingFlexible,sourceload
 BuildingFlexibleBasic,sourceload
 SourceLoadMinMax,sourceload
+BatteryDetailledBeta,storage
 Battery_V1,storage
 StorageLinearBounds,storage
 StorageSeasonal,storage

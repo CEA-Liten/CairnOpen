@@ -6,11 +6,14 @@ class ModelTS : public ModelVar
 {
 public:
     ModelTS(const std::string& aName = "", const UnitParam* a_Unit = nullptr);
-    ModelTS(const std::string& aName, const UnitParam* a_Unit, InputParam::ModelParam* ap_Variable);
+    ModelTS(const std::string& aName, const UnitParam* a_Unit, ModelParam* ap_Variable);
+
     ~ModelTS();
    
     void setName(const std::string& a_Name);
     const std::string& getDescriptions() const { return m_Comment; };
+
+    const std::vector<double>* get_Values(size_t aNpdtPast = 0) const;
     void set_Values(uint aNpdtPast);
     void set_Values(size_t a_npdtTot, double a_Value);
 
@@ -26,7 +29,11 @@ protected:
     double m_min;
     double m_max;
 
-    InputParam::ModelParam* p_Variable{ nullptr };
+    mutable std::vector<double> m_cachedValues;
+    mutable const std::vector<double>* m_cachedSrc = nullptr;
+    mutable size_t m_cachedOffset = 0;
+
+    ModelParam* p_Variable{ nullptr };
     class ZEVariables* p_ZEVariable{ nullptr };
 };
 

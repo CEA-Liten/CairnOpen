@@ -1,15 +1,14 @@
 #ifndef SubModel_H
 #define SubModel_H
 
-class SubModel;
-class MilpComponent;
 class MilpPort;
-class EnvImpact;
 
 #include "CairnCore_global.h"
 #include "Cairn_Exception.h"
 #include "GlobalSettings.h"
+
 #include "MIPModeler.h"
+#include "MilpComponent.h"
 #include "InputParam.h"
 #include "EnvImpact.h"
 #include "ModelVar.h"
@@ -59,10 +58,12 @@ public:
     virtual void declareModelParameters() = 0;    /** MILP Model input parameters to be read from SettingsFile */
     virtual void declareModelInterface() = 0;     /** MILP Model input parameters to be read from SettingsFile */
     virtual void declareModelIndicators() = 0;    /** MILP Model input indicators to be read from SettingsFile */
-    virtual void buildModel() = 0;                   /** MILP Model description : variables, cosntraint */
-    virtual void buildControlVariables();
-    virtual void finalizeModelData();                /** after reading of all parameters, possibly initialize internal data of Models */
     virtual void initDefaultPorts() = 0;
+
+    // buildModel is overridden in TechnicalSubModel, BusSubModel, and OperationalSubModel
+    // So, it should not be defined for a model. Instead, computeModelContribution should be filled for a model.
+    virtual void buildModel() = 0;                /** MILP Model description : variables, cosntraint */
+
     /**----------------------- Methods that can be overridden in the individual models -------------------------------*/
     virtual void computeInitialData() {
         /* computeInitialData is used to initialize some important variables.
@@ -78,6 +79,8 @@ public:
         * It is also used to pre-compute initial state data for addControlIO(...)
         */
     };
+    virtual void finalizeModelData();                /** after reading of all parameters, possibly initialize internal data of Models */
+    virtual void buildControlVariables();
     virtual void resetHistStoredVaues() {};
     virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr) {}; //overridden in Cogeneration and MultiConverter
     virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr) {};//overridden in Cogeneration and MultiConverter
@@ -140,7 +143,7 @@ public:
     /** Methods for model parent, name, energyvector and topology */
     virtual double Sens() { return 0; }; /* To be overridden in Grid and SourceLoad*/
     void setControlType(const std::string& aControl) { mControl = aControl; }
-    std::string Name() { return this->parent()->objectName(); }
+    std::string Name() const { return this->parent()->objectName(); }
     void setParentCompo(MilpComponent* aCompo) { mParentCompo = aCompo; }
     void setMainCarrier(EnergyVector* aEnergyVector) { mMainCarrier = aEnergyVector; }
     EnergyVector* getMainCarrier() const { return mMainCarrier; }
@@ -153,6 +156,7 @@ public:
     MilpPort* getPort(const std::string& aPortId);
     MilpPort* getPortByType(const std::string& aType, const std::string& aDirection = "ANY");
     std::map <std::string, std::map<std::string, std::string>> const DefaultPorts() { return mDefaultPorts; }
+    std::map<std::string, std::string> getDefaultPortData(const std::string& portId) const;
 
     /** Exception */
     Cairn_Exception  getException() const { return mException; }
@@ -353,8 +357,7 @@ public:
         mAllocate = true;
     }
 
-    void setCurrency(const std::string& aCurrency) { mCurrency = aCurrency; }
-    const std::string* pCurrency() const { return &mCurrency; }
+    const std::string* pCurrency() const;
 
     //std::string OptimalSizeUnit() const;
     const std::string* pOptimalSizeUnit() const;
@@ -369,6 +372,7 @@ public:
     void setLabel(const std::string& aLabel, const std::string& aValue) { mLabelMap[aLabel] = aValue; };
     std::string getLabelValue(const std::string& aLabel) const;
 
+    std::vector<std::string> possibleModelClasses() const { return mPossibleModelClasses; };
 
 private:
     std::string m_OptimalSizeUnit;
@@ -376,14 +380,15 @@ private:
     bool mComputeSizeMax; /* If true then compute mExpSizeMax (call setExpSizeMax). It is automatically set to true on "add SizeMaxIO"*/
     std::map<std::string, std::string> mLabelMap;
 
+
 protected:
     int checkBusSameValueVarName(MilpPort* port);
     virtual int checkBusFlowBalanceVarName(MilpPort* port, int &inumberchange, std::string &varUseCheck);
     virtual bool defineDefaultVarNames(MilpPort* port);
-
-    std::string mCurrency;
-
+    
     Cairn_Exception mException;
+
+    std::vector<std::string> mPossibleModelClasses;
 
     /** Pointers **/
     MIPModeler::MIPModel* mModel;      /** Pointer to global MIPModel */
@@ -392,7 +397,7 @@ protected:
 
     /** Ports */
     std::map <std::string, std::map<std::string, std::string>> mDefaultPorts;
-    std::vector<MilpPort*> mListPort{};        /** List of connexion MilpPort of Component  */
+    std::vector<MilpPort*> mListPort{};      /** List of MilpPort of Component  */
     bool mVariablePortNumber;          /** Model can have variable number of physical inlet and outlet - they must be <= number of total NbInputPorts or outputs */
     int mNbInputPorts;                 /** Number of Componen Input Ports */
     int mNbOutputPorts;                /** Number of Component Outputs Ports */

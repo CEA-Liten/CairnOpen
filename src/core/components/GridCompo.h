@@ -34,8 +34,9 @@ class GridCompo ;
 class CAIRNCORESHARED_EXPORT GridCompo : public MilpComponent
 {
 public:
-    GridCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map<std::string, std::map<std::string, std::string>>& aPorts,
-        MilpData* aMilpData, TecEcoEnv& aTecEcoEnv, ModelFactory* aModelFactory);
+    GridCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, 
+        const std::map<std::string, std::map<std::string, std::string>>& aPorts,
+        MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory);
 
     virtual ~GridCompo();
     

@@ -90,7 +90,7 @@ int main()
 
 	//Create a new Bus and add link to the new port of the SourceLoad PV
 	CairnAPI::BusAPI vCO2_Bus;
-	TESTAPI("add CO2_Bus", vCO2_Bus = m_Problem.create_Bus("CO2_Bus", "NodeLaw", vCO2))
+	TESTAPI("add CO2_Bus", vCO2_Bus = m_Problem.create_Bus("CO2_Bus", "ManualConstraint", vCO2))
 	vCO2_Bus.set_SettingValue("StrictConstraint", false);
 
 	m_Problem.add(vPV_CarbonPort, vCO2_Bus);

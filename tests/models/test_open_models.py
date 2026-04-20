@@ -10,9 +10,9 @@ import csv
 
 BASE_DIR = Path(path.dirname(path.realpath(__file__)))
 file_report = path.join(BASE_DIR,"rapport_modeles.csv")
-with open(file_report, mode='w', newline='') as file:
-    writer = csv.writer(file,delimiter=';')
-    writer.writerow(["name_study","PLAN","HIST","TIMESERIES","RUNLPFILE","LPFILE","SAMPLING"])
+#with open(file_report, mode='w', newline='') as file:
+#    writer = csv.writer(file,delimiter=';')
+#     writer.writerow(["name_study","PLAN","HIST","TIMESERIES","RUNLPFILE","LPFILE","SAMPLING"])
     
 # Récupère tous les fichiers .csv dans les sous-dossiers de "data"
 # Ne récupère pas les sensibilités
@@ -57,14 +57,16 @@ def test_generic(name_study,app_home,sampling, block_assert=True,skip_col=[]):
         status["SAMPLING"] = sampling_status
     print((status["PLAN"] == True) and (status["TIMESERIES"] == True), "Test " + name_study + " failed, status: " + str(status))
     print(status)
-    with open(file_report, mode='a', newline='') as file:
-        writer = csv.writer(file,delimiter=';')
-        writer.writerow([name_study,status["PLAN"],status["HIST"],status["TIMESERIES"],status["RUNLPFILE"],status["LPFILE"],status["SAMPLING"]])
+    #with open(file_report, mode='a', newline='') as file:
+    #    writer = csv.writer(file,delimiter=';')
+    #    writer.writerow([name_study,status["PLAN"],status["HIST"],status["TIMESERIES"],status["RUNLPFILE"],status["LPFILE"],status["SAMPLING"]])
     if (block_assert)==True:
         assert (status["PLAN"] == True)
         assert (status["HIST"] == True) 
         assert (status["TIMESERIES"] == True)
-        assert (not "Failed" in status["SAMPLING"])
+        if status["SAMPLING"] != "NA":
+            status_sampling = ["Failed" not in v for v in status["SAMPLING"].values()]
+            assert (False not in status_sampling)
     return status
 
 
