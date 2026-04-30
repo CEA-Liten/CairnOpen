@@ -79,8 +79,7 @@ rem =========================================================
 rem Generate config
 if "%CONFIGURATION%"=="nothing" (
 	echo "no build"
-)
-else ( 
+) else ( 
 	"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
 
 	rem build 

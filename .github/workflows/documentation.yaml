@@ -37,7 +37,7 @@ jobs:
           curl -L -o "$WHL_FILENAME" "$WHL_URL"
           mv "$WHL_FILENAME" bin/
       - name: build Doc
-        run: cmd.exe /c "buildAll.bat" nothing open no-wheel no-deps env buildDoc
+        run: .\buildAll.bat nothing open no-wheel no-deps env buildDoc
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
