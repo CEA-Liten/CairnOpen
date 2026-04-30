@@ -32,7 +32,7 @@ jobs:
         run: bash ./buildAll.sh
       
       - name: TNR PyTest
-        run: bash ${WORKSPACE}/tests/scripts/startPytest.sh
+        run: bash ./tests/scripts/startPytest.sh
         continue-on-error: true
       - name: TNR CTest
         run: bash ./tests/startCtest.sh

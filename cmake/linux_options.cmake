@@ -19,7 +19,7 @@ set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 # --------- User-defined options ---------
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
-option(WITH_TESTING "Build tests. Default = OFF" ON)
+option(WITH_TESTING "Build tests. Default = OFF" OFF)
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" ON)
 option(BUILD_WHEEL "build python wheel of cairn" ON)
 
