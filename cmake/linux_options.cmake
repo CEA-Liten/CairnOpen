@@ -9,7 +9,7 @@ set(CPLEX_ROOT /home/share/570-Energie/570.15-TRILOGY/tools/CPLEX/CPLEX_Studio20
 
 # Python, to force Python (if not defined, use find_package Python3)
 set(PYTHON_HOME /home/prog/python-u24/Python-3.13.12/ CACHE INTERNAL "Python installation path")
-set(PYTHON_VENV /home/share/570-Energie/570.15-TRILOGY/tools/python-u24/venvs/buildCairn CACHE INTERNAL "Python virtual environment")
+set(PYTHON_VENV ${CMAKE_SOURCE_DIR}/venvs/buildCairn CACHE INTERNAL "Python virtual environment")
 set(PYTHON_PACKAGES lib/python3.13/site-packages CACHE INTERNAL "Python packages path")
 
 set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11)
