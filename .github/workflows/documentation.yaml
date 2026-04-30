@@ -33,8 +33,9 @@ jobs:
           echo "WHL_FILENAME=$WHL_FILENAME" >> $GITHUB_ENV
           echo "WHL_URL=$WHL_URL" >> $GITHUB_ENV
           echo "Downloading wheel from $WHL_URL"
-          if not exist "bin/" mkdir bin
-          curl -L -o "bin/${WHL_FILENAME}" "${WHL_URL}"
+          mkdir -p bin
+          curl -L -o "$WHL_FILENAME" "$WHL_URL"
+          mv "$WHL_FILENAME" bin/
       - name: build Doc
         run: cmd.exe /c "buildAll.bat" nothing open no-wheel no-deps env buildDoc
       - name: Deploy to GitHub Pages
