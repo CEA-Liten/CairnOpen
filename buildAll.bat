@@ -1,7 +1,7 @@
 @ECHO off
 rem =========================================================
 rem
-rem buildAll [<empty>=release|debug|fullrelease|fulldebug] 
+rem buildAll [<empty>=release|debug|fullrelease|fulldebug|nothing] 
 rem	 		 [<empty>=all|open]					: all=with private models, open=without
 rem			 [<empty>|wheel|wheel-noinstall]	: wheel=build and install wheel, wheel-noinstall=build but no install
 rem			 [<empty>|deps]			: deps=use dependencies installed in the directory D:/Tools/DepsCairn
@@ -77,19 +77,24 @@ mkdir "%BUILD_PATH%"
 rem ========================================================= 
 
 rem Generate config
-"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
-
-rem build 
-"%CMAKEPATH%\cmake.exe" --build --preset %CONFIGURATION%  
-
-rem remove previous install directory
-set BIN_PATH=bin\%CONFIGURATION%
-if exist %BIN_PATH% (
-	rmdir /s /q "%BIN_PATH%"
+if "%CONFIGURATION%"=="nothing" (
+	echo "no build"
 )
+else ( 
+	"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
+
+	rem build 
+	"%CMAKEPATH%\cmake.exe" --build --preset %CONFIGURATION%  
+
+	rem remove previous install directory
+	set BIN_PATH=bin\%CONFIGURATION%
+	if exist %BIN_PATH% (
+		rmdir /s /q "%BIN_PATH%"
+	)
 	
-rem Install
-"%CMAKEPATH%\cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+	rem Install
+	"%CMAKEPATH%\cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+)
 
 rem ========================================================= 
 rem Input parameter: buildDoc
