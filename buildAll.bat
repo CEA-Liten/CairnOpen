@@ -12,7 +12,7 @@ rem =========================================================
 SET STARTTIME=%TIME%
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin
+set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
 if exist "cmakepath.bat" (	
 	call cmakepath.bat
 )
@@ -78,10 +78,10 @@ if exist %BUILD_PATH% (
 mkdir "%BUILD_PATH%"
 
 rem Generate config
-"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
+"%CMAKEPATH%" -G "Ninja" --preset=%CONFIGURATION% %OPTION_DEPS% %OPTION_WHEEL% %OPTION_PRIVATE% %OPTION_ENVCAIRN% -S . 
 
 rem build 
-"%CMAKEPATH%\cmake.exe" --build --preset %CONFIGURATION%  
+"%CMAKEPATH%" --build --preset %CONFIGURATION%  
 
 rem remove previous install directory
 set BIN_PATH=bin\%CONFIGURATION%
@@ -90,14 +90,14 @@ if exist %BIN_PATH% (
 )
 
 rem Install
-"%CMAKEPATH%\cmake.exe" --install %BUILD_PATH% --prefix %BIN_PATH%
+"%CMAKEPATH%" --install %BUILD_PATH% --prefix %BIN_PATH%
 
 :buildDoc
 rem ========================================================= 
 rem Input parameter: buildDoc
 set BUILD_DOCCAIRN=%6
 if "%BUILD_DOCCAIRN%"=="buildDoc" (	
-	"%CMAKEPATH%\cmake.exe" -G "Ninja" --preset=buildDoc %OPTION_PRIVATE% -S . 
+	"%CMAKEPATH%" -G "Ninja" --preset=buildDoc %OPTION_PRIVATE% -S . 
 )
 
 
