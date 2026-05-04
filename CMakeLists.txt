@@ -60,7 +60,7 @@ if (BUILD_CAIRN)
     project(${PROJECT_NAME} LANGUAGES CXX C  VERSION ${${PROJECT_NAME}_VERSION}) 
     set(CMAKE_CXX_STANDARD 17)  
 else()
-    project(${PROJECT_NAME} VERSION ${${PROJECT_NAME}_VERSION}) 
+    project(${PROJECT_NAME} LANGUAGES NONE VERSION ${${PROJECT_NAME}_VERSION}) 
 endif()
 
 # ========= Tests setup =========
