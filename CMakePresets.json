@@ -24,6 +24,10 @@
                 "lhs": "${hostSystemName}",
                 "rhs": "Windows"
             },
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
             "environment": {
                 "GUI_HOME": "${sourceDir}/gui",
                 "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
@@ -67,7 +71,7 @@
             "displayName": "Linux Debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "TEST_WITH_COVERAGE":  "ON"
+                "TEST_WITH_COVERAGE": "ON"
             }
         },
         {
@@ -82,18 +86,15 @@
             "name": "debug",
             "displayName": "Debug",
             "inherits": "windows-base",
-            "architecture": {
-                "value": "x64",
-                "strategy": "external"
-            },
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/src"
             }
         },
         {
             "name": "release",
             "displayName": "Release",
-            "inherits": "debug",
+            "inherits": "windows-base",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
@@ -109,9 +110,9 @@
         {
             "name": "fullrelease",
             "displayName": "Full-Release",
-            "inherits": "fulldebug",
+            "inherits": "release",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "USER_OPTIONS_FILE": "cmake/full_options.cmake"
             }
         },
         {
@@ -120,12 +121,23 @@
             "inherits": "release",
             "installDir": "${sourceDir}/bin/release",
             "cacheVariables": {
-                "BUILD_WHEEL": "ON",                
+                "PRESETNAME": "release",
+                "BUILD_WHEEL": "ON",
                 "INSTALL_WHEEL": "ON",
-                "BUILD_MIPMODELER": "OFF",
-                "BUILD_MODULECAIRN": "OFF",
-                "BUILD_CAIRNGUI": "OFF",
-                "BUILD_CAIRN": "OFF"
+                "WITH_TESTING": "OFF"
+            }
+        },
+        {
+            "name": "fullwheel",
+            "displayName": "Full-Wheel",
+            "inherits": "release",
+            "installDir": "${sourceDir}/bin/fullrelease",
+            "cacheVariables": {
+                "PRESETNAME": "fullrelease",
+                "BUILD_WHEEL": "ON",
+                "INSTALL_WHEEL": "ON",
+                "WITH_PRIVATEMODELS": "ON",
+                "WITH_TESTING": "OFF"
             }
         },
         {
@@ -134,13 +146,15 @@
             "inherits": "release",
             "installDir": "${sourceDir}/bin/release",
             "cacheVariables": {
-                "BUILD_DOC": "ON",         
+                "PYTHON_VENVDOC": "${sourceDir}/envs/docCairn",
+                "BUILD_DOC": "ON",
                 "BUILD_WHEEL": "OFF",
                 "INSTALL_WHEEL": "OFF",
                 "BUILD_MIPMODELER": "OFF",
                 "BUILD_MODULECAIRN": "OFF",
                 "BUILD_CAIRNGUI": "OFF",
-                "BUILD_CAIRN": "OFF"
+                "BUILD_CAIRN": "OFF",
+				"WITH_TESTING": "OFF"
             }
         }
     ],
@@ -190,6 +204,7 @@
             "environment": {
                 "GUI_HOME": "${sourceDir}/gui",
                 "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
+                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/src/models",
                 "PATH": "${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
             }
         },
