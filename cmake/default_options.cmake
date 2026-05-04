@@ -5,7 +5,7 @@
 option(DEPS_INSTALL "Install dependencies" ON)
 
 # Cplex path
-set(CPLEX_ROOT "C:/Program Files/IBM/ILOG/CPLEX_Studio201/cplex" CACHE INTERNAL "CPLEX installation path (if exists use CPLEX)")
+set(CPLEX_ROOT "C:/Program Files/IBM/ILOG/CPLEX_Studio201/cplex" CACHE STRING "CPLEX installation path (if exists use CPLEX)")
 
 # Python, to force Python (if not defined, use find_package Python3)
 set(PYTHON_HOME C:/Python/Python313 CACHE INTERNAL "Python installation path")
@@ -16,7 +16,7 @@ set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11
 set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 
 # doc
-set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE INTERNAL "Python virtual environment")
+set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE STRING "Python virtual environment")
 
 # ================================================================
 # --------- User-defined options ---------
