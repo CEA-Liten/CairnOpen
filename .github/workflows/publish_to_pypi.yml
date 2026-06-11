@@ -19,7 +19,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-wheel
-          path: test_wheel/wheel.whl
+          path: test_wheel/cairnopen-1.0.4-py3-none-any.whl
 
   publish-to-testpypi:
     name: Publish Python  to TestPyPI
