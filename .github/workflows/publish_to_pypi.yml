@@ -37,6 +37,7 @@ jobs:
       uses: actions/download-artifact@v6
       with:
         name: test-wheel
+        path: dist
     - name: Publish to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
