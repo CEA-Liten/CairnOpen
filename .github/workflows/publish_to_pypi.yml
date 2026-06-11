@@ -14,8 +14,8 @@ jobs:
       - name: dummy wheel
         uses: actions/upload-artifact@v4
         with:
-          name: test_wheel
-          path: test_wheel/test_wheel.whl
+          name: test-wheel
+          path: test_wheel/wheel.whl
 
   publish-to-testpypi:
     name: Publish Python  to TestPyPI
