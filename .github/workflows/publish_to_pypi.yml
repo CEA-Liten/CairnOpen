@@ -8,9 +8,9 @@ on:
 jobs:
 
   store_dummy_artifact:
-    name: store artifact
-    runs-on: ubuntu-latest
-    steps:
+      steps:
+      - name: List files
+        run: ls -R
       - name: dummy wheel
         uses: actions/upload-artifact@v4
         with:
