@@ -1,0 +1,34 @@
+name: Publish Python to TestPyPI
+
+on:
+  push:
+    branches:
+      - test_deploy_pypi
+
+jobs:
+
+
+  publish-to-testpypi:
+    name: Publish Python  to TestPyPI
+    needs:
+    - build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/cairnopen
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v6
+      with:
+        name: test_wheel
+        path: test_wheel/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+
