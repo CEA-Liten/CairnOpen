@@ -24,7 +24,7 @@ jobs:
   publish-to-testpypi:
     name: Publish Python  to TestPyPI
     runs-on: ubuntu-latest
-
+    needs: store_dummy_artifact
     environment:
       name: testpypi
       url: https://test.pypi.org/p/cairnopen
