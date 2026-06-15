@@ -86,7 +86,17 @@ if (WITH_PYBIND)
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 
 	# virtual environment with pybind11	
-	python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+	#python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+	 if (NOT EXISTS ${PYTHON_VENV})
+        message("create build environment: ${PY_ENV}")
+        execute_process (COMMAND "${Python_EXECUTABLE}" -m venv "${PYTHON_VENV}" COMMAND_ERROR_IS_FATAL ANY)
+        set(ENV{VIRTUAL_ENV} "${PYTHON_VENV}")
+        set(Python_FIND_VIRTUALENV FIRST)
+        unset(Python_EXECUTABLE)
+        find_package(Python COMPONENTS Interpreter Development)
+        message("Python_EXECUTABLE: ${Python_EXECUTABLE}")
+		execute_process(COMMAND ${Python_EXECUTABLE} -m pip install --user -r "${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt")
+    endif()
 	
 	set(PYBIND11_FINDPYTHON ${Python_FOUND})
 	find_package(pybind11 CONFIG REQUIRED)
@@ -128,10 +138,7 @@ if (WITH_PYBIND)
             DESTINATION .
             )
 
-	install(
-            DIRECTORY ${CAIRN_HOME}/fmiInterface
-            DESTINATION .
-            )
+	
 
 	#install MIPModeler
 	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPModeler)
