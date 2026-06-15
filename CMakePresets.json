@@ -146,7 +146,6 @@
             "inherits": "release",
             "installDir": "${sourceDir}/bin/release",
             "cacheVariables": {
-                "PYTHON_VENVDOC": "${sourceDir}/envs/docCairn",
                 "BUILD_DOC": "ON",
                 "BUILD_WHEEL": "OFF",
                 "INSTALL_WHEEL": "OFF",
@@ -154,7 +153,24 @@
                 "BUILD_MODULECAIRN": "OFF",
                 "BUILD_CAIRNGUI": "OFF",
                 "BUILD_CAIRN": "OFF",
-				"WITH_TESTING": "OFF"
+                "WITH_TESTING": "OFF"
+            }
+        },
+        {
+            "name": "buildDevDoc",
+            "displayName": "DevDoc",
+            "inherits": "release",
+            "installDir": "${sourceDir}/bin/release",
+            "cacheVariables": {
+                "BUILD_DEVDOC": "ON",
+                "CAIRNDEVDOC_HOME": "${sourceDir}/doc/devDocCairn",
+                "BUILD_WHEEL": "OFF",
+                "INSTALL_WHEEL": "OFF",
+                "BUILD_MIPMODELER": "OFF",
+                "BUILD_MODULECAIRN": "OFF",
+                "BUILD_CAIRNGUI": "OFF",
+                "BUILD_CAIRN": "OFF",
+                "WITH_TESTING": "OFF"
             }
         }
     ],
@@ -192,6 +208,13 @@
             "displayName": "Full-Debug",
             "configurePreset": "fulldebug",
             "configuration": "debug",
+            "jobs": 4
+        },
+        {
+            "name": "buildDevDoc",
+            "displayName": "DevDoc",
+            "configurePreset": "buildDevDoc",
+            "configuration": "release",
             "jobs": 4
         }
     ],

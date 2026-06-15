@@ -131,7 +131,7 @@
 				"nodeName": "Electricityalternatif",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"componentWidth": 40,
@@ -140,6 +140,10 @@
 				"paramListJson": [
 					{
 						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "Voltage",
 						"value": 230
 					}
 				],
@@ -171,7 +175,7 @@
 				"nodeName": "Electricitycontinu",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#d72b2b",
 				"nodeComment": "",
 				"componentWidth": 40,
@@ -180,6 +184,10 @@
 				"paramListJson": [
 					{
 						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "Voltage",
 						"value": 230
 					}
 				],

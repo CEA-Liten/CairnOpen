@@ -2,9 +2,10 @@
 
 TechnicalSubModel::TechnicalSubModel(CairnObject* aParent) :
 SubModel(aParent),
-mHistPureOpexContributionDiscounted(0.),
+mHistFixedOpexContributionDiscounted(0.),
 mHistReplacementPartDiscounted(0.),
 mOptimalSize(2, 0.),
+mWeightResult(2, 0.),
 mTotalCostFunction(2, 0.),
 mCapexContribution(2, 0.),
 mExistence(2,0.),
@@ -102,7 +103,7 @@ void TechnicalSubModel::setTimeData()
 
 void TechnicalSubModel::resetHistStoredVaues()
 {
-    mHistPureOpexContributionDiscounted = 0.;
+    mHistFixedOpexContributionDiscounted = 0.;
     mHistReplacementPartDiscounted = 0.;
     mHistVariableCostsDiscounted = 0.;
 
@@ -133,14 +134,16 @@ void TechnicalSubModel::setExpInstalled()
     * Optimize size on the basis of weighting factor multiplying constant production or storage capacity
     * Variable to multiply by the capex offset to model the "construction" work
     */
-    addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_INT);
+    if (mLPModelOnly) {
+        addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_FLOAT);
+    }
+    else {
+        addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_INT);
+    }
 
-    if (mUseWeightOptimization)
+    if (mWeight<0)
     {
         mExpInstalled = mVarInstalled;
-        if (mWeight >= 0.) {
-            addConstraint(mVarInstalled == 1, "sInstalled");
-        }
     }
     else
     {
@@ -188,22 +191,30 @@ void TechnicalSubModel::addMinimumCapacity(double& aMaxSize)
 
 int TechnicalSubModel::checkConsistency()
 {
+    int ierr = SubModel::checkConsistency();
+
     // note that this function is not used for SourceLoad where the only dimensionning variable is the weight
-    if (mPiecewiseCapex && mUseWeightOptimization)
+    if (mPiecewiseCapex && mWeight<0)
     {
-        cCritical() << "ERROR : options PiecewiseCapex and UseWeightOptimization cannot be used together  " << mPiecewiseCapex << mUseWeightOptimization;
+        cCritical() << "ERROR : options PiecewiseCapex and Weight<0 cannot be used together  " << mPiecewiseCapex << (mWeight<0);
         return -1;
     }
 
     for (int i = 0; i < mEnvImpacts.size(); i++)
     {
-        if (mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() && mUseWeightOptimization) {
-            cCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and UseWeightOptimization cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << mUseWeightOptimization;
+        if (mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() && (mWeight<0)) {
+            cCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and (mWeight<0) cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << (mWeight < 0);
             return -1;
         }
     }
 
-    return 0;
+    if (mMaxValue < 0. && mWeight < 0.)
+    {
+        cCritical() << "ERROR : size of one component and weight cannot be optimized together maxvalue : " << mMaxValue << ", Weight : " << (mWeight);
+        return -1;
+    }
+
+    return ierr;
 }
 
 void TechnicalSubModel::computeAllContribution()
@@ -223,7 +234,7 @@ void TechnicalSubModel::computeAllContribution()
     /* Compute economical expressions and add corresponding constraints, if EncoInvestModel=true */
     computeEconomicalContribution();
 
-    /* Next Opex(PureOpex + Replacement + VarCost + EnvImpactCost) should be computet at the end because it is a sum of other expressions */
+    /* Next Opex should be computet at the end because it is a sum of other expressions */
     computeNetOpexContribution();
 }
 
@@ -379,7 +390,6 @@ void TechnicalSubModel::computeEconomicalContribution()
 
 void TechnicalSubModel::computeNetOpexContribution() {
     //Next Opex should be computet at the end because it is a sum of other expressions
-    //NetOpex = PureOpex + Replacement + VarCost + EnvImpactCost 
     if (mEcoInvestModel) {
         for (uint64_t t = 0; t < mTimeSteps.size(); ++t) {
             mExpOpex[t] = mExpFixedOpex[t] + mExpVariableOpex[t] + mExpReplacement[t] + mExpVariableCosts[t];
@@ -395,6 +405,8 @@ void TechnicalSubModel::computeNetOpexContribution() {
 void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
 {
     mOptimalSize.at(0) = 0.;
+    mWeightResult.at(0) = 1;
+    mWeightResult.at(1) = 1;
     mTotalCostFunction.at(0) = 0.;
     mCapexContribution.at(0) = 0.;
     mOpexContribution.at(0) = 0.;
@@ -419,6 +431,13 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         for (uint64_t t = 0; t < *mptrTimeshift; ++t) mReplacementPart.at(1) += mExpReplacement.at(t).evaluate(optSol); // HIST
     }
     mExistence.at(0) = mExistence.at(1) = mExpInstalled.evaluate(optSol);
+    if (mOptimalSize.at(0) == 0.) {
+        mExistence.at(0) = mExistence.at(1) = 0.;
+    }
+    if (mWeight > 1 || mWeight < 0) {
+        mWeightResult.at(0) = mOptimalSize.at(0) / mMaxValue;
+        mWeightResult.at(1) = mOptimalSize.at(1) / mMaxValue;
+    }
     double xxx = mExpSizeMax.evaluate(optSol);
     for (uint64_t t = 0; t < mHorizon; ++t) mVariableCosts.at(0) += mExpVariableCosts.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // PLAN
     for (uint64_t t = 0; t < *mptrTimeshift; ++t) mVariableCosts.at(1) += mExpVariableCosts.at(t).evaluate(optSol); // HIST
@@ -472,7 +491,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         + envEmissionPartDiscounted + envImpactPartDiscounted + variableCostsDiscounted; 
 
     if (mEcoInvestModel) {
-        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpFixedOpex, optSol, mHistPureOpexContributionDiscounted);
+        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpFixedOpex, optSol, mHistFixedOpexContributionDiscounted);
         computeDiscounted(*mptrTimeshift, mNpdtPast, mExpReplacement, optSol, mHistReplacementPartDiscounted);
     }
 
@@ -483,6 +502,6 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         envHistImpactPartDiscounted += *impact->getEnvImpactPartDiscountedHIST();
     }
     computeDiscounted(*mptrTimeshift, mNpdtPast, mExpVariableCosts, optSol, mHistVariableCostsDiscounted);
-    mTotalCostFunction.at(1) = mCapexContribution.at(1) + (mHistPureOpexContributionDiscounted + mHistReplacementPartDiscounted + envHistImpactPartDiscounted + mHistVariableCostsDiscounted) / mParentCompo->ExtrapolationFactor();
+    mTotalCostFunction.at(1) = mCapexContribution.at(1) + (mHistFixedOpexContributionDiscounted + mHistReplacementPartDiscounted + envHistImpactPartDiscounted + mHistVariableCostsDiscounted) / mParentCompo->ExtrapolationFactor();
 }
 

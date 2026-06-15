@@ -58,6 +58,18 @@ include(SpdlogSetup)
 find_package(MIPModeler REQUIRED ModelerInterface MIPSolver)
 find_package(Cairn REQUIRED CairnModelInterface)
 
+if (WITH_PROFILING)
+    message("\n---------- profiling --------------------------")
+    target_compile_definitions(CairnCore
+        PRIVATE
+            ENABLE_PROFILING=1
+    )
+    # Windows requires Psapi for GetProcessMemoryInfo()
+    if (WIN32)
+        target_link_libraries(CairnCore PRIVATE Psapi)
+    endif()
+endif()
+
 if (WITH_PYBIND)
 	# --- build package for python
 	set(COMPONENT cairn)
@@ -132,6 +144,10 @@ if (WITH_PYBIND)
             DIRECTORY ${CAIRN_HOME}/fmiInterface
             DESTINATION .
             )
+	install(
+            DIRECTORY ${CAIRN_HOME}/pyInterface
+            DESTINATION .
+            )
 
 	#install MIPModeler
 	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPModeler)
@@ -189,17 +205,44 @@ endif()
 
 if(WITH_TESTING)	
 	include(CTestTools)
+
+	set(CAIRN_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts)
+
 	if (NOT WITH_PRIVATEMODELS)
 		set(${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/ChangeModelClassTest.cpp)
 	endif()
 	if (NOT TEST_WITH_COVERAGE)
-		list(APPEND ${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/OpenModelsTest.cpp)
+		list(APPEND ${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/GenericTests.cpp)
 	endif()
 
-	add_tests(${CAIRNTESTS_HOME}/apicpp/src 
-	DATA ${CAIRNTESTS_HOME}/apicpp/data 
-	RESULTS ${CAIRNTESTS_HOME}/apicpp/results 
-	DEPS CairnCore CairnModelInterface spdlog::spdlog
-	EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils
-	EXCLUDE_TESTS ${${COMPONENT}_EXCLUDE_TESTS})	
+	# CTests
+	if (TEST_WITH_CTESTS)
+		add_tests(${CAIRNTESTS_HOME}/apicpp/src 
+			DATA ${CAIRNTESTS_HOME}/apicpp/data 
+			RESULTS ${CAIRNTESTS_HOME}/apicpp/results 
+			DEPS CairnCore CairnModelInterface spdlog::spdlog
+			EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils
+			EXCLUDE_TESTS ${${COMPONENT}_EXCLUDE_TESTS}
+		)
+	endif()
+
+	# generic NRTs
+	if (TEST_WITH_GENERICTESTS)
+		create_genericTest(GenericTests 
+			${CAIRNTESTS_HOME}/apicpp/src
+			${CAIRNTESTS_HOME}/apicpp/src/GenericTests.cpp
+			DEPS CairnCore CairnModelInterface spdlog::spdlog
+			EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils
+		)
+
+		add_genericTests(models)
+		add_genericTests(integration)
+
+		if (WITH_PRIVATEMODELS)
+			add_genericTests(privateTests/models)
+			add_genericTests(privateTests/integration)
+		endif()
+
+	endif()
+
 endif()

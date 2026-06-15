@@ -63,3 +63,27 @@ void CairnAPI::SimulationControlAPI::updateMilpData()
 	}
 	CairnAPIUtils::setError(vRet);
 }
+
+
+SimulationControl* CairnAPI::SimulationControlAPI::get_SimulationControl() const
+{
+	return (SimulationControl*)get_Object();
+}
+
+t_list CairnAPI::SimulationControlAPI::get_ReadingModes() const
+{
+	const SimulationControl* control = get_SimulationControl();
+	if (control) {
+		return control->getReadingModes();
+	}
+	return {};
+}
+
+t_list CairnAPI::SimulationControlAPI::get_RollingModes() const
+{
+	const SimulationControl* control = get_SimulationControl();
+	if (control) {
+		return control->getRollingModes();
+	}
+	return {};
+}

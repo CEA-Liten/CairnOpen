@@ -1,8 +1,8 @@
 #include "ModelTS.h"
 #include "ZEVariables.h"
 
-ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit)
-    : ModelVar(aName, "")
+ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, const std::string& aDescription)
+    : ModelVar(aName, "", aDescription)
 {
     m_default = 1.0;
     m_min = std::nan("1");
@@ -15,7 +15,7 @@ ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, ModelParam* 
 {
     if (ap_Variable) {
         p_Variable = ap_Variable;
-        m_Comment = ap_Variable->getDescription();
+        m_Description = ap_Variable->getDescription();
 
         if (const double* pval = std::get_if<double>(&ap_Variable->getDefault())) {
             if (!std::isnan(*pval))
@@ -155,7 +155,7 @@ bool ModelTS::checkProfile()
     bool vRet = true;
     if (p_ZEVariable) {
         if (m_Name != "" && !std::isnan(m_min) && !std::isnan(m_max)) {
-            cInfo() << "checking " << m_Name;
+            cDebug() << "checking " << m_Name;
             std::vector<double>& vZEHist = *p_ZEVariable->ptrOutVariable();
             size_t vSize = vZEHist.size();
             if (vSize) {
@@ -172,7 +172,7 @@ bool ModelTS::checkProfile()
                     vRet = false;
                 }
             }           
-            cInfo() << "end checking " << m_Name;
+            cDebug() << "end checking " << m_Name;
         }
     }
     return vRet;
@@ -180,7 +180,7 @@ bool ModelTS::checkProfile()
 
 void ModelTS::subscribeTS(const std::string& a_exName, t_mapExchange& a_Import, size_t a_npdtTot)
 {
-    p_ZEVariable = new ZEVariables(m_Name, &m_Unit, m_Comment + " Profile ", "1", "0", true);
+    p_ZEVariable = new ZEVariables(m_Name, &m_Unit, m_Description + " Profile ", "1", "0", false);
     a_Import[a_exName] = p_ZEVariable;
     std::vector<double>& vZEHist = *p_ZEVariable->ptrVariable();
     vZEHist.resize(a_npdtTot, 0.0);

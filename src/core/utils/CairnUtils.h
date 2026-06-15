@@ -9,21 +9,21 @@
 #include <charconv>
 #include <codecvt>
 #include <locale>
+#include <initializer_list>
 
 #include <Eigen/SparseCore>
 #include <Eigen/Dense>
 
 #include "CairnCore_global.h"
-#include "ModelParam.h"
-
 #include "Cairn_Exception.h"
-
-namespace fs = std::filesystem;
-typedef std::map<std::string, std::string> t_mapParams;
+#include "ModelParam.h"
 
 using Eigen::VectorXf;
 using Eigen::MatrixXf;
 
+namespace fs = std::filesystem;
+
+/* Represents a single parameter entry to be exported as a CSV row */
 struct ParameterRow {
 	std::string component;
 	std::string parameter;
@@ -35,7 +35,7 @@ struct ParameterRow {
 	std::map<std::string, std::string> extraData;
 };
 
-struct ExportParameterData {
+struct ExportParameterRows {
 	std::vector<std::string> labelHeaders;
 	std::vector<std::string> extraHeaders;
 	std::vector<ParameterRow> rows;
@@ -66,6 +66,28 @@ namespace  CairnUtils {
 	void outputIndicator(std::fstream& out, const std::string compoName, const std::string indicatorName, const double value, 
 		const std::string unit, const std::string alias, const std::string Description = "N/A", const std::vector<std::string>& labels = {});
 
+	inline bool isEnergyVector(const std::string& a_Type) {
+		// TODO: remove "EnergyVector" after few versions
+		return (a_Type == "ElectricalCarrier" || a_Type == "MaterialCarrier" || a_Type == "EnergyVector");
+	}
+
+	inline bool isBus(const std::string& a_Type) {
+		return (a_Type == "BusFlowBalance" || a_Type == "BusSameValue" || a_Type == "MultiObjCompo");
+	}
+
+	std::string getAutoCompoName(
+		const std::vector<std::string>& compoList,
+		const std::string& componentType,
+		const std::string& componentName = {},
+		bool isImport = false,
+		const std::vector<std::string>& excludeList = {});
+
+	// t_mapGroups : import "JsonDescription.h" ?! 
+	std::map<std::string, std::string> buildGroupData(
+		const std::vector<std::string>& components,
+		const std::vector<std::string>& existingGroups, 
+		const std::string& mainCompo = "", const std::string& groupName = "");
+
 	std::string toLower(const std::string& a_string);
 	std::string toUpper(const std::string& a_string);
 	std::string remove_spaces(const std::string& a_string);
@@ -83,6 +105,7 @@ namespace  CairnUtils {
 
 	std::vector<std::string> CAIRNCORESHARED_EXPORT split(const std::string& a_string, const char& a_separator = ',');
 	std::vector<std::string> CAIRNCORESHARED_EXPORT split(const std::string& a_string, const std::string & a_separator);
+	std::vector<std::string> CAIRNCORESHARED_EXPORT toStringVector(const std::string& a_Value);
 
 	std::string BuildFileName(const std::string& aFileName);
 	std::string BuildFileName_W(const std::wstring &aFileName);
@@ -92,6 +115,78 @@ namespace  CairnUtils {
 
 	std::vector<std::vector<std::string>> readToList(const std::string& Full_File_Name, const std::string& Separator);
 	std::vector<double> getDataArray(const std::vector<std::vector<std::string>>& data_Inputs, int aCol, int iskipHead);
+
+	t_mapParamData extractParams(const t_mapParamData& source, const std::vector<std::string>& keys);
+	t_mapParamData extractGuiParams(const t_mapParamData& source);
+
+	static const ParamData getParamData(const t_mapParamData& params, const std::string& name)
+	{
+		const auto it = params.find(name);
+		return (it != params.end()) ? it->second : ParamData{};
+	}
+
+	static inline std::string getParamValue(const t_mapParamData& params, const std::string& name, 
+		const std::string& defaultValue = "")
+	{
+		auto it = params.find(name);
+		return (it != params.end()) ? it->second.value : defaultValue;
+	}
+
+	static inline void setParamValue(t_mapParamData& params, const std::string& name, const std::string& value)
+	{
+		params[name].value = value;
+	}
+
+	static inline std::string getParamComment(const t_mapParamData& params, const std::string& name)
+	{
+		auto it = params.find(name);
+		return (it != params.end()) ? it->second.comment : "";
+	}
+
+	static inline void setParamComment(t_mapParamData& params, const std::string& name, const std::string& comment)
+	{
+		params[name].comment = comment;
+	}
+
+	inline t_mapParamData buildParamMap(
+		std::initializer_list<std::pair<std::string, std::string>> list)
+	{
+		t_mapParamData out;
+		for (const auto& [key, value] : list)
+			setParamValue(out, key, value);
+		return out;
+	}
+
+	inline t_mapParamData convertToParamDataMap(
+		const std::map<std::string, std::string>& input)
+	{
+		t_mapParamData out;
+
+		for (const auto& [key, value] : input)
+		{
+			ParamData pd;
+			pd.value = value;
+			pd.comment = "";   // always empty
+
+			out.emplace(key, std::move(pd));
+		}
+
+		return out;
+	}
+
+	inline std::map<std::string, std::string>
+		convertFromParamDataMap(const t_mapParamData& input)
+	{
+		std::map<std::string, std::string> out;
+
+		for (const auto& [key, param] : input)
+		{
+			out.emplace(key, param.value);   // ignore comment
+		}
+
+		return out;
+	}
+
 
 	inline std::wstring toWString(const std::string& s)
 	{
@@ -119,17 +214,6 @@ namespace  CairnUtils {
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 #pragma warning(pop)
 		return converter.to_bytes(ws);
-	}
-
-	static inline std::string getParam(const t_mapParams& a_Params, const std::string& a_Name) {
-		try
-		{
-			return a_Params.at(a_Name);
-		}
-		catch (const std::exception&)
-		{
-			return "";
-		}
 	}
 
 	inline void ltrim(std::string& s) {
@@ -188,7 +272,7 @@ namespace  CairnUtils {
 	void collectParameters(
 		std::vector<ParameterRow>& rows,
 		const std::string& componentName,
-		const std::map<std::string, ModelParam*>& paramMap,
+		const std::map<std::string, class ModelParam*>& paramMap,
 		const std::map<std::string, bool>& optionsMap = {},
 		const std::map<std::string, std::string>& timeSeriesNames = {},
 		const std::vector<std::string>& labelList = {},
@@ -196,7 +280,7 @@ namespace  CairnUtils {
 
 	void writeParameterDataToCSV(
 		std::ostream& out,
-		const ExportParameterData& data,
+		const ExportParameterRows& data,
 		const std::map<std::string, bool>& optionsMap);
 
 	static std::string detectBOM(std::ifstream& file)
@@ -325,18 +409,7 @@ namespace  CairnUtils {
 		}
 		return normalizeToUtf8(s1) == normalizeToUtf8(s2);
 	}
-	/* ------------------------------------------------------ */
 
-	inline static void checkRead(int err, const std::string& context)
-	{
-		if (err < 0) {
-			throw Cairn_Exception(
-				"Error while initializing " + context +
-				". A mandatory parameter is missing!",
-				-1
-			);
-		}
-	}
 }
 
 #endif //CAIRNUTILS_H

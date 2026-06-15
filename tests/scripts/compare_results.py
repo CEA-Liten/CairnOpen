@@ -65,8 +65,12 @@ def compare_plan_rempl(type_PLAN_FILE, file_plan_ref, file_plan, logs : TextIOWr
         return "NA"
     
     plan_df = pd.read_csv(file_plan,sep=";",index_col=["Model","Alias"])
-
-    jointure = plan_df_ref.assign(value_current = plan_df["Value"])
+    try:
+        jointure = plan_df_ref.assign(value_current = plan_df["Value"])
+    except:
+        plan_df_ref = plan_df_ref[~plan_df_ref.index.duplicated(keep="first")]
+        plan_df = plan_df[~plan_df.index.duplicated(keep="first")]
+        jointure = plan_df_ref.assign(value_current = plan_df["Value"])
     jointure["diff"] = jointure["Value"]-jointure["value_current"]
     jointure["relative_diff"] = abs(jointure["diff"]/jointure["Value"])
     filter_diff = jointure[(jointure["relative_diff"].abs()>threshold)]

@@ -89,7 +89,7 @@ public:
         addParameter("MinPower", &mMinPower_H2, 0., true, true, "Electroysis system minimum power multiplying coefficient in the range 0 to 1");	  
         addParameter("AuxConso", &mAuxConso, 0., &mAddAuxConso, true, "Constant consumption in proportion of MaxPower", "", "AddOperationConstraints");
         addParameter("StdByConso", &mStdByConso, 0., &mAddStdByConso, true, "Constant consumption in proportion of MaxPower only when the electrolyzer state is on standby", "", "AddOperationConstraints");
-        addParameter("Cost", &mCost, 0., false, true, "Cost per energy produced per hour", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pEnergyUnit()} }) );
+        addParameter("Cost", &mCost, 0., false, true, "Cost per energy produced per hour", SFunctionUnit({ eFTypeDivision, { pCurrency(), pQuantity("EnergyUnit")}}));
     }
 
  

@@ -170,7 +170,7 @@
 				"nodeName": "ElectricityDistrib",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentType": "EnergyVector",
+				"componentType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 330,
@@ -194,7 +194,7 @@
 						"value": 1
 					},
 					{
-						"key": "Potential",
+						"key": "Voltage",
 						"value": 220
 					},
 					{
@@ -272,7 +272,7 @@
 				"nodeName": "H2",
 				"nodeType": "H2Vector",
 				"nodeTechnoType": "H2Vector",
-				"componentType": "EnergyVector",
+				"componentType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 254,
@@ -296,7 +296,11 @@
 						"value": 0.03332
 					},
 					{
-						"key": "Potential",
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
 						"value": 30
 					},
 					{

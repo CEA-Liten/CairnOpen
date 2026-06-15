@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-from cairn import *
 import os
 import shutil
 from os import path
@@ -8,7 +7,12 @@ import pandas as pd
 import filecmp
 import json 
 
-from cairn import CairnAPI, EnergyVector, Component, Port, Bus, Solution
+try:
+    from cairn import *
+    from cairn import CairnAPI, EnergyVector, Component, Port, Bus, Solution
+except:
+    from cairnopen import *
+    from cairnopen import CairnAPI, EnergyVector, Component, Port, Bus, Solution
 
 
 

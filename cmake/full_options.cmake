@@ -26,8 +26,11 @@ set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE INTERNAL "Python virtual enviro
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
 option(WITH_TESTING "Build tests. Default = OFF" ON)
+option(TEST_WITH_CTESTS "Build C unit tests. Default = OFF" ON)
+option(TEST_WITH_GENERICTESTS "Build generic tests. Default = OFF" ON)
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" ON)
 option(WITH_PRIVATEMODELS "Generate private models" ON)
+option(WITH_PROFILING "Enable runtime profiling instrumentation" ON)
 set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/virtualPy CACHE INTERNAL "Cairn wheel installation path")
 
 # TODO!!
@@ -65,7 +68,7 @@ option(BUILD_CAIRNCMD "build Cairn standalone (CairnCmd) if ON" ON)
 # Compilation of CairnGui
 option(BUILD_CAIRNGUI "build Cairn GUI if ON" ON)
 option(WITH_LICENCE "build cairn gui with licence" ON)
-option(BUILD_MODELJSON "build Model.json if ON" ON)
+#option(BUILD_MODELJSON "build Model.json if ON" ON)
 set(CAIRNGUI_HOME ${CMAKE_SOURCE_DIR}/gui CACHE INTERNAL "Cairn gui path")
 
 set(CAIRN_APP ${CMAKE_SOURCE_DIR} CACHE INTERNAL "Cairn GUI installation path")

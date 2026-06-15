@@ -10,10 +10,12 @@ import sys
 import os
 import shutil
 import pandas as pd
-import cairn as crn
+try:
+    import cairn as crn
+except:
+    import cairnopen as crn
+    
 import PerseePasteResults as ppr
-
-print("charge persee sens param")
 
 def run_sensitivity_manual_sampling(testcase, app_home, tab_param_name, tmax, verifyParamType, timeStepFile="", tsFileList=[]):
     test_adress = os.path.join(app_home,testcase+".json")
@@ -31,6 +33,7 @@ def run_sensitivity_manual_sampling(testcase, app_home, tab_param_name, tmax, ve
     ppr.PasteResultsMonoLoc(app_home, "Report_s", "PLAN", file_out="sumupall_sens.csv", list_order=tab_param.index)
 
 if __name__ == '__main__':
+
     print("----------------------- Run Sensitivity Arguments------------------------------")
     print(sys.argv)
     # argment list : 
@@ -52,7 +55,7 @@ if __name__ == '__main__':
             tab_param_name=sys.argv[3]
         else:
             tab_param_name="tab_echantillonnage.csv"
-        print("Tab Echantillonnage File:", tab_param_name)
+        print("Sampling File:", tab_param_name)
 
         if sys.argv[4]!="":
             tmax = int(sys.argv[4])
@@ -85,7 +88,7 @@ if __name__ == '__main__':
 
     if tsFileList != []:
         run_sensitivity_manual_sampling(testcase, app_home, tab_param_name, tmax, verifyParamType, timeStepFile=timeStepFile, tsFileList=tsFileList)
-        print("end sensitivity")
+        print("[debug] end sensitivity")
     else:
         print("Error: check if there is at least one timeseries loaded", flush=True)
 

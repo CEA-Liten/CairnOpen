@@ -172,7 +172,7 @@
 				"nodeName": "Electricity",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 610,
@@ -190,6 +190,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"optionListJson": [
@@ -228,7 +232,7 @@
 				"nodeName": "Heat",
 				"nodeType": "Heat",
 				"nodeTechnoType": "Heat",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
@@ -246,6 +250,18 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 50
+					},
+					{
+						"key": "Temperature",
+						"value": 50
+					},
+					{
+						"key": "FluxType",
+						"value": "Energy"
 					}
 				],
 				"optionListJson": [

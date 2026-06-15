@@ -23,7 +23,7 @@ class CAIRNCORESHARED_EXPORT Solver: public CairnObject
 {
     
 public:
-    Solver(CairnObject* ap_Parent, const std::string& aName, const std::map<std::string, std::string>& aComponent={});
+    Solver(CairnObject* ap_Parent, const std::string& aName, const t_mapParamData& aComponent={});
     virtual ~Solver();
        
     void SolveProblem(MIPModeler::MIPModel* aModel, const std::string &location, const int cycle=0, const std::map<std::string, bool> paramMap = std::map<std::string, bool>());
@@ -61,7 +61,7 @@ public:
     std::vector<InputParam*> get_OptionInputParams();
 
     std::vector<std::string> getProblemTypes() const {
-        return (mModelType == GS::GAMS()) ? mGAMSProblemTypes : std::vector<std::string>{};
+        return (mModelType == GS::GAMS()) ? mGAMSProblemTypes : std::vector<std::string>{ "MIP", "LP"};
     }
 
     std::vector<std::string> getPossibleModelTypes() const {
@@ -69,9 +69,9 @@ public:
     }
 
 private:
-    void doInit(const std::map<std::string, std::string>& aComponent);
+    void doInit(const t_mapParamData& aComponent);
     void declareCompoInputParam();
-    bool setCompoInputParam(const std::map<std::string, std::string>& aComponent);
+    bool setCompoInputParam(const t_mapParamData& aComponent);
     void InitSolverParam();
 
     static const std::vector<std::string> mPossibleModelTypes;
@@ -102,6 +102,7 @@ private:
     std::string mWriteMipStart;
     std::string mReadParamFile;
     std::string mWriteGMS;
+    bool mIsLpModel;
     int mNbSolToKeep;
     double mGap;
     double mTimeLimit;

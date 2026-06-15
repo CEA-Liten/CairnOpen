@@ -2,76 +2,245 @@
 #include "Cairn_Exception.h"
 #include "GlobalSettings.h"
 #include "CairnUtils.h"
+#include <unordered_set>
 #include <fstream>
 #include <filesystem>
 namespace fs = std::filesystem;
 
-
-JsonDescription::JsonDescription(CairnObject *aParent, std::string aName)
-    : CairnObject(aParent, aName),
-    mException(Cairn_Exception())
+// ============================================================
+// Constructor / Destructor
+// ============================================================
+JsonDescription::JsonDescription(const std::string& vJsonFile)
+    : CairnObject(nullptr, "JsonDescription" + vJsonFile)
 {
-}
-JsonDescription::~JsonDescription()
-{
-} // ~JsonDescription()
-
-std::vector< t_mapParams > JsonDescription::parseJsonDescription(const std::string &aDescFile)
-{    
-    extractDocumentData(readJSONFile(aDescFile));
-    return mComponents ;
-}
-
-std::string JsonDescription::extractComponentType(const json& comp) const
-{
-    std::string type;
-    if (comp.contains("componentPERSEEType")) {
-        type = (std::string)comp["componentPERSEEType"];
+    cInfo() << "Read JSON input file: " + vJsonFile;
+    try {
+        extractJsonData(vJsonFile);
+        extractCompoParamData();
     }
-    else {
-        type = (std::string)comp["componentType"];
-
+    catch (const Cairn_Exception& error) {
+        throw error;
     }
-    return type;
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//Extract the data of ports for a given componenet 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+JsonDescription::~JsonDescription() = default;
 
-std::map < std::string, std::map<std::string, std::string> > JsonDescription::getCompoPortData(const std::string &compoName) const
+// =================================================================================
+// extractJsonData - load file and populate mComponentsList, mLinksList, mGroupsList
+// =================================================================================
+void JsonDescription::extractJsonData(const std::string& aJsonFile)
 {
-    json comp; 
-    std::map < std::string, std::map<std::string, std::string> > ports; //contains the data of all ports of componenet compoId
+    const json jsonData = readJSONFile(aJsonFile);
 
-    bool found = false;
-    for(auto & component : mComponentsList)
+    // ---- Single-page format ----------------------------------------
+    if (jsonData.contains("Components"))
     {
-        if (compoName == (std::string)component["nodeName"]) {
-            comp = component;
-            found = true;
-            break;
+        const json& components = jsonData["Components"];
+        if (components.is_array())
+            mComponentsList = components; 
+
+        if (jsonData.contains("Links"))
+        {
+            const json& links = jsonData["Links"];
+            if (links.is_array())
+                mLinksList = links;
+        }
+
+        if (jsonData.contains("Groups"))
+        {
+            const json& groups = jsonData["Groups"];
+            if (groups.is_array())
+                mGroupsList = groups;
+        }
+    }
+    else
+    {
+        // ---- Multi-page format -----------------------------------------
+        mComponentsList = json::array();
+        mLinksList      = json::array();
+
+        for (auto& [key, value] : jsonData.items())
+        {
+            if (!CairnUtils::contains(key, "Page") || key == "numberPages")
+                continue;
+
+            if (value.contains("Components"))
+            {
+                for (auto& component : value["Components"])
+                    mComponentsList.push_back(std::move(component)); // move avoids deep copy
+            }
+
+            if (value.contains("Links"))
+            {
+                for (auto& link : value["Links"])
+                    mLinksList.push_back(std::move(link));  
+            }
+
+            if (value.contains("Groups"))
+            {
+                for (auto& group : value["Groups"])
+                    mGroupsList.push_back(std::move(group));
+            }
         }
     }
 
-    if (!found) {
-        cWarning() << "getCompoPortData: component " + compoName + " has not been found!";
-        return {}; 
+    // ---- Dynamic indicators (page-independent) ----------------------------
+    if (jsonData.contains("DynamicIndicators"))
+    {
+        const json& list = jsonData["DynamicIndicators"];
+        mDynamicIndicators.reserve(mDynamicIndicators.size() + list.size());
+        for (const auto& dynIndicator : list)
+            extractUDIndicatorData(dynIndicator);
     }
 
-    cInfo() << compoName << " getCompoPortData :";
+    // ---- Group name (if applicable) ----------------------------
+    if (jsonData.contains("groupName"))
+    {
+        mGroupName = jsonData["groupName"];
+    }
 
-    std::string type = extractComponentType(comp);
-    const bool isBus = (CairnUtils::contains(type, "Bus") || CairnUtils::contains(type, "MultiObj")) ? true : false;
+    if (jsonData.contains("mainNodeName"))
+    {
+        mGroupMainNode = jsonData["mainNodeName"];
+    }
+
+    // Build component lookup indices now that the list is fully populated.
+    buildComponentIndex();
+}
+
+// ================================================================
+// extractCompoParamData - build list of component parameter maps
+// ================================================================
+void JsonDescription::extractCompoParamData()
+{
+    for (auto& comp : mComponentsList)
+    {
+        t_mapParamData component;
+
+        const std::string componentType = extractComponentType(comp);
+        const std::string nodeId = read(comp, "nodeId");
+        const std::string nodeType = read(comp, "nodeType");
+        const std::string nodeTechnoType = read(comp, "nodeTechnoType");
+        const std::string componentCarrier = read(comp, "componentCarrier");
+        const std::string xpos = read(comp, "x");
+        const std::string ypos = read(comp, "y");
+        const std::string nodeName = read(comp, "nodeName");
+        const std::string energyColor = read(comp, "energyTypeColor");
+
+        CairnUtils::setParamValue(component, "type", componentType);
+        CairnUtils::setParamValue(component, "nodeId", nodeId);
+        CairnUtils::setParamValue(component, "name", nodeName);
+        CairnUtils::setParamValue(component, "ModelType", nodeType);
+        CairnUtils::setParamValue(component, "ModelTechnoType", nodeTechnoType);
+        CairnUtils::setParamValue(component, "componentCarrier", componentCarrier);
+        CairnUtils::setParamValue(component, "Xpos", xpos);
+        CairnUtils::setParamValue(component, "Ypos", ypos);
+
+        if (CairnUtils::isEnergyVector(componentType)) {
+            CairnUtils::setParamValue(component, "EnergyColor", energyColor);
+        }
+
+        cDebug() << "\n >>>>>>>>>>>> nodeName : " << nodeName;
+        cDebug() << "\t - nodeId  \t\t" << nodeId;
+        cDebug() << "\t - componentPERSEEType \t\t" << componentType;
+        cDebug() << "\t - nodeType \t\t" << nodeType;
+        cDebug() << "\t - nodeTechnoType \t" << nodeTechnoType;
+        cDebug() << "\t - componentCarrier \t" << componentCarrier;
+
+        extractParamData(comp, "optionListJson", component, "", { "Xpos", "Ypos" });
+        extractParamData(comp, "paramListJson", component);
+        extractParamData(comp, "envImpactsListJson", component);
+        extractParamData(comp, "portImpactsListJson", component);
+        extractParamData(comp, "timeSeriesListJson", component);
+
+        upwardCompatibility(component);
+
+        // ---- Labels -------------------------------------------------------
+         
+        const bool skip = componentType == "SimulationControl" 
+            || componentType == "Solver"
+            || CairnUtils::isEnergyVector(componentType);
+
+        if (componentType == "TecEcoAnalysis")
+        {
+            if (const auto it = comp.find("labelList"); it != comp.end() && it->is_array())
+            {
+                mLabelList.reserve(mLabelList.size() + it->size());
+                for (const auto& lbl : *it)
+                    if (lbl.is_string())
+                        mLabelList.push_back(lbl.get<std::string>());
+            }
+        }
+        else if (!skip)
+        {
+            if (comp.contains("labelListJson"))
+            {
+                t_mapLabels compoLabels;
+                extractLabels(comp, compoLabels);
+                mLabelMap.emplace(CairnUtils::getParamValue(component, "name"),
+                    std::move(compoLabels));
+            }
+        }
+
+        if (componentType == "TecEcoAnalysis")
+            mTecEcoParamData = component;
+        else if (componentType == "SimulationControl")
+            mSimulationControlParamData = component;
+        else if (componentType == "Solver")
+            mSolverParamData = component;
+        else if (CairnUtils::isEnergyVector(componentType))
+            mCarrierParamDataList.push_back(std::move(component));
+        else if (CairnUtils::isBus(componentType))
+            mBusParamDataList.push_back(std::move(component));
+        else
+            mComponentParamDataList.push_back(std::move(component));
+    }
+}
+
+// ============================================================
+// extractPortParamData
+// ============================================================
+std::map<std::string, t_mapParamData>
+JsonDescription::extractPortParamData(const std::string& compoName) const
+{
+    // O(1) lookup via index instead of O(n) linear scan.
+    const json* compPtr = nullptr;
+    if (const auto it = mComponentIndexByName.find(compoName);
+        it != mComponentIndexByName.end())
+    {
+        compPtr = &mComponentsList[it->second];
+    }
+
+    if (!compPtr) {
+        cDebug() << "extractPortParamData: component " + compoName + " has not been found!";
+        return {};
+    }
+
+    const json& comp = *compPtr;
+    cDebug() << compoName << " extractPortParamData:";
+
+    const std::string type = extractComponentType(comp);
+    const bool isBus = CairnUtils::contains(type, "Bus") ||
+        CairnUtils::contains(type, "MultiObj");
+
+    // Build link index 
+    buildLinkIndex();
+
+    if (!comp.contains("nodePortsData")) {
+        cDebug() << "extractPortParamData: component " << compoName << " has no nodePortsData!";
+        return {};
+    }
+
+    std::map<std::string, t_mapParamData> ports;
 
     const json& posList = comp["nodePortsData"];
-    uint i = 0;
-    for (auto & pos : posList)
+    uint portIdx = 0;
+
+    for (const auto& pos : posList)
     {
-        const json &portList = pos["ports"];
-        for(auto & port : portList)
+        for (const auto& port : pos["ports"])
         {
-            i++;
+            ++portIdx;
 
             const std::string portName = read(port, "name", "");
             const std::string portID = read(port, "id", compoName + "." + portName);
@@ -79,447 +248,526 @@ std::map < std::string, std::map<std::string, std::string> > JsonDescription::ge
             const std::string portVariable = read(port, "variable", "");
             const std::string portCarrier = read(port, "carrier");
 
-            cInfo() << "\t - Port\t" << std::to_string(i);
-            cInfo() << "\t\t - id\t\t\t" << portID;
-            cInfo() << "\t\t - name\t\t\t" << portName;
-            cInfo() << "\t\t - carrier\t\t\t" << portCarrier;
-            cInfo() << "\t\t - direction\t\t\t" << portDirection;
-            cInfo() << "\t\t - variable\t\t" << portVariable;
-            cInfo() << "\t\t - coeff\t\t" << read(port, "coeff");
-            cInfo() << "\t\t - offset\t\t" << read(port, "offset");
-            cInfo() << "\t\t - checkunit\t\t" << read(port, "checkunit");
-            
+            cDebug() << "\t - Port\t" << portIdx;
+            cDebug() << "\t\t - id\t\t\t" << portID;
+            cDebug() << "\t\t - name\t\t\t" << portName;
+            cDebug() << "\t\t - carrier\t\t\t" << portCarrier;
+            cDebug() << "\t\t - direction\t\t\t" << portDirection;
+            cDebug() << "\t\t - variable\t\t" << portVariable;
+            cDebug() << "\t\t - coeff\t\t" << read(port, "coeff");
+            cDebug() << "\t\t - offset\t\t" << read(port, "offset");
+            cDebug() << "\t\t - checkunit\t\t" << read(port, "checkunit");
+
             const std::string portLabel = compoName + " port " + portName + " (" + portID + ")";
 
-            if (portVariable.empty()) //Only add ports that have variables
-            {
-                if (!isBus) { //A Bus port has a variable only if it is the master port in the case of a Bus-Bus link
+            if (portVariable.empty()) {
+                if (!isBus)
                     cWarning() << "Variable not defined for" << portLabel;
-                }
                 continue;
             }
-
             if (portDirection.empty()) {
                 cWarning() << "Direction not defined for" << portLabel;
                 continue;
             }
-
             if (portCarrier.empty() || portCarrier == "NO_CARRIER") {
                 cWarning() << "Carrier not defined for" << portLabel;
                 continue;
             }
 
-            bool insertPort = true;  // insert port even if it is not connected
+            bool insertPort = true;
+            t_mapParamData portMap;
 
-            // Add port to map  
-            t_mapParams portMap; //contains the data of one port
-            for(auto & link : mLinksList)
+            // --- Use the link index: only iterate links that are relevant to this node ---
+            // Determine which identifier format this file uses
+            const std::string compNodeId = read(comp, "nodeId");
+            const std::string compNodeName = read(comp, "nodeName");
+
+            // Gather candidate link indices (nodeId key or nodeName key)
+            auto gatherLinks = [&](const std::string& key) -> const std::vector<std::size_t>*
             {
-                const std::string identifier = (read(link, "tailNodeId") == "" || read(link, "headNodeId") == "")
-                    ? "Name" : "Id"; // new format : old format
+                const auto it = mLinkIndexByNode.find(key);
+                return (it != mLinkIndexByNode.end()) ? &it->second : nullptr;
+            };
 
-                //supports two format : socketName and nodeName + "." + socketName
-                const std::string headSocket = read(link, "headSocket" + identifier);
-                const std::string tailSocket = read(link, "tailSocket" + identifier);
-                std::vector<std::string> headSocketList = CairnUtils::split(headSocket, '.');
-                std::vector<std::string> tailSocketList = CairnUtils::split(tailSocket, '.');
-                                
-                std::string headSocketName = headSocketList[headSocketList.size()-1]; 
-                std::string tailSocketName = tailSocketList[tailSocketList.size() - 1];
-
-                const std::string compNode = read(comp, "node" + identifier); //nodeId or nodeName
-                const std::string headNode = read(link, "headNode" + identifier);
-                const std::string tailNode = read(link, "tailNode" + identifier);
-
-                const bool isHeadSocket = (compNode == headNode && portName == headSocketName);
-                const bool isTailSocket = (compNode == tailNode && portName == tailSocketName);
-
-                if (!isHeadSocket && !isTailSocket) {
-                    // A link that is not related to the current port!
-                    continue;
-                }
-
-                // Filter Bus ports that have variables in case of Bus-Componenet links (old studies)
-                if (isBus)
+            // Process links from either id-based or name-based bucket
+            auto processLinkBucket = [&](const std::vector<std::size_t>* bucket) -> bool  
+            {
+                if (!bucket) return false;
+                for (std::size_t li : *bucket)
                 {
-                    const std::string& otherNode = isHeadSocket ? tailNode : headNode;
-                    const std::string& otherSocketName = isHeadSocket ? tailSocketName : headSocketName;
+                    const json& link = mLinksList[li];
 
-                    if (getPortVariable(otherNode, otherSocketName) != "")
+                    const std::string identifier =
+                        (read(link, "tailNodeId") == "" || read(link, "headNodeId") == "")
+                        ? "Name" : "Id"; // In old json format, nodeId was used in links definition
+
+                    const std::string headSocket = read(link, "headSocket" + identifier);
+                    const std::string tailSocket = read(link, "tailSocket" + identifier);
+
+                    const std::vector<std::string> headSocketList = CairnUtils::split(headSocket, '.');
+                    const std::vector<std::string> tailSocketList = CairnUtils::split(tailSocket, '.');
+
+                    const std::string headSocketName = headSocketList.back();
+                    const std::string tailSocketName = tailSocketList.back();
+
+                    const std::string compNode = read(comp, "node" + identifier);
+                    const std::string headNode = read(link, "headNode" + identifier);
+                    const std::string tailNode = read(link, "tailNode" + identifier);
+
+                    const bool isHeadSocket = (compNode == headNode && portName == headSocketName);
+                    const bool isTailSocket = (compNode == tailNode && portName == tailSocketName);
+
+                    if (!isHeadSocket && !isTailSocket)
+                        continue;
+
+                    if (isBus)
                     {
-                        if (CairnUtils::contains(getcomponentCategoryFromId(otherNode), "Bus")) {
-                            throw Cairn_Exception("Only one Bus should have a variable in case of a Bus-Bus link!", -1);
+                        const std::string& otherNode = isHeadSocket ? tailNode : headNode;
+                        const std::string& otherSocketName = isHeadSocket ? tailSocketName : headSocketName;
+
+                        const std::string portVar = getPortVariable(otherNode, otherSocketName);
+                        if (!portVar.empty()) {
+                            if (CairnUtils::contains(getcomponentCategoryFromId(otherNode), "Bus")) {
+                                cWarning() << "Only one Bus should have a variable in case of a Bus-Bus link: " << compNode << otherNode;
+                                // throw error ?!
+                            }
+                            insertPort = false;
+                            return true; // break outer
                         }
-                        // else: Bus-Component link => Bus port which has a variable in an old study
-
-                        insertPort = false; // don't insert port!
-                        break; 
                     }
+
+                    const std::string headNodeName = getNodeFromId(headNode);
+                    const std::string tailNodeName = getNodeFromId(tailNode);
+
+                    CairnUtils::setParamValue(portMap, "LinkedComponent", "");
+
+                    if (isHeadSocket)
+                    {
+                        CairnUtils::setParamValue(portMap, "LinkedComponent", tailNodeName);
+                        CairnUtils::setParamValue(portMap, "BusPortName", tailSocketName);
+                        cDebug() << "\t\t - " << compNode << "." << portName
+                            << " ==" << tailNodeName << "." << portName
+                            << " category " << getcomponentCategoryFromId(headNode)
+                            << " connected to " << tailNodeName
+                            << " category " << getcomponentCategoryFromId(tailNode);
+                    }
+                    else
+                    {
+                        CairnUtils::setParamValue(portMap, "LinkedComponent", headNodeName);
+                        CairnUtils::setParamValue(portMap, "BusPortName", headSocketName);
+                        cDebug() << "\t\t - " << compNode << "." << portName
+                            << " ==" << headNodeName << "." << portName
+                            << " category " << getcomponentCategoryFromId(headNode)
+                            << " connected to " << headNodeName
+                            << " category " << getcomponentCategoryFromId(tailNode);
+                    }
+                    return true; // found – stop searching
                 }
+                return false;
+            };
 
-                const std::string headNodeName = getNodeFromId(headNode);
-                const std::string tailNodeName = getNodeFromId(tailNode);
-                if (isHeadSocket)
-                {
-                    portMap["LinkedComponent"] = tailNodeName;
-                    portMap["BusPortName"] = tailSocketName;
-                    cInfo() << "\t\t - " << compNode << "." << portName
-                        << " ==" << tailNodeName << "." << portName
-                        << " category " << getcomponentCategoryFromId(headNode)
-                        << " connected to " << tailNodeName
-                        << " category " << getcomponentCategoryFromId(tailNode);
-                }
-                else // isTailSocket
-                {
-                    portMap["LinkedComponent"] = headNodeName;
-                    portMap["BusPortName"] = headSocketName;
-                    cInfo() << "\t\t - " << compNode << "." << portName
-                        << " ==" << headNodeName << "." << portName
-                        << " category " << getcomponentCategoryFromId(headNode)
-                        << " connected to " << headNodeName
-                        << " category " << getcomponentCategoryFromId(tailNode);
-                }
+            // Try id-based bucket first, then name-based.
+            if (!processLinkBucket(gatherLinks(compNodeId)))
+                processLinkBucket(gatherLinks(compNodeName));
 
-                break; // found!  
-            }
+            if (!insertPort)
+                continue;
 
-            if (insertPort)
-            {
-                std::string position = read(port, "position");
-                if (position == "") {
-                    position = read(pos, "pos");
-                }
+            std::string position = read(port, "position");
+            if (position.empty())
+                position = read(pos, "pos");
 
-                portMap["CompoName"] = compoName;
-                portMap["Name"] = portName;
-                portMap["Position"] = position;
-                portMap["IsDefaultPort"] = read(port, "defaultport");
-                portMap["Enabled"] = read(port, "enabled");
-                portMap["CarrierType"] = read(port, "carrierType");
-                portMap["Carrier"] = read(port, "carrier");
-                portMap["Direction"] =  CairnUtils::toUpper(read(port, "direction"));
-                portMap["Variable"] = portVariable;
-                portMap["Coeff"] = read(port,"coeff") ;
-                portMap["Offset"] = read(port, "offset");
-                portMap["CheckUnit"] = read(port, "checkunit");
+            const std::string isDefaultPort = read(port, "defaultport");
+            const std::string enabled = read(port, "enabled");
+            const std::string carrierType = read(port, "carrierType");
+            const std::string carrier = read(port, "carrier");
+            const std::string direction = CairnUtils::toUpper(read(port, "direction"));
+            const std::string coeff = read(port, "coeff");
+            const std::string offset = read(port, "offset");
+            const std::string checkUnit = read(port, "checkunit");
 
-                //Add a port to the map
-                ports[portID] = portMap;
-            }
+            CairnUtils::setParamValue(portMap, "CompoName", compoName);
+            CairnUtils::setParamValue(portMap, "Name", portName);
+            CairnUtils::setParamValue(portMap, "Position", position);
+            CairnUtils::setParamValue(portMap, "IsDefaultPort", isDefaultPort);
+            CairnUtils::setParamValue(portMap, "Enabled", enabled);
+            CairnUtils::setParamValue(portMap, "CarrierType", carrierType);
+            CairnUtils::setParamValue(portMap, "Carrier", carrier);
+            CairnUtils::setParamValue(portMap, "Direction", direction);
+            CairnUtils::setParamValue(portMap, "Variable", portVariable);
+            CairnUtils::setParamValue(portMap, "Coeff", coeff);
+            CairnUtils::setParamValue(portMap, "Offset", offset);
+            CairnUtils::setParamValue(portMap, "CheckUnit", checkUnit);
+
+            extractParamData(port, "params", portMap, portName);
+
+            ports.emplace(portID, std::move(portMap));
         }
     }
+
     return ports;
 }
 
-std::string JsonDescription::getPortVariable(const std::string& compoName, const std::string& portName) const
+// ============================================================
+// extractUDIndicatorData
+// ============================================================
+void JsonDescription::extractUDIndicatorData(const json& indicatorJson)
 {
-    // Find the component by name
-    const auto compIt = std::find_if(mComponentsList.cbegin(), mComponentsList.cend(),
-        [&compoName](const json& component)
-        {
-            return (std::string)component["nodeName"] == compoName || (std::string)component["nodeId"] == compoName;
-        });
+    mDynamicIndicators.push_back({
+        {"name",    indicatorJson.value("name",    std::string{})},
+        {"formula", indicatorJson.value("formula", std::string{})}
+    });
+}
 
-    if (compIt == mComponentsList.cend())
+// ============================================================
+// extractParamData
+// ============================================================
+void JsonDescription::extractParamData(const json& comp, const std::string& a_key,
+    t_mapParamData& aMap, const std::string& portName,
+    const std::vector<std::string>& a_excludedKeys) const
+{
+    const auto it = comp.find(a_key);
+    if (it == comp.end())
+        return;
+
+    cDebug() << "\t - " << a_key << " :";
+    for (const auto& param : *it)
+        extractParam(param, aMap, portName, a_excludedKeys);
+}
+
+// ============================================================
+// extractParam
+// ============================================================
+bool JsonDescription::extractParam(const json& param, t_mapParamData& outMap,
+    const std::string& portName,
+    const std::vector<std::string>& excludedKeys) const
+{
+    if (!param.contains("key") || !param.contains("value"))
+        return false;
+
+    std::string key = param["key"].get<std::string>();
+
+    if (!portName.empty())
     {
+        const std::string suffix = portName + ".";
+        if (auto pos = key.find(suffix); pos != std::string::npos)
+            key.erase(pos, suffix.size());
+    }
+
+    // excludedKeys is a small vector so std::find is fine
+    if (std::find(excludedKeys.begin(), excludedKeys.end(), key) != excludedKeys.end())
+        return false;
+
+    const auto type = param["value"].type();
+    const bool supported =
+        type == nlohmann::detail::value_t::number_float ||
+        type == nlohmann::detail::value_t::number_integer ||
+        type == nlohmann::detail::value_t::number_unsigned ||
+        type == nlohmann::detail::value_t::boolean ||
+        type == nlohmann::detail::value_t::string ||
+        type == nlohmann::detail::value_t::array;
+
+    if (!supported) {
+        cWarning() << "\t\t !!!! UNKNOWN TYPE - PARAMETER IGNORED - " << key;
+        return false;
+    }
+
+    std::string value = read(param, "value");
+    std::string comment = read(param, "comment", "");
+    cDebug() << "\t\t - " << key << " = " << value;
+
+    CairnUtils::setParamValue(outMap, key, std::move(value));
+    CairnUtils::setParamComment(outMap, key, std::move(comment));
+
+    return true;
+}
+
+// ============================================================
+// extractLabels
+// ============================================================
+void JsonDescription::extractLabels(const json& comp, t_mapLabels& aMap)
+{
+    static constexpr const char* a_key = "labelListJson";
+
+    const auto listIt = comp.find(a_key);
+    if (listIt == comp.end())
+        return;
+
+    cDebug() << "\t - " << a_key << " :";
+
+    for (const auto& p : *listIt)
+    {
+        const auto& val = p["value"];
+        switch (val.type())
+        {
+        case nlohmann::detail::value_t::number_float:
+        case nlohmann::detail::value_t::number_integer:
+        case nlohmann::detail::value_t::number_unsigned:
+        case nlohmann::detail::value_t::boolean:
+        case nlohmann::detail::value_t::string:
+        case nlohmann::detail::value_t::array:
+        {
+            std::string vValue = read(p, "value");
+            const std::string key = p["key"].get<std::string>();
+            cDebug() << "\t\t - " << key << " = " << vValue;
+            aMap.emplace(std::move(key), std::move(vValue));
+            break;
+        }
+        default:
+            cWarning() << "\t\t !!!!!!!! UNKNOWN labelListJson TYPE - PARAMETER IGNORED - "
+                << p["key"].get<std::string>();
+            break;
+        }
+    }
+}
+
+// ============================================================
+// extractGroups
+// ============================================================
+std::vector<t_mapGroups> JsonDescription::extractGroupData() const
+{
+    std::vector<t_mapGroups> groups;
+    groups.reserve(mGroupsList.size());
+
+    for (const auto& grp : mGroupsList)
+    {
+        t_mapGroups group;
+
+        // Basic fields
+        const std::string groupId = read(grp, "groupId");
+        const std::string groupName = read(grp, "groupName");
+        const std::string mainNodeName = read(grp, "mainNodeName");
+        const std::string minimized = read(grp, "minimized");
+        const std::string borderColor = read(grp, "borderColor");
+
+        group.emplace("groupId", groupId);
+        group.emplace("groupName", groupName);
+        group.emplace("mainNodeName", mainNodeName);
+        group.emplace("minimized", minimized);
+        group.emplace("borderColor", borderColor);
+
+        // listNodeName[] -> store as comma-separated 
+        if (grp.contains("listNodeName") && grp["listNodeName"].is_array())
+        {
+            std::string str;
+
+            for (const auto& node : grp["listNodeName"])
+            {
+                if (node.is_string()) 
+                {
+                    if (!str.empty())
+                        str += ",";
+
+                    str += node.get<std::string>();
+                }
+            }
+
+            group.emplace("listNodeName", str);
+        }
+
+        groups.push_back(std::move(group));
+    }
+
+    return groups;
+}
+
+// ============================================================
+// extractComponentType
+// ============================================================
+std::string JsonDescription::extractComponentType(const json& comp) const
+{
+    // Prefer PERSEE-specific type; fall back to generic componentType.
+    if (const auto it = comp.find("componentPERSEEType"); it != comp.end())
+        return it->get<std::string>();
+    return comp.value("componentType", std::string{});
+}
+
+// ============================================================
+// getPortVariable (O(1) via index)
+// ============================================================
+std::string JsonDescription::getPortVariable(const std::string& compoName,
+                                              const std::string& portName) const
+{
+    // O(1) lookup using the pre-built index.
+    const json* compPtr = nullptr;
+    if (const auto it = mComponentIndexByName.find(compoName);
+        it != mComponentIndexByName.end())
+        compPtr = &mComponentsList[it->second];
+    else if (const auto it2 = mComponentIndexById.find(compoName);
+             it2 != mComponentIndexById.end())
+        compPtr = &mComponentsList[it2->second];
+
+    if (!compPtr) {
         cWarning() << "Component not found:" << compoName;
         return "";
     }
 
-    // Search for the port in all port groups
-    const json& posList = (*compIt)["nodePortsData"];
+    const json& posList = (*compPtr)["nodePortsData"];
     for (const auto& pos : posList)
     {
-        const json& portList = pos["ports"];
-        for (const auto& port : portList)
+        for (const auto& port : pos["ports"])
         {
             if (read(port, "name", "") == portName)
-            {
                 return read(port, "variable", "");
-            }
         }
     }
 
-    cWarning() << "Port not found:" << portName
-        << "in component:" << compoName;
+    cWarning() << "Port not found:" << portName << "in component:" << compoName;
     return "";
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Loop on component array
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void JsonDescription::extractDocumentData(const json& jsonData)
-{    
-    bool oldJsonFormat = false;
-
-    //--------------------------------------------------------------------------//
-    //For old study.json that has only one page 
-    if (jsonData.contains("Links")) {
-        //~~~~~~~~~~~~ Get links array ~~~~~~~~~~~~~~~~~~~~
-        json links = jsonData["Links"];
-        if (links.is_array())
-            mLinksList = links;
-    }
-
-    if (jsonData.contains("Components")) {
-        //~~~~~~~~~~~~ component array ~~~~~~~~~~~~~~~~~~~~
-        oldJsonFormat = true;
-        json components = jsonData["Components"];
-        if (components.is_array())
-            mComponentsList = components;
-    }
-
-    //--------------------------------------------------------------------------//
-    // 
-    //--------------------------------------------------------------------------//
-    //For new study.json that may have multiple pages
-    if (!oldJsonFormat) {
-        //read pages
-        for (auto& [key, value] : jsonData.items()) {
-            if (CairnUtils::contains(key, "Page") && key != "numberPages") {
-                if (value.contains("Links")) {
-                    json links = value["Links"];
-                    for (auto& link : links) {
-                        mLinksList.push_back(link);
-                    }
-                }
-                if (value.contains("Components")) {
-                    json components = value["Components"];
-                    for (auto& component : components) {
-                        mComponentsList.push_back(component);
-                    }
-                }
-            }
-        }        
-    }
-    //--------------------------------------------------------------------------//
-
-    for (auto &component : mComponentsList)
-    {
-        extractComponentData(component);
-    }
-
-    //--------------------------------------------------------------------------//
-
-    //DynamicIndicators are independent from pages
-    if (jsonData.contains("DynamicIndicators")) {
-        //~~~~~~~~~~~~ dynamic indicators array ~~~~~~~~~~~~~~~~~~~~
-        json dynamicIndicatorsList = jsonData["DynamicIndicators"];
-        for(auto & dynIndicator : dynamicIndicatorsList)
-        {
-            extractUDIndicatorData(dynIndicator);
-        }
-    }
-
-    return;
-}
-
-void JsonDescription::extractUDIndicatorData(const json& indicatorJson) {
-    t_mapParams indicator;
-    indicator["name"] = indicatorJson["name"];
-    indicator["formula"] = indicatorJson["formula"];
-    mDynamicIndicators.push_back(indicator);
-}
-
-std::string JsonDescription::read(const json& in, const std::string& id, const std::string& defaultValue) const
-{
-    std::string vRet = defaultValue;
-    if (in.contains(id)) {
-        const json &value = in[id];
-        if (value.is_string())
-            vRet = CairnUtils::trim(value.get<std::string>()); // explicit UTF-8 string
-        else if (value.is_number_unsigned())
-            vRet = std::to_string(value.get<uint64_t>());
-        else if (value.is_number_integer())
-            vRet = std::to_string(value.get<int64_t>());       
-        else if (value.is_number_float())
-            vRet = doubleToString(value.get<double>());
-        else if (value.is_boolean())
-            vRet = std::to_string(value.get<bool>());
-        else if (value.is_array()) {                       
-            vRet = "";
-            std::string vSep = "";
-            for (size_t vIdx = 0; vIdx < value.size(); vIdx++) {
-                if (value[vIdx].is_string()) {
-                    vRet += vSep + value[vIdx].get<std::string>();
-                    vSep = ",";
-                }
-            }             
-        }
-    }        
-    return vRet;
-}
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Extract array items by key and print value
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void JsonDescription::extractComponentData(const json &comp)
-{
-    t_mapParams component;
-    t_mapParams compoLabels;
-
-    std::string type = extractComponentType(comp);
-    component["type"] = type;
-    component["nodeId"] = comp["nodeId"];
-    component["Model"] = comp["nodeType"]; // TecEcoAnalysis and Solver has an option named "Model" which will overwrite the value
-    component["ModelTechnoType"] = comp["nodeTechnoType"];   
-    component["componentCarrier"] = read(comp, "componentCarrier"); //only needed for Bus components
-
-    component["Xpos"] = read(comp, "x");
-    component["Ypos"] = read(comp, "y");
-
-    if (comp["nodeType"] == "SimulationControl") {
-        component["type"] = "SimulationControl";
-    }
-
-    cInfo() << "\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> nodeName : " << comp.value("nodeName", "");
-    cInfo() << "\t - nodeType \t\t" << comp.value("nodeType", "");
-    cInfo() << "\t - nodeId  \t\t" << comp.value("nodeId", "");
-    cInfo() << "\t - nodeTechnoType \t\t" << comp.value("nodeTechnoType", "");
-    cInfo() << "\t - type \t\t" << type;
-    cInfo() << "\t - componentCarrier \t\t" << comp.value("componentCarrier", "");
-
-    if (component["type"] == "SimulationControl") {
-        component["Model"] = comp["nodeTechnoType"];
-        //component["id"] = "Cairn";
-    }
-    if (component["type"] == "EnergyVector") {
-        component["EnergyColor"] = comp["energyTypeColor"];
-    }
-
-    extractParamData(comp, "optionListJson", component, {"Xpos", "Ypos"});
-    extractParamData(comp, "paramListJson", component);
-    extractParamData(comp, "envImpactsListJson", component);
-    extractParamData(comp, "portImpactsListJson", component);
-    extractParamData(comp, "timeSeriesListJson", component);
-
-    /* set name after extract options to override option "id" */
-    component["id"] = comp["nodeName"];
-
-    upwardCompatibility(component);
-
-    mComponents.push_back(component);
-
-    //----------- Labels ------------------//
-    if (component["type"] == "TecEcoAnalysis") {
-        //list of user-defined labels
-        if (comp.contains("labelList")) {
-            json labelList = comp["labelList"];
-            if (labelList.is_array()) {
-                for (size_t vIdx = 0; vIdx < labelList.size(); vIdx++) {
-                    if (labelList[vIdx].is_string()) {
-                        mLabelList.push_back(labelList[vIdx].get<std::string>());
-                    }
-                }
-            }
-        }
-    }
-    else if ( component["type"] != "SimulationControl"
-        && component["type"] != "Solver"
-        && component["type"] != "EnergyVector"
-        ) {
-        //mLabelMap keys should be the same as mLabelList 
-        //if it is not the case, the labels are filtered later on in OptimProblem
-        if (comp.contains("labelListJson")) {
-            extractParamData(comp, "labelListJson", compoLabels);
-            mLabelMap[component["id"]] = compoLabels;
-        }
-    }
-}
-
-
+// ============================================================
+// getNodeFromId  (O(1) via index)
+// ============================================================
 std::string JsonDescription::getNodeFromId(const std::string& nodeId) const
 {
-    for (auto & comp : mComponentsList)
-    {
-        if ((std::string)comp["nodeId"] == nodeId) return (std::string)comp["nodeName"] ;
-        if ((std::string)comp["nodeName"] == nodeId) return (std::string)comp["nodeName"];
+    if (const auto it = mComponentIndexByName.find(nodeId);
+        it != mComponentIndexByName.end())
+        return nodeId; // argument was already a name
 
-    }
-    return "nodeId_Not_Found_"+nodeId;
+    if (const auto it = mComponentIndexById.find(nodeId);
+        it != mComponentIndexById.end())
+        return mComponentsList[it->second].value("nodeName", std::string{});
+
+    return "nodeId_Not_Found_" + nodeId;
 }
-std::string JsonDescription::getcomponentCategoryFromId(const std::string & nodeId) const
+
+// ============================================================
+// getcomponentCategoryFromId  (O(1) via index)
+// ============================================================
+std::string JsonDescription::getcomponentCategoryFromId(const std::string& nodeId) const
 {
-    for (auto & comp : mComponentsList)
+    const json* compPtr = nullptr;
+
+    if (const auto it = mComponentIndexById.find(nodeId);
+        it != mComponentIndexById.end())
+        compPtr = &mComponentsList[it->second];
+    else if (const auto it2 = mComponentIndexByName.find(nodeId);
+             it2 != mComponentIndexByName.end())
+        compPtr = &mComponentsList[it2->second];
+
+    if (compPtr)
     {
-        if ((std::string)comp["nodeId"] == nodeId || (std::string)comp["nodeName"] == nodeId)
-        {
-            const std::string type = extractComponentType(comp);
-            if (CairnUtils::contains(type, "MultiObjCompo")) 
-                return "BusMultiObjCompo"; // to comply with JsonDescription treatment 
-            else 
-                return type;
-        }
+        const std::string type = extractComponentType(*compPtr);
+        return CairnUtils::contains(type, "MultiObjCompo")
+               ? "BusMultiObjCompo"
+               : type;
     }
-    return "nodeId_Not_Found_"+nodeId;
-}
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// First loop on parameters array
-// Extract array items and print key + value
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void JsonDescription::extractParamData(const json& comp, const std::string& a_key, t_mapParams& aMap, const std::vector<std::string>& a_excludedKeys)
-{
-    if (comp.contains(a_key)) {
-        json paramList = comp[a_key];
-        cInfo() << "\t - " << a_key << " :";
-        for (auto& p : paramList)
-        {
-            std::vector<std::string>::const_iterator vIter = find(a_excludedKeys.begin(), a_excludedKeys.end(), p["key"]);
-            if (vIter != a_excludedKeys.end())
-                continue;
 
-            switch (p["value"].type())
-            {
-            case nlohmann::detail::value_t::number_float:  
-            case nlohmann::detail::value_t::number_integer:
-            case nlohmann::detail::value_t::number_unsigned:  
-            case nlohmann::detail::value_t::boolean:
-            case nlohmann::detail::value_t::string:
-            case nlohmann::detail::value_t::array:
-            {
-                std::string vValue = read(p, "value");
-                cInfo() << "\t\t - " << (std::string)p["key"] << " = " << vValue;
-                aMap[p["key"]] = vValue;
-            }                
-                break;                      
-            default:
-                cWarning() << "\t\t !!!!!!!!!!!!!!!!! UNKOWN " << a_key << " TYPE - PARAMETER IGNORED - " << (std::string)p["key"];
-                break;
-            }
-        }
-    }
+    return "nodeId_Not_Found_" + nodeId;
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Read the json formatted file
-// return the JsonDocument
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ============================================================
+// readJSONFile
+// ============================================================
 json JsonDescription::readJSONFile(const std::string& aFileName)
 {
-    // Check file existence before opening
-    if (!fs::exists(aFileName)) {
+    if (!fs::exists(aFileName))
         throw Cairn_Exception("JSON file not found: " + aFileName, -1);
-    }
 
-    // Open in binary mode to preserve UTF-8 encoding
+    // Open in binary mode to preserve UTF-8 encoding.
     std::ifstream file(aFileName, std::ios::binary);
-    if (!file.is_open()) {
+    if (!file.is_open())
         throw Cairn_Exception("JSON file could not be opened: " + aFileName, -1);
-    }
 
-    try
-    {
+    try {
         return json::parse(file);
     }
-    catch (const json::parse_error& e)
-    {
+    catch (const json::parse_error& e) {
         throw Cairn_Exception("JSON parse error in file: " + aFileName
             + "\n  at byte " + std::to_string(e.byte)
             + "\n  " + e.what(), -1);
     }
-    catch (const std::exception& e)
-    {
+    catch (const std::exception& e) {
         throw Cairn_Exception("Error reading JSON file: " + aFileName
             + "\n  " + e.what(), -1);
     }
+}
+
+
+// ============================================================
+// read – extract a JSON field as std::string
+// ============================================================
+std::string JsonDescription::read(const json& in, const std::string& id,
+    const std::string& defaultValue) const
+{
+    // Use find() to avoid double lookup (contains + operator[]).
+    const auto it = in.find(id);
+    if (it == in.end())
+        return defaultValue;
+
+    const json& value = *it;
+
+    if (value.is_string())
+        return CairnUtils::trim(value.get<std::string>());
+    if (value.is_number_unsigned())
+        return std::to_string(value.get<uint64_t>());
+    if (value.is_number_integer())
+        return std::to_string(value.get<int64_t>());
+    if (value.is_number_float())
+        return doubleToString(value.get<double>());
+    if (value.is_boolean())
+        return std::to_string(value.get<bool>());
+
+    if (value.is_array())
+    {
+        std::string result;
+        // Pre-scan for string elements to avoid repeated reallocations.
+        for (const auto& elem : value)
+        {
+            if (!elem.is_string()) continue;
+            if (!result.empty()) result += ',';
+            result += elem.get<std::string>();
+        }
+        return result;
+    }
+
+    return defaultValue;
+}
+
+// ============================================================
+// Index builders
+// ============================================================
+
+// Build O(1) lookup maps from mComponentsList once, after loading.
+void JsonDescription::buildComponentIndex()
+{
+    const std::size_t n = mComponentsList.size();
+    mComponentIndexById.reserve(n);
+    mComponentIndexByName.reserve(n);
+
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const json& c = mComponentsList[i];
+        if (c.contains("nodeId"))
+            mComponentIndexById.try_emplace(c["nodeId"].get<std::string>(), i);
+        if (c.contains("nodeName"))
+            mComponentIndexByName.try_emplace(c["nodeName"].get<std::string>(), i);
+    }
+}
+
+// Build per-node link index (first call of extractPortParamData).
+void JsonDescription::buildLinkIndex() const
+{
+    if (mLinkIndexBuilt) return;
+
+    const std::size_t nLinks = mLinksList.size();
+    // Each link has at most 2 nodes; reserve generously.
+    mLinkIndexByNode.reserve(nLinks * 2);
+
+    for (std::size_t i = 0; i < nLinks; ++i)
+    {
+        const json& link = mLinksList[i];
+        // New format uses Id fields; old format uses Name fields.
+        for (const char* field : { "headNodeId", "tailNodeId", "headNodeName", "tailNodeName" })
+        {
+            if (link.contains(field))
+            {
+                const std::string node = link[field].get<std::string>();
+                if (!node.empty())
+                    mLinkIndexByNode[node].push_back(i);
+            }
+        }
+    }
+    mLinkIndexBuilt = true;
 }

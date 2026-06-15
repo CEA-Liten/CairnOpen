@@ -70,12 +70,15 @@ t_list CairnAPI::get_Models(const std::string& a_TechnoType)
 	// Composants avec des constructeurs simplifés	
 	CairnCore* vCairn = new CairnCore("Cairn", "__CairnAPI");
 	if (vCairn) {
-		std::map<std::string, std::string> vComponentDescrp;
-		vComponentDescrp["id"] = "__Component";
-		vComponentDescrp["type"] = std::string(a_TechnoType.c_str());
-		vComponentDescrp["ListPorts"] = "Port0";
-		if (vCairn->getProblem()->createComponent(vComponentDescrp["type"], vComponentDescrp, {})) {// {} is a nest map of ports list
-			MilpComponent* vComp = vCairn->getComponent(vComponentDescrp["id"]);
+		const std::string compoName = "__Component";
+
+		t_mapParamData vComponentDescrp = CairnUtils::buildParamMap({
+				{"type", a_TechnoType},
+				{"ListPorts", "Port0"}
+			});
+
+		if (vCairn->getProblem()->createMilpComponent(compoName, a_TechnoType, vComponentDescrp, {})) {// {} is a nest map of ports list
+			MilpComponent* vComp = vCairn->getComponent(compoName);
 			if (vComp) {
 				// dynamics list ?
 				vRet = vComp->get_ModelClassList();
@@ -97,17 +100,23 @@ t_list CairnAPI::get_ModelAttributs(const std::string& a_ModelClass, const std::
 {
 	t_list vRet;
 	return vRet;
+
 	//TODO	
 	CairnCore* vCairn = new CairnCore("Cairn", "__CairnAPI");
 	if (vCairn) {
-		std::map<std::string, std::string> vComponentDescrp;
-		vComponentDescrp["id"] = "__Component";
-		//vComponentDescrp["type"] = std::string(a_ComponentType.c_str());
-		vComponentDescrp["Model"] = std::string(a_ModelClass.c_str());
-		vComponentDescrp["ModelClass"] = std::string(a_ModelClass.c_str());
-		vComponentDescrp["ListPorts"] = "Port0";
-		if (vCairn->getProblem()->createComponent(vComponentDescrp["type"], vComponentDescrp, {})) {// {} is a nest map of ports list
-			MilpComponent* vComp = vCairn->getComponent(vComponentDescrp["id"]);
+		const std::string compoName = "__Component";
+		const std::string compoType; //TODO
+
+		t_mapParamData vComponentDescrp = CairnUtils::buildParamMap({
+			{"type",  compoType},
+			{"ModelType",  a_ModelClass},
+			{"ModelClass", a_ModelClass},
+			{"ListPorts",  "Port0"}
+		});
+
+		if (vCairn->getProblem()->createMilpComponent(compoName, compoType, vComponentDescrp, {} /*a nest map of ports list*/))
+		{
+			MilpComponent* vComp = vCairn->getComponent(compoName);
 			if (vComp) {
 				int ierr = vComp->initProblem();
 			}
@@ -135,7 +144,7 @@ t_list CairnAPI::get_Solvers() const
 //------------- Create Study ------------------------------------------
 CairnAPI::OptimProblemAPI CairnAPI::create_Study(const std::string& a_StudyName)
 {	
-	cInfo() << "Creating a study...";
+	cDebug() << "Creating a study...";
 	OptimProblemAPI vRet;
 	if (m_Cairn) 
 		CairnAPIUtils::setError(CairnAPIUtils::errDefault, "Study already exist");
@@ -144,6 +153,18 @@ CairnAPI::OptimProblemAPI CairnAPI::create_Study(const std::string& a_StudyName)
 	
 		fs::path vLogFile(a_StudyName);
 		vLogFile.replace_extension("log");
+
+		// delete log file if it already exists ---
+		//if (fs::exists(vLogFile)) {
+		//	try {
+		//		fs::remove(vLogFile);
+		//	}
+		//	catch (const std::exception& e) {
+		//		cWarning() << "Could not delete existing log file: " << e.what();
+		//		// Not fatal, continue
+		//	}
+		//}
+
 		CairnLogger::ChangeFileLogger(vLogFile.string());
 		m_Cairn = new CairnCore("Cairn", vQStudyName);
 		
@@ -160,9 +181,9 @@ CairnAPI::OptimProblemAPI CairnAPI::read_Study(const std::string& a_filename)
 		vRet = create_Study(a_filename);		
 		try
 		{
-			cInfo() << "===================================================";
+			cInfo() << "============================================================================";
 			cInfo() << "Reading study file by the api: " << a_filename;
-			cInfo() << "===================================================";
+			cInfo() << "============================================================================";
 
 			m_Cairn->doInit();
 		}

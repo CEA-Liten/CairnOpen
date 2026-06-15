@@ -52,7 +52,7 @@ public:
     void computeInitialData() override;
     void computeModelContribution() override;
     void setTimeData();
-    int checkConsistency();
+    int checkConsistency() override;
 //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
     {

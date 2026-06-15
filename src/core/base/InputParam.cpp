@@ -169,10 +169,16 @@ void InputParam::addIndicator(const t_Name& aIndicatorName, std::vector<double>*
 
 void InputParam::addToShowConfigList(const std::string& aConfig)
 {
+    // TODO: build list by iterating over all parameters ?! 
     if (aConfig == "DONOTSHOW") return;
-    if (find(mShowConfigList.begin(), mShowConfigList.end(), aConfig) == mShowConfigList.end())
+
+    std::string config = aConfig;
+    if (config.empty())
+        config = "Base";
+
+    if (find(mShowConfigList.begin(), mShowConfigList.end(), config) == mShowConfigList.end())
     {
-        mShowConfigList.push_back(aConfig);
+        mShowConfigList.push_back(config);
     }
 }
 
@@ -334,38 +340,42 @@ int InputParam::fillVectorData(const std::string& aName, const InputParam& aSrc,
 
 void InputParam::jsonSaveGUIInputParam(ojson& paramArray)
 {    
-    for (auto const& [key, val] : mMapParams) {
-        if (val) {
+    for (auto const& [key, param] : mMapParams) {
+        if (param) {
             ojson paramObject;
             paramObject["key"] = key;
-            switch (val->getType()) {
+            switch (param->getType()) {
                 case eDouble:
-                    paramObject["value"] = *std::get<eDouble>(val->getPtr());
+                    paramObject["value"] = *std::get<eDouble>(param->getPtr());
                     break;
                 case eInt:
-                    paramObject["value"] = *std::get<eInt>(val->getPtr());
+                    paramObject["value"] = *std::get<eInt>(param->getPtr());
                     break;
                 case eBool:
-                    if (*std::get<eBool>(val->getPtr()))
+                    if (*std::get<eBool>(param->getPtr()))
                         paramObject["value"] = true;
                     else
                         paramObject["value"] = false;
                     break;
                 case eString:
-                    paramObject["value"] = *std::get<eString>(val->getPtr());
+                    paramObject["value"] = *std::get<eString>(param->getPtr());
                     break;
                 case eStringList: {
                     paramObject["value"] = ojson::array();
                     ojson& vList = paramObject["value"];
-                    std::vector<std::string> &values = *(std::vector<std::string>*)(std::get<eStringList>(val->getPtr()));
+                    std::vector<std::string> &values = *(std::vector<std::string>*)(std::get<eStringList>(param->getPtr()));
                     for (auto& value : values) {
                         vList.push_back(value);
                     }                    
                     break;
                 }
                 default:
-                    paramObject["value"] = val->toString();
+                    paramObject["value"] = param->toString();
                     break;
+            }
+            const std::string comment = param->getComment();
+            if (!comment.empty()) {
+                paramObject["comment"] = comment;
             }
             paramArray.push_back(paramObject);
         }
@@ -479,8 +489,11 @@ bool InputParam::setParameterValue(const std::string& a_SettingsName, const t_va
     return false;
 }
 
-int InputParam::readParameters(const std::map<std::string, std::string>& aSettings)
+int InputParam::readParameters(const t_mapParamData& aSettings)
 {
+    if (mMapParams.empty())
+        return 0;
+
     for (auto const& [key, val] : mMapParams) {
         if (val) {
             if (!val->readParameter(aSettings))

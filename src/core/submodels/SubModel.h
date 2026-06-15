@@ -79,23 +79,22 @@ public:
         * It is also used to pre-compute initial state data for addControlIO(...)
         */
     };
-    virtual void finalizeModelData();                /** after reading of all parameters, possibly initialize internal data of Models */
+
+    int checkPorts();
+    virtual int checkConsistency();
+
     virtual void buildControlVariables();
     virtual void resetHistStoredVaues() {};
     virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr) {}; //overridden in Cogeneration and MultiConverter
     virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr) {};//overridden in Cogeneration and MultiConverter
     virtual void setPortPointers() { };
-    virtual void computeAllContribution() { };
     virtual void computeModelContribution() { }; /* Compute Model particular Contribution */
     virtual void computeAllIndicators(const double* optSol);
-    int checkVariable(const std::string variable) const;
-    virtual int checkUnit(MilpPort* port);
     virtual int defineDefaultVarNames();
     virtual void setTimeData();
     virtual void setTypicalPeriods(const bool& useTypicalPeriods, const uint& aTypicalPeriods, const uint& aNDtTypicalPeriods, const std::vector<int>& aVectTypicalPeriods);
     virtual bool isSizeOptimized();
     virtual bool isPriceOptimized(); //Only SourceLoad
-    virtual int checkConsistency() { return 0; };
     virtual std::string ObjectiveType() { return ""; };
     virtual uint64_t exprMilpHorizon(); //Technical + Operation 
     virtual uint64_t varMilpHorizon(); //Technical + Operation 
@@ -145,6 +144,8 @@ public:
     void setControlType(const std::string& aControl) { mControl = aControl; }
     std::string Name() const { return this->parent()->objectName(); }
     void setParentCompo(MilpComponent* aCompo) { mParentCompo = aCompo; }
+
+    virtual void defineMainCarrier() { /** do nothing: to be defined in individual models */ }; 
     void setMainCarrier(EnergyVector* aEnergyVector) { mMainCarrier = aEnergyVector; }
     EnergyVector* getMainCarrier() const { return mMainCarrier; }
 
@@ -184,19 +185,21 @@ public:
         const std::string& aDescription = "", const t_unit& aUnit = "");
 
     /** Add expression to Model list of IO Interface */
-    void addIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const t_unit& aUnit);
-    void addIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit);
+    void addIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const t_unit& aUnit, const std::string& aDescription = "");
+    void addIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, const std::string& aDescription = "");
 
-    void addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string aUnit);
-    void addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string* pUnit);
+    void addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string& aUnit, const std::string& aDescription = "");
+    void addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string* pUnit, const std::string& aDescription = "");
 
     bool assertIONonExistence(const std::string& name, const t_pExpr expression); /* throw an error if an IO with given name but different expression already exist (and vice versa)*/
     void assertIsSizeMaxExp(MIPModeler::MIPExpression* aExprPtr); /* throw an error if a given pointer doesn't point to the expression mExpSizeMax */
     void assertIsNotSizeMaxExp(MIPModeler::MIPExpression* aExprPtr); /* throw an error if a given pointer points to the expression mExpSizeMax */
 
     /** Add expression to Model list of Rolling Horizon elements */
-    void addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, double* aValuePtr, double* aDefaultValue = nullptr, bool a_isMPC = true);
-    void addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, std::vector<double>* aHistPtr, double* aDefaultValue = nullptr, bool a_isMPC = true);
+    void addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, 
+        double* aValuePtr, double* aDefaultValue = nullptr, bool a_isMPC = true, const std::string& aDescription = "");
+    void addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit, 
+        std::vector<double>* aHistPtr, double* aDefaultValue = nullptr, bool a_isMPC = true, const std::string& aDescription = "");
 
     void removeIO(const std::string& aName);
     void removeEnvImpactIOs(const std::string& aImpactName);
@@ -265,9 +268,6 @@ public:
 
     void setOpexExpression(std::string aExpressionName) { mOpexExpression = aExpressionName; }
     std::string getOpexExpression() { return mOpexExpression; }
-
-    void setPureOpexExpression(std::string aExpressionName) { mPureOpexExpression = aExpressionName; }
-    std::string getPureOpexExpression() { return mPureOpexExpression; }
 
     void setReplacementExpression(std::string aExpressionName) { mReplacementExpression = aExpressionName; }
     std::string getReplacementExpression() { return mReplacementExpression; }
@@ -358,6 +358,8 @@ public:
     }
 
     const std::string* pCurrency() const;
+    const std::string* pQuantity(const std::string& a_Quantity) const;
+
 
     //std::string OptimalSizeUnit() const;
     const std::string* pOptimalSizeUnit() const;
@@ -386,6 +388,9 @@ protected:
     virtual int checkBusFlowBalanceVarName(MilpPort* port, int &inumberchange, std::string &varUseCheck);
     virtual bool defineDefaultVarNames(MilpPort* port);
     
+    int checkVariable(const std::string variable) const;
+    int checkUnit(MilpPort* port);
+
     Cairn_Exception mException;
 
     std::vector<std::string> mPossibleModelClasses;
@@ -423,7 +428,6 @@ protected:
     std::string mSubObjectiveExpression;          /** Name of expression to be used for Subobjective evaluation */
     std::string mCapexExpression;                 /** Name of expression to be used for Capex evaluation */
     std::string mOpexExpression;                  /** Name of expression to be used for Opex evaluation */
-    std::string mPureOpexExpression;              /** Name of expression to be used for PureOpex evaluation */
     std::string mReplacementExpression;           /** Name of expression to be used for Replacement evaluation */
     std::string mVariableCostsExpression;         /** Name of expression to be used for VariableCosts evaluation */
     std::string mPenaltyConstraintExpression;     /** Name of expression to be used for Penalty evaluation */
@@ -449,7 +453,6 @@ protected:
 
     /** Weight */ //TODO: move mLPModelOnly to TechnicalSubModel and mLPWeightOptimization to TechnicalSubModel or SourceLoadSubModel ?
     double mWeight;
-    bool mUseWeightOptimization;          /** bool indicating use sizing based on Weight if = true - default to false*/
     bool mLPWeightOptimization;           /** bool indicating use LP sizing if Weight if = true - default to false*/ 
     bool mLPModelOnly;                    /** bool indicating use of LPModelOnly if = true - default to false*/
     std::string mWeightUnit;
@@ -472,7 +475,7 @@ protected:
     bool mUseVariableTimeSteps;
 
     /** Typical Periods management */
-    bool mUseTypicalPeriods;
+    bool mUseTypicalPeriods{ false };
     std::vector<int> mVectTypicalPeriods; //Vector of Timesteps over planning horizon. Past timesteps use small timestep
     uint mTypicalPeriods;                // number of typical period eg number of typical days, weeks...
     uint mNDtTypicalPeriods;            // number of timesteps in one typical period : 24 hours...

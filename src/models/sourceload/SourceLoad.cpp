@@ -38,6 +38,9 @@ void SourceLoad::setTimeData()
 int SourceLoad::checkConsistency()
 {
     //int ier = TechnicalSubModel::checkConsistency();
+
+    int ier = SubModel::checkConsistency();
+
     if (mWeight < 0 && (mUseControlledFlux == true || mUseWeightedFlux == true))
     {
         cCritical() << " For linearity purpose, optimization of SourceLoad Weight " << mWeight << " requires mUseControlledFlux = false and mUseWeightedFlux = false ! " << mUseControlledFlux << mUseWeightedFlux;
@@ -65,19 +68,21 @@ int SourceLoad::checkConsistency()
         cCritical() << "Load shedding min deactivation time (" << mMinSheddingStandBy << ") must be less or equal to past size (" << mNpdtPast << ")";
         return -1;
     }
-    return 0;
+    return ier;
 }
 
 double SourceLoad::getTemperature(const std::string& direction)
 {
+    bool vOk = false;
+    double vRet = 0;
     for (MilpPort* lptrport : mListPort)
     {
-        if (lptrport->Direction() == direction && lptrport->PotentialName() == "Temperature" && lptrport->getCarrier() != nullptr)
-        {
-            return lptrport->getCarrier()->Potential();
+        if (lptrport->Direction() == direction)        {
+            vRet = lptrport->getCarrierTemperature(&vOk);
+            if (vOk) break;            
         }
     }
-    return 0.;
+    return vRet;
 }
 
 void SourceLoad::computeInitialData()

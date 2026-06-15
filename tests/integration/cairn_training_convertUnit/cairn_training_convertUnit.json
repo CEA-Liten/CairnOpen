@@ -333,7 +333,7 @@
 				"nodeName": "ElectricityDistrib",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 330,
@@ -367,6 +367,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 220
 					}
 				],
 				"optionListJson": [
@@ -475,7 +479,7 @@
 				"nodeName": "H2",
 				"nodeType": "H2Vector",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 254,
@@ -509,6 +513,14 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
+						"value": 30
 					}
 				],
 				"optionListJson": [

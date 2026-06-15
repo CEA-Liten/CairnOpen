@@ -29,10 +29,11 @@ std::string CAIRNCORESHARED_EXPORT indicatorName(SubModel* ap_Model, MilpPort* a
         return {};
     }();
 
-    auto* carrier = (ap_Port ? ap_Port->getCarrier() : nullptr);
-    const bool isHeatCarrier = (carrier && carrier->isHeatCarrier());
+    bool isHeatCarrier = false;
+    double tempCarrier = (ap_Port ? ap_Port->getCarrierTemperature(&isHeatCarrier) : 0.0);
+    auto* carrier = (ap_Port ? ap_Port->getCarrier() : nullptr);    
     const std::string heatSuffix = isHeatCarrier && ( grid || storage || (converter && converter->ModelClassName() == "PowerToFluidT") )
-        ? (" at " + CairnUtils::to_string_trim(carrier->Potential()) + " degC")
+        ? (" at " + CairnUtils::to_string_trim(tempCarrier) + " degC")
         : std::string{};
 
     const std::unordered_map<std::string, std::function<std::string()>> tokenMap{

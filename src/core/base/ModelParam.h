@@ -6,6 +6,14 @@
 #include "UnitParam.h"
 #include <optional>
 
+/* Param Raw Data: value, comment */
+struct ParamData {
+    std::string value;
+    std::string comment;
+};
+
+typedef std::map<std::string, ParamData> t_mapParamData;
+
 enum TriState {
     False = 0,
     True = 1,
@@ -72,7 +80,7 @@ public:
     bool copyValues(const std::vector<double>& aSrc, size_t aOffset = 0);
     bool setValues(const double& aValue, size_t aSize);
 
-    bool readParameter(const std::map<std::string, std::string>& aSettings);
+    bool readParameter(const t_mapParamData& aSettings);
     bool IsBlocking();
     bool IsUsed();
     bool isDependent(); /* whether m_IsBlocking is a scalr or depends on other parameetrs */
@@ -117,7 +125,7 @@ protected:
     FlagParam m_IsBlocking;
     FlagParam m_IsUsed;
 
-    virtual void readParam(const std::string& aParamName, const std::map<std::string, std::string>& a_Settings);
+    virtual void readParam(const std::string& aParamName, const t_mapParamData& a_Settings);
 };
 
 

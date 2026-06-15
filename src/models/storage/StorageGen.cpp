@@ -24,11 +24,14 @@ void StorageGen::setTimeData() {
 
 int StorageGen::checkConsistency()
 {
+    int ier = TechnicalSubModel::checkConsistency();
+
     if ((mInitSOC < 0. && mInitSOC != -1.) || mInitSOC > 1.) {
         cCritical() << "ERROR : Storage " << parent()->objectName() << " expects an initial state of charge in the range [0,1] or -1 to use coupling within PEGASE. ";
         return -1;
     }
-    return 0;
+
+    return ier;
 }
 
 void StorageGen::computeInitialData()
@@ -196,7 +199,7 @@ void StorageGen::addPressureModel()
 {
     addVariable(mVarPressureIn, "Pin", 0, mPressureMax);
 
-    if (getMaxBound() > 0.) {
+    if (getMaxBound() > 0.) { // getMaxBound() is always > 0 !!
         fillExpression(mExpPressure, mVarPressureIn);
         for (uint64_t t = 0; t < mHorizon; ++t) {
             addConstraint(mExpPressure[t] - mExpEsto[t] * mPressureMax / getMaxBound() == 0, "pressureInStorage", t);

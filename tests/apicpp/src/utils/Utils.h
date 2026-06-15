@@ -6,7 +6,6 @@
 #include <utility> // for std::pair
 #include <fstream>
 #include <sstream>
-#include <vector>
 #include <cstdlib>
 #include<cstdio>
 #include <map>
@@ -17,6 +16,15 @@
 #include <iterator>
 #include <filesystem>
 namespace fs = std::filesystem;
+
+constexpr auto CSV_SEPARATOR = ';';
+
+
+static bool starts_with(std::string_view str, std::string_view prefix)
+{
+    return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+}
+
 enum ECodeError {
     noError = 0,
     errSize = 1,  //File Size Error(size not equal - empty)
@@ -107,6 +115,7 @@ public:
 	static int compare_dict(const t_dict& inputDict, const t_dict& refDict);
     static std::string valueToString(const t_value& value);
 	static int ReadNameParamCsvFile(const std::string filename, t_list csvData);
+    static std::vector<std::string> parseLineCSV(const std::string& filename, const char& a_sep = ';');
 	static int Identify_Type(const std::string& str1);
 	static map<string, string> ParsingDictionaryFromFile(const string& cheminFichierDict);
 	static int SearchAndDeleteFromDict(t_dict& TargetDict, const string& TargetKeyToBeDeleted);
@@ -202,3 +211,92 @@ private:
         }
     }
 };
+
+
+
+class CSVRow
+{
+public:
+    double operator[](std::size_t index) const
+    {
+        size_t vIndex = (size_t)m_data[index] + 1;
+        std::string str(&m_line[vIndex], (size_t)m_data[index + 1] - vIndex);
+        return std::stof(str);
+    }
+    std::string operator()(std::size_t index) const
+    {
+        size_t vIndex = (size_t)m_data[index] + 1;
+        std::string str(&m_line[vIndex], (size_t)m_data[index + 1] - vIndex);
+        return str;
+    }
+    std::size_t size() const
+    {
+        return m_data.size() - 1;
+    }
+    void readNextRow(std::istream& str)
+    {
+        std::getline(str, m_line);
+
+        m_data.clear();
+        m_data.emplace_back(-1);
+        std::string::size_type pos = 0;
+        while ((pos = m_line.find(CSV_SEPARATOR, pos)) != std::string::npos)
+        {
+            m_data.emplace_back(pos);
+            ++pos;
+        }
+        // This checks for a trailing comma with no data after it.
+        pos = m_line.size();
+        m_data.emplace_back(pos);
+    }
+private:
+    std::string            m_line;
+    std::vector<size_t>    m_data;
+};
+
+std::istream& operator>>(std::istream& str, CSVRow& data);
+
+class CSVIterator
+{
+public:
+    typedef std::input_iterator_tag     iterator_category;
+    typedef CSVRow                      value_type;
+    typedef std::size_t                 difference_type;
+    typedef CSVRow* pointer;
+    typedef CSVRow& reference;
+
+    CSVIterator(std::istream& str) :m_str(str.good() ? &str : nullptr) { ++(*this); }
+    CSVIterator() :m_str(nullptr) {}
+
+    // Pre Increment
+    CSVIterator& operator++() { if (m_str) { if (!((*m_str) >> m_row)) { m_str = nullptr; } }return *this; }
+    // Post increment
+    CSVIterator operator++(int) { CSVIterator    tmp(*this); ++(*this); return tmp; }
+    CSVRow const& operator*()   const { return m_row; }
+    CSVRow const* operator->()  const { return &m_row; }
+
+    bool operator==(CSVIterator const& rhs) { return ((this == &rhs) || ((this->m_str == nullptr) && (rhs.m_str == nullptr))); }
+    bool operator!=(CSVIterator const& rhs) { return !((*this) == rhs); }
+
+
+private:
+    std::istream* m_str;
+    CSVRow              m_row;
+};
+
+class CSVRange
+{
+    std::istream& stream;
+public:
+    CSVRange(std::istream& str)
+        : stream(str)
+    {
+    }
+    CSVIterator begin() const { return CSVIterator{ stream }; }
+    CSVIterator end()   const { return CSVIterator{}; }
+};
+
+
+std::ostream& operator<<(std::ostream& str, const std::vector<std::string>& data);
+std::ostream& operator<<(std::ostream& str, const std::vector<double>& data);
+std::ostream& operator<<(std::ostream& str, const std::vector<t_value>& data);

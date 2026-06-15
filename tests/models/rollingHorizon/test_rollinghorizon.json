@@ -123,7 +123,7 @@
 				"nodeName": "Electricity",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
@@ -132,6 +132,10 @@
 				"paramListJson": [
 					{
 						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "Voltage",
 						"value": 230
 					}
 				],
@@ -151,7 +155,7 @@
 				"nodeName": "H2Vector",
 				"nodeType": "H2Vector",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 610,

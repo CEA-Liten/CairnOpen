@@ -87,7 +87,7 @@
 		},
 		{
 			"componentCarrier": "Electricity#1",
-			"componentPERSEEType": "EnergyVector",
+			"componentPERSEEType": "ElectricalCarrier",
 			"energyTypeColor": "#6052b9",
 			"nodeId": "12401",
 			"nodeName": "Electricity#1",
@@ -207,6 +207,10 @@
 				{
 					"key": "SellPrice",
 					"value": 0
+				},
+				{
+					"key": "Voltage",
+					"value": 230
 				}
 			],
 			"timeSeriesListJson": [
@@ -228,7 +232,7 @@
 		},
 		{
 			"componentCarrier": "H2Vector#1",
-			"componentPERSEEType": "EnergyVector",
+			"componentPERSEEType": "MaterialCarrier",
 			"energyTypeColor": "green",
 			"nodeId": "12501",
 			"nodeName": "H2Vector#1",
@@ -347,6 +351,14 @@
 				},
 				{
 					"key": "SellPrice",
+					"value": 0
+				},
+				{
+					"key": "Pressure",
+					"value": 0
+				},
+				{
+					"key": "Temperature",
 					"value": 0
 				}
 			],

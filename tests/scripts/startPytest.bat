@@ -1,32 +1,39 @@
 set OPTION=%1
-if "%OPTION%" == "" set OPTION=release
+if "%OPTION%"=="" set OPTION=release
 echo %OPTION%
 
 set MARKER=%~2
 
 set XDIST=%3
 
+rem Normalize XDIST
+if "%XDIST%"=="''" set "XDIST="
+if "%XDIST%"=="\"\"" set "XDIST="
+if "%XDIST%"=="" set "XDIST=0"
+
 set REPORT=%4
-if "%REPORT%" == "" set REPORT=Cairn-TNR.xml
+if "%REPORT%"=="" set REPORT=Cairn-TNR.xml
 echo %REPORT%
 
 set REPORT_UPDATE=Cairn-TNR_update.txt
 
-set SCRIPT_DIR=%~dp0
+set "SCRIPT_DIR=%~dp0"
 
 set TESTED_DIR=%5
-if "%TESTED_DIR%" == "" set TESTED_DIR=%SCRIPT_DIR%\..\
+if "%TESTED_DIR%"=="" (
+    set TESTED_DIR=%SCRIPT_DIR%\..\
+)
 echo Using test dir "%TESTED_DIR%"
 
 set SCRIPT_REPORT=%6 
-if "%SCRIPT_REPORT%" == "" set SCRIPT_REPORT=htmlReportLste.py
+if "%SCRIPT_REPORT%"=="" set SCRIPT_REPORT=htmlReportLste.py
 echo %SCRIPT_REPORT%
 
 set HTML_ARG=%7
-if "%HTML_ARG%" == "" set HTML_ARG="tests\reports\Cairn-TNR"
+if "%HTML_ARG%"=="" set HTML_ARG="tests\reports\Cairn-TNR"
 
 set HTML_REPORT=%8
-if "%HTML_REPORT%" == "" set HTML_REPORT="YES"
+if "%HTML_REPORT%"=="" set HTML_REPORT="YES"
 
 set REPORT_OLD=%REPORT:~0,-4%_old.xml
 
@@ -42,27 +49,26 @@ REM Activation de l'environnement Python
 
 call %~dp0\\pythonEnv.bat %PYTHON_VENV%
 
-REM Activation d'uranie
-
-powershell D:\Uranie_Binaries\833-47843-venv\uranie\bin\thisroot.ps1
-
 cd /D %TESTED_DIR%
-echo Executing pytest in "%CD%"
 echo Using %PYTHON_VENV%
 
-if "%XDIST%" == "" set XDIST=0
+if "%XDIST%"=="" set "XDIST=0"
+echo XDIST is [%XDIST%]
 
 echo "%MARKER%"
-if "%MARKER%" == "" goto :no_marker
-if not "%MARKER%" == "" goto :marker
+if "%MARKER%"=="" goto :no_marker
+if not "%MARKER%"=="" goto :marker
+
+echo Executing pytest in "%TESTED_DIR%"
+
 
 :marker	
-if "%MARKER%" == "" goto :no_marker
+if "%MARKER%"=="" goto :no_marker
 
-if %XDIST% == 0 (
-pytest -p no:faulthandler -m "%MARKER%" --junitxml %REPORT% 
+if "%XDIST%"=="0" (
+    pytest -p no:faulthandler -m "%MARKER%" --junitxml %REPORT% "%TESTED_DIR%"
 ) else (
-pytest -p no:faulthandler -n %XDIST% --dist=loadgroup -m "%MARKER%" --junitxml %REPORT% 
+    pytest -p no:faulthandler -n %XDIST% --dist=loadgroup -m "%MARKER%" --junitxml %REPORT% "%TESTED_DIR%"
 )
 
 echo "in marker"
@@ -72,12 +78,12 @@ goto:end
 
 :no_marker
 
-if %XDIST% == 0 (
-pytest -p no:faulthandler --junitxml %REPORT% 
+if "%XDIST%"=="0" (
+	pytest -p no:faulthandler --junitxml %REPORT% "%TESTED_DIR%"
 ) else (
-pytest -p no:faulthandler -n %XDIST% --dist=loadgroup --junitxml %REPORT% 
+	pytest -p no:faulthandler -n %XDIST% --dist=loadgroup --junitxml %REPORT% "%TESTED_DIR%"
 )
-if %HTML_REPORT% == "YES" goto :html
+if %HTML_REPORT%=="YES" goto :html
 goto:end
 
 :html

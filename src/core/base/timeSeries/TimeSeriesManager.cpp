@@ -15,161 +15,193 @@ TimeSeriesManager::~TimeSeriesManager()
         delete p_Reader;
 }
 
-void TimeSeriesManager::importTS(const t_mapExchange& aListSubscribedVariables)
+void TimeSeriesManager::addTS(const std::wstring& a_fileName)
 {
-    // Reader without files (Pegase)
-    importTS({ std::wstring{} }, aListSubscribedVariables, true);
+    // si filename = "" , efface la liste	
+    if (a_fileName == L"") {
+        m_TSfileList.clear();
+    }
+    else {
+        // ajoute un fichier time series dans la liste des fichiers
+        m_TSfileList.push_back(a_fileName);
+    }    
 }
 
-void TimeSeriesManager::importTS(const std::vector<std::wstring>& aTSfileList, const t_mapExchange &aListSubscribedVariables, 
+void TimeSeriesManager::addTS(const t_dict& a_TS)
+{
+    m_TSValues.addTS(a_TS);
+}
+
+bool TimeSeriesManager::checkTS(string& a_ErrMsg)
+{
+    bool vRet = true;
+    // Verify timeseries files
+    for (auto& vFileName : m_TSfileList) {
+        fs::path vTimeStepFile(vFileName);
+        std::error_code vErrFile;
+        if (!fs::exists(vTimeStepFile, vErrFile)) {
+            const std::string strTSfile = CairnUtils::toUTF8String(vFileName);
+            a_ErrMsg =  "Error : timeseries file: " + strTSfile + " does not exist";
+            vRet = false;
+        }
+    }
+    if (vRet) {
+        vRet = m_TSValues.checkTS(a_ErrMsg);
+        if (!vRet && a_ErrMsg == "") {
+            // no TS in m_TSValues
+            if (!m_TSfileList.size()) {
+                // no files
+                a_ErrMsg = "Please, defines timeseries before running";
+            }
+            else
+                vRet = true;
+        }
+    }    
+    return vRet;
+}
+
+void TimeSeriesManager::clearTS()
+{
+    addTS(L"");
+    m_TSValues.addTS({});
+}
+
+void TimeSeriesManager::importTS(const std::vector<std::wstring>& aTSfileList, const t_mapExchange& aListSubscribedVariables, bool isCoSim, const int& iShift, bool isCheckTimeSeriesUnits)
+{
+    addTS(L"");
+    for (auto& vFile : aTSfileList)
+        addTS(vFile);
+    importTS(aListSubscribedVariables, isCoSim, iShift, isCheckTimeSeriesUnits);
+}
+
+void TimeSeriesManager::importTS(const t_mapExchange& aListSubscribedVariables,
     bool isCoSim, const int& iShift, bool isCheckTimeSeriesUnits)
 {
-    //Generate a list of required input timeseries names
-    std::vector<std::string> listNotFoundNames = {};
-   
-    for (auto& iSubscribedVariable : aListSubscribedVariables) {
-        ZEVariables* var = iSubscribedVariable.second;
+    // Collect names of non-MPC variables 
+    std::unordered_set<std::string> notFoundNames;
+    for (auto& [key, var] : aListSubscribedVariables) {
         if (!var->IsMPC())
-        {   //Add to the list if it is not a controlled variable
-            listNotFoundNames.push_back(var->Name());
-        }
+            notFoundNames.insert(var->Name());
     }
 
-    if (!isCoSim && aTSfileList.empty()) {
-        throw Cairn_Exception("Error: at least one timeseries file must be provided when running in Stand-Alone mode!", -1);
+    if (!isCoSim) {
+        std::string errMsg;
+        if (!checkTS(errMsg))
+            throw Cairn_Exception(errMsg, -1);
     }
 
-    //Read all input timeseries files
-    bool noTimeSeriesFound = true;
-    for (auto& vFile : aTSfileList) {
-        //import a timeseries file
-        try {
-            noTimeSeriesFound &= !importTS(vFile, aListSubscribedVariables, iShift, listNotFoundNames, isCheckTimeSeriesUnits);
-        }
-        catch (Cairn_Exception cairn_error) {
-            throw cairn_error;
-        }
+    bool anyFound = false; // at least one timeseries (file) found! 
+
+    // import timeseries from input files
+    for (auto& vFile : m_TSfileList) {
+        // TODO: use unique_ptr ?
+        delete p_Reader;
+        p_Reader = TimeSeriesReader::NewReader(m_ReaderKind);
+        anyFound |= importTS(*p_Reader, vFile, aListSubscribedVariables, iShift, notFoundNames, isCheckTimeSeriesUnits);
     }
 
-    if (!isCoSim && noTimeSeriesFound) {
-        throw Cairn_Exception("Error: none of the specified timeseries files exist!", -1);
-    }
-    
-    //Verify if all input timeseries are found
-    if (listNotFoundNames.size() > 0) {
-        std::string errorMessage = "ERROR: The following input dataseries are misssing : ";
-        for (int i = 0; i < listNotFoundNames.size(); i++) {
-            if (i > 0) errorMessage += ", ";
-            errorMessage += listNotFoundNames[i];
-            Cairn_Exception cairn_error(errorMessage, -1);
-            throw cairn_error;
+    // read the values of added timeseries; if any 
+    anyFound |= importTS(m_TSValues, L"Time series values", aListSubscribedVariables, iShift, notFoundNames, isCheckTimeSeriesUnits);
+
+    if (!isCoSim && !anyFound)
+        throw Cairn_Exception("Error: at least one timeseries must be provided!", -1);
+
+    if (!notFoundNames.empty()) {
+        std::string errorMessage = "ERROR: The following input dataseries are missing: ";
+        bool first = true;
+        for (auto& name : notFoundNames) {
+            if (!first) errorMessage += ", ";
+            errorMessage += name;
+            first = false;
         }
+        throw Cairn_Exception(errorMessage, -1);
     }
 }
 
-bool TimeSeriesManager::importTS(const std::wstring& aTSfile, const t_mapExchange& aListSubscribedVariables, 
-    const int& iShift, std::vector<std::string>& aListNotFoundNames, bool isCheckTimeSeriesUnits)
+bool TimeSeriesManager::importTS(TimeSeriesReader& a_Reader, const std::wstring& aTSfile,
+    const t_mapExchange& aListSubscribedVariables, const int& iShift,
+    std::unordered_set<std::string>& aNotFoundNames, bool isCheckTimeSeriesUnits)
 {
-    if (p_Reader)
-        delete p_Reader;
-    
-    p_Reader = TimeSeriesReader::NewReader(m_ReaderKind);
-
     struct SUnitErr {
-        std::string zeVar; std::string dataUnit; std::string zeUnit;
-        SUnitErr(const std::string& aVar, const std::string& aUnit, const std::string& aDataUnit)
-        {
-            zeVar = aVar; dataUnit = aDataUnit; zeUnit = aUnit;
-        };
+        std::string zeVar, dataUnit, zeUnit;
     };
 
     const std::string strTSfile = CairnUtils::toUTF8String(aTSfile);
+
+    if (!a_Reader.open(aTSfile)) {
+        cWarning() << "Timeseries file not found: " << strTSfile;
+        return false;
+    }
+
+    // read and analyze Times 
+    std::vector<double> vTimes;
+    readTimes(a_Reader, aTSfile, iShift, vTimes);
+
+    // read Header (names, units)
+    std::vector<TimeSeriesReader::TimeSeriesDescrp> vHeaders;
+    a_Reader.readHeader(aListSubscribedVariables, vHeaders);
+
+    // read timeseries data 
     std::vector<SUnitErr> vUnitErrs;
 
-    const bool isReadTimeSeries = p_Reader->open(aTSfile);
-    if (isReadTimeSeries) {
-        // read and analyze Times        
-        std::vector<double> vTimes;
-        readTimes(aTSfile, iShift, vTimes);
+    for (auto& [key, var] : aListSubscribedVariables) {
+        const std::string zeVarName = var->Name();
 
-        // read Header (names, units)
-        std::vector<TimeSeriesReader::TimeSeriesDescrp> vHeaders;
-        p_Reader->readHeader(aListSubscribedVariables, vHeaders);
-        
-        //Read timeseries data        
-        for (auto& iSubscribedVariable : aListSubscribedVariables) {
-            ZEVariables* var = iSubscribedVariable.second;
-            std::string zeVarName = var->Name();
-            bool ifound = false;
-            for (auto& vHeader : vHeaders) {    
-                if (CairnUtils::compareStrings(vHeader.Name, zeVarName)) {
-                    std::string zeVarUnit = var->Unit();
-                    OrCheckUnits checkUnits = CheckUnits(vHeader.Unit, zeVarUnit, true);
-                    if (!checkUnits.isConsistency) {
-                        vUnitErrs.push_back(SUnitErr(zeVarName, zeVarUnit, vHeader.Unit));
-                    }
-                    
-                    // Read values
-                    std::vector<double> vValues;
-                    p_Reader->readValues(vHeader.Index, vValues);
-                   
-                    // Extrapolation
-                    // Apply time shift
-                    extrapolation(aTSfile, iShift, vHeader, vTimes, vValues);
+        auto headerIt = std::find_if(vHeaders.begin(), vHeaders.end(),
+            [&](const TimeSeriesReader::TimeSeriesDescrp& h) {
+                return CairnUtils::compareStrings(h.Name, zeVarName);
+            });
 
-                    // Conversion 
-                    conversion(checkUnits, vValues);
-                    
-                    // Transform + Apply : vValues -> var                 
-                    if (vTimes.size()) {
-                        if (r_MilpData.readingMode() == "Interpolation")
-                            importZEVarInterpolation(var, vValues, vTimes, iShift);
-                        else
-                            importZEVarAverage(var, vValues, vTimes, iShift);
-                    }
-                    else {                       
-                        // Average for multi timesteps: var                    
-                        Average(var, r_MilpData.pdtHeure(), r_MilpData.TimeSteps(), r_MilpData.npdtPast());
-                    }                                                            
-                    ifound = true;
-                    break;
-                }
-            }
-            if (ifound) {
-                //Remove zeVarName from list of not found names
-                std::vector<std::string>::iterator vIter = find(aListNotFoundNames.begin(), aListNotFoundNames.end(), zeVarName);
-                if (vIter != aListNotFoundNames.end())
-                    aListNotFoundNames.erase (vIter);
-            }
-        }
-        p_Reader->close();
-    }
-    else {
-        cWarning() << "Timeseries file not found: " << strTSfile;
-    }
+        // timeseries name was not found; continue, as it may be in another file
+        if (headerIt == vHeaders.end())
+            continue; 
 
-    if (vUnitErrs.size()) {
-        std::string vErrMsg = "Error while importing: " + strTSfile;
-        for (auto& vErr : vUnitErrs) {
-            vErrMsg += "\n\nUnits inconsistency for the variable " + vErr.zeVar + ", the reading unit is " + vErr.dataUnit + ", the unit defined is " + vErr.zeUnit;
-        }
-        
-        if (isCheckTimeSeriesUnits) {
-            //Throw an Exception and stop the simulation
-            Cairn_Exception cairn_error(vErrMsg, -1);
-            throw cairn_error;
+        // timeseries name found
+        const auto& vHeader = *headerIt;  
+        const std::string zeVarUnit = var->Unit();
+        OrCheckUnits checkUnits = CheckUnits(vHeader.Unit, zeVarUnit, true);
+
+        if (!checkUnits.isConsistency)
+            vUnitErrs.push_back({ zeVarName, vHeader.Unit, zeVarUnit });
+
+        std::vector<double> vValues;
+        a_Reader.readValues(vHeader.Index, vValues);
+
+        extrapolation(aTSfile, iShift, vHeader, vTimes, vValues);
+        conversion(checkUnits, vValues);
+
+        if (!vTimes.empty()) {
+            if (r_MilpData.readingMode() == "Interpolation")
+                importZEVarInterpolation(var, vValues, vTimes, iShift);
+            else
+                importZEVarAverage(var, vValues, vTimes, iShift);
         }
         else {
-            //Write a warnning in the log but continue the simulation
-            cWarning() << vErrMsg;
+            Average(var, r_MilpData.pdtHeure(), r_MilpData.TimeSteps(), r_MilpData.npdtPast());
         }
+
+        aNotFoundNames.erase(zeVarName); 
     }
 
-    return isReadTimeSeries;
+    a_Reader.close();
+
+    if (!vUnitErrs.empty()) {
+        std::string errMsg = "Error while importing: " + strTSfile;
+        for (auto& e : vUnitErrs)
+            errMsg += "\n\nUnits inconsistency for variable " + e.zeVar
+            + ", file unit: " + e.dataUnit
+            + ", expected unit: " + e.zeUnit;
+
+        if (isCheckTimeSeriesUnits)
+            throw Cairn_Exception(errMsg, -1);
+        else
+            cWarning() << errMsg;
+    }
+
+    return true;
 }
 
-
-void TimeSeriesManager::readTimes(const std::wstring& aTSfile, const int& iShift, std::vector<double>& aTimes)
+void TimeSeriesManager::readTimes(TimeSeriesReader& a_Reader, const std::wstring& aTSfile, const int& iShift, std::vector<double>& aTimes)
 {
     aTimes.clear();
 
@@ -185,7 +217,7 @@ void TimeSeriesManager::readTimes(const std::wstring& aTSfile, const int& iShift
     std::vector<double> vReadTimes;
     const double startTime = r_MilpData.pdt() * r_MilpData.startTime(); //in seconds
     const double endTime = (r_MilpData.endTime() > 0) ? r_MilpData.pdt() * r_MilpData.endTime() : -1.0; //in seconds
-    if (p_Reader->readTimes(vReadTimes, startTime, endTime, r_MilpData.pdt())) {
+    if (a_Reader.readTimes(vReadTimes, startTime, endTime, r_MilpData.pdt())) {
         // times exists for this reader
         //Verify that the first time value is not 0
         if (vReadTimes[0] == 0) {
@@ -276,20 +308,20 @@ void TimeSeriesManager::readTimes(const std::wstring& aTSfile, const int& iShift
             }
 
             if (std::isnan(aTimes[l])) {
-                Cairn_Exception cairn_error("Error while importing: " + strTSfile + "\n\nThe time value at line " + std::to_string(p_Reader->getNumLine(l + 1)) + " is NAN!", -1);
+                Cairn_Exception cairn_error("Error while importing: " + strTSfile + "\n\nThe time value at line " + std::to_string(a_Reader.getNumLine(l + 1)) + " is NAN!", -1);
                 throw cairn_error;
             }
 
             //Verify that time is strictly increasing
             if (l == 0) {
                 if (aTimes[l] < 0) {
-                    Cairn_Exception cairn_error("Error while importing: " + strTSfile + "\n\nThe Time value at line " + std::to_string(p_Reader->getNumLine(0)) + " is negative (first data line)!", -1);
+                    Cairn_Exception cairn_error("Error while importing: " + strTSfile + "\n\nThe Time value at line " + std::to_string(a_Reader.getNumLine(0)) + " is negative (first data line)!", -1);
                     throw cairn_error;
                 }
             }
             else {
                 if (aTimes[l] <= aTimes[l - 1]) {
-                    Cairn_Exception cairn_error("Error while importing: " + strTSfile + "\n\nThe Time value at line " + std::to_string(p_Reader->getNumLine(l + 1)) + " is less than or equal to a previous value.", -1);
+                    Cairn_Exception cairn_error("Error while importing: " + strTSfile + "\n\nThe Time value at line " + std::to_string(a_Reader.getNumLine(l + 1)) + " is less than or equal to a previous value.", -1);
                     throw cairn_error;
                 }
             }

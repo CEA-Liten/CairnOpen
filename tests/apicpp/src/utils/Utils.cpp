@@ -661,11 +661,24 @@ std::vector<std::string> TestUtils::readCSV(const std::string& filename)
 
 	std::string line;
 	while (std::getline(file, line)) {
+		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 		lines.push_back(line);
 	}
 
 	file.close();
 	return lines;
+}
+
+std::vector<std::string> TestUtils::parseLineCSV(const std::string& a_line, const char& a_sep)
+{
+	std::vector<std::string> elems;
+	std::istringstream iLineStream(a_line);
+	std::string cell;
+	while (std::getline(iLineStream, cell, a_sep))
+	{
+		elems.push_back(cell);
+	}
+	return elems;
 }
 
 int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFilePath2)
@@ -694,8 +707,8 @@ int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFil
 		{
 			//header
 			if (i == 0) {
-				std::vector<std::string> values1 = str_to_vector(lines1[i]);
-				std::vector<std::string> values2 = str_to_vector(lines2[i]);
+				std::vector<std::string> values1 = parseLineCSV(lines1[i]);
+				std::vector<std::string> values2 = parseLineCSV(lines2[i]);
 
 				if (values1.size() != values2.size()) {
 					areEqual = false;
@@ -710,8 +723,8 @@ int TestUtils::ComparaisonCsvFile(string const CsvFilePath1, string const CsvFil
 				}				
 			}
 			else {
-				std::vector<std::string> values1 = str_to_vector(lines1[i]);
-				std::vector<std::string> values2 = str_to_vector(lines2[i]);
+				std::vector<std::string> values1 = parseLineCSV(lines1[i]);
+				std::vector<std::string> values2 = parseLineCSV(lines2[i]);
 
 				if (values1.size() != values2.size()) {
 					areEqual = false;
@@ -784,4 +797,59 @@ void TestUtils::skipUTF8BOM(std::istream& in)
 	// No BOM => rewind to start
 	in.clear();
 	in.seekg(start);
+}
+
+
+
+std::istream& operator>>(std::istream& str, CSVRow& data)
+{
+	data.readNextRow(str);
+	return str;
+}
+
+
+std::ostream& operator<<(std::ostream& str, const std::vector<std::string>& data)
+{
+	if (data.size()) {
+		str << data[0];
+		for (size_t i = 1; i < data.size(); i++) {
+			str << CSV_SEPARATOR << data[i];
+		}
+		str << std::endl;
+	}
+	return str;
+}
+
+std::ostream& operator<<(std::ostream& str, const std::vector<double>& data)
+{
+	if (data.size()) {
+		str << data[0];
+		for (size_t i = 1; i < data.size(); i++) {
+			str << CSV_SEPARATOR << data[i];
+		}
+		str << std::endl;
+	}
+	return str;
+}
+
+std::ostream& operator<<(std::ostream& str, const std::vector<t_value>& data)
+{
+	if (data.size()) {
+		if (const double* pSrc = std::get_if<double>(&data[0])) {
+			str << *pSrc;
+		}		
+		else if (const std::string* pSrc = std::get_if<std::string>(&data[0])) {
+			str << *pSrc;
+		}		
+		for (size_t i = 1; i < data.size(); i++) {
+			if (const double* pSrc = std::get_if<double>(&data[i])) {
+				str << CSV_SEPARATOR << *pSrc;				
+			}
+			else if (const std::string* pSrc = std::get_if<std::string>(&data[i])) {
+				str << CSV_SEPARATOR << *pSrc;
+			}			
+		}
+		str << std::endl;
+	}
+	return str;
 }

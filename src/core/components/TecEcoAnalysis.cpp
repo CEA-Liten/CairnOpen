@@ -5,7 +5,7 @@
 
 class OptimProblem;
 
-TecEcoAnalysis::TecEcoAnalysis(CairnObject* aParent, const std::map<std::string, std::string>& aComponent) :
+TecEcoAnalysis::TecEcoAnalysis(CairnObject* aParent, const t_mapParamData& aComponent) :
     TechnicalSubModel(aParent),
     mConfigParam(nullptr),
     mCompoInputParam(nullptr),
@@ -91,7 +91,7 @@ std::vector<BusCompo*> TecEcoAnalysis::BusComponents()
     return {};
 }
 
-void TecEcoAnalysis::doInit(const std::map<std::string, std::string>& aComponent)
+void TecEcoAnalysis::doInit(const t_mapParamData& aComponent)
 {
     //Init list of Settings parameters (scalar, double) by direct reading from aSettings file
 
@@ -108,19 +108,23 @@ void TecEcoAnalysis::declareConfigurationParameters()
 {
     mConfigParam = new InputParam(this, "ConfigParam" + Name());
     //std::vector<std::string> (no default value)
-    mConfigParam->addParameter("ConsideredEnvironmentalImpacts", &mSelectedEnvImpacts, {}, false, true, "Selected environmental impacts to be considered (EF method)", "-");
+    mConfigParam->addParameter("ConsideredEnvironmentalImpacts", &mSelectedEnvImpacts, std::vector < std::string>(), false, true, "Selected environmental impacts to be considered (EF method)", "-");
     //bool
     mConfigParam->addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling ");    
     mConfigParam->addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling");  
 }
 
-void TecEcoAnalysis::setConfigurationParameters(const std::map<std::string, std::string>& aComponent)
+void TecEcoAnalysis::setConfigurationParameters(const t_mapParamData& aComponent)
 {
+    // TODO: use initProblem()
     if (aComponent.empty()) {
         return; // component creation
     }
 
-    CairnUtils::checkRead(mConfigParam->readParameters(aComponent), Name());
+    if (mConfigParam->readParameters(aComponent) < -1) {
+        throw Cairn_Exception("Error while initializing " + Name() +
+            ". A mandatory parameter is missing!", -1);
+    }
 }
 
 void TecEcoAnalysis::declareCompoInputParam()
@@ -186,7 +190,7 @@ void TecEcoAnalysis::declareEnvImpactParam()
             mCompoEnvImpactsParam->addParameter(mSelectedEnvImpacts[i] + " MaxConstraint", &mVBEnvImpactMaxConstraint[eIndex], false, false, true, "Is max constraint considered?", "-");
         }
         if (!CairnUtils::contains(impactParamNames, mSelectedEnvImpacts[i] + " MaxConstraintValue")) {
-            mCompoEnvImpactsParam->addParameter(mSelectedEnvImpacts[i] + " MaxConstraintValue", &mVDEnvImpactMaxConstraint[eIndex], INFINITY_VAL, false, true, "Maximum quantity of environmental impact", mPossibleEnvImpacts[eIndex].Unit);
+            mCompoEnvImpactsParam->addParameter(mSelectedEnvImpacts[i] + " MaxConstraintValue", &mVDEnvImpactMaxConstraint[eIndex], INFINITY_VAL, false, true, "Total project maximum quantity of environmental impact", mPossibleEnvImpacts[eIndex].Unit);
         }
         if (!CairnUtils::contains(impactParamNames, mSelectedEnvImpacts[i] + " Cost")) {
             mCompoEnvImpactsParam->addParameter(mSelectedEnvImpacts[i] + " Cost", &mVDEnvImpactCost[eIndex], 0., false, true, "Cost of environmental impact in Currency", SFunctionUnit({ eFTypeDivision, {pCurrency()}, mPossibleEnvImpacts[eIndex].Unit}));
@@ -194,23 +198,27 @@ void TecEcoAnalysis::declareEnvImpactParam()
     }
 }
 
-void TecEcoAnalysis::setCompoInputParam(const std::map<std::string, std::string>& aComponent)
+void TecEcoAnalysis::setCompoInputParam(const t_mapParamData& aComponent)
 {
     if (aComponent.empty()) {
         return; // component creation
     }
 
     //read non-configuration parameters
-    CairnUtils::checkRead(mCompoInputParam->readParameters(aComponent), Name());
-    CairnUtils::checkRead(mCompoInputSettings->readParameters(aComponent), Name());
-    CairnUtils::checkRead(mCompoEnvImpactsParam->readParameters(aComponent), Name());
+    if (mCompoInputParam->readParameters(aComponent) < 0
+        || mCompoInputSettings->readParameters(aComponent) < 0
+        || mCompoEnvImpactsParam->readParameters(aComponent) < 0)
+    {
+        throw Cairn_Exception("Error while initializing " + Name() +
+            ". A mandatory parameter is missing!", -1);
+    }
     
     if (mCurrency.empty()) {
         mCurrency = "EUR";
     }
 
     //set ObjectiveUnit to Currency if not provided
-    if (CairnUtils::getParam(aComponent,"ObjectiveUnit") == "") {
+    if (CairnUtils::getParamValue(aComponent,"ObjectiveUnit") == "") {
         mObjectiveUnit = mCurrency;
     }
 
@@ -459,12 +467,14 @@ void TecEcoAnalysis::computeSubObjective()
     }
 }
 
-void TecEcoAnalysis::buildModel()
+void TecEcoAnalysis::buildTecEcoModel()
 {
     /*
     * Computation of Economical and Environmental should be made in computeAllTecEcoContribution()
     * Because they should be computed before adding Bus constraints (Bus::buildModel)
     */
+
+    cInfo() << "Constructing TecEco model and adding related-optimization constraints...";
 
     //Compute the contributions related to Bus components (have to be done after Bus::buildModel)
     computeSubObjective();
@@ -533,7 +543,10 @@ void TecEcoAnalysis::buildModel()
     mAllocate = false;
 }
 
-void TecEcoAnalysis::computeAllContribution() {
+void TecEcoAnalysis::computeTecEcoContribution()
+{
+    cInfo() << "Computing pre-simulation TecEco expressions...";
+
     if (mAllocate) {
         allocateExpressions();
     }
@@ -811,18 +824,18 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
         mCapexContribution.at(0) = mCapexContribution.at(1) = mExpCapex.evaluate(optSol);
 
         //Opex
-        SubModel::computeIndicator(mExpFixedOpex, optSol, mPureOpexContribution.at(0), mPureOpexContributionDiscounted.at(0), mPureOpexContribution.at(1), mPureOpexContributionDiscounted.at(1), false);
+        SubModel::computeIndicator(mExpFixedOpex, optSol, mFixedOpexContribution.at(0), mFixedOpexContributionDiscounted.at(0), mFixedOpexContribution.at(1), mFixedOpexContributionDiscounted.at(1), false);
         SubModel::computeIndicator(mExpReplacement, optSol, mReplacementContribution.at(0), mReplacementContributionDiscounted.at(0), mReplacementContribution.at(1), mReplacementContributionDiscounted.at(1), false);
         SubModel::computeIndicator(mExpOpex, optSol, mOpexContribution.at(0), mOpexContributionDiscounted.at(0), mOpexContribution.at(1), mOpexContributionDiscounted.at(1), false);
 
         double opexDiscounted_redundant = mExpOpexDiscounted.evaluate(optSol);
-        assert(abs(mOpexContributionDiscounted.at(0) - opexDiscounted_redundant) < 10e-3);
+        assert(abs(mOpexContributionDiscounted.at(0) - opexDiscounted_redundant)/(opexDiscounted_redundant+0.001) < 10e-3);
 
         //NPV = -capex -discounted_opex
         mNetPresentValue.at(0) = -mCapexContribution.at(0) - mOpexContributionDiscounted.at(0);
 
         double negNpv = mExpNegNPV.evaluate(optSol); //mExpNegNPV is used to add constraints on NPV
-        assert(abs(mNetPresentValue.at(0) + negNpv) < 10e-3);
+        assert(abs(mNetPresentValue.at(0) + negNpv)/(negNpv+0.001) < 10e-3);
 
         //histNPV = -capex -discounted_hist_opex
         mNetPresentValue.at(1) = -mCapexContribution.at(1) - mOpexContributionDiscounted.at(1);

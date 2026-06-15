@@ -20,14 +20,23 @@ class CAIRNCORESHARED_EXPORT MilpPort : public CairnObject
 {
     
 public:
-    MilpPort(CairnObject *aParent, std::string aID, std::string aName, const std::map<std::string, std::string> aComponent);
-    virtual ~MilpPort();
+    MilpPort(CairnObject *aParent, const std::string& aID, const std::string& aName, 
+        const t_mapParamData& aPort, EnergyVector * carrier = nullptr);
+
+    ~MilpPort();
 
     virtual int initProblem(const uint aNpdtTot);
+
+    InputParam* getAttributes() { return mAttributes; }
     InputParam* getInputParam() { return mInputParam; }
+
+    void declareAttributes();
+    void setAttributes(const t_mapParamData& portParams);
+
     void declareParameters();
-    void setParameters(const std::map<std::string, std::string>& portParams);
-    void completePortInfo(std::map<std::string, std::string>& portParams);
+    void setParameters(const t_mapParamData & portParams);
+
+    void completePortInfo(const t_mapParamData& portParams, EnergyVector* carrier = nullptr);
 
     std::string ID() const { return mID; }
     std::string Name() const { return this->objectName(); }
@@ -43,7 +52,7 @@ public:
     double  VarCoeff() const { return mVarCoeff; }
     double  VarOffset() const { return mVarOffset; }
 
-    std::string CompoName() { return std::string(this->parent()->objectName().c_str()); }
+    std::string CompoName() const { return this->parent()->objectName(); }
     std::string LinkedBusName();
     std::string PortType() const { return mBusType; } //BusFlowBalance, BusSameValue, or MultiObjCompo 
     std::string BusPortName() const { return mBusPortName; }
@@ -61,7 +70,6 @@ public:
     MIPModeler::MIPExpression1D & ExpPotential(){return mPotential ;}
 
     void setName(const std::string& name) { this->setObjectName(name); }
-    void setCompoName(const std::string& name) { this->parent()->setObjectName(name); }
     void setPortType(std::string aPortType);
     void setVariable(std::string aVariable);
     void setDirection(std::string aDirection) { mDirection = aDirection;}
@@ -74,16 +82,11 @@ public:
     void setFlux0D(const double &aSignedCoeff, MIPModeler::MIPExpression& aFluxExpression) ;
     void setPotential(const unsigned int &aTime, MIPModeler::MIPExpression &aPotentialExpression) ;
 
-    EnergyVector* getCarrier() { return mCarrier; }
+    EnergyVector* getCarrier() const { return mCarrier; }
     void setCarrier(EnergyVector* aptrEnergyVector);
 
     BusCompo* getLinkedBus() { return mLinkedBus; }
     void setLinkedBus(BusCompo* linkedBus);
-
-    const std::string PotentialName() { 
-        if(mCarrier) return mCarrier->PotentialName();
-        return "";
-    }
 
     const std::string getFluxName() {
         if (mCarrier) return mCarrier->FluxName();
@@ -95,16 +98,25 @@ public:
         return "";
     }
 
+    void updateUnits(const MilpComponent* pParent);
+
+    const std::string* pQuantity(const std::string& a_Quantity) const;
+
+    // TODO: delete and pQuantity("FluxUnit"), pQuantity("StorageUnit"), pQuantity("PowerUnit") use instead 
     const std::string* pFluxUnit() const { return mFluxUnit; }
     const std::string* pStorageUnit() const { return mStorageUnit; }
     const std::string* pPowerUnit() const { return mPowerUnit; }
-    const std::string* pMassUnit() const { return mMassUnit; }
-    const std::string* pPotentialUnit() const { return mPotentialUnit; }
+
+    const std::string* pCurrency() const { return mCurrency; }
 
     std::string FluxUnit() const;
     std::string StorageUnit() const;
-    std::string PotentialUnit() const;
 
+    double getParamValue(const std::string& a_ParamName, uint64_t t) const;
+    double MolarMass(uint64_t t) const;
+    double MolarMass() const; 
+
+    bool useLHV() const;
     bool useProfileLHV() const;
     bool useProfileGHV() const;
 
@@ -114,15 +126,26 @@ public:
 
     double GHV() const;
 
-    const std::vector<double>* LHVProfile() const;
-    const std::vector<double>* GHVProfile() const;
-
     void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusLinkedPort = false);
 
     std::vector<InputParam*> get_InputParams();
 
+    double getCarrierTemperature(bool *ap_Ok = nullptr);
+    double getCarrierPressure(bool* ap_Ok = nullptr);
+ 
+    std::vector<InputParam*> get_AttributeInputParams();
+    std::vector<InputParam*> get_ParamInputParams();
+
+    double VariableOpex() const { return mVariableOpex; }
+
+    bool checkCarrierType(const std::string& expectedTechnoType) const;
+
 private:
+    
+    InputParam* mAttributes{ nullptr };
     InputParam* mInputParam{ nullptr };
+
+    double mVariableOpex;
 
     EnergyVector* mCarrier{ nullptr };  
     BusCompo* mLinkedBus{ nullptr };
@@ -131,8 +154,8 @@ private:
     const std::string* mFluxUnit;
     const std::string* mStorageUnit;
     const std::string* mPowerUnit;
-    const std::string* mMassUnit;
-    const std::string* mPotentialUnit;
+
+    const std::string* mCurrency;
 
     //Attributes
     std::string mID;              /** Port unique Id */

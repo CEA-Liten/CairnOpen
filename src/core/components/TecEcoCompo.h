@@ -11,19 +11,21 @@ class TecEcoCompo;
 class CAIRNCORESHARED_EXPORT TecEcoCompo : public MilpComponent
 {
 public:
-    TecEcoCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, const std::map<std::string, 
-        std::map<std::string, std::string>>& aPorts, MilpData* aMilpData, ModelFactory* aModelFactory);
+    TecEcoCompo(CairnObject* aParent, 
+        const std::string& aName,
+        const t_mapParamData& aComponent,
+        const std::map<std::string, t_mapParamData>& aPorts, 
+        MilpData* aMilpData, ModelFactory* aModelFactory);
 
     ~TecEcoCompo();
   
     bool newCompoModel();
 
     void declareCompoInputParam() override;
-    void setCompoInputParam(const std::map<std::string, std::string> aComponent) override;
+    void setCompoInputParam(const t_mapParamData& aComponent) override;
     void redeclareEnvImpactParameters() override;
 
     std::vector<InputParam*> get_InputParams() override;
-
     std::vector<InputParam*> get_ParamInputParams() override;
     std::vector<InputParam*> get_OptionInputParams() override;
     std::vector<InputParam*> get_EnvImpactInputParams() override;

@@ -1,3 +1,3 @@
-;Case;H2Grid.Grid extraction FluidH2Mass GridFlow;Compressor.Installed Size;TecEcoAnalysis#1.OBJECTIVE
-0;withLosses;14747474.747474743;2.163885434441734;24.091747288058393
-1;withoutLosses;14600000.0;2.1422465800973174;23.850829815177814
+;Case;TecEcoAnalysis#1.OBJECTIVE;Compressor.Installed Size;H2Grid.Grid extraction MaterialMass GridFlow
+0;withoutLosses;23.8534;2.14248;1.46e+07
+1;withLosses;24.0944;2.16412;1.47475e+07

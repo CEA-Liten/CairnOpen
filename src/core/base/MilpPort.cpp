@@ -1,28 +1,37 @@
 
 #include "MilpPort.h"
 #include "BusCompo.h"
+#include "MaterialCarrier.h"
 
-MilpPort::MilpPort(CairnObject *aParent, std::string aID, std::string aName, const std::map<std::string, std::string> aPort): CairnObject(aParent),
+MilpPort::MilpPort(CairnObject* aParent, const std::string& aID, const std::string& aName, 
+    const t_mapParamData& aPort, EnergyVector * carrier)
+    : CairnObject(aParent),
     mID(aID),
-    mPosition(CairnUtils::getParam(aPort,"Position")),
-    mCarrierType(CairnUtils::getParam(aPort,"CarrierType")),
+    mPosition(CairnUtils::getParamValue(aPort,"Position")),
+    mCarrierType(CairnUtils::getParamValue(aPort,"CarrierType")),
     mIsDefaultPort(false), 
-    mIsEnabled(CairnUtils::getParam(aPort,"Enabled")),
+    mIsEnabled(CairnUtils::getParamValue(aPort,"Enabled")),
     mBusType(""), //BusFlowBalance, BusSameValue, or MultiObjCompo 
-    mBusPortName(CairnUtils::getParam(aPort,"BusPortName")), //The name of the linked Bus port  
+    mBusPortName(CairnUtils::getParamValue(aPort,"BusPortName")), //The name of the linked Bus port  
     mBusPortPosition(""), //The position of the linked Bus port  
     mFluxUnit(nullptr),
     mStorageUnit(nullptr),
-    mPowerUnit(nullptr),
-    mMassUnit(nullptr),
-    mPotentialUnit(nullptr)
+    mPowerUnit(nullptr)
 {
+
+    if (!aParent) {
+        throw Cairn_Exception("The parent of port " + aID + "(" + aName + ") is null", -1);
+    }
+
     setName(aName);
     setObjectType("MilpPort");
-    setCompoName(CairnUtils::getParam(aPort, "CompoName"));
-    mInputParam = new InputParam(this, "InputParam" + Name());
-    declareParameters();
-    setParameters(aPort);
+
+    mAttributes = new InputParam(this, "Attributes" + Name());
+
+    declareAttributes();
+    setAttributes(aPort);
+    
+    setCarrier(carrier);
 }
 
 MilpPort::~MilpPort()
@@ -32,11 +41,10 @@ MilpPort::~MilpPort()
     mFluxUnit = nullptr;
     mStorageUnit = nullptr;
     mPowerUnit = nullptr;
-    mMassUnit = nullptr;
-    mPotentialUnit = nullptr;
     mFlux.clear();
     mPotential.clear();
-    if (mInputParam) delete mInputParam;
+    delete mAttributes;
+    delete mInputParam;
 }
 
 std::string MilpPort::CarrierName()
@@ -68,25 +76,39 @@ int MilpPort::initProblem(const uint aNpdtTot)
     return 0;
 }
 
-void MilpPort::declareParameters() {
-    //std::string
-    mInputParam->addParameter("Direction", &mDirection, "", false, true, "Port direction");
-    mInputParam->addParameter("Variable", &mVariable, "", true, true, "Port variable");
-    mInputParam->addParameter("CheckUnit", &mVarCheckUnit, "Yes", false, true, "Port checkUnit");
-    //double
-    mInputParam->addParameter("Coeff", &mVarCoeff, 1., false, true, "Port coeff");
-    mInputParam->addParameter("Offset", &mVarOffset, 0., false, true, "Port offset");
+void MilpPort::declareAttributes() {
+    mAttributes->addParameter("Direction", &mDirection, "", false, true, "Port direction");
+    mAttributes->addParameter("Variable", &mVariable, "", true, true, "Port variable");
+    mAttributes->addParameter("CheckUnit", &mVarCheckUnit, "Yes", false, true, "Port checkUnit");
+
+    mAttributes->addParameter("Coeff", &mVarCoeff, 1., false, true, "Port coeff");
+    mAttributes->addParameter("Offset", &mVarOffset, 0., false, true, "Port offset");
 }
 
-void MilpPort::setParameters(const std::map<std::string, std::string>& portParams) 
-{
-    mInputParam->readParameters(portParams);
+void MilpPort::declareParameters() {
+    // Parameters : only for MilpComponent
+    if (parent()->objectType() != "MilpComponent") {
+        return;
+    }
 
-    if (CairnUtils::getParam(portParams, "IsDefaultPort") == "Yes") {
+    delete mInputParam;
+
+    mInputParam = new InputParam(this, "InputParam" + Name());
+
+    mInputParam->addParameter("VariableOpex", &mVariableOpex, 0., false, true, "Variable Opex",
+        SFunctionUnit({ eFTypeDivision, { pCurrency(), pQuantity("EnergyUnit") } }), "EcoInvestModel");
+}
+
+void MilpPort::setAttributes(const t_mapParamData& portParams)
+{
+    mAttributes->readParameters(portParams);
+
+    if (CairnUtils::getParamValue(portParams, "IsDefaultPort") == "Yes") {
         mIsDefaultPort = true;
     }
     
-    if (mIsEnabled == "") {
+    // TODO: use bool for  mIsEnabled ?!
+    if (mIsEnabled.empty()) { 
         mIsEnabled = "true";
     }
 
@@ -105,14 +127,21 @@ void MilpPort::setParameters(const std::map<std::string, std::string>& portParam
     setPosition();
 }
 
-void MilpPort::completePortInfo(std::map<std::string, std::string>& portParams) {
-    //portParams.remove("Direction");
-    //portParams.remove("Variable");
+void MilpPort::setParameters(const t_mapParamData& portParams)
+{
+    if (!mInputParam) return;
     mInputParam->readParameters(portParams);
-    setName(portParams["Name"]);
-    setCompoName(portParams["CompoName"]);
-    mBusPortName = portParams["BusPortName"];
-    mPosition = portParams["Position"];
+}
+
+void MilpPort::completePortInfo(const t_mapParamData& portParams, EnergyVector* carrier)
+{
+    setAttributes(portParams);
+    setCarrier(carrier);
+    setName(CairnUtils::getParamValue(portParams, "Name"));
+
+    mBusPortName = CairnUtils::getParamValue(portParams, "BusPortName");
+    mPosition = CairnUtils::getParamValue(portParams, "Position");
+
     setPosition();
 }
 
@@ -153,10 +182,33 @@ std::string MilpPort::StorageUnit() const
     if (mStorageUnit) return *mStorageUnit;
     return "";
 }
-std::string MilpPort::PotentialUnit() const 
+
+double MilpPort::getParamValue(const std::string& a_ParamName, uint64_t t) const
 {
-    if (mPotentialUnit) return *mPotentialUnit;
-    return "";
+    return mCarrier ?
+        mCarrier->getParamValue(a_ParamName, t, dynamic_cast<const MilpComponent*>(parent()))
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+double MilpPort::MolarMass(uint64_t t) const
+{
+    return mCarrier ?
+        mCarrier->MolarMass(t, dynamic_cast<const MilpComponent*>(parent()))
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+double MilpPort::MolarMass() const
+{
+    return mCarrier ?
+        mCarrier->MolarMass()
+        : std::numeric_limits<double>::quiet_NaN();
+}
+
+bool MilpPort::useLHV() const
+{
+    return mCarrier
+        ? mCarrier->isParamExist("LHV")
+        : false;
 }
 
 bool MilpPort::useProfileLHV() const
@@ -164,35 +216,28 @@ bool MilpPort::useProfileLHV() const
     if (!mCarrier) {
         throw Cairn_Exception("useProfileLHV called on port (" + ID() + ", " + Name() + ") with no carrier", -1);
     }
-    return mCarrier->useProfileLHV();
+    return mCarrier->useProfileParam("LHV");
 }
 
 double MilpPort::LHV() const
 {
     return mCarrier 
-        ? mCarrier->LHV() 
+        ? mCarrier->getParamCstValue("LHV")
         : std::numeric_limits<double>::quiet_NaN();
-}
-
-const std::vector<double>* MilpPort::LHVProfile() const
-{
-    return mCarrier ? getTimeSeries(mCarrier->LHVProfileID()) : nullptr;
 }
 
 const double MilpPort::LHV(const uint64_t t) const
 {
     return mCarrier ?
-        mCarrier->useProfileLHV() ?
-        LHVProfile()->at(t) : mCarrier->LHV()
+        mCarrier->getParamValue("LHV", t, dynamic_cast<const MilpComponent*>(parent()) )      
         : std::numeric_limits<double>::quiet_NaN();
 }
 
 const double MilpPort::minLHV() const
 {
     return mCarrier ?
-        mCarrier->useProfileLHV() ?
-        *std::min_element(LHVProfile()->begin(), LHVProfile()->end()) : mCarrier->LHV()
-        : std::numeric_limits<double>::quiet_NaN();
+        mCarrier->getMinParamValue("LHV", dynamic_cast<const MilpComponent*>(parent()))
+        : std::numeric_limits<double>::quiet_NaN();   
 }
 
 bool MilpPort::useProfileGHV() const
@@ -200,19 +245,14 @@ bool MilpPort::useProfileGHV() const
     if (!mCarrier) {
         throw Cairn_Exception("useProfileGHV called on port (" + ID() + ", " + Name() + ") with no carrier", -1);
     }
-    return mCarrier->useProfileGHV();
+    return mCarrier->useProfileParam("GHV");
 }
 
 double MilpPort::GHV() const 
 {
     return mCarrier
-        ? mCarrier->GHV()
+        ? mCarrier->getParamCstValue("GHV")
         : std::numeric_limits<double>::quiet_NaN();
-}
-
-const std::vector<double>* MilpPort::GHVProfile() const
-{
-    return mCarrier ? getTimeSeries(mCarrier->GHVProfileID()) : nullptr;
 }
 
 const std::vector<double>* MilpPort::getTimeSeries(const std::string& tsName) const
@@ -229,19 +269,40 @@ const std::vector<double>* MilpPort::getTimeSeries(const std::string& tsName) co
 
 void MilpPort::setCarrier(EnergyVector* aptrEnergyVector)
 { 
+    if (mCarrier == aptrEnergyVector)
+        return;
+
     mCarrier = aptrEnergyVector; 
+
     if (mCarrier) {
-        mFluxUnit = mCarrier->pFluxUnit(); 
-        mStorageUnit = mCarrier->pStorageUnit();
-        mPowerUnit = mCarrier->pPowerUnit();
-        mMassUnit = mCarrier->pMassUnit();
-        mPotentialUnit = mCarrier->pPotentialUnit();
+        MilpComponent* pParent = dynamic_cast<MilpComponent*>(parent()); 
+
+        updateUnits(pParent);
+
         //if (mIsDefaultPort) { //What about old studies?!
         //    MilpComponent* lptrCompo = (MilpComponent*)this->parent();
         //    if (lptrCompo) {
         //        lptrCompo->declareIOVariables();
         //    }
         //}
+
+        declareParameters();
+
+        if (pParent) {
+            const auto portParams = pParent->portData(ID(), Name());
+            setParameters(portParams);
+        }
+    }
+}
+
+void MilpPort::updateUnits(const MilpComponent* pParent) 
+{
+    mFluxUnit = mCarrier->pFluxUnit();
+    mStorageUnit = mCarrier->pStorageUnit();  
+    mPowerUnit = mCarrier->pPowerUnit();
+
+    if (pParent && pParent->compoModel()) {
+        mCurrency = pParent->compoModel()->pCurrency();
     }
 }
 
@@ -251,12 +312,12 @@ void MilpPort::setLinkedBus(BusCompo* linkedBus) {
 
 void MilpPort::setFlux(const unsigned int &aTime, const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
 {
-    mFlux[aTime] = mVarCoeff * aSignedCoeff * aFluxExpression + mVarOffset ;
+    mFlux[aTime] = aSignedCoeff * (mVarCoeff * aFluxExpression + mVarOffset);
     mTimeDependant = 1;
 }
 void MilpPort::setFlux0D(const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
 {
-    mFlux0D = mVarCoeff * aSignedCoeff * aFluxExpression;
+    mFlux0D = aSignedCoeff * mVarCoeff * aFluxExpression;
     mTimeDependant = 0;
 }
 
@@ -270,19 +331,25 @@ void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinke
     std::string portId = mID;
     std::string portName = Name();
     std::string position = mPosition;
+    std::string variable = mVariable;
     std::string defaultport = No();
     if (mIsDefaultPort) defaultport = Yes();
+
     if (isBusLinkedPort) {
         /**
         * A Bus linked port is a copy of the linked component port
-        * Only change the port ID and port Name, 
-        * and always define it as a non-default port
+        * => - change the port ID and port Name, 
+        *    - set variable to empty
+        *    - define it as a non-default port
         */
         portId = "port" + std::to_string(nodePortArray.size() + 1);
         portName = mBusPortName;
         position = mBusPortPosition;
+        variable = "";
         defaultport = No();
     }
+
+    // Attributes
     ojson nodePort = ojson{
             {"id", portId},
             {"name", portName},
@@ -290,16 +357,42 @@ void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinke
             {"carrier", CarrierName()},
             {"carrierType", mCarrierType},
             {"direction", mDirection},
-            {"variable", mVariable},
+            {"variable", variable},
             {"coeff", mVarCoeff},
             {"offset",mVarOffset},
             {"checkunit",mVarCheckUnit},
             {"defaultport", defaultport},
             {"enabled", mIsEnabled}
     };
+
+    // Parameters
+    if (mInputParam) {
+        nodePort["params"] = ojson::array();
+        mInputParam->jsonSaveGUIInputParam(nodePort["params"]);
+    }
+
     nodePortArray.push_back(nodePort);
 }
 
+bool MilpPort::checkCarrierType(const std::string& expectedTechnoType) const
+{
+    const EnergyVector* carrier = getCarrier();
+    if (!carrier) {
+        cCritical() << "Port " << ID()
+            << " has no carrier assigned (expected " << expectedTechnoType << ")";
+        return false;
+    }
+
+    const std::string actualTechnoType = carrier->TechnoType();
+    if (actualTechnoType != expectedTechnoType) {
+        cCritical() << "Port " << ID()
+            << " has carrier type '" << actualTechnoType
+            << "' but expected '" << expectedTechnoType << "'";
+        return false;
+    }
+
+    return true;
+}
 
 std::string MilpPort::GAMSVarName()
 {
@@ -310,5 +403,58 @@ std::string MilpPort::GAMSVarName()
 
 std::vector<InputParam*> MilpPort::get_InputParams()
 {
-   return { getInputParam() };    
+   return { 
+       getAttributes(), 
+       getInputParam() 
+   };    
+}
+
+double MilpPort::getCarrierTemperature(bool* ap_Ok)
+{
+    if (mCarrier != nullptr) {
+        if (mCarrier->Type() == "MaterialCarrier") {
+            MaterialCarrier* pCarrier = (MaterialCarrier*)mCarrier;
+            if (ap_Ok) *ap_Ok = true;
+            double vRet = pCarrier->getParamCstValue("Temperature");
+            if (std::isnan(vRet)) {
+                if (ap_Ok) *ap_Ok = false;
+            }
+            return vRet;
+        }
+    }
+    if (ap_Ok) *ap_Ok = false;
+    return 0.0;
+}
+
+double MilpPort::getCarrierPressure(bool* ap_Ok)
+{
+    if (mCarrier != nullptr) {
+        if (mCarrier->Type() == "MaterialCarrier") {
+            MaterialCarrier* pCarrier = (MaterialCarrier*)mCarrier;
+            if (ap_Ok) *ap_Ok = true;
+            return pCarrier->getParamCstValue("Pressure");
+        }
+    }
+    if (ap_Ok) *ap_Ok = false;
+    return 0.0;
+}
+
+const std::string* MilpPort::pQuantity(const std::string& a_Quantity) const {
+    if (mCarrier != nullptr) {
+        return mCarrier->pQuantity(a_Quantity);
+    }
+    return nullptr;
+}
+std::vector<InputParam*> MilpPort::get_AttributeInputParams()
+{
+    return {
+        getAttributes()
+    };
+}
+
+std::vector<InputParam*> MilpPort::get_ParamInputParams()
+{
+    return {
+        getInputParam()
+    };
 }

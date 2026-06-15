@@ -17,8 +17,10 @@
 class CAIRNCORESHARED_EXPORT BusCompo : public MilpComponent
 {
 public:
-    BusCompo (CairnObject* aParent, const std::map<std::string, std::string>& aComponent, 
-        const std::map < std::string, std::map<std::string, std::string> >& aPorts, 
+    BusCompo (CairnObject* aParent, 
+        const std::string& aName,
+        const t_mapParamData& aComponent,
+        const std::map < std::string, t_mapParamData>& aPorts,
         MilpData *aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory) ;
 
     virtual ~BusCompo();
@@ -33,7 +35,7 @@ public:
     }
 
     void declareCompoInputParam();
-    void setCompoInputParam(const std::map<std::string, std::string> aComponent);
+    void setCompoInputParam(const t_mapParamData& aComponent);
 
     std::string ObjectiveType() const; /* case of MultiObjective */
     std::vector<std::string> getPossibleObjectiveTypes() const;
@@ -58,7 +60,7 @@ public:
     /** Save as json file */
     int NbPorts(const std::string& aDirection = "");
     std::vector<MilpPort*> listSidePorts(const std::string& aside);
-    void jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide);
+    void jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide) override;
 
 protected:  
     // Iterate on LinkedPorts and obtain their parents?!

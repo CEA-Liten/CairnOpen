@@ -174,9 +174,9 @@ t_list CairnAPI::TecEcoAnalysisAPI::get_Ports() const
 	return vRet;
 }
 
-CairnAPI::MilpPortAPI CairnAPI::TecEcoAnalysisAPI::get_Port(const std::string& a_Name)
+std::shared_ptr < CairnAPI::MilpPortAPI> CairnAPI::TecEcoAnalysisAPI::get_Port(const std::string& a_Name)
 {
-	MilpPortAPI vRet;
+	std::shared_ptr < MilpPortAPI> vRet;
 	const std::string vPortName = std::string(a_Name.c_str());
 	if (m_Object) {
 		TecEcoCompo* pTecEco = (TecEcoCompo*)m_Object;
@@ -190,7 +190,7 @@ CairnAPI::MilpPortAPI CairnAPI::TecEcoAnalysisAPI::get_Port(const std::string& a
 			}
 
 			if (vPort) {
-				vRet.set_MilpPort(vPort);
+				vRet = std::make_shared<MilpPortAPI>(vPort);
 			}
 			else {
 				CairnAPIUtils::setError(errNotFound, "port " + a_Name);
@@ -200,10 +200,10 @@ CairnAPI::MilpPortAPI CairnAPI::TecEcoAnalysisAPI::get_Port(const std::string& a
 	return vRet;
 }
 
-CairnAPI::MilpPortAPI CairnAPI::TecEcoAnalysisAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
+std::shared_ptr <CairnAPI::MilpPortAPI> CairnAPI::TecEcoAnalysisAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
 	const std::string& a_Direction, const std::string& a_Variable, const std::string& a_PortId)
 {
-	MilpPortAPI vPort;
+	std::shared_ptr <MilpPortAPI> vPort;
 	ECodeError vErr = noError;
 	std::string vErrMsg = "";
 
@@ -220,19 +220,20 @@ CairnAPI::MilpPortAPI CairnAPI::TecEcoAnalysisAPI::add_Port(const std::string& a
 				std::string vComponentName(get_Name());
 				std::string vPortId = a_PortId;
 				if(vPortId.empty()) vPortId =  pTecEco->getUniquePortID();
-				std::map<std::string, std::string> vPortParams;
-				vPortParams["CompoName"] = vComponentName;
-				vPortParams["Name"] = a_PortName;
-				vPortParams["Carrier"] = a_EnergyVector.get_Name();
-				vPortParams["Direction"] = CairnUtils::toUpper(a_Direction);
-				vPortParams["Variable"] = a_Variable;
+
+				t_mapParamData vPortParams;
+				CairnUtils::setParamValue(vPortParams, "CompoName", vComponentName);
+				CairnUtils::setParamValue(vPortParams, "Name", a_PortName);
+				CairnUtils::setParamValue(vPortParams, "Carrier", a_EnergyVector.get_Name());
+				CairnUtils::setParamValue(vPortParams, "Direction", CairnUtils::toUpper(a_Direction));
+				CairnUtils::setParamValue(vPortParams, "Variable", a_Variable);
 
 				//create port
-				pTecEco->createOnePort(vPortId, vPortParams);
+				pTecEco->createOnePort(vPortId, vPortParams, a_EnergyVector.get_EnergyVector());
 				vMilpPort = pTecEco->getPort(vPortId);
 				if (vMilpPort) {
-					vPort.set_MilpPort(vMilpPort);
-					vPort.set_EnergyCarrier(a_EnergyVector.get_EnergyVector());
+					vPort = std::make_shared<MilpPortAPI>(vMilpPort);					
+					//vPort.set_EnergyCarrier(a_EnergyVector.get_EnergyVector());
 				}
 				else {
 					vErr = errAdd;
@@ -293,7 +294,7 @@ bool CairnAPI::TecEcoAnalysisAPI::useEnergyVector(const std::string& a_EnergyCar
 	bool vRet = false;
 	t_list vPorts = get_Ports();
 	for (auto& vPort : vPorts) {
-		if (get_Port(vPort).get_CarrierName() == a_EnergyCarrierName) {
+		if (get_Port(vPort)->get_CarrierName() == a_EnergyCarrierName) {
 			vRet = true;
 			break;
 		}
@@ -305,7 +306,7 @@ void CairnAPI::TecEcoAnalysisAPI::get_Links(t_dict& a_Links)
 {
 	t_list vPorts = get_Ports();
 	for (auto& vPortName : vPorts) {
-		MilpPort* vPort = get_Port(vPortName).get_MilpPort();
+		MilpPort* vPort = get_Port(vPortName)->get_MilpPort();
 		if (vPort) {
 			BusCompo* vBus = vPort->getLinkedBus();
 			if (vBus) {

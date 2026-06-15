@@ -1,6 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
+#include "StudyCTest.h"
 
 using namespace std;
 
@@ -9,6 +9,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File PathsPersee
@@ -30,7 +34,7 @@ int main()
 	)
 
 	// Get component ELY_PEM
-	CairnAPI::MilpComponentAPI vELY_PEM;
+	std::shared_ptr < CairnAPI::MilpComponentAPI> vELY_PEM;
 	TESTAPI("Get component ELY_PEM", vELY_PEM = m_Problem.get_Component("ELY_PEM"))
 
 	// Get/Set a param comment
@@ -40,18 +44,18 @@ int main()
 	//)
 
 	const std::string capexComment = "This is Capex";
-	TESTAPI("Set Capex comment", vELY_PEM.set_SettingComment("Capex", capexComment))
+	TESTAPI("Set Capex comment", vELY_PEM->set_SettingComment("Capex", capexComment))
 
 	TESTAPI2("Verify Capex comment",
-		TestUtils::compare_scalar(vELY_PEM.get_SettingComment("Capex"), capexComment, eString)
+		TestUtils::compare_scalar(vELY_PEM->get_SettingComment("Capex"), capexComment, eString)
 	)
 
 	// Get/Set the comments of all params
 	const std::string maxPowerComment = "This is MaxPower";
-	TESTAPI("Set comments of ELY_PEM params", vELY_PEM.set_SettingComments({ {"MaxPower", maxPowerComment} }))
+	TESTAPI("Set comments of ELY_PEM params", vELY_PEM->set_SettingComments({ {"MaxPower", maxPowerComment} }))
 
 	t_dictComment vELY_PEMComments;
-	TESTAPI("Get comments of ELY_PEM params", vELY_PEMComments = vELY_PEM.get_SettingComments())
+	TESTAPI("Get comments of ELY_PEM params", vELY_PEMComments = vELY_PEM->get_SettingComments())
 
 	TESTAPI2("Verify MaxPower comment",
 		TestUtils::compare_scalar(vELY_PEMComments["MaxPower"], maxPowerComment, eString)

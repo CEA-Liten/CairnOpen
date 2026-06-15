@@ -1,6 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
+#include "StudyCTest.h"
 #include "UtilsJson.h"
 
 using namespace std;
@@ -11,140 +11,151 @@ using namespace std;
    Then, it executes a simulation and compares the result to the reference formation_cairn_Results_Reference.csv 
    which is generated using the GUI.
 */
+int test(StudyCTest &a_Test, CairnAPI& a_Cairn, const std::string& a_SolverName)
+{	
+	CairnAPI::OptimProblemAPI vProblem = a_Cairn.get_Study();
+	CairnAPI::SolutionAPI vSolution;
+
+	TESTAPI("Run 1",
+		vSolution = vProblem.run(a_SolverName)
+	)
+
+	TESTAPI2FALSE("Check Run 1",
+		a_Test.checkResults("Reference", true, true)
+	)
+
+
+	TESTAPI("Export time series", vSolution.exportTimeSeries())
+
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = vProblem.get_SimulationControl();
+	TESTAPI("Modify FutureSize",
+		vSimulationControl->set_SettingValues({
+			{"FutureSize", 156}
+			})
+	)
+
+	TESTAPI("Run 2",
+		vProblem.run(a_SolverName)
+	)
+
+	TESTAPI2FALSE("Check Run 2",
+		a_Test.checkResults("Reference_run2")
+	)
+
+	TESTAPI("Run 3",
+		vSolution = vProblem.run(a_SolverName)
+	)
+
+	TESTAPI2FALSE("Check Run 3",
+		a_Test.checkResults("Reference_run2")
+	)
+	
+	return 0;
+}
 
 int main()
 {
+	StudyCTest vTest("formation_cairn", "readStudy");
+
 	CairnAPI m_Cairn;
-	CairnAPI::OptimProblemAPI m_Problem;
+	
+	// Test with solver Cplex, if not exist test with solver Highs
+	int vRet = vTest.readStudyChangeSolver(m_Cairn, "Cplex");
+	if (vRet != noError && vRet != errType) return vRet;
+	bool vTestCplexHighs = (vRet == noError);
 
-	//File PathsPersee
-	string const StudyRoot = TEST_RESULTS + (std::string)"/readStudy/";
-	std::string vFileName = StudyRoot + (std::string)"/formation_cairn.json";
-	string const TimeseriesFileName = StudyRoot + (std::string)"/formation_cairn_dataseries.csv";
-	string const ResultFileName = StudyRoot + "formation_cairn_results_Results.csv";
-
-	if (fs::exists(StudyRoot)) {
-		fs::remove_all(StudyRoot);
-	}
-	if (!fs::exists(TEST_RESULTS)) {
-		fs::create_directory(TEST_RESULTS);
-	}
-	fs::create_directory(StudyRoot);
-	fs::copy_file(TEST_DATA + (std::string)"/formation_cairn.json", vFileName);
-	fs::copy_file(TEST_DATA + (std::string)"/formation_cairn_dataseries.csv", TimeseriesFileName);
-
-	string const ReferenceResultFileName = TEST_DATA + (std::string)"/formation_cairn_Results_Reference.csv";
-	string const ReferenceResultFileName_2 = TEST_DATA + (std::string)"/formation_cairn_Results_Reference_run2.csv";
-
-	TESTAPI("read study file from the file path: " + vFileName,
-		m_Problem = m_Cairn.read_Study(vFileName)
-	)
+	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.get_Study();
 
 	//Verify the values of some parameters with static ref values
 
-	CairnAPI::MilpComponentAPI vELY_PEM = m_Problem.get_Component("ELY_PEM");
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
 	TESTAPI2("Verify the value of ELY_PEM.Capex.",
-		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 480000.0, eDouble)
+		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
 	TESTAPI2("Verify the value of ELY_PEM.GWP#EnvGreyContentCoefficient_A.",
-		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A"), 100.0, eDouble)
+		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A"), 100.0, eDouble)
 	)
 
 	TESTAPI2("Verify the value of ELY_PEM.ModelClass.",
-		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("ModelClass"), std::string("Electrolyzer"), eString)
+		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("ModelClass"), std::string("Electrolyzer"), eString)
 	)
 
-	CairnAPI::MilpPortAPI ely_pem_PortL0 = vELY_PEM.get_Port("PortL0");
+	std::shared_ptr < CairnAPI::MilpPortAPI> ely_pem_PortL0 = vELY_PEM->get_Port("PortL0");
 	TESTAPI2("Verify the value of ELY_PEM.PortL0.coeff",
-		TestUtils::compare_scalar(ely_pem_PortL0.get_SettingValue("Coeff"), 1.0, eDouble)
+		TestUtils::compare_scalar(ely_pem_PortL0->get_SettingValue("Coeff"), 1.0, eDouble)
 	)
 
 	TESTAPI2("Verify the value of ELY_PEM.PortL0.offset",
-		TestUtils::compare_scalar(ely_pem_PortL0.get_SettingValue("Offset"), 0.0, eDouble)
+		TestUtils::compare_scalar(ely_pem_PortL0->get_SettingValue("Offset"), 0.0, eDouble)
 	)
 
-	CairnAPI::MilpComponentAPI elec_grid = m_Problem.get_Component("Elec_Grid");
+	std::shared_ptr<CairnAPI::MilpComponentAPI> elec_grid = m_Problem.get_Component("Elec_Grid");
 	TESTAPI2("Verify the value of Elec_Grid.PortR0.GWP#EnvContentCoefficient_A.",
-		TestUtils::compare_scalar(elec_grid.get_SettingValue("PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A"), 20.0, eDouble)
+		TestUtils::compare_scalar(elec_grid->get_SettingValue("PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A"), 20.0, eDouble)
 	)
 
-	CairnAPI::MilpComponentAPI h2_tank = m_Problem.get_Component("H2_Tank");
+	std::shared_ptr<CairnAPI::MilpComponentAPI> h2_tank = m_Problem.get_Component("H2_Tank");
 	TESTAPI2("Verify the value of H2_Tank.MaxFlowCharge.",
-		TestUtils::compare_scalar(h2_tank.get_SettingValue("MaxFlowCharge"), 1100.0, eDouble)
+		TestUtils::compare_scalar(h2_tank->get_SettingValue("MaxFlowCharge"), 1100.0, eDouble)
 	)
 
-	CairnAPI::EnergyVectorAPI evH2 = m_Problem.get_EnergyCarrier("H2");
+	std::shared_ptr < CairnAPI::EnergyVectorAPI> evH2 = m_Problem.get_EnergyCarrier("H2");
 	TESTAPI2("Verify the value of H2.LHV.",
-		TestUtils::compare_scalar(evH2.get_SettingValue("LHV"), 0.03332, eDouble)
+		TestUtils::compare_scalar(evH2->get_SettingValue("LHV"), 0.03332, eDouble)
 	)
 
 	TESTAPI2("Verify the value of H2.RHO.",
-		TestUtils::compare_scalar(evH2.get_SettingValue("RHO"), 0.0899, eDouble)
+		TestUtils::compare_scalar(evH2->get_SettingValue("RHO"), 0.0899, eDouble)
 	)
 
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
 	TESTAPI2("Verify the value of SimulationControl.UseExtrapolationFactor.",
-		TestUtils::compare_scalar(vSimulationControl.get_SettingValue("UseExtrapolationFactor"), true, eBool)
+		TestUtils::compare_scalar(vSimulationControl->get_SettingValue("UseExtrapolationFactor"), true, eBool)
 	)//true is the default value. Parameter UseExtrapolationFactor doesn't exist in formation_cairn.json
 
-	CairnAPI::SolverAPI vSolver = m_Problem.get_Solver();
+	std::shared_ptr < CairnAPI::SolverAPI> vSolver = m_Problem.get_Solver();
 	TESTAPI2("Verify the value of Solver.NbSolToKeep.",
-		TestUtils::compare_scalar(vSolver.get_SettingValue("NbSolToKeep"), 1, eInt)
+		TestUtils::compare_scalar(vSolver->get_SettingValue("NbSolToKeep"), 1, eInt)
 	)//1 is the default value. Parameter NbSolToKeep doesn't exist in formation_cairn.json
 
-	TESTAPI2("Verify the value of Solver.Gap.",
-		TestUtils::compare_scalar(vSolver.get_SettingValue("Gap"), 0.001, eDouble)
-	)
+	
 
 	std::vector<std::string> ConsideredEnvironmentalImpacts = { "Climate change#Global Warming Potential 100",
 																"Acidification#Accumulated Exceedance" };
 
-	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
 	TESTAPI2("Verify the value of TecEco.ConsideredEnvironmentalImpacts.",
-		TestUtils::compare_scalar(vTecEcoAnalysis.get_SettingValue("ConsideredEnvironmentalImpacts"), ConsideredEnvironmentalImpacts, eStringList)
+		TestUtils::compare_scalar(vTecEcoAnalysis->get_SettingValue("ConsideredEnvironmentalImpacts"), ConsideredEnvironmentalImpacts, eStringList)
 	)
 		
 
 	//Execute a simulation then compare the result with the referance
 
-	TESTAPI("Read the Timeseries from the file path: " + TimeseriesFileName,
-		m_Problem.add_TimeSeries(TimeseriesFileName)
+	TESTAPI("Read the Timeseries from the file path: " + vTest.get_TimeseriesFileName(),
+		m_Problem.add_TimeSeries(vTest.get_TimeseriesFileName())
 	)
 
-	CairnAPI::SolutionAPI vSolution;
+	if (vTestCplexHighs) {
+		// Test Cplex and Highs
 
-	TESTAPI("Run 1",
-		vSolution = m_Problem.run()
-	)
+		TESTAPI2("Verify the value of Solver.Gap.",
+			TestUtils::compare_scalar(vSolver->get_SettingValue("Gap"), 0.001, eDouble)
+		)
+		int vRetTest = test(vTest, m_Cairn, "");
+		if (vRetTest) return vRetTest;
 
-	TESTAPI2("Compare results", 
-		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
-	)
+		vRetTest = vTest.readStudyChangeSolver(m_Cairn, "Highs", true);
+		if (vRetTest) return vRetTest;
 
-	TESTAPI("Export time series", vSolution.exportTimeSeries())
-
-	TESTAPI("Modify FutureSize",
-		vSimulationControl.set_SettingValues({
-			{"FutureSize", 156}
-		})
-	)
-
-	TESTAPI("Run 2",
-		m_Problem.run()
-	)
-
-	TESTAPI2("Compare results for run 2",
-		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName_2)
-	)
-
-	TESTAPI("Run 3",
-		vSolution = m_Problem.run()
-	)
-
-	TESTAPI2("Compare results from the last two runs",
-		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName_2)
-	)
+		vRetTest = test(vTest, m_Cairn, "Highs");
+		if (vRetTest) return vRetTest;
+	}
+	else {
+		// Test only Highs
+		int vRetTest = test(vTest, m_Cairn, "");
+		if (vRetTest) return vRetTest;
+	}
 
 	return noError;
 }

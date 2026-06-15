@@ -33,53 +33,145 @@ void MultiConverter::computeInitialData()
 {
     setMinValue(mMinSize);
     setMaxValue(mMaxPower);
+
+    readUpperBounds();
 }
+
+void MultiConverter::readUpperBounds()
+{
+    if (mUpperBoundsFile.empty())
+        return;
+
+    const std::string absoluteFileName = getAbsoluteFileName(mUpperBoundsFile);
+
+    // ---------------------------------------------------------------------
+    // Load file if it exists
+    // ---------------------------------------------------------------------
+    if (!fs::exists(absoluteFileName)) {
+        cWarning() << Name() << ": upper-bounds file \"" << absoluteFileName
+            << "\" not found.";
+        return;
+    }
+
+    const auto csvData = CairnUtils::readFromCsvFile(absoluteFileName, ";");
+    if (csvData.empty()) {
+        cWarning() << Name() << ": upper-bounds file \"" << absoluteFileName
+            << "\" is empty.";
+        return;
+    }
+
+    // Extract first column only
+    mUpperBounds = GS::getDataArray(csvData, 0, 0);
+
+    // ---------------------------------------------------------------------
+    // Validate size
+    // ---------------------------------------------------------------------
+    const std::size_t expectedSize = mNbInputFlux + mNbOutputFlux;
+
+    if (mUpperBounds.size() == expectedSize)
+        return; // all good
+
+    // ---------------------------------------------------------------------
+    // Special case: file contains a single value -> use it for all
+    // ---------------------------------------------------------------------
+    if (mUpperBounds.size() == 1) {
+        const double k = mUpperBounds[0];
+        mUpperBounds.assign(expectedSize, k);
+
+        cWarning() << Name() << ": upper-bounds file \"" << absoluteFileName
+            << "\" contains a single value (" << k
+            << "). Using this value to all "
+            << expectedSize << " bounds.";
+        return;
+    }
+
+    // ---------------------------------------------------------------------
+    // Invalid size -> error
+    // ---------------------------------------------------------------------
+    throw Cairn_Exception(
+        Name() + ": invalid upper-bounds file \"" + absoluteFileName +
+        "\". Expected " + std::to_string(expectedSize) +
+        " values (NbInputFlux + NbOutputFlux), but found " +
+        std::to_string(mUpperBounds.size()),
+        -1
+    );
+}
+
+//double MultiConverter::smallestNonZeroCoefficient(const Eigen::MatrixXd& matrix) {
+//    double minCoeff = std::numeric_limits<double>::infinity();
+//
+//    for (int i = 0; i < matrix.rows(); ++i) {
+//        for (int j = 0; j < matrix.cols(); ++j) {
+//            double value = matrix(i, j);
+//            if (value != 0 && std::abs(value) < minCoeff) {
+//                minCoeff = std::abs(value);
+//            }
+//        }
+//    }
+//
+//    if (std::isinf(minCoeff)) {
+//        throw Cairn_Exception("Error: the matrix must not be Zero", -1);
+//    }
+//
+//    return minCoeff;
+//}
 
 void MultiConverter::computeModelContribution()
 {
     Eigen::MatrixXd matrixEigenA = convertToEigen(mCoefficient_A);
- 
+
     //A,B,C,D is the matrixEigenA decomposed by blocks [A B ; C D]
     Eigen::MatrixXd A = matrixEigenA.topLeftCorner(mNbInputFlux, mNbInputFlux);
     Eigen::MatrixXd B = matrixEigenA.topRightCorner(mNbInputFlux, matrixEigenA.cols() - mNbInputFlux);
     Eigen::MatrixXd C = matrixEigenA.bottomLeftCorner(mNbOutputFlux, mNbInputFlux);
     Eigen::MatrixXd D = matrixEigenA.bottomRightCorner(mNbOutputFlux, mNbOutputFlux);
 
-    double norm_A = norm1(matrixEigenA);
-    double norm_B = norm1(B);
-
-    std::vector <double> maxInput;
-    for (int i = 0; i < mNbInputFlux; i++) {
-        maxInput.push_back(norm_B / smallestNonZeroCoefficient(A) * fabs(mMaxPower));
-    }
-
-    std::vector <double> maxOutput;
-    for (int i = 0; i < mNbOutputFlux; i++) {
-        maxOutput.push_back(norm_A / smallestNonZeroCoefficient(matrixEigenA) * fabs(mMaxPower));
-    }
 
     // effective output production on each port (thermal / electrical) : 1D variable
+
+    //const double norm_B = norm1(B);
+    //const double smallestNonZeroCoeff_A = smallestNonZeroCoefficient(A);
+    //const double maxInput = (norm_B / smallestNonZeroCoeff_A) * fabs(mMaxPower);
+
+    //const double norm_A = norm1(matrixEigenA);
+    //const double smallestNonZeroCoeff_EigenA = smallestNonZeroCoefficient(matrixEigenA);
+    //const double maxOutput = (norm_A / smallestNonZeroCoeff_EigenA) * fabs(mMaxPower);
+
     mInput.resize(mNbInputFlux);
-    for (int i = 0; i < mNbInputFlux; i++) {
-        addVariable(mInput[i], "Fluxin"+std::to_string(i), 0., maxInput[i]);
-    }
-
     mOutput.resize(mNbOutputFlux);
-    for (int j = 0; j < mNbOutputFlux; j++) {
-        addVariable(mOutput[j], "Fluxout_"+std::to_string(j), 0., maxOutput[j]);
+
+    if (mUpperBounds.empty()) {
+        // inputs: no upper bound
+        for (int i = 0; i < mNbInputFlux; i++) {
+            addVariable(mInput[i], "Fluxin_" + std::to_string(i), 0.0);
+        }
+        // outputs
+        for (int j = 0; j < mNbOutputFlux; j++) {
+            if(j == 0) // first output: upper bound = getMaxBound()
+                addVariable(mOutput[j], "Fluxout_" + std::to_string(j), 0.0, getMaxBound());
+            else //output j > 0: upper bound = getMaxBound()
+                addVariable(mOutput[j], "Fluxout_" + std::to_string(j), 0.0);
+        }
+    }
+    else {
+        for (int i = 0; i < mNbInputFlux; i++) {
+            addVariable(mInput[i], "Fluxin_" + std::to_string(i), 0.0, std::fabs(mMaxPower) * mUpperBounds[i]);
+        }
+
+        for (int j = 0; j < mNbOutputFlux; j++) {
+            addVariable(mOutput[j], "Fluxout_" + std::to_string(j), 0.0, std::fabs(mMaxPower) * mUpperBounds[mNbInputFlux + j]);
+        }
     }
 
-    for (int i = 0; i < mNbInputFlux; i++)  {
-        for (uint64_t t = 0; t < mHorizon; ++t) {
+    for (uint64_t t = 0; t < mHorizon; ++t) {
+        for (int i = 0; i < mNbInputFlux; i++) {
             mExpInput[i][t] += mInput[i](t);
         }
-    }
 
-    for (int i = 0; i < mNbOutputFlux; i++) {
-        for (uint64_t t = 0; t < mHorizon; ++t) {
+        for (int i = 0; i < mNbOutputFlux; i++) {
             mExpOutput[i][t] += mOutput[i](t);
         }
-    }   
+    }
 
     // \sum_j a_ij x_j + \sum_j a_ij y_j = 0
     for (int i = 0; i < mNbOutputFlux + mNbInputFlux; i++) 
@@ -168,7 +260,7 @@ void MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vect
     }
 }
 
-void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vector<double>& vector, const bool& isVectorD)
+void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vector<double>& aVector, const bool& isVectorD)
 {
     /*
     * It is not mandatory to provide files for matrices B and C.
@@ -192,7 +284,7 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
     if (fs::exists(absoluteFileName)) {
         std::vector<std::vector<std::string>> data_Inputs_B = CairnUtils::readFromCsvFile(absoluteFileName, ";");
         if (!data_Inputs_B.empty()) {
-            vector = GS::getDataArray(data_Inputs_B, 0, 0); //take only the first column
+            aVector = GS::getDataArray(data_Inputs_B, 0, 0); //take only the first column
         }
     }
     else {
@@ -201,11 +293,11 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
     }
 
     //verify that the size of the vector is mNbInputFlux + mNbOutputFlux
-    if (vector.size() != mNbInputFlux + mNbOutputFlux) {
-        if (vector.size() == 1) {
+    if (aVector.size() != mNbInputFlux + mNbOutputFlux) {
+        if (aVector.size() == 1) {
             //resize the vector using equal values
-            double k = vector[0];
-            vector.resize(mNbOutputFlux + mNbInputFlux, k);
+            double k = aVector[0];
+            aVector.resize(mNbOutputFlux + mNbInputFlux, k);
             cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + matrixName + "\" contains only one value: " + std::to_string(k)
                 + ". All the values of the matrix will be set to " + std::to_string(k);
         }

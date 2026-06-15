@@ -1,6 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
+#include "StudyCTest.h"
 #include "UtilsJson.h"
 
 using namespace std;
@@ -14,6 +14,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File PathsPersee
@@ -62,8 +66,8 @@ int main()
 	// -------------- Run 2 with FutureSize = 10 --------------
 
 	// Change FutureSize to 10
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
-	TESTAPI("Change FutureSize to 10", vSimulationControl.set_SettingValue("FutureSize", 10))
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
+	TESTAPI("Change FutureSize to 10", vSimulationControl->set_SettingValue("FutureSize", 10))
 
 	// Run 2
 	TESTAPI("Run 2", vSolution = m_Problem.run(run2Dir))

@@ -4,7 +4,9 @@
 
 using namespace GS ;
 
-SimulationControl::SimulationControl(CairnObject* ap_Parent, const std::string& aSimulationControlName, const std::map<std::string, std::string> &aComponent):
+SimulationControl::SimulationControl(CairnObject* ap_Parent, 
+    const std::string& aSimulationControlName, 
+    const t_mapParamData& aComponent):
     CairnObject(ap_Parent),
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
@@ -32,30 +34,30 @@ void SimulationControl::declareCompoInputParam()
 
     //bool
     mCompoInputSettings->addParameter("RunUntilSimulationEnd", &mRunUntilSimulationEnd, false, false, true, "When true run until the end of all cycles", "-", "Global_Optim");
-    mCompoInputSettings->addParameter("ExportResultsEveryCycle", &mExportResultsEveryCycle, false, false, true, "When true export a result file (PLAN and HIST) every cycle", "-", "Global_Optim");
     mCompoInputSettings->addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, true, false, true, "When true apply Extrapolation factor", "-", "Global_Optim");
-    mCompoInputSettings->addParameter("ExportResults", &mExportResults, true, false, true, "When true export all results file", "-", "Global_Optim");
-    mCompoInputSettings->addParameter("ShowIndicatorDescription", &mShowIndicatorDescription, false, false, true, "When true add a column for indicators Description in PLAN/HIST", "-", "Global_Optim");
-
-    mCompoInputSettings->addParameter("ExportJson", &mExportJson, false, false, true, "When true export the study architecture as stuydName_self.json file after end of simulation", "-", "Global_Optim");
-    mCompoInputSettings->addParameter("ExportParameters", &mExportParameters, false, false, true, "When true export the mandatory and modified parameters after end of simulation", "-", "Global_Optim");
     mCompoInputSettings->addParameter("CheckTimeSeriesUnits", &mCheckTimeSeriesUnits, true, false, true, "When true check if the timeseries units are correct", "-", "Global_Optim");
+
+    mCompoInputSettings->addParameter("ExportResultsEveryCycle", &mExportResultsEveryCycle, false, false, true, "When true export a result file (PLAN and HIST) every cycle", "-", "ExportOption");
+    mCompoInputSettings->addParameter("ExportResults", &mExportResults, true, false, true, "When true export all results file", "-", "ExportOption");
+    mCompoInputSettings->addParameter("ShowIndicatorDescription", &mShowIndicatorDescription, false, false, true, "When true add a column for indicators Description in PLAN/HIST", "-", "ExportOption");
+    mCompoInputSettings->addParameter("ExportJson", &mExportJson, false, false, true, "When true export the study architecture as stuydName_self.json file after end of simulation", "-", "ExportOption");
+    mCompoInputSettings->addParameter("ExportParameters", &mExportParameters, false, false, true, "When true export the mandatory and modified parameters after end of simulation", "-", "ExportOption");
     //double 
-    mCompoInputSettings->addParameter("TimeStep", &mTimeStep, 3600., true, true, "constant TimeStep of optimization - overwritten by studyName_ListeOfTimeSteps.csv file ", "s", "Global_Optim");
+    mCompoInputSettings->addParameter("TimeStep", &mTimeStep, 3600., true, true, "constant TimeStep of optimization - overwritten by studyName_ListeOfTimeSteps.csv file ", "s", "TimeManagement");
     //int
-    mCompoInputSettings->addParameter("StartTime", &mStartTime, 0, false, true, "Starting time in number of timesteps", "TimeStep", "Global_Optim");
+    mCompoInputSettings->addParameter("StartTime", &mStartTime, 0, false, true, "Starting time in number of timesteps", "TimeStep", "TimeManagement");
     mCompoInputSettings->addParameter("EndTime", &mEndTime, -1, false, true, "End time in number of timesteps - negative value means until the end of the dataseries file", "TimeStep", "Global_Optim");
-    mCompoInputSettings->addParameter("FutureSize", &mFutureSize, 8760, true, true, "Planning horizon in number of timesteps of constant value TimeStep ", "TimeStep", "Global_Optim");
-    mCompoInputSettings->addParameter("NbCycle", &mNbCycle, 1, true, true, "Number of cycles ie rolling horizons to be computed", "-", "Global_Optim");
-    mCompoInputSettings->addParameter("TimeShift", &mTimeShift, 1, true, true, "Rolling horizon shifting in number of timesteps", "TimeStep", "Global_Optim");
-    mCompoInputSettings->addParameter("PastSize", &mPastSize, 1, true, true, "Past horizon in number of timesteps must be greater than or equal to timeshift", "TimeStep", "Global_Optim");
+    mCompoInputSettings->addParameter("FutureSize", &mFutureSize, 8760, true, true, "Planning horizon in number of timesteps of constant value TimeStep ", "TimeStep", "TimeManagement");
+    mCompoInputSettings->addParameter("NbCycle", &mNbCycle, 1, true, true, "Number of cycles ie rolling horizons to be computed", "-", "TimeManagement");
+    mCompoInputSettings->addParameter("TimeShift", &mTimeShift, 1, true, true, "Rolling horizon shifting in number of timesteps", "TimeStep", "TimeManagement");
+    mCompoInputSettings->addParameter("PastSize", &mPastSize, 1, true, true, "Past horizon in number of timesteps must be greater than or equal to timeshift", "TimeStep", "TimeManagement");
     mCompoInputSettings->addParameter("FutureVariableTimestep", &mFutureVariableTimestep, 8760, true, true, "Planning horizon in number of variable timesteps ie number of lines of the variable timestep file studyName_ListeOfTimeSteps.csv ", "-", "RH_MPC_Optim");
     //std::string
-    mCompoInputSettings->addParameter("ReadingMode", &mReadingMode, "Average", false, true, "Reading mode used to read time series values", "-", "Global_Optim");
-    mCompoInputSettings->addParameter("RollingMode", &mRollingMode, "Periodic", false, true, "Reading mode used for rolling horizons", "-", "Global_Optim");
+    mCompoInputSettings->addParameter("ReadingMode", &mReadingMode, "Average", false, true, "Reading mode used to read time series values", "-", "TimeSeriesManagement");
+    mCompoInputSettings->addParameter("RollingMode", &mRollingMode, "Periodic", false, true, "Reading mode used for rolling horizons", "-", "TimeSeriesManagement");
 }
 
-void SimulationControl::setCompoInputParam(const std::map<std::string, std::string>& aComponent) 
+void SimulationControl::setCompoInputParam(const t_mapParamData& aComponent)
 {
     if (aComponent.size() != 0) {
         int ierr1 = mCompoInputParam->readParameters(aComponent);
@@ -67,12 +69,13 @@ void SimulationControl::setCompoInputParam(const std::map<std::string, std::stri
     }
 }
 
-void SimulationControl::doInit(const std::map<std::string, std::string>& aComponent)
+void SimulationControl::doInit(const t_mapParamData& aComponent)
 {
-    if (mGUIData) delete mGUIData;
+    delete mGUIData;
+
     mGUIData = new GUIData(this);
-    mGUIData->doInit("SimulationControl", "SimulationControl", "SimulationControl",
-        { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
+    t_mapParamData extractedParams = CairnUtils::extractGuiParams(aComponent);
+    mGUIData->doInit("SimulationControl", "SimulationControl", "SimulationControl", extractedParams);
 
     declareCompoInputParam();
     setCompoInputParam(aComponent);
@@ -122,7 +125,7 @@ void SimulationControl::jsonSaveGuiComponent(ojson &componentsArray)
     componentsArray.push_back(compoObject) ;
 }
 
-std::map<std::string, ModelParam*> SimulationControl::getParameters()
+std::map<std::string, ModelParam*> SimulationControl::getParameters() 
 {
     std::map<std::string, ModelParam*> paramMap;
 

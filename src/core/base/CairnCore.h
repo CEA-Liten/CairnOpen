@@ -44,6 +44,10 @@ public:
 
     void setStdAloneMode(const bool& abool);
 
+    void addTS(const std::wstring& a_fileName);
+    void addTS(const t_dict& a_TS);
+    bool checkTS(string& a_ErrMsg);
+    void importTS(const int& iShift);
     void importTS(const std::vector<std::string>& aTSfileList, const int& iShift);
     void importTS(const std::vector<std::wstring>&aTSfileList, const int& iShift);
 
@@ -116,6 +120,8 @@ public:
     std::string getGlobalResultsFileName(const int& aNsol) { return mStudy.getScenarioFile("_PLAN.csv", aNsol); }
 
     int getNumCycle() { return mIter; }
+
+    void loadDefUnits() const;
 
 private:
     OptimProblem* mProblem ;

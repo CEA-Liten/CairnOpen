@@ -240,7 +240,7 @@
 				"nodeId": "11601",
 				"nodeName": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"x": 470,
@@ -340,7 +340,7 @@
 						"value": 1
 					},
 					{
-						"key": "Potential",
+						"key": "Voltage",
 						"value": 230
 					},
 					{
@@ -373,7 +373,7 @@
 				"nodeId": "11701",
 				"nodeName": "H2_HP",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "#2b451a",
 				"nodeComment": "",
 				"x": 750,
@@ -473,7 +473,11 @@
 						"value": 0.03332
 					},
 					{
-						"key": "Potential",
+						"key": "Pressure",
+						"value": 200
+					},
+					{
+						"key": "Temperature",
 						"value": 200
 					},
 					{
@@ -509,7 +513,7 @@
 				"nodeId": "11801",
 				"nodeName": "H2_LP",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 610,
@@ -609,7 +613,11 @@
 						"value": 0.03332
 					},
 					{
-						"key": "Potential",
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
 						"value": 30
 					},
 					{
@@ -2030,6 +2038,10 @@
 					{
 						"key": "Losses",
 						"value": 0.01
+					},
+					{
+						"key": "SetManualPowerConsumption",
+						"value": false
 					}
 				],
 				"envImpactsListJson": [],

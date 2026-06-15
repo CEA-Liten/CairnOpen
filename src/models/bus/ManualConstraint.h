@@ -76,9 +76,9 @@ public:
 //----------------------------------------------------------------------------------------------------
     void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue, double aMinIntegrateConstraintBusValue, 
         double aMaxIntegrateConstraintBusValue, double aStrictIntegrateConstraintBusValue, double aMaxFlexIntegrateConstraintBusValue) ;
-//----------------------------------------------------------------------------------------------------
-    void finalizeModelData();
-//----------------------------------------------------------------------------------------------------
+
+    void computeInitialData() override;
+
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance;}
     void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression) ;
     void addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression) ;

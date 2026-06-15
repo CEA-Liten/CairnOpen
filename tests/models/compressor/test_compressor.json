@@ -240,7 +240,7 @@
 				"nodeId": "11601",
 				"nodeName": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"x": 470,
@@ -350,6 +350,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"timeSeriesListJson": [
@@ -373,7 +377,7 @@
 				"nodeId": "11701",
 				"nodeName": "H2_HP",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "#2b451a",
 				"nodeComment": "",
 				"x": 750,
@@ -483,7 +487,12 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 200
 					}
+
 				],
 				"timeSeriesListJson": [
 					{
@@ -509,7 +518,7 @@
 				"nodeId": "11801",
 				"nodeName": "H2_LP",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 610,
@@ -619,6 +628,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 30
 					}
 				],
 				"timeSeriesListJson": [
@@ -2030,6 +2043,10 @@
 					{
 						"key": "Losses",
 						"value": 0.01
+					},
+					{
+						"key": "SetManualPowerConsumption",
+						"value": false
 					}
 				],
 				"envImpactsListJson": [],

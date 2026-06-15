@@ -50,18 +50,7 @@ namespace CairnAPIUtils {
 			cerr << "Error : cannot open the file " << filename << endl;
 			return dataMap;
 		}
-
-		// Read File - string Format
-		std::stringstream buffer;
-		buffer << iFile.rdbuf();
-		string inputData = buffer.str();
-
-		// Close File
-		iFile.close();
-
-		// Parse File - Line-Line
-		std::istringstream iDataStream(inputData);
-		while (std::getline(iDataStream, line))
+		while (std::getline(iFile, line, ';'))
 		{
 			// Parse line with seperator ','			
 			line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
@@ -69,7 +58,7 @@ namespace CairnAPIUtils {
 			std::istringstream iLineStream(line);
 			t_list lineVec;
 
-			while (getline(iLineStream, cell, ','))
+			while (std::getline(iLineStream, cell, ':'))
 			{
 				lineVec.push_back(cell);
 			}
@@ -172,14 +161,6 @@ namespace CairnAPIUtils {
 		return vRet;
 	}
 
-	std::vector<double> getParamVectorValue(const t_value& a_Value)
-	{
-		if (std::holds_alternative<std::vector<double>>(a_Value)) {
-			return std::get<std::vector<double>>(a_Value);
-		}
-		return {};
-	}
-
 	t_value getParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name) {
 		t_value vRet = "parameter doesn't exist";
 		for (auto& vInput : a_Inputs) {
@@ -207,27 +188,19 @@ namespace CairnAPIUtils {
 	}
 
 	bool setParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const t_value& a_Value) {
-		bool vOk = true;
-		std::string vQValue = getParamValue(a_Value);
-		std::vector<double> vVectValue;
-		if (vQValue == "NON_COMPATIBLE") {
-			//try vector of double
-			vVectValue = getParamVectorValue(a_Value);
-		}
 		bool vFind = false;
+
 		for (auto& vInput : a_Inputs) {
-			if (vInput) {
-				if (vQValue != "NON_COMPATIBLE") {
-					vFind = vInput->setParameterValue(a_Name, vQValue);
-				}
-				else {
-					vFind = vInput->setParameterValue(a_Name, vVectValue);
-				}
-				if (vFind) break;
-			}
+			if (!vInput) continue;
+
+			vFind = std::visit([&](const auto& val) -> bool {
+				return vInput->setParameterValue(a_Name, val);
+				}, a_Value);
+
+			if (vFind) break;
 		}
-		vOk &= vFind;
-		return vOk;
+
+		return vFind;
 	}
 
 	bool setParameters(std::vector<InputParam*> a_Inputs, const t_dict& a_Params) {
@@ -281,13 +254,13 @@ namespace CairnAPIUtils {
 		return false;
 	}
 
-	bool setParamComments(std::vector<InputParam*> a_Inputs, const t_dictComment& a_Params) {
-		bool vOk = true;
-		for (auto& vParam : a_Params) {
-			vOk &= setParamComment(a_Inputs, vParam.first, vParam.second);
-		}
-		return vOk;
-	}
+	//bool setParamComments(std::vector<InputParam*> a_Inputs, const t_dictComment& a_Params) {
+	//	bool vOk = true;
+	//	for (auto& vParam : a_Params) {
+	//		vOk &= setParamComment(a_Inputs, vParam.first, vParam.second);
+	//	}
+	//	return vOk;
+	//}
 
 	bool isMandatoryParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name)
 	{

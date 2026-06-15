@@ -1,6 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
+#include "StudyCTest.h"
 #include "UtilsJson.h"
 
 using namespace std;
@@ -14,6 +14,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	string const Study = "test_compressor";

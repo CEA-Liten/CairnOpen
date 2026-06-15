@@ -20,10 +20,10 @@ message("PythonCMD: ${PythonCMD}")
 execute_process(COMMAND ${PythonCMD} install -r "${CAIRNTESTS_HOME}/scripts/reqs_tests.txt")
 
 # uninstall previous cairn
-execute_process(COMMAND ${PythonCMD} uninstall -y cairn)
+execute_process(COMMAND ${PythonCMD} uninstall -y ${PROJECT_NAME})
 
 # get whl file
-file(GLOB FILES_LIST $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/../cairn-${PROJECT_VERSION}*.whl)
+file(GLOB FILES_LIST $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/../${PROJECT_NAME}-${PROJECT_VERSION}*.whl)
 
 # install cairn with the wheel file
 list(LENGTH FILES_LIST nbWhl)

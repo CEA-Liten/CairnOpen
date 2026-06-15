@@ -178,7 +178,7 @@ long OrObject::Add(const std::vector<int>& a_Keys, const std::string& a_Name, co
 
 int OrObject::AddParam(const std::string& a_Name, OrParam* ap_Param)
 {
-    m_mapParams.insert(t_mapKey::value_type(a_Name, m_Params.size()));
+    m_mapParams[a_Name] = m_Params.size();    
     m_Params.push_back(ap_Param);
     return m_Params.size() - 1;
 }

@@ -1,6 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
+#include "StudyCTest.h"
 #include "UtilsJson.h"
 
 using namespace std;

@@ -10,10 +10,10 @@ CairnAPI::EnergyVectorAPI::EnergyVectorAPI(EnergyVector* ap_EnergyVector)
 }
 
 CairnAPI::EnergyVectorAPI::EnergyVectorAPI(const OptimProblemAPI& a_Problem, 
-	const std::string& a_Name, const std::string& a_Type)
+	const std::string& a_Name, const std::string& a_Type, const std::string& a_TechnoType)
 	: CairnAPI::ObjectAPI()
 {
-	*this = a_Problem.create_EnergyCarrier(a_Name, a_Type);
+	*this = *a_Problem.create_EnergyCarrier(a_Name, a_Type, a_TechnoType);
 }
 
 EnergyVector* CairnAPI::EnergyVectorAPI::get_EnergyVector() const
@@ -35,20 +35,29 @@ std::string CairnAPI::EnergyVectorAPI::get_Type() const
 	return "";
 }
 
+std::string CairnAPI::EnergyVectorAPI::get_TechnoType() const
+{
+	if (m_Object) {
+		EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
+		return pEnergyVector->TechnoType();
+	}
+	return "";
+}
+
+
 // Set the value of a parameter
 void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance)
 {	
 	ECodeError vRet = noError;
 	if (m_Object) {
-		try
-		{
+		try {
 			CairnAPI::ObjectAPI::set_SettingValue(a_SettingName, a_SettingValue);
-			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
-			bool vOk = pEnergyVector->InitEnergyVectorParam();
+			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;	
+			const std::string value = CairnAPIUtils::getParamValue(a_SettingValue);
+			bool vOk = pEnergyVector->updateCompoParamMap(a_SettingName, "value", value);
 			vRet = (vOk) ? noError : errParam;
 		}
-		catch (const std::exception&)
-		{
+		catch (const std::exception&) {
 			vRet = errParam;
 		}
 	}	
@@ -59,18 +68,38 @@ void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingNam
 void CairnAPI::EnergyVectorAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
 	ECodeError vRet = noError;
+
 	if (m_Object) {
-		try
-		{
-			CairnAPI::ObjectAPI::set_SettingValues(a_SettingValues);
-			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
-			bool vOk = pEnergyVector->InitEnergyVectorParam();
-			vRet = (vOk) ? noError : errParam;
+		try {
+			for (const auto& kv : a_SettingValues) {
+				const std::string& name = kv.first;
+				const t_value& value = kv.second;
+
+				set_SettingValue(name, value);
+			}
 		}
-		catch (const std::exception&)
-		{
+		catch (const std::exception&) {
 			vRet = errParam;
 		}
-	}	
-	CairnAPIUtils::setError(vRet);	
+	}
+
+	CairnAPIUtils::setError(vRet);
+}
+
+// Set the comment of a comment
+void CairnAPI::EnergyVectorAPI::set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, 
+	bool checkExistence)
+{
+	ECodeError vRet = noError;
+	if (m_Object) {
+		try {
+			CairnAPI::ObjectAPI::set_SettingComment(a_SettingName, a_SettingComment, checkExistence);
+			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;
+			pEnergyVector->updateCompoParamMap(a_SettingName, "comment", a_SettingComment);
+		}
+		catch (const std::exception&) {
+			vRet = errParam;
+		}
+	}
+	CairnAPIUtils::setError(vRet);
 }

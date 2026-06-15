@@ -24,7 +24,7 @@ TecEcoAnalysis;Annual replacement costs;0;EUR;ReplacementPart
 TecEcoAnalysis;Annual income;0;EUR;SellPart
 TecEcoAnalysis;Annual buying costs;0;EUR;BuyPart
 Converter;CAPEX;0;EUR;CAPEX
-Converter;is installed;1;-;IsInstalled
+Converter;is installed;0;-;IsInstalled
 Converter;Annual operation cost;0;EUR;OPEX
 Converter;Annual fixed OPEX;0;EUR;PureOPEX
 Converter;Annual variable OPEX;0;EUR;VariableOPEX

@@ -13,10 +13,12 @@ using namespace CairnUtils;
 
 using Eigen::Map;
 
-BusCompo::BusCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent,
-    const std::map < std::string, std::map<std::string, std::string> >& aPorts, 
-    MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
+BusCompo::BusCompo(CairnObject* aParent, 
+    const std::string& aName,
+    const t_mapParamData& aComponent,
+    const std::map < std::string, t_mapParamData>& aPorts,
+    MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory) 
+    : MilpComponent(aParent, aName, aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
 {    
     setObjectType("BusCompo");
 }
@@ -30,7 +32,7 @@ void BusCompo::declareCompoInputParam()
     MilpComponent::declareCompoInputParam(); //Common component input param
 }
 
-void BusCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent)
+void BusCompo::setCompoInputParam(const t_mapParamData& aComponent)
 {
     MilpComponent::setCompoInputParam(aComponent);
 }
@@ -95,12 +97,14 @@ int BusCompo::checkPorts()
     }
 
     // Check Bus own ports
-    int ierr = MilpComponent::checkPorts();
-    if (ierr < 0) return ierr;
+    if (MilpComponent::checkPorts() < 0) {
+        return -1;
+    }
 
     // Check conncetions
-    ierr = checkConnections();
-    if (ierr < 0) return ierr;
+    if (checkConnections() < 0) {
+        return -1;
+    }
 
     return 0;
 }

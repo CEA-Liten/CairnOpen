@@ -42,16 +42,18 @@ typedef SubModel* (*f_submodel)(CairnObject* aParent);
 class CAIRNCORESHARED_EXPORT MilpComponent : public CairnObject
 {
 public:
-    MilpComponent(CairnObject* aParent, std::string aName, MilpData *aMilpData, TecEcoAnalysis *aTecEcoAnalysis,
-        const std::map<std::string, std::string> &aComponent, 
-        const std::map < std::string, std::map<std::string, std::string> > &aPorts={}, 
-        class ModelFactory* aModelFactory=nullptr);
+    MilpComponent(CairnObject* aParent, const std::string& aName, 
+        MilpData *aMilpData, 
+        TecEcoAnalysis *aTecEcoAnalysis,
+        const t_mapParamData& aComponent,
+        const std::map < std::string, t_mapParamData > &aPorts = {},
+        class ModelFactory* aModelFactory = nullptr);
 
     virtual ~MilpComponent();
     
     void initMilpComponent();
 
-    std::string Name() const {return std::string(this->objectName().c_str()); }
+    std::string Name() const {return this->objectName(); }
     void setName(const std::string& name) { this->setObjectName(name); }
 
     std::string Type() const { return mType; } 
@@ -80,7 +82,7 @@ public:
     virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
     void setSubModelEnvImpacts();
 
-    virtual int setParameters();
+    virtual int createRHVariables();
     int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
     void createCompoModel();                              
     void deleteCompoModel();
@@ -93,9 +95,11 @@ public:
     void exportSubmodelIO(Solver* aSolver, int aNsol);  /** Output Data (for link with PEGASE or OUTSIDE) */
     void removeIOs();
     
-    void setBusFluxPortExpression(); /** Fill in expression at BusSameValue port connexion */
-    void setBusFluxPortExpression(MilpPort *port, const double &aSignedCoefficient);                                              /** Fill in expression at BusSameValue port connexion */
-    void setBusSameValuePortExpression();  /** Fill in expression at BusSameValue port connexion */
+    void setBusFluxPortExpression(); 
+    void assignFluxToPort(MilpPort* port, double sign); 
+
+    void setBusSameValuePortExpression(); 
+    void assignPotentialToPort(MilpPort* port);
 
     /* Methods that calls a SubModel function */
     MIPModeler::MIPExpression* getMIPExpression(std::string aExpressionName);
@@ -105,8 +109,11 @@ public:
     virtual void setMIPModel (MIPModeler::MIPModel* aModel) ;                        /** Set pointer to global Optimization Problem Model */
 
     virtual int defineDefaultVarNames();
-    void createOnePort(const std::string& portId, const std::map<std::string, std::string>& portParams);
-    std::string getUniquePortID();
+
+    void createOnePort(const std::string& portId, const t_mapParamData & portParams,
+        EnergyVector* carrier = nullptr);
+
+std::string getUniquePortID();
     const std::vector<MilpPort*> &PortList();
     void addPort(MilpPort* lptrport);
     void removePort(MilpPort* lptrport);
@@ -114,14 +121,17 @@ public:
     MilpPort* getPortByName(const std::string& aPortName);
 
     virtual void declareCompoInputParam();
-    virtual void setCompoInputParam(const std::map<std::string, std::string> aComponent);
-    void initGuiData(const std::map<std::string, std::string>& paramMap);
+    virtual void setCompoInputParam(const t_mapParamData& aComponent);
+    void initGuiData(const t_mapParamData& paramMap);
 
     bool allDefaultPortsHaveVariables();
     void declareIndicators();
 
     bool allDefaultPortsHaveCarriers();
     void declareIOVariables();
+
+    virtual std::vector<std::string> get_IOVarNames() const;
+    virtual std::string get_IOVarDescription(const std::string& varName) const;
 
     virtual void jsonSaveGuiComponent(ojson &componentsArray, const std::string& componentCarrier, 
         const std::vector<std::string>& refLabelList) ;
@@ -187,8 +197,11 @@ public:
     void setXpos(const int& aXpos);
     void setYpos(const int& aYpos);
 
-    void updateCompoParamMap(const std::string& a_SettingName, const t_value& a_SettingValue);
-    void updateCompoParamMap(const t_dict& a_SettingValues);
+    void updateCompoParamMap(const std::string& a_SettingName, 
+        const std::string& a_AttributeName, const std::string& a_AttributeValue);
+
+    void updatePortParamMap(const std::string& portId, const std::string& portName, 
+        const std::string& a_SettingName, const std::string& a_AttributeName, const std::string& a_AttributeValue);
 
     MilpPort* mapDefaultPort(const std::string& portId, const std::map<std::string, std::string>& portParams);
 
@@ -198,7 +211,7 @@ public:
     void createExportListVars(t_mapExchange& a_Export);
     void createPortsExportListVars(t_mapExchange& a_Exchange);
 
-    std::map<std::string, std::string> portDataFromInputFile(const std::string& portId, const std::string& portName);
+    t_mapParamData portData(const std::string& portId, const std::string& portName) const;
 
     void setTecEcoAnalysis(TecEcoAnalysis* mTecEcoAnalysis);
 
@@ -221,6 +234,7 @@ public:
     virtual std::vector<InputParam*> get_TimeSeriesInputParams();
     virtual std::vector<InputParam*> get_EnvImpactInputParams();
     virtual std::vector<InputParam*> get_PortEnvImpactInputParams();
+    virtual InputParam* get_PerfParam();
 
     std::optional<double> getIndicatorValue(const std::string& indicatorName, const std::string& range = "PLAN") const;
     bool isInstalled() const;
@@ -236,8 +250,8 @@ protected:
     TecEcoAnalysis* mTecEcoAnalysis;
 
     // Component settings
-    std::map<std::string, std::string> mComponent ;         /** Map of Topological data from .json */
-    std::map < std::string, std::map<std::string, std::string> > mPorts;  /** Map of port data from .json, portName: std::map<std::string, std::string> */
+    t_mapParamData mComponent ;         /** Map of Topological data from .json */
+    std::map < std::string, t_mapParamData > mPorts;  /** Map of port data from .json, portName: std::map<std::string, std::string> */
 
     int mHistNbHours;          /** nombre d'heures déjà décompté par le passé (permet de faire la bonne actualisation) */
     double mOptimalSize; //Not used anywhere!  /** Optimal size of component, if optimized eg Nominal power, storage capacity...*/
@@ -274,6 +288,9 @@ protected:
     std::string mPublishUserVariable;
     std::string mSubmodelFile; //Do we still need this?!
 
+    int initializeModel();
+    int readPerfMapFiles();
+
     // Time Series
     typedef std::map<std::string, ModelTS> t_mapTS;
     t_mapTS m_timeSeries = {};
@@ -284,6 +301,7 @@ protected:
     class ModelFactory* mModelFactory;
     virtual bool newCompoModel();  
     void createPorts();
+    EnergyVector* getCarrier(const std::string& carrierName);
 };
 
 #endif // MilpComponent_H

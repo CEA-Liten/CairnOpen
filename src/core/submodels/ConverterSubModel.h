@@ -46,6 +46,12 @@ public:
         // ----------- Indicators specific for Converters -----------
 
         mInputIndicators->addIndicator("Installed Size", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Size");
+        if (mWeight < 0) {
+            mInputIndicators->addIndicator("Optimal Weight", &mWeightResult, exp, "Component optimal weight", "-", "Weight");
+        }
+        else {
+            mInputIndicators->addIndicator("Weight", &mWeightResult, exp, "Component weight", "-", "Weight");
+        }
         mInputIndicators->addIndicator("Running time at power >0.", &mRunningTime, exp, "Running time", "h", "RunningTime");
         mInputIndicators->addIndicator("Running time availability", &mRunningTimeAvlblt, exp, "Maximum possible running time", "-", "RunningTimeAvailable");
         if (mUseAgeing) {

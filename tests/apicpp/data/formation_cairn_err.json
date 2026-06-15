@@ -174,7 +174,7 @@
 				"nodeId": "301",
 				"nodeName": "ElectricityDistrib",
 				"nodeTechnoType": "Electrical",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#fabe0c",
 				"nodeComment": "",
 				"x": 330,
@@ -260,6 +260,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 220
 					}
 				],
 				"timeSeriesListJson": [
@@ -279,7 +283,7 @@
 				"nodeId": "251",
 				"nodeName": "H2",
 				"nodeTechnoType": "FluidH2",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 254,
@@ -361,6 +365,14 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
+						"value": 30
 					}
 				],
 				"timeSeriesListJson": [

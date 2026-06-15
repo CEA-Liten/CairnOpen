@@ -18,20 +18,19 @@ using namespace IndicatorNames;
 class CAIRNCORESHARED_EXPORT TechnicalSubModel : public SubModel
 {
 public:
-    TechnicalSubModel(CairnObject* aParent=nullptr);
+    TechnicalSubModel(CairnObject* aParent = nullptr);
     ~TechnicalSubModel();
 
     virtual void setTimeData();
 
     /** -------------------------------------------------------------------------------------------------------------- */
-    void buildModel() override;
+    void buildModel() override final; /* prevent models from overriding buildModel() */
     void setExpInstalled();
     virtual void computeGeometricContribution();   /** MILP Model description : geometric expressions */
     virtual void computeEnvContribution();        /** MILP Model description : environment expressions */
     virtual void computeEconomicalContribution(); /** MILP Model description : economical expressions */
-    void computeNetOpexContribution();            /** Compute Net Opex contribution expression, pureOpex + replacement + varcost */
+    void computeNetOpexContribution();            /** Compute Net Opex contribution expression */
     virtual void computeAgeingModelContribution() { /* only relevant for ConverterSubModel */ };
-    virtual void computeAllContribution();       /** MILP Model description : all expressions */
     virtual void computeDefaultIndicators(const double* optSol);
     void resetHistStoredVaues();
     /** -------------------------------------------------------------------------------------------------------------- */
@@ -48,7 +47,6 @@ public:
         addParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");  
         addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel", "", "EnvironmentModel");  
         addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "GeometryModel");     
-        addParameter("UseWeightOptimization", &mUseWeightOptimization, false, false, true, "Use sizing based on Weight if true", "");  
         addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");    
         addParameter("PiecewiseCapex", &mPiecewiseCapex, false, false, true, "Provide a map of capex and sizes - see performances maps in doc", "", "EcoInvestModel");
         addParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", "GeometryModel");
@@ -90,7 +88,7 @@ public:
         //bool
         addParameter("LPWeightOptimization", &mLPWeightOptimization, false, false, true, "Use integer Weight if false ", ""); /** Use sizing based on Weight if true - default is false*/
         //double 
-        addParameter("Weight", &mWeight, 1., &mUseWeightOptimization, true);	/** Weight of identical component, use negative value for optimization */
+        addParameter("Weight", &mWeight, 1., false, true);	/** Weight of identical component, use negative value for optimization */
         addParameter("LifeTime", &mLifeTime, 1., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");              /** LifeTime in years */ 
         addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", SFunctionUnit({ eFTypeDivision, { pCurrency(), pOptimalSizeUnit() }}), "EcoInvestModel");                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
         addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., false, &mEcoInvestModel, "Multiplicative coefficient on elementary Capex", "-", "EcoInvestModel");  /** Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
@@ -152,20 +150,19 @@ public:
         SubModel::declareDefaultModelInterface();
 
         //General
-        addIO("isInstalled", &mExpInstalled, true, "bool");  /** Binary equals 1 if installed */
+        addIO("isInstalled", &mExpInstalled, true, "bool", "Binary equals 1 if installed");  
 
-        addIO("VariableCosts", &mExpVariableCosts, true, pCurrency());    /** Computed variable costs resulting from material/fuel consumption */
+        addIO("VariableCosts", &mExpVariableCosts, true, pCurrency(), "Computed variable costs resulting from material/fuel consumption");  
         setVariableCostsExpression("VariableCosts");  // defines default expression to be used for VariableCosts computation and use in Economic analysis
 
         //EcoInvestModel
-        addIO("Capex", &mExpCapex, &mEcoInvestModel, mMainCarrier->pFluxUnit()); /** Computed initial investment costs Capex */
-        addIO("Opex", &mExpOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Net Opex */
-        addIO("FixedOpex", &mExpFixedOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit());      /** Computed operational cost Pure Opex */
-        addIO("Replacement", &mExpReplacement, &mEcoInvestModel, mMainCarrier->pFluxUnit());      /** Computed variable replacement cost */
+        addIO("Capex", &mExpCapex, &mEcoInvestModel, mMainCarrier->pFluxUnit(), "Computed initial investment costs Capex");  
+        addIO("Opex", &mExpOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit(), "Computed operational cost Net Opex");     
+        addIO("FixedOpex", &mExpFixedOpex, &mEcoInvestModel, mMainCarrier->pStorageUnit(), "Computed operational cost Fixed Opex");  
+        addIO("Replacement", &mExpReplacement, &mEcoInvestModel, mMainCarrier->pFluxUnit(), "Computed variable replacement cost");  
 
         setCapexExpression("Capex");        // defines default expression to be used for OptimalSize computation and use in Economic analysis
         setOpexExpression("Opex");          // defines default expression to be used for OptimalSize computation and use in Economic analysis
-        setPureOpexExpression("PureOpex");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
         setReplacementExpression("Replacement");  // defines default expression to be used for OptimalSize computation and use in Economic analysis
 
         //EnvironmentModel -- EnvImpact
@@ -177,7 +174,7 @@ public:
         addIO("Mass", &mExpMass, &mGeometryModel, "kg");
 
         //State
-        addControlIO("State", &mExpState, &mAddStateVariable, "bool", &mHistState); /* state of the component : 1 if on 0 if off */
+        addControlIO("State", &mExpState, &mAddStateVariable, "bool", &mHistState, nullptr, true, "state of the component : 1 if on 0 if off");  
         /* Note: ProductionUC uses ControlIO for StartUp and ShutDown */
         addIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool");
         addIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool");
@@ -227,7 +224,7 @@ public:
 
     void addMinimumCapacity(double& aSizeMax); 
 
-    int checkConsistency();
+    int checkConsistency() override;
 
     std::vector<double> getCapexContribution() { return mCapexContribution; }
 
@@ -252,6 +249,9 @@ public:
     }
 
 protected:
+
+    void computeAllContribution();       /** MILP Model description : all expressions */
+
     /** Flags */
     bool mEcoInvestModel;               /** bool indicating use of Economic Model if = true - default to true*/
     bool mEnvironmentModel;             /** bool indicating use of Environment Model if = true - default to true*/
@@ -275,7 +275,7 @@ protected:
 
     /** Expressions */
     MIPModeler::MIPExpression mExpCapex;                        /** Capex contribution expression */
-    MIPModeler::MIPExpression1D mExpOpex;                       /** Net Opex contribution expression, pureOpex + replacement + varcost */
+    MIPModeler::MIPExpression1D mExpOpex;                       /** Net Opex contribution expression */
     MIPModeler::MIPExpression1D mExpFixedOpex;                  /** Pure Opex contribution expression, in fraction of Capex */
     MIPModeler::MIPExpression1D mExpVariableOpex;               /** Variable Opex contribution expression, relative to a ref IO */
 
@@ -292,6 +292,7 @@ protected:
     std::vector<double> mTotalCostFunction;
     std::vector<double> mCapexContribution;
     std::vector<double> mExistence;
+    std::vector<double> mWeightResult;
     std::vector<double> mOpexContribution;
     std::vector<double> mFixedOpexContribution;
     std::vector<double> mVariableOpexContribution;
@@ -301,7 +302,7 @@ protected:
     std::vector<double> mEnvGreyImpactCost;
     //
 
-    double mHistPureOpexContributionDiscounted;
+    double mHistFixedOpexContributionDiscounted;
     double mHistReplacementPartDiscounted;
 
     std::vector<double> mSumUp;

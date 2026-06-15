@@ -119,7 +119,7 @@ Subject To
  cMaxGFxH2O_grid8:               - vMaxFlowH2O_grid + vGFxH2O_grid(8) <= 0
  cMaxGFxH2O_grid9:               - vMaxFlowH2O_grid + vGFxH2O_grid(9) <= 0
  csInstalledH2_load0:            vInstalledH2_load  = 1
- csWeightH2_load0:               vWeightH2_load  = 1
+ csMaxValH2_load0:               vWeightH2_load  = 1
  csBigMInstalledH2_load0:        - vInstalledH2_load + vWeightH2_load <= 0
  csMinSizeInstalledH2_load0:     vWeightH2_load >= 0
  cMSFxH2_load0:                  <= 10000
@@ -267,75 +267,75 @@ Subject To
  csBigMInstalledMultiConverter#10: - 1000 vInstalledMultiConverter#1
                                  + vMaxPowerMultiConverter#1 <= 0
  csMinSizeInstalledMultiConverter#10: vMaxPowerMultiConverter#1 >= 0
- ccEfficiency_0MultiConverter#10: vFluxin0MultiConverter#1(0)
-                                 + vFluxin2MultiConverter#1(0)
+ ccEfficiency_0MultiConverter#10: vFluxin_0MultiConverter#1(0)
+                                 + vFluxin_2MultiConverter#1(0)
                                  - 33.3 vFluxout_0MultiConverter#1(0)
                                  - vFluxout_1MultiConverter#1(0)  = 0
- ccEfficiency_0MultiConverter#11: vFluxin0MultiConverter#1(1)
-                                 + vFluxin2MultiConverter#1(1)
+ ccEfficiency_0MultiConverter#11: vFluxin_0MultiConverter#1(1)
+                                 + vFluxin_2MultiConverter#1(1)
                                  - 33.3 vFluxout_0MultiConverter#1(1)
                                  - vFluxout_1MultiConverter#1(1)  = 0
- ccEfficiency_0MultiConverter#12: vFluxin0MultiConverter#1(2)
-                                 + vFluxin2MultiConverter#1(2)
+ ccEfficiency_0MultiConverter#12: vFluxin_0MultiConverter#1(2)
+                                 + vFluxin_2MultiConverter#1(2)
                                  - 33.3 vFluxout_0MultiConverter#1(2)
                                  - vFluxout_1MultiConverter#1(2)  = 0
- ccEfficiency_0MultiConverter#13: vFluxin0MultiConverter#1(3)
-                                 + vFluxin2MultiConverter#1(3)
+ ccEfficiency_0MultiConverter#13: vFluxin_0MultiConverter#1(3)
+                                 + vFluxin_2MultiConverter#1(3)
                                  - 33.3 vFluxout_0MultiConverter#1(3)
                                  - vFluxout_1MultiConverter#1(3)  = 0
- ccEfficiency_0MultiConverter#14: vFluxin0MultiConverter#1(4)
-                                 + vFluxin2MultiConverter#1(4)
+ ccEfficiency_0MultiConverter#14: vFluxin_0MultiConverter#1(4)
+                                 + vFluxin_2MultiConverter#1(4)
                                  - 33.3 vFluxout_0MultiConverter#1(4)
                                  - vFluxout_1MultiConverter#1(4)  = 0
- ccEfficiency_0MultiConverter#15: vFluxin0MultiConverter#1(5)
-                                 + vFluxin2MultiConverter#1(5)
+ ccEfficiency_0MultiConverter#15: vFluxin_0MultiConverter#1(5)
+                                 + vFluxin_2MultiConverter#1(5)
                                  - 33.3 vFluxout_0MultiConverter#1(5)
                                  - vFluxout_1MultiConverter#1(5)  = 0
- ccEfficiency_0MultiConverter#16: vFluxin0MultiConverter#1(6)
-                                 + vFluxin2MultiConverter#1(6)
+ ccEfficiency_0MultiConverter#16: vFluxin_0MultiConverter#1(6)
+                                 + vFluxin_2MultiConverter#1(6)
                                  - 33.3 vFluxout_0MultiConverter#1(6)
                                  - vFluxout_1MultiConverter#1(6)  = 0
- ccEfficiency_0MultiConverter#17: vFluxin0MultiConverter#1(7)
-                                 + vFluxin2MultiConverter#1(7)
+ ccEfficiency_0MultiConverter#17: vFluxin_0MultiConverter#1(7)
+                                 + vFluxin_2MultiConverter#1(7)
                                  - 33.3 vFluxout_0MultiConverter#1(7)
                                  - vFluxout_1MultiConverter#1(7)  = 0
- ccEfficiency_0MultiConverter#18: vFluxin0MultiConverter#1(8)
-                                 + vFluxin2MultiConverter#1(8)
+ ccEfficiency_0MultiConverter#18: vFluxin_0MultiConverter#1(8)
+                                 + vFluxin_2MultiConverter#1(8)
                                  - 33.3 vFluxout_0MultiConverter#1(8)
                                  - vFluxout_1MultiConverter#1(8)  = 0
- ccEfficiency_0MultiConverter#19: vFluxin0MultiConverter#1(9)
-                                 + vFluxin2MultiConverter#1(9)
+ ccEfficiency_0MultiConverter#19: vFluxin_0MultiConverter#1(9)
+                                 + vFluxin_2MultiConverter#1(9)
                                  - 33.3 vFluxout_0MultiConverter#1(9)
                                  - vFluxout_1MultiConverter#1(9)  = 0
- ccEfficiency_1MultiConverter#10: vFluxin0MultiConverter#1(0)
-                                 + 0.5 vFluxin2MultiConverter#1(0)
+ ccEfficiency_1MultiConverter#10: vFluxin_0MultiConverter#1(0)
+                                 + 0.5 vFluxin_2MultiConverter#1(0)
                                  - 19.8 vFluxout_0MultiConverter#1(0)  = 0
- ccEfficiency_1MultiConverter#11: vFluxin0MultiConverter#1(1)
-                                 + 0.5 vFluxin2MultiConverter#1(1)
+ ccEfficiency_1MultiConverter#11: vFluxin_0MultiConverter#1(1)
+                                 + 0.5 vFluxin_2MultiConverter#1(1)
                                  - 19.8 vFluxout_0MultiConverter#1(1)  = 0
- ccEfficiency_1MultiConverter#12: vFluxin0MultiConverter#1(2)
-                                 + 0.5 vFluxin2MultiConverter#1(2)
+ ccEfficiency_1MultiConverter#12: vFluxin_0MultiConverter#1(2)
+                                 + 0.5 vFluxin_2MultiConverter#1(2)
                                  - 19.8 vFluxout_0MultiConverter#1(2)  = 0
- ccEfficiency_1MultiConverter#13: vFluxin0MultiConverter#1(3)
-                                 + 0.5 vFluxin2MultiConverter#1(3)
+ ccEfficiency_1MultiConverter#13: vFluxin_0MultiConverter#1(3)
+                                 + 0.5 vFluxin_2MultiConverter#1(3)
                                  - 19.8 vFluxout_0MultiConverter#1(3)  = 0
- ccEfficiency_1MultiConverter#14: vFluxin0MultiConverter#1(4)
-                                 + 0.5 vFluxin2MultiConverter#1(4)
+ ccEfficiency_1MultiConverter#14: vFluxin_0MultiConverter#1(4)
+                                 + 0.5 vFluxin_2MultiConverter#1(4)
                                  - 19.8 vFluxout_0MultiConverter#1(4)  = 0
- ccEfficiency_1MultiConverter#15: vFluxin0MultiConverter#1(5)
-                                 + 0.5 vFluxin2MultiConverter#1(5)
+ ccEfficiency_1MultiConverter#15: vFluxin_0MultiConverter#1(5)
+                                 + 0.5 vFluxin_2MultiConverter#1(5)
                                  - 19.8 vFluxout_0MultiConverter#1(5)  = 0
- ccEfficiency_1MultiConverter#16: vFluxin0MultiConverter#1(6)
-                                 + 0.5 vFluxin2MultiConverter#1(6)
+ ccEfficiency_1MultiConverter#16: vFluxin_0MultiConverter#1(6)
+                                 + 0.5 vFluxin_2MultiConverter#1(6)
                                  - 19.8 vFluxout_0MultiConverter#1(6)  = 0
- ccEfficiency_1MultiConverter#17: vFluxin0MultiConverter#1(7)
-                                 + 0.5 vFluxin2MultiConverter#1(7)
+ ccEfficiency_1MultiConverter#17: vFluxin_0MultiConverter#1(7)
+                                 + 0.5 vFluxin_2MultiConverter#1(7)
                                  - 19.8 vFluxout_0MultiConverter#1(7)  = 0
- ccEfficiency_1MultiConverter#18: vFluxin0MultiConverter#1(8)
-                                 + 0.5 vFluxin2MultiConverter#1(8)
+ ccEfficiency_1MultiConverter#18: vFluxin_0MultiConverter#1(8)
+                                 + 0.5 vFluxin_2MultiConverter#1(8)
                                  - 19.8 vFluxout_0MultiConverter#1(8)  = 0
- ccEfficiency_1MultiConverter#19: vFluxin0MultiConverter#1(9)
-                                 + 0.5 vFluxin2MultiConverter#1(9)
+ ccEfficiency_1MultiConverter#19: vFluxin_0MultiConverter#1(9)
+                                 + 0.5 vFluxin_2MultiConverter#1(9)
                                  - 19.8 vFluxout_0MultiConverter#1(9)  = 0
  ccEfficiency_2MultiConverter#10: - 31.99 vFluxout_0MultiConverter#1(0)
                                  + 4.032 vFluxout_2MultiConverter#1(0)  = 0
@@ -357,25 +357,25 @@ Subject To
                                  + 4.032 vFluxout_2MultiConverter#1(8)  = 0
  ccEfficiency_2MultiConverter#19: - 31.99 vFluxout_0MultiConverter#1(9)
                                  + 4.032 vFluxout_2MultiConverter#1(9)  = 0
- ccEfficiency_3MultiConverter#10: 4.032 vFluxin1MultiConverter#1(0)
+ ccEfficiency_3MultiConverter#10: 4.032 vFluxin_1MultiConverter#1(0)
                                  - 36 vFluxout_0MultiConverter#1(0)  = 0
- ccEfficiency_3MultiConverter#11: 4.032 vFluxin1MultiConverter#1(1)
+ ccEfficiency_3MultiConverter#11: 4.032 vFluxin_1MultiConverter#1(1)
                                  - 36 vFluxout_0MultiConverter#1(1)  = 0
- ccEfficiency_3MultiConverter#12: 4.032 vFluxin1MultiConverter#1(2)
+ ccEfficiency_3MultiConverter#12: 4.032 vFluxin_1MultiConverter#1(2)
                                  - 36 vFluxout_0MultiConverter#1(2)  = 0
- ccEfficiency_3MultiConverter#13: 4.032 vFluxin1MultiConverter#1(3)
+ ccEfficiency_3MultiConverter#13: 4.032 vFluxin_1MultiConverter#1(3)
                                  - 36 vFluxout_0MultiConverter#1(3)  = 0
- ccEfficiency_3MultiConverter#14: 4.032 vFluxin1MultiConverter#1(4)
+ ccEfficiency_3MultiConverter#14: 4.032 vFluxin_1MultiConverter#1(4)
                                  - 36 vFluxout_0MultiConverter#1(4)  = 0
- ccEfficiency_3MultiConverter#15: 4.032 vFluxin1MultiConverter#1(5)
+ ccEfficiency_3MultiConverter#15: 4.032 vFluxin_1MultiConverter#1(5)
                                  - 36 vFluxout_0MultiConverter#1(5)  = 0
- ccEfficiency_3MultiConverter#16: 4.032 vFluxin1MultiConverter#1(6)
+ ccEfficiency_3MultiConverter#16: 4.032 vFluxin_1MultiConverter#1(6)
                                  - 36 vFluxout_0MultiConverter#1(6)  = 0
- ccEfficiency_3MultiConverter#17: 4.032 vFluxin1MultiConverter#1(7)
+ ccEfficiency_3MultiConverter#17: 4.032 vFluxin_1MultiConverter#1(7)
                                  - 36 vFluxout_0MultiConverter#1(7)  = 0
- ccEfficiency_3MultiConverter#18: 4.032 vFluxin1MultiConverter#1(8)
+ ccEfficiency_3MultiConverter#18: 4.032 vFluxin_1MultiConverter#1(8)
                                  - 36 vFluxout_0MultiConverter#1(8)  = 0
- ccEfficiency_3MultiConverter#19: 4.032 vFluxin1MultiConverter#1(9)
+ ccEfficiency_3MultiConverter#19: 4.032 vFluxin_1MultiConverter#1(9)
                                  - 36 vFluxout_0MultiConverter#1(9)  = 0
  ccEfficiency_4MultiConverter#10:  = 0
  ccEfficiency_4MultiConverter#11:  = 0
@@ -397,6 +397,26 @@ Subject To
  ccEfficiency_5MultiConverter#17:  = 0
  ccEfficiency_5MultiConverter#18:  = 0
  ccEfficiency_5MultiConverter#19:  = 0
+ ccPowMax_0MultiConverter#10:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(0) <= 0
+ ccPowMax_0MultiConverter#11:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(1) <= 0
+ ccPowMax_0MultiConverter#12:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(2) <= 0
+ ccPowMax_0MultiConverter#13:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(3) <= 0
+ ccPowMax_0MultiConverter#14:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(4) <= 0
+ ccPowMax_0MultiConverter#15:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(5) <= 0
+ ccPowMax_0MultiConverter#16:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(6) <= 0
+ ccPowMax_0MultiConverter#17:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(7) <= 0
+ ccPowMax_0MultiConverter#18:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(8) <= 0
+ ccPowMax_0MultiConverter#19:    - vMaxPowerMultiConverter#1
+                                 + vFluxout_0MultiConverter#1(9) <= 0
  csInstalledO2_prod0:            vInstalledO2_prod  = 1
  csMaxValO2_prod0:               vMaxFlowO2_prod  = 10000
  csBigMInstalledO2_prod0:        - 10000 vInstalledO2_prod + vMaxFlowO2_prod
@@ -432,66 +452,66 @@ Subject To
  cMaxGFxO2_prod7:                - vMaxFlowO2_prod + vGFxO2_prod(7) <= 0
  cMaxGFxO2_prod8:                - vMaxFlowO2_prod + vGFxO2_prod(8) <= 0
  cMaxGFxO2_prod9:                - vMaxFlowO2_prod + vGFxO2_prod(9) <= 0
- cSNodeLaw#10:                   vGFxElec_grid(0) - vFluxin0MultiConverter#1(0)
+ cSNodeLaw#10:                   vGFxElec_grid(0)
+                                 - vFluxin_0MultiConverter#1(0)  = 0
+ cSNodeLaw#11:                   vGFxElec_grid(1)
+                                 - vFluxin_0MultiConverter#1(1)  = 0
+ cSNodeLaw#12:                   vGFxElec_grid(2)
+                                 - vFluxin_0MultiConverter#1(2)  = 0
+ cSNodeLaw#13:                   vGFxElec_grid(3)
+                                 - vFluxin_0MultiConverter#1(3)  = 0
+ cSNodeLaw#14:                   vGFxElec_grid(4)
+                                 - vFluxin_0MultiConverter#1(4)  = 0
+ cSNodeLaw#15:                   vGFxElec_grid(5)
+                                 - vFluxin_0MultiConverter#1(5)  = 0
+ cSNodeLaw#16:                   vGFxElec_grid(6)
+                                 - vFluxin_0MultiConverter#1(6)  = 0
+ cSNodeLaw#17:                   vGFxElec_grid(7)
+                                 - vFluxin_0MultiConverter#1(7)  = 0
+ cSNodeLaw#18:                   vGFxElec_grid(8)
+                                 - vFluxin_0MultiConverter#1(8)  = 0
+ cSNodeLaw#19:                   vGFxElec_grid(9)
+                                 - vFluxin_0MultiConverter#1(9)  = 0
+ cSNodeLaw#20:                   vGFxH2O_grid(0) - vFluxin_1MultiConverter#1(0)
                                   = 0
- cSNodeLaw#11:                   vGFxElec_grid(1) - vFluxin0MultiConverter#1(1)
+ cSNodeLaw#21:                   vGFxH2O_grid(1) - vFluxin_1MultiConverter#1(1)
                                   = 0
- cSNodeLaw#12:                   vGFxElec_grid(2) - vFluxin0MultiConverter#1(2)
+ cSNodeLaw#22:                   vGFxH2O_grid(2) - vFluxin_1MultiConverter#1(2)
                                   = 0
- cSNodeLaw#13:                   vGFxElec_grid(3) - vFluxin0MultiConverter#1(3)
+ cSNodeLaw#23:                   vGFxH2O_grid(3) - vFluxin_1MultiConverter#1(3)
                                   = 0
- cSNodeLaw#14:                   vGFxElec_grid(4) - vFluxin0MultiConverter#1(4)
+ cSNodeLaw#24:                   vGFxH2O_grid(4) - vFluxin_1MultiConverter#1(4)
                                   = 0
- cSNodeLaw#15:                   vGFxElec_grid(5) - vFluxin0MultiConverter#1(5)
+ cSNodeLaw#25:                   vGFxH2O_grid(5) - vFluxin_1MultiConverter#1(5)
                                   = 0
- cSNodeLaw#16:                   vGFxElec_grid(6) - vFluxin0MultiConverter#1(6)
+ cSNodeLaw#26:                   vGFxH2O_grid(6) - vFluxin_1MultiConverter#1(6)
                                   = 0
- cSNodeLaw#17:                   vGFxElec_grid(7) - vFluxin0MultiConverter#1(7)
+ cSNodeLaw#27:                   vGFxH2O_grid(7) - vFluxin_1MultiConverter#1(7)
                                   = 0
- cSNodeLaw#18:                   vGFxElec_grid(8) - vFluxin0MultiConverter#1(8)
+ cSNodeLaw#28:                   vGFxH2O_grid(8) - vFluxin_1MultiConverter#1(8)
                                   = 0
- cSNodeLaw#19:                   vGFxElec_grid(9) - vFluxin0MultiConverter#1(9)
-                                  = 0
- cSNodeLaw#20:                   vGFxH2O_grid(0) - vFluxin1MultiConverter#1(0)
-                                  = 0
- cSNodeLaw#21:                   vGFxH2O_grid(1) - vFluxin1MultiConverter#1(1)
-                                  = 0
- cSNodeLaw#22:                   vGFxH2O_grid(2) - vFluxin1MultiConverter#1(2)
-                                  = 0
- cSNodeLaw#23:                   vGFxH2O_grid(3) - vFluxin1MultiConverter#1(3)
-                                  = 0
- cSNodeLaw#24:                   vGFxH2O_grid(4) - vFluxin1MultiConverter#1(4)
-                                  = 0
- cSNodeLaw#25:                   vGFxH2O_grid(5) - vFluxin1MultiConverter#1(5)
-                                  = 0
- cSNodeLaw#26:                   vGFxH2O_grid(6) - vFluxin1MultiConverter#1(6)
-                                  = 0
- cSNodeLaw#27:                   vGFxH2O_grid(7) - vFluxin1MultiConverter#1(7)
-                                  = 0
- cSNodeLaw#28:                   vGFxH2O_grid(8) - vFluxin1MultiConverter#1(8)
-                                  = 0
- cSNodeLaw#29:                   vGFxH2O_grid(9) - vFluxin1MultiConverter#1(9)
+ cSNodeLaw#29:                   vGFxH2O_grid(9) - vFluxin_1MultiConverter#1(9)
                                   = 0
  cSNodeLaw#30:                   vGFxHeat_HT_grid(0)
-                                 - vFluxin2MultiConverter#1(0)  = 0
+                                 - vFluxin_2MultiConverter#1(0)  = 0
  cSNodeLaw#31:                   vGFxHeat_HT_grid(1)
-                                 - vFluxin2MultiConverter#1(1)  = 0
+                                 - vFluxin_2MultiConverter#1(1)  = 0
  cSNodeLaw#32:                   vGFxHeat_HT_grid(2)
-                                 - vFluxin2MultiConverter#1(2)  = 0
+                                 - vFluxin_2MultiConverter#1(2)  = 0
  cSNodeLaw#33:                   vGFxHeat_HT_grid(3)
-                                 - vFluxin2MultiConverter#1(3)  = 0
+                                 - vFluxin_2MultiConverter#1(3)  = 0
  cSNodeLaw#34:                   vGFxHeat_HT_grid(4)
-                                 - vFluxin2MultiConverter#1(4)  = 0
+                                 - vFluxin_2MultiConverter#1(4)  = 0
  cSNodeLaw#35:                   vGFxHeat_HT_grid(5)
-                                 - vFluxin2MultiConverter#1(5)  = 0
+                                 - vFluxin_2MultiConverter#1(5)  = 0
  cSNodeLaw#36:                   vGFxHeat_HT_grid(6)
-                                 - vFluxin2MultiConverter#1(6)  = 0
+                                 - vFluxin_2MultiConverter#1(6)  = 0
  cSNodeLaw#37:                   vGFxHeat_HT_grid(7)
-                                 - vFluxin2MultiConverter#1(7)  = 0
+                                 - vFluxin_2MultiConverter#1(7)  = 0
  cSNodeLaw#38:                   vGFxHeat_HT_grid(8)
-                                 - vFluxin2MultiConverter#1(8)  = 0
+                                 - vFluxin_2MultiConverter#1(8)  = 0
  cSNodeLaw#39:                   vGFxHeat_HT_grid(9)
-                                 - vFluxin2MultiConverter#1(9)  = 0
+                                 - vFluxin_2MultiConverter#1(9)  = 0
  cSNodeLaw#40:                   - vWeightH2_load
                                  + vFluxout_0MultiConverter#1(0)  = 0
  cSNodeLaw#41:                   - vWeightH2_load
@@ -645,66 +665,16 @@ Bounds
  0 <= vGFxHeat_Low_temp(9) <= 10000
  0 <= vInstalledMultiConverter#1 <= 1
  0 <= vMaxPowerMultiConverter#1 <= 1000
- 0 <= vFluxin0MultiConverter#1(0) <= 180244
- 0 <= vFluxin0MultiConverter#1(1) <= 180244
- 0 <= vFluxin0MultiConverter#1(2) <= 180244
- 0 <= vFluxin0MultiConverter#1(3) <= 180244
- 0 <= vFluxin0MultiConverter#1(4) <= 180244
- 0 <= vFluxin0MultiConverter#1(5) <= 180244
- 0 <= vFluxin0MultiConverter#1(6) <= 180244
- 0 <= vFluxin0MultiConverter#1(7) <= 180244
- 0 <= vFluxin0MultiConverter#1(8) <= 180244
- 0 <= vFluxin0MultiConverter#1(9) <= 180244
- 0 <= vFluxin1MultiConverter#1(0) <= 180244
- 0 <= vFluxin1MultiConverter#1(1) <= 180244
- 0 <= vFluxin1MultiConverter#1(2) <= 180244
- 0 <= vFluxin1MultiConverter#1(3) <= 180244
- 0 <= vFluxin1MultiConverter#1(4) <= 180244
- 0 <= vFluxin1MultiConverter#1(5) <= 180244
- 0 <= vFluxin1MultiConverter#1(6) <= 180244
- 0 <= vFluxin1MultiConverter#1(7) <= 180244
- 0 <= vFluxin1MultiConverter#1(8) <= 180244
- 0 <= vFluxin1MultiConverter#1(9) <= 180244
- 0 <= vFluxin2MultiConverter#1(0) <= 180244
- 0 <= vFluxin2MultiConverter#1(1) <= 180244
- 0 <= vFluxin2MultiConverter#1(2) <= 180244
- 0 <= vFluxin2MultiConverter#1(3) <= 180244
- 0 <= vFluxin2MultiConverter#1(4) <= 180244
- 0 <= vFluxin2MultiConverter#1(5) <= 180244
- 0 <= vFluxin2MultiConverter#1(6) <= 180244
- 0 <= vFluxin2MultiConverter#1(7) <= 180244
- 0 <= vFluxin2MultiConverter#1(8) <= 180244
- 0 <= vFluxin2MultiConverter#1(9) <= 180244
- 0 <= vFluxout_0MultiConverter#1(0) <= 267308
- 0 <= vFluxout_0MultiConverter#1(1) <= 267308
- 0 <= vFluxout_0MultiConverter#1(2) <= 267308
- 0 <= vFluxout_0MultiConverter#1(3) <= 267308
- 0 <= vFluxout_0MultiConverter#1(4) <= 267308
- 0 <= vFluxout_0MultiConverter#1(5) <= 267308
- 0 <= vFluxout_0MultiConverter#1(6) <= 267308
- 0 <= vFluxout_0MultiConverter#1(7) <= 267308
- 0 <= vFluxout_0MultiConverter#1(8) <= 267308
- 0 <= vFluxout_0MultiConverter#1(9) <= 267308
- 0 <= vFluxout_1MultiConverter#1(0) <= 267308
- 0 <= vFluxout_1MultiConverter#1(1) <= 267308
- 0 <= vFluxout_1MultiConverter#1(2) <= 267308
- 0 <= vFluxout_1MultiConverter#1(3) <= 267308
- 0 <= vFluxout_1MultiConverter#1(4) <= 267308
- 0 <= vFluxout_1MultiConverter#1(5) <= 267308
- 0 <= vFluxout_1MultiConverter#1(6) <= 267308
- 0 <= vFluxout_1MultiConverter#1(7) <= 267308
- 0 <= vFluxout_1MultiConverter#1(8) <= 267308
- 0 <= vFluxout_1MultiConverter#1(9) <= 267308
- 0 <= vFluxout_2MultiConverter#1(0) <= 267308
- 0 <= vFluxout_2MultiConverter#1(1) <= 267308
- 0 <= vFluxout_2MultiConverter#1(2) <= 267308
- 0 <= vFluxout_2MultiConverter#1(3) <= 267308
- 0 <= vFluxout_2MultiConverter#1(4) <= 267308
- 0 <= vFluxout_2MultiConverter#1(5) <= 267308
- 0 <= vFluxout_2MultiConverter#1(6) <= 267308
- 0 <= vFluxout_2MultiConverter#1(7) <= 267308
- 0 <= vFluxout_2MultiConverter#1(8) <= 267308
- 0 <= vFluxout_2MultiConverter#1(9) <= 267308
+ 0 <= vFluxout_0MultiConverter#1(0) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(1) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(2) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(3) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(4) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(5) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(6) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(7) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(8) <= 1000
+ 0 <= vFluxout_0MultiConverter#1(9) <= 1000
  0 <= vInstalledO2_prod <= 1
  0 <= vMaxFlowO2_prod <= 10000
  0 <= vStateO2_prod(0) <= 1
@@ -734,16 +704,15 @@ Generals
  vStateElec_grid(8)  vStateElec_grid(9)  vInstalledH2O_grid  vStateH2O_grid(0) 
  vStateH2O_grid(1)  vStateH2O_grid(2)  vStateH2O_grid(3)  vStateH2O_grid(4) 
  vStateH2O_grid(5)  vStateH2O_grid(6)  vStateH2O_grid(7)  vStateH2O_grid(8) 
- vStateH2O_grid(9)  vInstalledH2_load  vInstalledHeat_HT_grid 
- vStateHeat_HT_grid(0)  vStateHeat_HT_grid(1)  vStateHeat_HT_grid(2) 
- vStateHeat_HT_grid(3)  vStateHeat_HT_grid(4)  vStateHeat_HT_grid(5) 
- vStateHeat_HT_grid(6)  vStateHeat_HT_grid(7)  vStateHeat_HT_grid(8) 
- vStateHeat_HT_grid(9)  vInstalledHeat_Low_temp  vStateHeat_Low_temp(0) 
- vStateHeat_Low_temp(1)  vStateHeat_Low_temp(2)  vStateHeat_Low_temp(3) 
- vStateHeat_Low_temp(4)  vStateHeat_Low_temp(5)  vStateHeat_Low_temp(6) 
- vStateHeat_Low_temp(7)  vStateHeat_Low_temp(8)  vStateHeat_Low_temp(9) 
- vInstalledMultiConverter#1  vInstalledO2_prod  vStateO2_prod(0) 
- vStateO2_prod(1)  vStateO2_prod(2)  vStateO2_prod(3)  vStateO2_prod(4) 
- vStateO2_prod(5)  vStateO2_prod(6)  vStateO2_prod(7)  vStateO2_prod(8) 
- vStateO2_prod(9) 
+ vStateH2O_grid(9)  vInstalledHeat_HT_grid  vStateHeat_HT_grid(0) 
+ vStateHeat_HT_grid(1)  vStateHeat_HT_grid(2)  vStateHeat_HT_grid(3) 
+ vStateHeat_HT_grid(4)  vStateHeat_HT_grid(5)  vStateHeat_HT_grid(6) 
+ vStateHeat_HT_grid(7)  vStateHeat_HT_grid(8)  vStateHeat_HT_grid(9) 
+ vInstalledHeat_Low_temp  vStateHeat_Low_temp(0)  vStateHeat_Low_temp(1) 
+ vStateHeat_Low_temp(2)  vStateHeat_Low_temp(3)  vStateHeat_Low_temp(4) 
+ vStateHeat_Low_temp(5)  vStateHeat_Low_temp(6)  vStateHeat_Low_temp(7) 
+ vStateHeat_Low_temp(8)  vStateHeat_Low_temp(9)  vInstalledMultiConverter#1 
+ vInstalledO2_prod  vStateO2_prod(0)  vStateO2_prod(1)  vStateO2_prod(2) 
+ vStateO2_prod(3)  vStateO2_prod(4)  vStateO2_prod(5)  vStateO2_prod(6) 
+ vStateO2_prod(7)  vStateO2_prod(8)  vStateO2_prod(9) 
 End

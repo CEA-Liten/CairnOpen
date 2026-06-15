@@ -174,7 +174,7 @@
 				"nodeId": "301",
 				"nodeName": "ElectricityDistrib",
 				"nodeTechnoType": "Electrical",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#fabe0c",
 				"nodeComment": "",
 				"x": 330,
@@ -250,7 +250,7 @@
 						"value": 1
 					},
 					{
-						"key": "Potential",
+						"key": "Voltage",
 						"value": 220
 					},
 					{
@@ -279,7 +279,7 @@
 				"nodeId": "251",
 				"nodeName": "H2Vector",
 				"nodeTechnoType": "FluidH2",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 254,
@@ -351,7 +351,11 @@
 						"value": 0.03332
 					},
 					{
-						"key": "Potential",
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
 						"value": 30
 					},
 					{

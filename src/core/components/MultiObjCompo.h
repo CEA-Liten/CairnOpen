@@ -19,14 +19,15 @@ class MultiObjCompo ;
 class CAIRNCORESHARED_EXPORT MultiObjCompo : public BusCompo
 {
 public:
-    MultiObjCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, 
-        const std::map < std::string, std::map<std::string, std::string> >& aPorts,
+    MultiObjCompo(CairnObject* aParent, 
+        const std::string& aName,
+        const t_mapParamData& aComponent,
+        const std::map < std::string, t_mapParamData>& aPorts,
         MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory);
 
-    virtual ~MultiObjCompo();
+    ~MultiObjCompo();
     
     void declareCompoInputParam();    
-
 
 protected:
 };

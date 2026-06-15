@@ -63,7 +63,7 @@ Heat_Grid;Levelized Grid extraction ThermalEnergy GridFlow;41304.1;MWh;LvlzdTotG
 Heat_Grid;Mean extraction ThermalPower GridFlow;607.292;MW;MeanGridFlow
 NodeEquality#1;Mean value during time period;0;;Mean
 SourceLoad#1;CAPEX;0;EUR;CAPEX
-SourceLoad#1;is installed;1;-;IsInstalled
+SourceLoad#1;is installed;0;-;IsInstalled
 SourceLoad#1;Annual operation cost;0;EUR;OPEX
 SourceLoad#1;Annual fixed OPEX;0;EUR;PureOPEX
 SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX

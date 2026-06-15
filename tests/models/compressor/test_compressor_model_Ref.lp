@@ -9,7 +9,7 @@ Minimize
        + 0 vPOutCompCompressor(7) + 0 vPOutCompCompressor(8)
        + 0 vPOutCompCompressor(9)
 Subject To
- csBigMInstalledCompressor0:     - 2.67780822512165 vInstalledCompressor
+ csBigMInstalledCompressor0:     - 2.678100492649 vInstalledCompressor
                                  + vMaxPowerCompressor <= 0
  csMinSizeInstalledCompressor0:  vMaxPowerCompressor >= 0
  cNotRunningIfNotInstalledCompressor0: - vInstalledCompressor
@@ -33,81 +33,81 @@ Subject To
  cNotRunningIfNotInstalledCompressor9: - vInstalledCompressor
                                  + vStateCompressor(9) <= 0
  cPowCompCompressor0:            vUsedPowerCompressor(0)
-                                 - 0.00107112329004866 vMassFlowCompressor(0)
+                                 - 0.0010712401970596 vMassFlowCompressor(0)
                                   = 0
  cPowCompCompressor1:            vUsedPowerCompressor(1)
-                                 - 0.00107112329004866 vMassFlowCompressor(1)
+                                 - 0.0010712401970596 vMassFlowCompressor(1)
                                   = 0
  cPowCompCompressor2:            vUsedPowerCompressor(2)
-                                 - 0.00107112329004866 vMassFlowCompressor(2)
+                                 - 0.0010712401970596 vMassFlowCompressor(2)
                                   = 0
  cPowCompCompressor3:            vUsedPowerCompressor(3)
-                                 - 0.00107112329004866 vMassFlowCompressor(3)
+                                 - 0.0010712401970596 vMassFlowCompressor(3)
                                   = 0
  cPowCompCompressor4:            vUsedPowerCompressor(4)
-                                 - 0.00107112329004866 vMassFlowCompressor(4)
+                                 - 0.0010712401970596 vMassFlowCompressor(4)
                                   = 0
  cPowCompCompressor5:            vUsedPowerCompressor(5)
-                                 - 0.00107112329004866 vMassFlowCompressor(5)
+                                 - 0.0010712401970596 vMassFlowCompressor(5)
                                   = 0
  cPowCompCompressor6:            vUsedPowerCompressor(6)
-                                 - 0.00107112329004866 vMassFlowCompressor(6)
+                                 - 0.0010712401970596 vMassFlowCompressor(6)
                                   = 0
  cPowCompCompressor7:            vUsedPowerCompressor(7)
-                                 - 0.00107112329004866 vMassFlowCompressor(7)
+                                 - 0.0010712401970596 vMassFlowCompressor(7)
                                   = 0
  cPowCompCompressor8:            vUsedPowerCompressor(8)
-                                 - 0.00107112329004866 vMassFlowCompressor(8)
+                                 - 0.0010712401970596 vMassFlowCompressor(8)
                                   = 0
  cPowCompCompressor9:            vUsedPowerCompressor(9)
-                                 - 0.00107112329004866 vMassFlowCompressor(9)
+                                 - 0.0010712401970596 vMassFlowCompressor(9)
                                   = 0
- cUseCompCompressor0:            - 2.67780822512165 vStateCompressor(0)
+ cUseCompCompressor0:            - 2.678100492649 vStateCompressor(0)
                                  + vUsedPowerCompressor(0) <= 0
  cPowMinCompressor0:             vUsedPowerCompressor(0) >= 0
  cMaxCompressor0:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(0) <= 0
- cUseCompCompressor1:            - 2.67780822512165 vStateCompressor(1)
+ cUseCompCompressor1:            - 2.678100492649 vStateCompressor(1)
                                  + vUsedPowerCompressor(1) <= 0
  cPowMinCompressor1:             vUsedPowerCompressor(1) >= 0
  cMaxCompressor1:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(1) <= 0
- cUseCompCompressor2:            - 2.67780822512165 vStateCompressor(2)
+ cUseCompCompressor2:            - 2.678100492649 vStateCompressor(2)
                                  + vUsedPowerCompressor(2) <= 0
  cPowMinCompressor2:             vUsedPowerCompressor(2) >= 0
  cMaxCompressor2:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(2) <= 0
- cUseCompCompressor3:            - 2.67780822512165 vStateCompressor(3)
+ cUseCompCompressor3:            - 2.678100492649 vStateCompressor(3)
                                  + vUsedPowerCompressor(3) <= 0
  cPowMinCompressor3:             vUsedPowerCompressor(3) >= 0
  cMaxCompressor3:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(3) <= 0
- cUseCompCompressor4:            - 2.67780822512165 vStateCompressor(4)
+ cUseCompCompressor4:            - 2.678100492649 vStateCompressor(4)
                                  + vUsedPowerCompressor(4) <= 0
  cPowMinCompressor4:             vUsedPowerCompressor(4) >= 0
  cMaxCompressor4:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(4) <= 0
- cUseCompCompressor5:            - 2.67780822512165 vStateCompressor(5)
+ cUseCompCompressor5:            - 2.678100492649 vStateCompressor(5)
                                  + vUsedPowerCompressor(5) <= 0
  cPowMinCompressor5:             vUsedPowerCompressor(5) >= 0
  cMaxCompressor5:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(5) <= 0
- cUseCompCompressor6:            - 2.67780822512165 vStateCompressor(6)
+ cUseCompCompressor6:            - 2.678100492649 vStateCompressor(6)
                                  + vUsedPowerCompressor(6) <= 0
  cPowMinCompressor6:             vUsedPowerCompressor(6) >= 0
  cMaxCompressor6:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(6) <= 0
- cUseCompCompressor7:            - 2.67780822512165 vStateCompressor(7)
+ cUseCompCompressor7:            - 2.678100492649 vStateCompressor(7)
                                  + vUsedPowerCompressor(7) <= 0
  cPowMinCompressor7:             vUsedPowerCompressor(7) >= 0
  cMaxCompressor7:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(7) <= 0
- cUseCompCompressor8:            - 2.67780822512165 vStateCompressor(8)
+ cUseCompCompressor8:            - 2.678100492649 vStateCompressor(8)
                                  + vUsedPowerCompressor(8) <= 0
  cPowMinCompressor8:             vUsedPowerCompressor(8) >= 0
  cMaxCompressor8:                - vMaxPowerCompressor
                                  + vUsedPowerCompressor(8) <= 0
- cUseCompCompressor9:            - 2.67780822512165 vStateCompressor(9)
+ cUseCompCompressor9:            - 2.678100492649 vStateCompressor(9)
                                  + vUsedPowerCompressor(9) <= 0
  cPowMinCompressor9:             vUsedPowerCompressor(9) >= 0
  cMaxCompressor9:                - vMaxPowerCompressor
@@ -203,7 +203,7 @@ Subject To
  cMaxGFxH2Grid8:                 - vMaxFlowH2Grid + vGFxH2Grid(8) <= 0
  cMaxGFxH2Grid9:                 - vMaxFlowH2Grid + vGFxH2Grid(9) <= 0
  csInstalledH2Load0:             vInstalledH2Load  = 1
- csWeightH2Load0:                vWeightH2Load  = 1
+ csMaxValH2Load0:                vWeightH2Load  = 1
  csBigMInstalledH2Load0:         - vInstalledH2Load + vWeightH2Load <= 0
  csMinSizeInstalledH2Load0:      vWeightH2Load >= 0
  cMSFxH2Load0:                   <= 10000
@@ -268,7 +268,7 @@ Subject To
                                   = 0
 Bounds
  0 <= vInstalledCompressor <= 1
- 0 <= vMaxPowerCompressor <= 2.67780822512165
+ 0 <= vMaxPowerCompressor <= 2.678100492649
  0 <= vStateCompressor(0) <= 1
  0 <= vStateCompressor(1) <= 1
  0 <= vStateCompressor(2) <= 1
@@ -279,16 +279,16 @@ Bounds
  0 <= vStateCompressor(7) <= 1
  0 <= vStateCompressor(8) <= 1
  0 <= vStateCompressor(9) <= 1
- 0 <= vUsedPowerCompressor(0) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(1) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(2) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(3) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(4) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(5) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(6) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(7) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(8) <= 2.67780822512165
- 0 <= vUsedPowerCompressor(9) <= 2.67780822512165
+ 0 <= vUsedPowerCompressor(0) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(1) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(2) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(3) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(4) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(5) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(6) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(7) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(8) <= 2.678100492649
+ 0 <= vUsedPowerCompressor(9) <= 2.678100492649
  0 <= vMassFlowCompressor(0) <= 2500
  0 <= vMassFlowCompressor(1) <= 2500
  0 <= vMassFlowCompressor(2) <= 2500
@@ -366,5 +366,5 @@ Generals
  vStateElecGrid(8)  vStateElecGrid(9)  vInstalledH2Grid  vStateH2Grid(0) 
  vStateH2Grid(1)  vStateH2Grid(2)  vStateH2Grid(3)  vStateH2Grid(4) 
  vStateH2Grid(5)  vStateH2Grid(6)  vStateH2Grid(7)  vStateH2Grid(8) 
- vStateH2Grid(9)  vInstalledH2Load 
+ vStateH2Grid(9) 
 End

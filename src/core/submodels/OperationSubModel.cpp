@@ -10,6 +10,10 @@ OperationSubModel::~OperationSubModel()
 {
 }
 
+int OperationSubModel::checkConsistency() {
+    return SubModel::checkConsistency();
+}
+
 void OperationSubModel::closeExpressions()
 {
     SubModel::closeExpressions();

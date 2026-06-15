@@ -83,7 +83,7 @@ SourceLoad#1;ImposedProfile FluidH2Mass SourceLoadFlow;0;kg;TotImposedProfileSou
 SourceLoad#1;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;0;kg;LvlzdTotImposedProfileSourceLoadFlow
 SourceLoad#1;Mean FluidH2Flowrate SourceLoadFlow;0;kg/h;MeanImposedProfileSourceLoadFlow
 StorageGen#1;CAPEX;0;EUR;CAPEX
-StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;is installed;0;-;IsInstalled
 StorageGen#1;Annual operation cost;0;EUR;OPEX
 StorageGen#1;Annual fixed OPEX;0;EUR;PureOPEX
 StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX

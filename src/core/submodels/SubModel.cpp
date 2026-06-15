@@ -1,5 +1,6 @@
 #include "SubModel.h"
 #include "MilpPort.h"
+#include "MaterialCarrier.h"
 #include "CairnUtils.h"
 using namespace CairnUtils;
 
@@ -14,7 +15,6 @@ SubModel::SubModel(CairnObject* aParent) :
     mAddStateVariable(false),
     mAddStartUpShutDownVariable(false),
     mWeight(1.), //needed for models that doesn't have parameter "Weight" such as Ramp
-    mUseWeightOptimization(false),
     mLPWeightOptimization(false),
     mLPModelOnly(false),
     mMaxValue(MIP_INFINITY),
@@ -51,7 +51,6 @@ SubModel::SubModel(CairnObject* aParent) :
     declareInputParams(name);
 }
 
-
 SubModel::~SubModel()
 {
     deleteInputParams();
@@ -60,9 +59,33 @@ SubModel::~SubModel()
     deleteEnvImpacts();
 }
 
-void SubModel::finalizeModelData()
+int SubModel::checkPorts() 
 {
-    // nothing here - Can be overridden in individual SubModels
+    // Check that all defualt ports has been created
+    //for (auto [portId, _] : mDefaultPorts) {
+    //    const auto* port = getPort(portId);
+    //    if (!port) {
+    //        cCritical() << "Default port of " + Name() + " is null";
+    //        return -1;
+    //    }
+    //}
+
+    // 1- Check that Variable exists as SubModel expression (0D or 1D)
+    // 2- Warning if Use type has not been defined
+    // 3- Check that units are consistent between Port (inherited from Bus) and SubModel expression
+    for (MilpPort* port : PortList()) {
+        if (checkUnit(port) < 0) {
+            cCritical() << ("Error checkUnit at port " + Name() + "." + port->Name());
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int SubModel::checkConsistency() 
+{
+    return checkPorts();
 }
 
 std::string SubModel::ModelClassName() const {
@@ -150,6 +173,13 @@ const std::string* SubModel::pCurrency() const {
     return mParentCompo->pCurrency(); 
 }
 
+const std::string* SubModel::pQuantity(const std::string& a_Quantity) const {
+    if (mMainCarrier != nullptr) {        
+        return mMainCarrier->pQuantity(a_Quantity);
+    }   
+    return nullptr;
+}
+
 std::map<std::string, std::string> SubModel::getDefaultPortData(const std::string& portId) const
 {
     const auto it = mDefaultPorts.find(portId);
@@ -175,7 +205,7 @@ MilpPort* SubModel::getPortByType(const std::string& aType, const std::string& a
 {
     for(MilpPort * lptrport: mListPort)
     {
-        if (CairnUtils::contains(lptrport->getCarrier()->Type(), aType) && (lptrport->Direction() == aDirection || aDirection == "ANY"))
+        if (lptrport->getCarrier()->Type() == aType && (lptrport->Direction() == aDirection || aDirection == "ANY"))
         {
             return lptrport;
         }
@@ -227,26 +257,29 @@ void SubModel::addTimeSeries(const std::string& aParamName, std::vector<double>*
 }
 
 //Model IO Interface
-void SubModel::addIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const t_unit& aUnit)
+void SubModel::addIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, 
+    const t_unit& aUnit, const std::string& aDescription)
 {
     /* 0D Exp and dynamic unit */
     if (assertIONonExistence(aIOName, aExprPtr)) {
         removeIO(aIOName);
     }
     assertIsNotSizeMaxExp(aExprPtr);
-    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit);
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aDescription);
 }
 
-void SubModel::addIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, const t_unit& aUnit)
+void SubModel::addIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, 
+    const t_unit& aUnit, const std::string& aDescription)
 {
     /* 1D Exp and dynamic unit */
     if (assertIONonExistence(aIOName, aExprPtr1D)) {
         removeIO(aIOName);
     }
-    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr1D, aIsUsed, aUnit);
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aDescription);
 }
 
-void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string aUnit)
+void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, 
+    const std::string& aUnit, const std::string& aDescription)
 {
     /* used only for mExpSizeMax(0D, scalar unit) */
     if (assertIONonExistence(aIOName, aExprPtr)) {
@@ -256,10 +289,11 @@ void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpressio
     mComputeSizeMax = true;
     mOptimalSizeExpression = aIOName;
     m_OptimalSizeUnit = aUnit;
-    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit);
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aDescription);
 }
 
-void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, const std::string* pUnit)
+void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, 
+    const std::string* pUnit, const std::string& aDescription)
 {
     /* used only for mExpSizeMax(0D, scalar unit) */
     if (assertIONonExistence(aIOName, aExprPtr)) {
@@ -269,7 +303,7 @@ void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpressio
     mComputeSizeMax = true;
     mOptimalSizeExpression = aIOName;
     p_OptimalSizeUnit = pUnit;
-    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, pUnit);
+    mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, pUnit, aDescription);
 }
 
 bool SubModel::assertIONonExistence(const std::string& name, const t_pExpr expression)
@@ -315,17 +349,17 @@ void SubModel::assertIsNotSizeMaxExp(MIPModeler::MIPExpression* aExprPtr) {
 
 // Model Rolling Horizon variables
 void SubModel::addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, 
-    const t_unit& aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC)
+    const t_unit& aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC, const std::string& aDescription)
 {
     addIO(aIOName, aExprPtr1D, aIsUsed, aUnit);
-    mListControlIO[aIOName] = new ControlVar(aIOName, aValuePtr, aDefaultValue, a_isMPC);
+    mListControlIO[aIOName] = new ControlVar(aIOName, aValuePtr, aDescription, aDefaultValue, a_isMPC);
 }
 
 void SubModel::addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, 
-    const t_unit& aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC)
+    const t_unit& aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC, const std::string& aDescription)
 {
     addIO(aIOName, aExprPtr1D, aIsUsed, aUnit);
-    mListControlIO[aIOName] = new ControlVar(aIOName, aHistPtr, aDefaultValue, a_isMPC);
+    mListControlIO[aIOName] = new ControlVar(aIOName, aHistPtr, aDescription, aDefaultValue, a_isMPC);
 }
 
 void SubModel::removeIO(const std::string& aName)
@@ -714,18 +748,15 @@ int SubModel::checkVariable(const std::string variable) const
 
 int SubModel::checkUnit(MilpPort* port)
 {
-    int ierr = 0 ;
     if (port->getCarrier() == nullptr) return 0;
     const std::string varName = port->Variable() ;
     const std::string direction = port->Direction() ;
     const std::string varFluxUnit = port->FluxUnit();
     const std::string varStorageUnit = port->StorageUnit();
-    const std::string varPotentialUnit = port->PotentialUnit();
     const std::string ExprUnit = ExpUnit(varName) ;
 
     if (direction.empty()) {
         cWarning() << ("Variable " + varName +" neither defined as INPUT nor OUTPUT for the component ! ") ;
-        ierr = 1 ;
     }
 
     if (checkVariable(varName) < 0) {
@@ -735,10 +766,10 @@ int SubModel::checkUnit(MilpPort* port)
     if (port->PortType()=="BusSameValue")
     {
          if (!CairnUtils::contains(ExprUnit, varFluxUnit) && !CairnUtils::contains(ExprUnit, varStorageUnit) 
-             && !CairnUtils::contains(ExprUnit, varPotentialUnit) && CairnUtils::toUpper(port->VarCheckUnit()) == "YES")
+             && CairnUtils::toUpper(port->VarCheckUnit()) == "YES")
          {
              cCritical() << (" ERROR MilpExpression "+varName +" unit found is "+ExprUnit) ;
-             cCritical() << (" Unit should be either "+varFluxUnit +" or "+varStorageUnit +" or "+varPotentialUnit) ;
+             cCritical() << (" Unit should be either "+varFluxUnit +" or "+varStorageUnit) ;
              dumpIOExpressionList();
              dumpIOExpression1DList();
              return -1 ;
@@ -746,8 +777,7 @@ int SubModel::checkUnit(MilpPort* port)
     }
     if (port->PortType()=="BusFlowBalance")
     {
-         if (!CairnUtils::contains(ExprUnit, varFluxUnit) && !CairnUtils::contains(ExprUnit, varStorageUnit) 
-             && !CairnUtils::contains(ExprUnit, varPotentialUnit)  
+         if (!CairnUtils::contains(ExprUnit, varFluxUnit) && !CairnUtils::contains(ExprUnit, varStorageUnit)             
              && CairnUtils::toUpper(port->VarCheckUnit()) == "YES")
          {
              cCritical() << (" ERROR MilpExpression "+varName +" flux unit (from SubModel) is "+ExprUnit) ;
@@ -757,7 +787,7 @@ int SubModel::checkUnit(MilpPort* port)
              return -1 ;
          }
     }
-    return ierr ;
+    return 0;
 }
 
 void SubModel::computeAllIndicators(const double* optSol) {
@@ -1106,8 +1136,8 @@ void SubModel::setTimeSteps(const bool& useVariableTimeSteps, std::vector<double
 void SubModel::decreaseOptimizationHorizon()                  /** Update mTimeSteps */
 {
     if (mDecreaseOptimizationHorizon == 1) {
-        cInfo() << "virtuSubModel, mDecreaseOptimizationHorizon = " << mDecreaseOptimizationHorizon;
-        uint64_t sumTimeSteps = accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0);
+        cInfo() << "virtuSubModel, mDecreaseOptimizationHorizon = " << mDecreaseOptimizationHorizon;        
+        uint64_t sumTimeSteps = accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0.);
 
         while (sumTimeSteps + *mptrAbsoluteTimeStep - *mptrTimeshift > *mptrFuturesize)
         {
@@ -1121,7 +1151,7 @@ void SubModel::decreaseOptimizationHorizon()                  /** Update mTimeSt
             else
                 mTimeSteps[i] -= *mptrTimeshift;
 
-            sumTimeSteps = accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0);
+            sumTimeSteps = accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0.);
 
             cInfo() << "decreaseOptimizationHorizon: *mptrAbsoluteTimeStep = " << *mptrAbsoluteTimeStep;
             cInfo() << "decreaseOptimizationHorizon: *mptrTimeshift = " << *mptrTimeshift;
@@ -1158,18 +1188,18 @@ void SubModel::setExpSizeMax(const MIPModeler::MIPExpression& aExpInstalled)
     addVarSizeMax(mMaxValue, mOptimalSizeExpression);
 
     //Compute SizeMax expression and add constraints
-    if (mUseWeightOptimization)
+    if (mWeight<0)
     {
         mExpSizeMax = fabs(mMaxValue) * mVarSizeMax;
-        if (mWeight >= 0.) {
-            addConstraint(mVarSizeMax == mWeight, "sWeight");
-        }
     }
     else
     {
         mExpSizeMax = mVarSizeMax * fabs(mWeight);
         if (mMaxValue >= 0.) {
             addConstraint(mVarSizeMax == mMaxValue, "sMaxVal");
+        }
+        if (abs(mMaxValue) <= 0.0000001) {
+            addConstraint(aExpInstalled == 0, "nullInstalledSize");
         }
     }
     addConstraint(mExpSizeMax <= aExpInstalled * fabs(mMaxValue) * fabs(mWeight), "sBigMInstalled");
@@ -1179,13 +1209,13 @@ void SubModel::setExpSizeMax(const MIPModeler::MIPExpression& aExpInstalled)
 void SubModel::addVarSizeMax(const double& aMaxVal, const std::string& aStrName)
 {
     //Max sizing value of the component (Weighting value, or Absolute value). Negative means optimization, absolute value gives max range value
-    if (mUseWeightOptimization)
+    if (mWeight<0)
     {
         if (mLPWeightOptimization) {
-            addVariable(mVarSizeMax, aStrName, 0.f, fabs(mWeight));
+            addVariable(mVarSizeMax, "Weight", 0.f, fabs(mWeight));
         }
         else {
-            addVariable(mVarSizeMax, aStrName, 0, fabs(mWeight), MIPModeler::MIP_INT);
+            addVariable(mVarSizeMax, "Weight", 0, fabs(mWeight), MIPModeler::MIP_INT);
         }
     }
     else {

@@ -146,7 +146,7 @@
 				"nodeId": "3101317191",
 				"nodeName": "CH4Vector",
 				"nodeTechnoType": "CH4Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "darkgreen",
 				"nodeComment": "",
 				"x": 610,
@@ -216,6 +216,14 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 0
+					},
+					{
+						"key": "Temperature",
+						"value": 0
 					}
 				],
 				"timeSeriesListJson": [],
@@ -229,7 +237,7 @@
 				"nodeId": "3091050206",
 				"nodeName": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"x": 470,
@@ -279,6 +287,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"timeSeriesListJson": [],

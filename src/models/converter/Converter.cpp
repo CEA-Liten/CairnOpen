@@ -101,14 +101,14 @@ void Converter::computeInitialData()
 
 void Converter::computeModelContribution()
 {
-    mMaxPowerOut = mMaxPower * mEfficiency;
+    mMaxPowerOut = mMaxPower * mEfficiency * mWeight;
 
     for (uint64_t t = 0; t < mHorizon; ++t) {
         mMaxPowerTS[t] = mConverterUpperBound[t];
         mMinPowerTS[t] = mMinPower * mConverterLowerBound[t];
     }
 
-    addVariable(mPower_In,"PowIn", 0., fabs(mMaxPower));
+    addVariable(mPower_In,"PowIn", 0., fabs(mMaxPower*mWeight));
 	addVariable(mPower_Out,"PowOut", 0., fabs(mMaxPowerOut));
    
     fillExpression(mExpPower_In, mPower_In);
@@ -116,10 +116,10 @@ void Converter::computeModelContribution()
 
     // constraints
     for (uint64_t t = 0; t < mHorizon; ++t) {
-        addConstraint(mExpPower_In[t] <= fabs(mMaxPower) * mMaxPowerTS[t], "PowerInMaxBound");
+        addConstraint(mExpPower_In[t] <= fabs(mMaxPower*mWeight) * mMaxPowerTS[t], "PowerInMaxBound");
     }
-
     setMinPower(mExpPower_In, mMinPowerTS, mMaxPower);
+    
 
     if (!mPiecewiseEfficiency && !mTimeSeriesPiecewiseEfficiency) {
         for (uint64_t t = 0; t < mHorizon; ++t) {

@@ -84,6 +84,8 @@ void MinStateTime::setTimeData()
 
 int MinStateTime::checkConsistency()
 {
+    int ier = OperationSubModel::checkConsistency();
+
     if (mControl == "MPC" || mControl == "RollingHorizon") {
         if ((mAddMinProductionTime && mMinProductionTime > mNpdtPast * TimeStep(0)) || (mAddMinStandbyTime && mMinStandbyTime > mNpdtPast * TimeStep(0))) {
             cCritical() << parent()->objectName() << ":Npdt past  size is equal to " << mNpdtPast <<
@@ -92,7 +94,7 @@ int MinStateTime::checkConsistency()
         }
     }
     
-    return 0; // ier;
+    return ier;
 }
 
 void MinStateTime::computeInitialData()

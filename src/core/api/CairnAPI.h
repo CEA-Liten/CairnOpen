@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <variant>
+#include <memory>
 
 typedef std::vector<std::string> t_list;
 //Adding type bool to t_value will cause a problem for std::string being casted as bool
@@ -14,6 +15,10 @@ typedef std::map<std::string, std::string> t_dictComment;
 
 typedef std::vector<t_value> t_values;
 typedef std::map<std::string, t_values> t_dictValues;
+typedef std::vector <std::map<std::string, t_value>> t_dicts;
+typedef std::vector <t_dicts> t_dictsValues;
+
+
 
 struct ExtraParameterData {
 	std::string component;
@@ -88,7 +93,7 @@ public:
     // Return the list of the possibles model class of a type
     t_list get_TechnoTypes(const std::string& a_ComponentCategory); // electrolyzer, PAC, 
 	
-	t_list get_Models(const std::string& a_TechnoType); // electrolyzerDetail, electrolyzerBasic ...
+	t_list get_Models(const std::string& a_TechnoType); // electrolyzerDetail, electrolyzer ...
 
 	// Return the list of the possibles EnergyCarrier type
 	t_list get_EnergyCarrierTypes();
@@ -107,7 +112,7 @@ public:
 	// --------------------------------------------------------------------------------	
 	class DECLSPEC ParamAPI {
 	public:
-		ParamAPI(class ObjectAPI* ap_Parent = nullptr, class ModelParam* ap_Param = nullptr);
+		ParamAPI(std::shared_ptr <class ObjectAPI> ap_Parent = nullptr, class ModelParam* ap_Param = nullptr);
 
 		std::string get_Name() const;
 		std::string get_Type() const;
@@ -131,10 +136,10 @@ public:
 
 	protected:
 		class ModelParam* m_Param{ nullptr };
-		class ObjectAPI* m_Parent{ nullptr };
+		std::shared_ptr<ObjectAPI> m_Parent{ nullptr };
 	};
 	// --------------------------------------------------------------------------------
-	class DECLSPEC ObjectAPI {
+	class DECLSPEC ObjectAPI : public std::enable_shared_from_this<ObjectAPI> {
 	public:
 		ObjectAPI(class CairnObject* ap_Object = nullptr);
 	
@@ -163,10 +168,16 @@ public:
 		std::string get_SettingComment(const std::string& a_SettingName);
 		t_dictComment get_SettingComments();
 
-		void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment);
+		virtual void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, bool checkExistence = true);
 		void set_SettingComments(const t_dictComment& a_SettingComments);
 
-		t_list get_ShowConfigList();
+		virtual t_list get_PerfParamList() const;
+
+		virtual t_list get_VarList() const; // IO vars
+		std::string get_VarDescription(const std::string& varName) const;
+
+		virtual t_list get_ShowConfigList();
+
 		std::string get_SettingShowConfig(const std::string& a_SettingName);
 
 		bool is_MandatorySetting(const std::string& a_SettingName);
@@ -200,6 +211,11 @@ public:
 		virtual void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		virtual void set_SettingValues(const t_dict& a_SettingValues);
 
+		class SimulationControl* get_SimulationControl() const;
+
+		t_list get_ReadingModes() const;
+		t_list get_RollingModes() const;
+
 	protected:		
 		void updateMilpData();
 	};
@@ -209,14 +225,17 @@ public:
 	public:
 		EnergyVectorAPI(class EnergyVector* ap_EnergyVector = nullptr);
 		EnergyVectorAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, 
-			const std::string& a_Type);
+			const std::string& a_Type = "MaterialCarrier", const std::string& a_TechnoType = "Material");
 		
 		std::string get_Type() const;
+		std::string get_TechnoType() const;
 		class EnergyVector* get_EnergyVector() const;
 		void set_EnergyVector(class EnergyVector* ap_EnergyVector);
 		
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
+
+		void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, bool checkExistence = true);
 	};
 
 	// --------------------------------------------------------------------------------	
@@ -236,13 +255,14 @@ public:
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
 
-		EnergyVectorAPI get_EnergyCarrier();
+		void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, bool checkExistence = true);
+
+		std::shared_ptr < EnergyVectorAPI> get_EnergyCarrier();
 		bool set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector);
 
 	private:
 		bool configureParentComponent();
 	};
-
 
 	// --------------------------------------------------------------------------------
 	class DECLSPEC TecEcoAnalysisAPI : public ObjectAPI {
@@ -261,8 +281,8 @@ public:
 		t_list get_DefaultPortIDs() const;
 		t_list get_DefaultPorts() const; //names
 		t_list get_Ports() const;
-		MilpPortAPI get_Port(const std::string& a_Name);
-		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
+		std::shared_ptr < MilpPortAPI> get_Port(const std::string& a_Name);
+		std::shared_ptr < MilpPortAPI> add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
 			const std::string& a_Direction = "DATAEXCHANGE", const std::string& a_Variable = "", const std::string& a_PortId = "");
 		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo = false);
 
@@ -311,13 +331,15 @@ public:
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
 		
+		void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, bool checkExistence = true);
+
 		// -- Ports ---
 		std::map<std::string, std::string> get_DefaultPortData(const std::string& portId) const;
 		t_list get_DefaultPortIDs() const;
 		t_list get_DefaultPorts() const; //names
 		t_list get_Ports() const;
-		MilpPortAPI get_Port(const std::string& a_Name);
-		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector = EnergyVectorAPI(),
+		std::shared_ptr < MilpPortAPI> get_Port(const std::string& a_Name);
+		std::shared_ptr < MilpPortAPI> add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector = EnergyVectorAPI(),
 			const std::string& a_Direction = "DATAEXCHANGE", const std::string& a_Variable = "", const std::string& a_PortId = "");
 		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo = false);
 
@@ -326,7 +348,7 @@ public:
 
 		// -- IOs ---
 		// Returns the list of variables contains the component
-		t_list get_VarList();
+		//t_list get_VarList() const;
 		t_value get_varValue(const std::string& a_VarName); 
 		t_dict get_varValues();  
 
@@ -370,20 +392,25 @@ public:
 
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
-		void set_TimeSeriesVector(const std::string& a_TimeSeriesName, const std::vector<double> a_TimeSeriesValue);
+
+		void set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, bool checkExistence = true);
 
 		bool isTimeSeriesParam(const std::string& a_TimeSeriesName);
-		
+		void set_TimeSeriesVector(const std::string& a_TimeSeriesName, const std::vector<double> a_TimeSeriesValue);
+
 		void modify_ModelClass(const std::string& a_prevModelClass, const std::string& a_newModelClass);
 
-		// -- Ports ---
+		t_list get_ShowConfigList() override;
+
+		// -- Ports --- TODO: move port-related methods to ObjectAPI
 		std::map<std::string, std::string> get_DefaultPortData(const std::string& portId) const;
 		t_list get_DefaultPortIDs() const;
 		t_list get_DefaultPorts() const; //names
-		t_list get_Ports() const;
-		MilpPortAPI get_Port(const std::string& a_Name);
-		MilpPortAPI add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector, const std::string& a_Direction = "DATAEXCHANGE", 
-			const std::string& a_Variable = "", const std::string& a_PortId = "",  const bool& reinitializeCompo = true);
+		t_list get_Ports() const;				
+		std::shared_ptr < MilpPortAPI> get_Port(const std::string& a_Name);
+		std::shared_ptr < MilpPortAPI> add_Port(const std::string& a_Name, const EnergyVectorAPI& a_EnergyVector,
+			const std::string& a_Direction="DATAEXCHANGE", const std::string& a_Variable = "", const std::string& a_PortId = "", 
+			const bool& reinitializeCompo = true);
 		bool remove_Port(MilpPortAPI& a_Port, const bool isDeleteCompo=false);
 
 		bool useEnergyVector(const std::string& a_EnergyCarrierName);
@@ -391,7 +418,7 @@ public:
 
 		// -- IOs ---
 		// Returns the list of variables contains the component
-		t_list get_VarList();
+		t_list get_VarList() const;
 		t_value get_varValue(const std::string& a_VarName); // , const SolutionAPI& a_solution, int a_numSol = 0);
 		t_dict get_varValues(); // (const SolutionAPI& a_solution, int a_numSol = 0);
 
@@ -467,6 +494,9 @@ public:
 		void set_StudyName(const std::string& a_Name);
 		void save_Study(const std::string& a_filename = "", const std::string& a_posAlgorithm = "");
 
+		std::map <std::string, std::string> import_Group_GUI(const std::string& a_filename); /* return <nameFromFile, name> */
+		t_list import_Group(const std::string& a_filename);
+
 		// Export parameters to a file
 		void export_Parameters(const std::string& fileName = "", const std::string& encoding = "UTF-8",
 			const std::map<std::string, bool>& optionsMap = {},
@@ -482,13 +512,13 @@ public:
 
 		// --------- Objects ---------
 		t_list get_Objects();
-		ObjectAPI get_Object(const std::string& a_Name);
+		std::shared_ptr<ObjectAPI> get_Object(const std::string& a_Name);
 
 		// --------- EnergyCarriers ---------
 		t_list get_EnergyCarriers() const;
-		EnergyVectorAPI get_EnergyCarrier(const std::string& a_Name) const;
-		EnergyVectorAPI create_EnergyCarrier(const std::string& a_Name, const std::string& a_Type) const;
-		//void remove_EnergyCarrier(const std::string& a_Name); 
+		std::shared_ptr <EnergyVectorAPI> get_EnergyCarrier(const std::string& a_Name) const;
+		std::shared_ptr <EnergyVectorAPI> create_EnergyCarrier(const std::string& a_Name, 
+			const std::string& a_Type = "MaterialCarrier", const std::string& a_TechnoType = "Material") const;
 		void remove_EnergyCarrier(const std::string& a_Name, bool forceDeletion = false);
 		void remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector); // Expose to PythonAPI
 		void remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector, bool forceDeletion);
@@ -496,15 +526,17 @@ public:
 		// --------- Components ---------
 		t_list get_Components() const;
 		t_list get_ComponentsByCategory(const std::string& a_Category = "") const;
-		MilpComponentAPI get_Component(const std::string &a_Name) const;
-		MilpComponentAPI create_Component(const std::string& a_Name, const std::string& a_ModelName) const;
+		std::shared_ptr <MilpComponentAPI> get_Component(const std::string &a_Name) const;
+		std::shared_ptr <MilpComponentAPI> create_Component(const std::string& a_Name, const std::string& a_ModelName) const;
 		void remove_Component(const std::string& a_Name);
 		void remove_Component(MilpComponentAPI& a_Component);
 
+		std::shared_ptr <MilpComponentAPI> copy_Component(const std::string& name, const std::string& newName, bool connexions = true);
+
 		// --------- Bus ----------
 		t_list get_Buses() const; // Returne the list of all bus names
-		BusAPI get_Bus(const std::string &a_Name) const;
-		BusAPI create_Bus(const std::string& a_Name, const std::string& a_ModelName, 
+		std::shared_ptr <BusAPI> get_Bus(const std::string &a_Name) const;
+		std::shared_ptr <BusAPI> create_Bus(const std::string& a_Name, const std::string& a_ModelName,
 			const EnergyVectorAPI& a_EnergyVector) const;
 		void remove_Bus(const std::string& a_Name);
 		void remove_Bus(BusAPI& a_Bus);
@@ -521,13 +553,13 @@ public:
 		void remove(BusAPI& a_bus, MilpPortAPI& a_port);
 
 		// --------- TecEcoAnalysis ---------
-		TecEcoAnalysisAPI get_TecEcoAnalysis() const;
+		std::shared_ptr<TecEcoAnalysisAPI> get_TecEcoAnalysis() const;
 
 		// --------- Solver ---------
-		SolverAPI get_Solver() const;
+		std::shared_ptr<SolverAPI> get_Solver() const;
 		
 		// --------- SimulationControl ---------
-		SimulationControlAPI get_SimulationControl() const;
+		std::shared_ptr<SimulationControlAPI> get_SimulationControl() const;
 		
 		// -- Run ---
 		 // Adds a time series file.
@@ -535,9 +567,7 @@ public:
 
 		// The following methods allow the user to write Cairn input timeseries:
 		// Adds a time serie to the model time series list.
-		void add_TimeSeries(const std::string& a_serie_name, 
-			const std::string& a_description, const std::string& a_unit, 
-			const t_values& a_times, const t_values& a_values);
+		void add_TimeSeries(const t_dict& a_TS);
 
 		// -- Interfaces --
 		t_list getSubscribedVariables();
@@ -549,6 +579,9 @@ public:
 		void initialize();		
 		SolutionAPI run(const std::string &a_resultsPath = "", const bool& a_coSim = false);
 		
+		void runSensitivityCSV(const std::string& a_samplingFileName, int a_max_time = -1, const std::string& a_indicatorsFileName = "");		
+		t_dicts runSensitivity(const t_dictsValues& a_sampling, int a_max_time = -1, const t_dicts& a_indicators = {});
+
 		// Indicators
 		t_dict get_All_IndicatorValues(const std::string& range = "PLAN") const; //return the indicator values of all components
 
@@ -556,7 +589,39 @@ public:
 		t_list get_optimized_components() const;
 
 	private:
-		t_list m_timestepfileList;
+		class ModelValue {
+		public:
+			ModelValue(const t_dict& a_values);
+			ModelValue(const std::string& a_Model, const std::string& a_Setting);						
+			bool setValue(OptimProblemAPI& a_Problem, const std::string& a_Value);
+			bool setValue(OptimProblemAPI& a_Problem);
+			void reset();			
+		private:
+			std::string m_Model;
+			std::string m_Port;
+			std::string m_Setting;			
+			t_value m_Value;
+			t_value m_SaveValue;
+			std::shared_ptr <CairnAPI::ObjectAPI> m_Component;
+
+			bool get_Port(CairnAPI::MilpPortAPI& a_Port);
+		};
+		class KPI {
+		public:
+			KPI(const t_dict &a_values);
+			KPI(const std::string& a_Model, const std::string& a_Indicator);
+			void printHeader(std::fstream& f);
+			void printValue(OptimProblemAPI& a_Problem, std::fstream& f);
+
+			void printValue(OptimProblemAPI& a_Problem, t_dict& a_res);
+
+		private:
+			std::string m_Model;
+			std::string m_Indicator;
+
+			double getValue(OptimProblemAPI& a_Problem);
+		};
+
 		class OptimProblem* m_Problem{ nullptr };
 	};
 

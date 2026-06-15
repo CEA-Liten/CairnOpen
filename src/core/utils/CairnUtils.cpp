@@ -2,6 +2,7 @@
 #include "GlobalSettings.h"
 #include <sstream>
 #include <fstream>
+#include <initializer_list>
 
 namespace CairnUtils {
 
@@ -81,6 +82,125 @@ namespace CairnUtils {
             out << ";" << vlabel;
         }
         out << "\n";
+    }
+
+    std::string getAutoCompoName(const std::vector<std::string>& compoList,
+        const std::string& componentType,
+        const std::string& componentName,
+        bool isImport,
+        const std::vector<std::string>& excludeList)
+    {
+        // Determine base name
+        std::string base = componentName.empty() ? componentType : componentName;
+
+        // Normalize base: strip "#suffix"
+        auto parts = split(base, '#');
+        base = parts[0];
+
+        // Regex equivalent: base#number
+        const std::string prefix = base + "#";
+
+        int maxId = 0;
+        bool exactNameExists = false;
+
+        // Helper to process a single node name
+        auto processName = [&](const std::string& name)
+        {
+            // Exact match (import case)
+            if (!componentName.empty() && name == componentName)
+                exactNameExists = true;
+
+            // Match base#number
+            if (name.rfind(prefix, 0) == 0) {  // starts with base#
+                std::string numStr = name.substr(prefix.size());
+                if (!numStr.empty() && std::all_of(numStr.begin(), numStr.end(), ::isdigit)) {
+                    int num = std::stoi(numStr);
+                    if (num > maxId)
+                        maxId = num;
+                }
+            }
+        };
+
+        // Scan existing components
+        for (const auto& name : compoList)
+            processName(name);
+
+        // Scan exclude list
+        for (const auto& name : excludeList)
+            processName(name);
+
+        // Import rule
+        if (isImport && !exactNameExists)
+            return componentName;
+
+        // Default: append next number
+        return base + "#" + std::to_string(maxId + 1);
+    }
+
+    std::map<std::string, std::string> buildGroupData(
+        const std::vector<std::string>& components,
+        const std::vector<std::string>& existingGroups, 
+        const std::string& mainCompo, const std::string& groupName)
+    {
+        std::map<std::string, std::string> group;
+
+        // ---- groupName: find a unique name ----
+        auto nameExists = [&](const std::string& name) {
+            for (const auto& g : existingGroups)
+                if (g == name)
+                    return true;
+            return false;
+        };
+
+        std::string uniqueGroupName = groupName;
+        if (nameExists(uniqueGroupName) || uniqueGroupName.empty())
+        {
+            int counter = 1;
+            while (true)
+            {
+                std::string candidate = "Group#" + std::to_string(counter++);
+                if (!nameExists(candidate))
+                {
+                    uniqueGroupName = candidate;
+                    break;
+                }
+            }
+        }
+
+        group.emplace("groupName", uniqueGroupName);
+
+        // ---- groupId = random 7 digits ----
+        int rnd = 1000000 + (std::rand() % 9000000); // 7 digits
+        group.emplace("groupId", std::to_string(rnd));
+
+        // ---- mainNodeName = first name ----
+        std::string mainNodeName = mainCompo;
+        bool exists = std::find(components.begin(), components.end(), mainCompo)
+            != components.end();
+
+        if (mainNodeName.empty() || !exists) {
+            mainNodeName = components.empty() ? "" : components.front();
+        }
+
+        group.emplace("mainNodeName", mainNodeName);
+
+        // ---- listNodeName (comma-separated) ----
+        std::string str;
+        for (const auto& name: components)
+        {
+            if (!str.empty())
+                str += ",";
+            str += name;
+        }
+        group.emplace("listNodeName", str);
+
+        // ---- borderColor ----
+        group.emplace("borderColor", "gray"); 
+
+        // ---- minimized ----
+        group.emplace("minimized", "false"); 
+
+        return group;
     }
 
     std::string toUpper(const std::string& a_string) {
@@ -199,6 +319,17 @@ namespace CairnUtils {
         return res;
     }
 
+    std::vector<std::string> toStringVector(const std::string& a_Value) {
+        std::vector<std::string> result;
+        const std::string value = CairnUtils::simplified(a_Value);
+        if (!value.empty()) {
+            for (const auto& s : CairnUtils::split(value)) {
+                result.push_back(CairnUtils::trim(s));
+            }
+        }
+        return result;
+    }
+
     std::string BuildFileName(const std::string& aFileName) {
         return BuildFileName_W(toWString(aFileName));
     }
@@ -235,7 +366,7 @@ namespace CairnUtils {
         }
         else
         {
-            cInfo() << " Reading csv file " << filename;
+            cInfo() << "Reading csv file " << filename;
         }
         data_Inputs = readToList(filename, sep);
         return data_Inputs;
@@ -252,7 +383,7 @@ namespace CairnUtils {
 
         // Detect and skip BOM
         const std::string encoding = detectBOM(File);
-        cInfo() << "CSV encoding detected:" << encoding;
+        cDebug() << "CSV encoding detected:" << encoding;
 
         int k = 1;
         std::string line;
@@ -310,6 +441,25 @@ namespace CairnUtils {
 
         }
         return lu;
+    }
+
+
+    // Function to extract specific keys from a t_mapParamData
+    t_mapParamData extractParams(const t_mapParamData& source, const std::vector<std::string>& keys)
+    {
+        t_mapParamData result;
+        for (const auto& key : keys) {
+            auto it = source.find(key);
+            if (it != source.end()) {
+                result[key] = it->second;
+            }
+        }
+        return result;
+    }
+
+    t_mapParamData extractGuiParams(const t_mapParamData& source) {
+        std::vector<std::string> keysToExtract = { "Xpos", "Ypos" };
+        return extractParams(source, keysToExtract);
     }
 
     /* Methods related to the levelization and discount factor computations */
@@ -676,7 +826,7 @@ namespace CairnUtils {
 
     void writeParameterDataToCSV(
         std::ostream& out,
-        const ExportParameterData& data,
+        const ExportParameterRows& data,
         const std::map<std::string, bool>& optionsMap)
     {
         auto getOption = [&](const std::string& key, bool defaultValue) {

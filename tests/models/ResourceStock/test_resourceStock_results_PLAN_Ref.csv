@@ -1,4 +1,4 @@
-Model;Indicator;Value;Unit;Alias
+﻿Model;Indicator;Value;Unit;Alias
 TecEcoAnalysis#1;NbYear;20;year;NbYear
 TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
 TecEcoAnalysis#1;Impact Discount Rate;0;-;ImpactDiscountRate
@@ -21,16 +21,16 @@ TecEcoAnalysis#1;Total project buying costs;1.08733e+08;EUR;DiscountedBuyPart
 TecEcoAnalysis#1;Total project cost of env impact of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedEnvImpactPart
 TecEcoAnalysis#1;Total Project env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedEnvImpactMass
 TecEcoAnalysis#1;Total project cost of env impact of Water use#User Deprivation Potential;0;EUR;WUDiscountedEnvImpactPart
-TecEcoAnalysis#1;Total Project env impact of Water use#User Deprivation Potential;0;kg world eq deprived;WUDiscountedEnvImpactMass
+TecEcoAnalysis#1;Total Project env impact of Water use#User Deprivation Potential;0;m3 world eq;WUDiscountedEnvImpactMass
 TecEcoAnalysis#1;Total project cost of env impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;EUR;EP-fwDiscountedEnvImpactPart
 TecEcoAnalysis#1;Total Project env impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwDiscountedEnvImpactMass
 TecEcoAnalysis#1;Total Project Embodied env impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPGreyEnvImpactMass
-TecEcoAnalysis#1;Total Project Embodied env impact of Water use#User Deprivation Potential;0;kg world eq deprived;WUGreyEnvImpactMass
+TecEcoAnalysis#1;Total Project Embodied env impact of Water use#User Deprivation Potential;0;m3 world eq;WUGreyEnvImpactMass
 TecEcoAnalysis#1;Total Project Embodied env impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwGreyEnvImpactMass
 TecEcoAnalysis#1;Total Project Operational impact cost of Climate change#Global Warming Potential 100;0;EUR;GWPDiscountedFlowEnvImpactCost
 TecEcoAnalysis#1;Total Project Operational impact of Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPDiscountedFlowEnvImpactMass
 TecEcoAnalysis#1;Total Project Operational impact cost of Water use#User Deprivation Potential;0;EUR;WUDiscountedFlowEnvImpactCost
-TecEcoAnalysis#1;Total Project Operational impact of Water use#User Deprivation Potential;0;kg world eq deprived;WUDiscountedFlowEnvImpactMass
+TecEcoAnalysis#1;Total Project Operational impact of Water use#User Deprivation Potential;0;m3 world eq;WUDiscountedFlowEnvImpactMass
 TecEcoAnalysis#1;Total Project Operational impact cost of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;EUR;EP-fwDiscountedFlowEnvImpactCost
 TecEcoAnalysis#1;Total Project Operational impact of Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwDiscountedFlowEnvImpactMass
 TecEcoAnalysis#1;Annual operation cost;9.59252e+06;EUR;NetOPEX
@@ -41,7 +41,7 @@ TecEcoAnalysis#1;Annual buying costs;9.5922e+06;EUR;BuyPart
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Climate change#Global Warming Potential 100;0;EUR;GWPFlowEnvImpactPart
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Climate change#Global Warming Potential 100;0;kg CO2 eq;GWPFlowEnvImpactMass
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Water use#User Deprivation Potential;0;EUR;WUFlowEnvImpactPart
-TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Water use#User Deprivation Potential;0;kg world eq deprived;WUFlowEnvImpactMass
+TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Water use#User Deprivation Potential;0;m3 world eq;WUFlowEnvImpactMass
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Part Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;EUR;EP-fwFlowEnvImpactPart
 TecEcoAnalysis#1;Total Undiscounted FlowEnvImpact Mass Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment;0;kg P eq;EP-fwFlowEnvImpactMass
 Converter;CAPEX;16000;EUR;CAPEX
@@ -56,10 +56,10 @@ Converter;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;
 Converter;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
 Converter;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Converter;Water use#User Deprivation Potential Env impact penalty part;0;EUR;WUDirectCost
-Converter;Water use#User Deprivation Potential Env impact mass;0;kg world eq deprived;WUDirectMass
+Converter;Water use#User Deprivation Potential Env impact mass;0;m3 world eq;WUDirectMass
 Converter;Water use#User Deprivation Potential EnvGrey impact cost;0;EUR;WUGreyCost
-Converter;Water use#User Deprivation Potential EnvGrey impact mass;0;kg world eq deprived;WUGreyMass
-Converter;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
+Converter;Water use#User Deprivation Potential EnvGrey impact mass;0;m3 world eq;WUGreyMass
+Converter;Water use#User Deprivation Potential Env impact replacement;0;m3 world eq;WUReplacement
 Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment Env impact penalty part;0;EUR;EP-fwDirectCost
 Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment Env impact mass;0;kg P eq;EP-fwDirectMass
 Converter;Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EnvGrey impact cost;0;EUR;EP-fwGreyCost
@@ -101,7 +101,7 @@ SourceLoad#1;ImposedProfile ElectricalEnergy SourceLoadFlow;-95922;MWh;TotImpose
 SourceLoad#1;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-1.08733e+06;MWh;LvlzdTotImposedProfileSourceLoadFlow
 SourceLoad#1;Mean ElectricalPower SourceLoadFlow;-10.95;MW;MeanImposedProfileSourceLoadFlow
 StorageGen#1;CAPEX;0;EUR;CAPEX
-StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;is installed;0;-;IsInstalled
 StorageGen#1;Annual operation cost;0;EUR;OPEX
 StorageGen#1;Annual fixed OPEX;0;EUR;PureOPEX
 StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX

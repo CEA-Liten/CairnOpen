@@ -60,7 +60,6 @@ namespace CairnAPIUtils {
 	t_list getParametersName(std::vector<InputParam*> a_Inputs, CairnAPI::ESettingsLimited a_setLimited);
 
 	DECLSPEC std::string getParamValue(const t_value& a_Value);
-	DECLSPEC std::vector<double> getParamVectorValue(const t_value& a_Value);
 
 	t_value getParameter(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 	void getParameters(std::vector<InputParam*> a_Inputs, t_dict& a_Params);
@@ -72,7 +71,7 @@ namespace CairnAPIUtils {
 	void getParamComments(std::vector<InputParam*> a_Inputs, t_dictComment& a_Params);
 
 	bool setParamComment(std::vector<InputParam*> a_Inputs, const std::string& a_Name, const std::string& a_Comment);
-	bool setParamComments(std::vector<InputParam*> a_Inputs, const t_dictComment& a_Params);
+	//bool setParamComments(std::vector<InputParam*> a_Inputs, const t_dictComment& a_Params);
 
 	bool isMandatoryParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name);
 	bool isUsedParam(std::vector<InputParam*> a_Inputs, const std::string& a_Name);

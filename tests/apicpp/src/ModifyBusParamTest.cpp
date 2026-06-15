@@ -1,6 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
+#include "StudyCTest.h"
 #include "UtilsJson.h"
 
 using namespace std;
@@ -20,6 +20,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File PathsPersee
@@ -45,26 +49,26 @@ int main()
 	)
 
 	//Create an energyVector
-	CairnAPI::EnergyVectorAPI vCO2;
+	std::shared_ptr < CairnAPI::EnergyVectorAPI> vCO2;
 	TESTAPI("create EnergyVector CO2", vCO2 = m_Problem.create_EnergyCarrier("CO2", "Material"))
 
 	//---------------- Create a SourceLoad ------------------------------
-	CairnAPI::MilpComponentAPI vPV = m_Problem.create_Component("PV", "SourceLoad");
+	std::shared_ptr < CairnAPI::MilpComponentAPI> vPV = m_Problem.create_Component("PV", "SourceLoad");
 
 	//Configure the default port
-	t_list vPV_DefaultPorts = vPV.get_DefaultPorts();
-	CairnAPI::MilpPortAPI vPV_dPort;
-	TESTAPI("get default port of ELY_PEM", vPV_dPort = vPV.get_Port(vPV_DefaultPorts[0]))
+	t_list vPV_DefaultPorts = vPV->get_DefaultPorts();
+	std::shared_ptr < CairnAPI::MilpPortAPI> vPV_dPort;
+	TESTAPI("get default port of ELY_PEM", vPV_dPort = vPV->get_Port(vPV_DefaultPorts[0]))
 
-	CairnAPI::EnergyVectorAPI vElec = m_Problem.get_EnergyCarrier("ElectricityDistrib");
-	TESTAPI("set the EnergyCarrier of the port", vPV_dPort.set_EnergyCarrier(vElec))
+	std::shared_ptr < CairnAPI::EnergyVectorAPI> vElec = m_Problem.get_EnergyCarrier("ElectricityDistrib");
+	TESTAPI("set the EnergyCarrier of the port", vPV_dPort->set_EnergyCarrier(*vElec))
 
-	vPV_dPort.set_SettingValues({
+	vPV_dPort->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "SourceLoadFlow"}
 	});
 
-	vPV.set_SettingValues({
+	vPV->set_SettingValues({
 		{"Direction", "Source" },
 		{"Weight", "1"},
 		{"FixedOpex", "0" },
@@ -76,12 +80,12 @@ int main()
 	);
 
     //Add link from the default port to Elec_Bus
-	CairnAPI::BusAPI vElec_Bus = m_Problem.get_Bus("Elec_Bus");
-	m_Problem.add(vPV_dPort, vElec_Bus);
+	std::shared_ptr < CairnAPI::BusAPI> vElec_Bus = m_Problem.get_Bus("Elec_Bus");
+	m_Problem.add(*vPV_dPort, *vElec_Bus);
 
 	//Add a new port to the SourceLoad "PV"
-	CairnAPI::MilpPortAPI vPV_CarbonPort = vPV.add_Port("Port_CO2_content", vCO2);
-	vPV_CarbonPort.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vPV_CarbonPort = vPV->add_Port("Port_CO2_content", *vCO2);
+	vPV_CarbonPort->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "SourceLoadFlow"},
 		{"Coeff", 10},
@@ -89,11 +93,11 @@ int main()
 	});
 
 	//Create a new Bus and add link to the new port of the SourceLoad PV
-	CairnAPI::BusAPI vCO2_Bus;
-	TESTAPI("add CO2_Bus", vCO2_Bus = m_Problem.create_Bus("CO2_Bus", "ManualConstraint", vCO2))
-	vCO2_Bus.set_SettingValue("StrictConstraint", false);
+	std::shared_ptr < CairnAPI::BusAPI> vCO2_Bus;
+	TESTAPI("add CO2_Bus", vCO2_Bus = m_Problem.create_Bus("CO2_Bus", "ManualConstraint", *vCO2))
+	vCO2_Bus->set_SettingValue("StrictConstraint", false);
 
-	m_Problem.add(vPV_CarbonPort, vCO2_Bus);
+	m_Problem.add(*vPV_CarbonPort, *vCO2_Bus);
 
 	//------ Execute a simulation then compare the result with the referance -----
 

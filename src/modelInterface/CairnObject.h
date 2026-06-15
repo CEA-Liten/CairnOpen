@@ -47,7 +47,10 @@ public:
         }
         return vRet;
     }
+
     const std::vector<CairnObject*>& children() const;
+    std::vector<std::string> childrenNames() const;
+
     virtual std::vector<class InputParam*> get_InputParams() { return {}; };
 
     virtual std::vector<class InputParam*> get_ParamInputParams() { return {}; };
@@ -55,6 +58,10 @@ public:
     virtual std::vector<class InputParam*> get_TimeSeriesInputParams() { return {}; };
     virtual std::vector<class InputParam*> get_EnvImpactInputParams() { return {}; };
     virtual std::vector<class InputParam*> get_PortEnvImpactInputParams() { return {}; };
+    virtual class InputParam* get_PerfParam() { return nullptr; };
+
+    virtual std::vector<std::string> get_IOVarNames() const { return {}; } //t_list
+    virtual std::string get_IOVarDescription(const std::string& varName) const { return {}; };
 
 private:
 	CairnObject* p_Parent{ nullptr };
@@ -62,7 +69,5 @@ private:
 	std::string m_Name;
     std::string m_Type;
 };
-
-
 
 #endif

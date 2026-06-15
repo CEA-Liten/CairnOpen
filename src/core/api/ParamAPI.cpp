@@ -5,7 +5,7 @@ using namespace CairnAPIUtils;
 
 
 
-CairnAPI::ParamAPI::ParamAPI(CairnAPI::ObjectAPI* ap_Parent, ModelParam* ap_Param)
+CairnAPI::ParamAPI::ParamAPI(std::shared_ptr < CairnAPI::ObjectAPI> ap_Parent, ModelParam* ap_Param)
 {
 	m_Parent = ap_Parent;
 	m_Param = ap_Param;

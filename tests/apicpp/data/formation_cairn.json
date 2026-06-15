@@ -174,7 +174,7 @@
 				"nodeId": "301",
 				"nodeName": "ElectricityDistrib",
 				"nodeTechnoType": "Electrical",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#fabe0c",
 				"nodeComment": "",
 				"x": 330,
@@ -238,19 +238,7 @@
 						"value": 0
 					},
 					{
-						"key": "CP",
-						"value": 0
-					},
-					{
-						"key": "GHV",
-						"value": 0
-					},
-					{
-						"key": "LHV",
-						"value": 1
-					},
-					{
-						"key": "Potential",
+						"key": "Voltage",
 						"value": 220
 					},
 					{
@@ -279,7 +267,7 @@
 				"nodeId": "251",
 				"nodeName": "H2",
 				"nodeTechnoType": "FluidH2",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 254,
@@ -351,7 +339,11 @@
 						"value": 0.03332
 					},
 					{
-						"key": "Potential",
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
 						"value": 30
 					},
 					{
@@ -1625,7 +1617,8 @@
 					},
 					{
 						"key": "Capex",
-						"value": 480000
+						"value": 480000,
+						"comment": "This is Capex"
 					},
 					{
 						"key": "Efficiency",
@@ -1641,8 +1634,7 @@
 					},
 					{
 						"key": "FixedOpex",
-						"value": 0.04,
-						"comment": "This is FixedOpex"
+						"value": 0.04
 					},
 					{
 						"key": "Replacement",

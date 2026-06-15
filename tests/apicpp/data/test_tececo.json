@@ -172,7 +172,7 @@
 				"nodeName": "Electricity",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 610,
@@ -180,7 +180,7 @@
 				"energyTypeColor": "#E8A317",
 				"paramListJson": [
 					{
-						"key": "Potential",
+						"key": "Voltage",
 						"value": 230
 					},
 					{
@@ -228,7 +228,7 @@
 				"nodeName": "Heat",
 				"nodeType": "Heat",
 				"nodeTechnoType": "Heat",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
@@ -236,8 +236,12 @@
 				"energyTypeColor": "red",
 				"paramListJson": [
 					{
-						"key": "Potential",
-						"value": 50
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
+						"value": 30
 					},
 					{
 						"key": "BuyPrice",
@@ -246,6 +250,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "FluxType",
+						"value": "Energy"
 					}
 				],
 				"optionListJson": [

@@ -6,10 +6,13 @@
 class CAIRNCORESHARED_EXPORT OperationSubModel : public SubModel
 {
 public:
-    OperationSubModel(CairnObject* aParent=nullptr);
+    OperationSubModel(CairnObject* aParent = nullptr);
     ~OperationSubModel();
 
-    void buildModel();
+    int checkConsistency() override;
+
+    void buildModel() override final; /* prevent models from overriding buildModel() */
+
     virtual void closeExpressions();
     void computeDefaultIndicators(const double* optSol);
 

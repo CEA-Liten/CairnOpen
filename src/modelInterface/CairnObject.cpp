@@ -1,7 +1,5 @@
 #include "CairnObject.h"
 
-
-
 CairnObject::CairnObject(CairnObject* ap_Parent, const std::string& a_Name)
 {
 	m_Name = a_Name;
@@ -42,6 +40,15 @@ const std::string& CairnObject::objectType() const
 const std::vector<CairnObject*>& CairnObject::children() const
 {
 	return m_children;
+}
+
+std::vector<std::string> CairnObject::childrenNames() const
+{
+	std::vector<std::string> vRet;
+	for (auto& vChild : m_children) {
+		vRet.push_back(vChild->objectName());
+	}
+	return vRet;
 }
 
 void CairnObject::addChild(CairnObject* ap_Child)

@@ -8,10 +8,12 @@ class BusCompo;
 class CAIRNCORESHARED_EXPORT BusSubModel : public SubModel
 {
 public:
-    BusSubModel(CairnObject* aParent=nullptr);
+    BusSubModel(CairnObject* aParent = nullptr);
     ~BusSubModel();
 
-    void buildModel();
+    int checkConsistency() override;
+
+    void buildModel() override final; /* prevent models from overriding buildModel() */
     void computeDefaultIndicators(const double* optSol);
 
     void declareDefaultModelConfigurationParameters() { 

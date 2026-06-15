@@ -38,15 +38,36 @@ void ConverterSubModel::setMinPower(MIPModeler::MIPExpression1D aPower, std::vec
     * Linearization of function :math:`Z(t) = varMinPowerH2 * Yonoff(t) (linearization)`,  :math:`mPowerH2(t) >= varMinPowerH2 * YonOff(t)` with mPowerH2 >= Z
     */
 
-    addVariable(mZ, "Pmin");
+    
 
-    if (!mLPModelOnly)
-    {
+    MIPModeler::MIPExpression1D aMinExpr(mTimeSteps.size());
+
+    if (mWeight < 0) {
         for (uint64_t t = 0; t < mHorizon; t++)
         {
-            addConstraint(aPower[t] - fabs(aNomPower) * mExpState[t] <= 0, "PowMax", t);
-            addConstraint(mZ(t) == aMinPowList[t] * mExpSizeMax, "DefPmin", t);
-            addConstraint(aPower[t] >= mZ(t) - (1 - mExpState[t]) * aMinPowList[t] * fabs(aNomPower), "Pmin", t);
+            aMinExpr[t] = aMinPowList[t] * aNomPower;
+        }
+    }
+    else if (mWeight > 1) {
+        for (uint64_t t = 0; t < mHorizon; t++)
+        {
+            aMinExpr[t] = aMinPowList[t] * mExpSizeMax / mWeight;
+        }
+    }
+    else {
+        for (uint64_t t = 0; t < mHorizon; t++)
+        {
+            aMinExpr[t] = aMinPowList[t] * mExpSizeMax;
+        }
+    }
+    if (!mLPModelOnly)
+    {
+        addVariable(mZ, "Pmin");
+        for (uint64_t t = 0; t < mHorizon; t++)
+        {
+            addConstraint(aPower[t] - fabs(aNomPower*mWeight)*mExpState[t] <= 0, "PowMax", t);
+            addConstraint(mZ(t) == aMinExpr[t], "DefPmin", t);
+            addConstraint(aPower[t] >= mZ(t) - (1 - mExpState[t]) * aMinPowList[t] * fabs(aNomPower * mWeight), "Pmin", t);
 
 
         }
@@ -54,7 +75,7 @@ void ConverterSubModel::setMinPower(MIPModeler::MIPExpression1D aPower, std::vec
     else {
         for (uint64_t t = 0; t < mHorizon; t++)
         {
-            addConstraint(aPower[t] >= aMinPowList[t] * mExpSizeMax, "MinPowerLPModOnly", t);
+            addConstraint(aPower[t] >= aMinExpr[t], "MinPowerLPModOnly", t);
         }
     }
 }

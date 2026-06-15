@@ -17,10 +17,11 @@ typedef std::variant< MIPModeler::MIPExpression*, MIPModeler::MIPExpression1D*> 
 
 class ModelVar {
 public:
-    ModelVar(const std::string& a_Name = "", t_unit a_Unit = "");
+    ModelVar(const std::string& a_Name = "", t_unit a_Unit = "", const std::string& a_Description = "");
     ~ModelVar();
 
     const std::string& getName() const { return m_Name; };
+    const std::string& getDescription() const { return m_Description; };
 
     std::string getUnit() const;
     void setUnit(t_unit a_Unit);
@@ -29,6 +30,8 @@ public:
 
 protected:
     std::string m_Name;
+    std::string m_Description;
+
     UnitParam m_Unit;
 };
 
@@ -39,11 +42,13 @@ class ControlVar : public ModelVar
 public:
     ControlVar(const std::string& aName,
         double* ap_Value,
+        const std::string& a_Description = "", 
         double* ap_DefaultValue = nullptr,
         bool a_isMPC = true
     );
     ControlVar(const std::string& aName,
         std::vector<double>* ap_Hist,
+        const std::string& a_Description = "",
         double* ap_DefaultValue = nullptr,
         bool a_isMPC = true
     );
@@ -84,11 +89,11 @@ protected:
 class ModelIO : public ModelVar
 {
 public:
-    ModelIO(const std::string& aName = "", t_flag a_IsUsed = true, t_unit a_Unit = "");
+    ModelIO(const std::string& aName = "", t_flag a_IsUsed = true, t_unit a_Unit = "", const std::string& aDescription = "");
     ModelIO(const std::string& aName, MIPModeler::MIPExpression* aPtr, 
-        t_flag a_IsUsed = true, t_unit a_Unit = "");
+        t_flag a_IsUsed = true, t_unit a_Unit = "", const std::string& aDescription = "");
     ModelIO(const std::string& aName, MIPModeler::MIPExpression1D* aPtr, 
-        t_flag a_IsUsed = true, t_unit a_Unit = "");
+        t_flag a_IsUsed = true, t_unit a_Unit = "", const std::string& aDescription = "");
 
     const EIOModelType& getType() const { return m_Type; };
     bool IsUsed() { return m_IsUsed.get_Value(); };

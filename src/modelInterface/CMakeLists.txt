@@ -34,7 +34,13 @@ set(${COMPONENT}_INTERFACE_INCLUDE_DIRECTORIES
 include(ComponentSetup)
 create_component(${COMPONENT})
 target_compile_definitions(${COMPONENT} PRIVATE -DMODELINTERFACE_LIBRARY)
-
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	message("CAIRN_MODELSDEBUG: ${CAIRN_MODELSDEBUG}")
+	target_compile_definitions(${COMPONENT} PRIVATE CAIRN_MODELSDEBUG="${CAIRN_MODELSDEBUG}/models")
+	if (WITH_PRIVATEMODELS)
+		target_compile_definitions(${COMPONENT} PRIVATE CAIRN_PMODELSDEBUG="${CAIRN_MODELSDEBUG}/privateModels")
+	endif()
+endif()
 include(SpdlogSetup)
 target_link_libraries(${COMPONENT} PRIVATE spdlog::spdlog)
 

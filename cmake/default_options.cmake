@@ -9,7 +9,7 @@ set(CPLEX_ROOT "C:/Program Files/IBM/ILOG/CPLEX_Studio201/cplex" CACHE STRING "C
 
 # Python, to force Python (if not defined, use find_package Python3)
 set(PYTHON_HOME C:/Python/Python313 CACHE INTERNAL "Python installation path")
-set(PYTHON_VENV C:/Python/envs/buildCairn CACHE INTERNAL "Python virtual environment")
+set(PYTHON_VENV C:/Python/envs/buildCairn CACHE STRING "Python virtual environment")
 set(PYTHON_PACKAGES Lib/site-packages CACHE INTERNAL "Python packages path")
 set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11)
 
@@ -23,6 +23,8 @@ set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE STRING "Python virtual environm
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
 option(WITH_TESTING "Build tests. Default = OFF" ON)
+option(TEST_WITH_CTESTS "Build C unit tests. Default = OFF" ON)
+option(TEST_WITH_GENERICTESTS "Build generic tests. Default = OFF" ON)
 option(BUILD_WHEEL "build python wheel of cairn" ON)
 
 # TODO!!

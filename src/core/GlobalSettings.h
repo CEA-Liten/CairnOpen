@@ -120,7 +120,7 @@ namespace GS
     inline void uExpandVecxf2QVector(std::vector<double>* vFineOut, const uint64_t aSizeFineOut,
                                      Eigen::VectorXf vCoarseIn, double aTimeStepOut,
                                      std::vector<double> aTimeStepsIn,
-                                     uint aNpdtPast, double aCoeff)
+                                     uint aNpdtPast, double aCoeff, double aOffset)
     {
       const uint64_t aSizeFine = aSizeFineOut ; //pastSize+futurSize
       const uint64_t aSizeCoarse = vCoarseIn.size() ; //pastSize+computationFuturSize
@@ -135,7 +135,7 @@ namespace GS
       //past
       for (uint64_t ifine=0; ifine<aNpdtPast; ifine++)
       {
-              (*vFineOut)[ifine] = aCoeff * vCoarseIn[icoarse] ;
+              (*vFineOut)[ifine] = aCoeff * vCoarseIn[icoarse] + aOffset;
               localOut[ifine] = (*vFineOut)[ifine] ;
               icoarse++ ;
       }
@@ -144,7 +144,7 @@ namespace GS
       {
           if (dt <= aTimeStepsIn[icoarse-aNpdtPast])  // dt est la periode de moyenne, composee d'un nombre entier de pas de temps
           {
-              (*vFineOut)[ifine] = aCoeff * vCoarseIn[icoarse] ;
+              (*vFineOut)[ifine] = aCoeff * vCoarseIn[icoarse] + aOffset;
               localOut[ifine] = (*vFineOut)[ifine] ;
               dt +=aTimeStepOut ;
               //cDebug() << "vFineOut ifine " << ifine << vCoarseIn[icoarse];

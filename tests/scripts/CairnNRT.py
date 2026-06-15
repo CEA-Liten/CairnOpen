@@ -16,7 +16,10 @@ from compare_lp import test_comparaison
 from compareJson import compareJson
 
 from sys import platform
-import cairn as crn
+try:
+    import cairn as crn
+except:
+    import cairnopen as crn
 import time
 
 def updateFile(file_current, file_ref, overwrite, keep_current = True):
@@ -71,7 +74,23 @@ class CairnNRT:
             self.__dataseries = [os.path.join(app_home, name+'_dataseries.csv')]
         else:
             self.__dataseries = dataseries
+        
+    def set_Results_ref(self, refPath):
+        self.__file_ref = refPath
 
+    def set_Results_file(self, refPath):
+        self.__file_res = refPath
+
+    def set_PLAN_ref(self, refPath):
+        self.__file_plan_ref = refPath
+
+    def set_HIST_ref(self, refPath):
+        self.__file_hist_ref = refPath
+    
+    def set_LP_ref(self, refPath):
+        self.__file_lp_ref = refPath
+
+ 
     def check_study_file_existence(self):
         assert os.path.isfile(self.__study_file), self.__study_file + " not found"
         for i in self.__dataseries:
@@ -279,7 +298,8 @@ class CairnNRT:
                 status = True
                 test = '<'
         
-        self.output(planOrHist + ' file difference '+str(abs(err))+ test + ' ' + str(threshold) + '%\n')
+            self.output(planOrHist + ' file difference '+str(abs(err))+ test + ' ' + str(threshold) + '%\n')
+
         return status
 
     def checklp(self):
@@ -417,6 +437,15 @@ class CairnNRT:
             self.__file_res = os.path.join(self.__app_home,folder_res,file_res)
         if file_ref != "":
             self.__file_ref = os.path.join(self.__app_home,folder_res,file_ref)
+        if os.getenv('BUILD_STEP') is None or 'CHECK' in os.getenv('BUILD_STEP'):
+            if not os.path.exists(self.__directory_res):
+                os.makedirs(self.__directory_res)
+            infos = new_compare_results(self.__app_home, self.__file_res, self.__file_ref, self.__logfile, self.__directory_res, threshold, pegase=self.__pegase,skip_col=skip_col)
+        
+        return infos
+    
+    def checkResults(self, threshold=0.01,skip_col=[]):
+               
         if os.getenv('BUILD_STEP') is None or 'CHECK' in os.getenv('BUILD_STEP'):
             if not os.path.exists(self.__directory_res):
                 os.makedirs(self.__directory_res)

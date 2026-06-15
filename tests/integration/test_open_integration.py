@@ -17,10 +17,12 @@ file_report = path.join(BASE_DIR,"rapport_modeles.csv")
 # Récupère tous les fichiers .csv dans les sous-dossiers de "data"
 # Ne récupère pas les sensibilités
 
+skip = []
+
 def find_all_tests(BASE_DIR):
     test_cases = []
     for case_dir in BASE_DIR.iterdir():
-        if case_dir.is_dir():
+        if case_dir.is_dir()and case_dir.name not in skip:
             jsons = list(case_dir.glob("*.json"))
             jsons = [
                 j for j in jsons

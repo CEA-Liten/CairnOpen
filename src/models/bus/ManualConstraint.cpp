@@ -18,18 +18,6 @@ ManualConstraint::~ManualConstraint()
 
 }
 
-void ManualConstraint::setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue, double aMinIntegrateConstraintBusValue, 
-    double aMaxIntegrateConstraintBusValue, double aStrictIntegrateConstraintBusValue, double aMaxFlexIntegrateConstraintBusValue)
-{
-	mMinConstraintBusValue = aMinConstraintBusValue;
-	mMaxConstraintBusValue = aMaxConstraintBusValue;
-	mStrictConstraintBusValue = aStrictConstraintBusValue;
-	mMinIntegrateConstraintBusValue = aMinIntegrateConstraintBusValue;
-	mMaxIntegrateConstraintBusValue = aMaxIntegrateConstraintBusValue;
-	mStrictIntegrateConstraintBusValue = aStrictIntegrateConstraintBusValue;
-    mMaxFlexIntegrateConstraintBusValue = aMaxFlexIntegrateConstraintBusValue;
-}
-
 void ManualConstraint::setTimeData()
 {
     SubModel::setTimeData();
@@ -37,6 +25,24 @@ void ManualConstraint::setTimeData()
     mHistBusBalance.resize(mHorizon+mNpdtPast);
 }
 
+void ManualConstraint::computeInitialData()
+{
+    /* When UseExtrapolationFactor is true, then *BusValue is assumed to be over one year */
+    
+    // Retrieve extrapolation factor 
+    const double factor = mParentCompo->ExtrapolationFactor();
+
+    // Compute scaling (1.0 means "no scaling")
+    const double scale = mUseExtrapolationFactor ? (1.0 / factor) : 1.0;
+
+    mMinConstraintBusValue *= scale;
+    mMaxConstraintBusValue *= scale;
+    mStrictConstraintBusValue *= scale;
+    mMinIntegrateConstraintBusValue *= scale;
+    mMaxIntegrateConstraintBusValue *= scale;
+    mStrictIntegrateConstraintBusValue *= scale;
+    mMaxFlexIntegrateConstraintBusValue *= scale;
+}
 
 void ManualConstraint::computeModelContribution()
 {
@@ -95,16 +101,6 @@ void ManualConstraint::computeModelContribution()
     }
 }
 
-//------------------------------------------------------------------------------
-void ManualConstraint::finalizeModelData() {
-    double extrapolationFactor  = mParentCompo->ExtrapolationFactor();
-    //Divide by UseExtrapolationFactor; assuming that the *BusValue are over one year
-    if (mUseExtrapolationFactor) {
-        setParameters(mMinConstraintBusValue / extrapolationFactor, mMaxConstraintBusValue / extrapolationFactor, mStrictConstraintBusValue / extrapolationFactor,
-            mMinIntegrateConstraintBusValue / extrapolationFactor, mMaxIntegrateConstraintBusValue / extrapolationFactor,
-            mStrictIntegrateConstraintBusValue / extrapolationFactor, mMaxFlexIntegrateConstraintBusValue / extrapolationFactor);
-    }
-}
 
 //----------------Parts of buildProblem--------------------------------------------------------------
 

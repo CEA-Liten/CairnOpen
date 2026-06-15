@@ -13,7 +13,7 @@ CairnAPI::BusAPI::BusAPI(const OptimProblemAPI& a_Problem, const std::string& a_
 	const std::string& a_ModelName, const EnergyVectorAPI& a_EnergyVector)
 	: CairnAPI::ObjectAPI()
 {
-	*this = a_Problem.create_Bus(a_Name, a_ModelName, a_EnergyVector);
+	*this = *a_Problem.create_Bus(a_Name, a_ModelName, a_EnergyVector);
 }
 
 BusCompo* CairnAPI::BusAPI::get_BusCompo() const
@@ -105,6 +105,8 @@ EnergyVector* CairnAPI::BusAPI::get_Carrier() const
 	if (pBus) {
 		return pBus->getMainCarrier();
 	}
+	else
+		return nullptr;
 }
 
 void CairnAPI::BusAPI::set_Carrier(const std::string& a_CarrierName) 
@@ -241,7 +243,8 @@ void CairnAPI::BusAPI::set_SettingValue(const std::string& a_SettingName, const 
 		, a_SettingName, a_SettingValue);
 
 		//Update MilpComponent::mComponent as it is used to re-initialize the component parameters
-		pBus->updateCompoParamMap(a_SettingName, a_SettingValue);
+		const std::string value = CairnAPIUtils::getParamValue(a_SettingValue);
+		pBus->updateCompoParamMap(a_SettingName, "value", value);
 
 		vRet = (vOk) ? noError : errParam;
 	}
@@ -254,6 +257,24 @@ void CairnAPI::BusAPI::set_SettingValues(const t_dict& a_SettingValues)
 	for (auto& vParam : a_SettingValues) {
 		set_SettingValue(vParam.first, vParam.second);
 	}
+}
+
+// Set the comment of a comment
+void CairnAPI::BusAPI::set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, 
+	bool checkExistence)
+{
+	ECodeError vRet = noError;
+	if (m_Object) {
+		try {
+			CairnAPI::ObjectAPI::set_SettingComment(a_SettingName, a_SettingComment, checkExistence);
+			BusCompo* pBus = (BusCompo*)m_Object;
+			pBus->updateCompoParamMap(a_SettingName, "comment", a_SettingComment);
+		}
+		catch (const std::exception&) {
+			vRet = errParam;
+		}
+	}
+	CairnAPIUtils::setError(vRet);
 }
 
 // -- Ports ---
@@ -314,9 +335,9 @@ t_list CairnAPI::BusAPI::get_Ports() const
 	return vRet;
 }
 
-CairnAPI::MilpPortAPI CairnAPI::BusAPI::get_Port(const std::string& a_Name)
+std::shared_ptr < CairnAPI::MilpPortAPI> CairnAPI::BusAPI::get_Port(const std::string& a_Name)
 {
-	MilpPortAPI vRet;
+	std::shared_ptr < MilpPortAPI> vRet;
 	BusCompo* pBus = get_BusCompo();
 	std::string vPortName = std::string(a_Name.c_str());
 	if (pBus) {
@@ -329,7 +350,7 @@ CairnAPI::MilpPortAPI CairnAPI::BusAPI::get_Port(const std::string& a_Name)
 		}
 
 		if (vPort) {
-			vRet.set_MilpPort(vPort);
+			vRet = std::make_shared<MilpPortAPI>(vPort);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "port " + a_Name);
@@ -338,7 +359,7 @@ CairnAPI::MilpPortAPI CairnAPI::BusAPI::get_Port(const std::string& a_Name)
 	return vRet;
 }
 
-CairnAPI::MilpPortAPI CairnAPI::BusAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
+std::shared_ptr < CairnAPI::MilpPortAPI> CairnAPI::BusAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
 	const std::string& a_Direction, const std::string& a_Variable, const std::string& a_PortId)
 {
 	EnergyVector* pCarrier = get_Carrier();
@@ -349,7 +370,7 @@ CairnAPI::MilpPortAPI CairnAPI::BusAPI::add_Port(const std::string& a_PortName, 
 			+ ". The bus carrier will be used!";
 	}
 	
-	MilpPortAPI vPort;
+	std::shared_ptr < MilpPortAPI> vPort;
 	BusCompo* pBus = get_BusCompo();
 	ECodeError vErr = noError;
 	std::string vErrMsg = "";
@@ -364,19 +385,20 @@ CairnAPI::MilpPortAPI CairnAPI::BusAPI::add_Port(const std::string& a_PortName, 
 			std::string vComponentName(get_Name());
 			std::string vPortId = a_PortId;
 			if (vPortId.empty()) vPortId = pBus->getUniquePortID();
-			std::map<std::string, std::string> vPortParams;
-			vPortParams["CompoName"] = vComponentName;
-			vPortParams["Name"] = a_PortName;
-			vPortParams["Carrier"] = pCarrier->Name();
-			vPortParams["Direction"] = CairnUtils::toUpper(a_Direction);
-			vPortParams["Variable"] = a_Variable;
+
+			t_mapParamData vPortParams;
+			CairnUtils::setParamValue(vPortParams, "CompoName", vComponentName);
+			CairnUtils::setParamValue(vPortParams, "Name", a_PortName);
+			CairnUtils::setParamValue(vPortParams, "Carrier", pCarrier->Name());
+			CairnUtils::setParamValue(vPortParams, "Direction", CairnUtils::toUpper(a_Direction));
+			CairnUtils::setParamValue(vPortParams, "Variable", a_Variable);
 
 			//create port
-			pBus->createOnePort(vPortId, vPortParams);
+			pBus->createOnePort(vPortId, vPortParams, pCarrier);
 			vMilpPort = pBus->getPort(vPortId);
-			if (vMilpPort) {
-				vPort.set_MilpPort(vMilpPort);
-				vPort.set_EnergyCarrier(pCarrier);
+			if (vMilpPort) {				
+				vPort = std::make_shared<MilpPortAPI>(vMilpPort);
+				//vPort.set_EnergyCarrier(pCarrier);
 			}
 			else {
 				vErr = errAdd;
@@ -446,7 +468,7 @@ void CairnAPI::BusAPI::get_Links(t_dict& a_Links)
 {
 	t_list vPorts = get_Ports();
 	for (auto& vPortName : vPorts) {
-		MilpPort* vPort = get_Port(vPortName).get_MilpPort();
+		MilpPort* vPort = get_Port(vPortName)->get_MilpPort();
 		if (vPort) {
 			BusCompo* vBus = vPort->getLinkedBus();
 			if (vBus) {
@@ -457,24 +479,24 @@ void CairnAPI::BusAPI::get_Links(t_dict& a_Links)
 }
 
 // -- IOs ---
-t_list CairnAPI::BusAPI::get_VarList()
-{
-	t_list vRet = {};
-	BusCompo* pBus = get_BusCompo();
-	if (pBus) {
-		// le composant existe, retourne une liste des variables (model expressions)		
-		const SubModel::t_mapIOs& vIOMap = pBus->compoModel()->getMapIOExpression();
-		for (auto& [vName, vIO] : vIOMap) {
-			if (vIO->IsUsed()) {
-				vRet.push_back(vName);
-			}
-		}
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
-}
+//t_list CairnAPI::BusAPI::get_VarList() const
+//{
+//	t_list vRet = {};
+//	BusCompo* pBus = get_BusCompo();
+//	if (pBus) {
+//		// le composant existe, retourne une liste des variables (model expressions)		
+//		const SubModel::t_mapIOs& vIOMap = pBus->compoModel()->getMapIOExpression();
+//		for (auto& [vName, vIO] : vIOMap) {
+//			if (vIO->IsUsed()) {
+//				vRet.push_back(vName);
+//			}
+//		}
+//	}
+//	else {
+//		CairnAPIUtils::setError(noCairn);
+//	}
+//	return vRet;
+//}
 
 t_value CairnAPI::BusAPI::get_varValue(const std::string& a_VarName)
 {

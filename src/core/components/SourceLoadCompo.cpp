@@ -7,12 +7,13 @@ using namespace GS ;
 using Eigen::Map;
 
 SourceLoadCompo::SourceLoadCompo(CairnObject *aParent,
-    const std::map<std::string, std::string>& aComponent,
-    const std::map < std::string, std::map<std::string, std::string> >& aPorts,
+    const std::string& aName,
+    const t_mapParamData& aComponent,
+    const std::map < std::string, t_mapParamData>& aPorts,
     MilpData* aMilpData,
     TecEcoAnalysis* aTecEcoAnalysis,
-    ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
+    ModelFactory* aModelFactory) 
+    : MilpComponent(aParent, aName, aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
 {
 }
 
@@ -25,7 +26,7 @@ void SourceLoadCompo::declareCompoInputParam()
     MilpComponent::declareCompoInputParam();
 }
 
-void SourceLoadCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent) 
+void SourceLoadCompo::setCompoInputParam(const t_mapParamData& aComponent)
 {
     MilpComponent::setCompoInputParam(aComponent);
 }

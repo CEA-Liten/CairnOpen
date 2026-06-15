@@ -146,7 +146,7 @@
 				"nodeId": "2845713128",
 				"nodeName": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"x": 470,
@@ -196,6 +196,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"timeSeriesListJson": [],

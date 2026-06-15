@@ -4,30 +4,38 @@
 include(GNUInstallDirs)
 
 # Common setup
+set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envs/envCairn${PROJECT_VERSION})
+if (INSTALL_WHEEL)
+    if (USE_ENVCAIRN) 
+        # force use on envCairn
+        set(INSTALL_WHEEL_VENV ${PYTHON_VENV_PROJECT})    
+    else()
+        set(PYTHON_VENV_PROJECT ${INSTALL_WHEEL_VENV})    
+    endif() 
+endif()
+if(CMAKE_HOST_SYSTEM_NAME MATCHES Windows)	
+    set(PYTHON_CMD_PROJECT ${PYTHON_VENV_PROJECT}/scripts/python)
+else()	
+    set(PYTHON_CMD_PROJECT ${PYTHON_VENV_PROJECT}/bin/python)
+endif()
+
+
 if (BUILD_CAIRN)  
     message("\n--------------------------------------------------")
     add_subdirectory(${CAIRN_HOME}/modelInterface)
     add_subdirectory(${CAIRN_HOME}/core)        
-    add_subdirectory(${CAIRN_HOME}/models)        
+    add_subdirectory(${CAIRN_HOME}/models)   
+    
     if (WITH_PRIVATEMODELS)
         message("\n---------- private ----------------------------")
         add_subdirectory(${CAIRN_HOME}/privateModels)  
-    endif()    
+    endif()  
 else()
     find_package(Cairn)
 endif()
   
 # extra files
-if (WITH_GENERICAPPENV)
-    set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envs/envCairn${PROJECT_VERSION})
-    if (INSTALL_WHEEL)
-        if (USE_ENVCAIRN) 
-            # force use on envCairn
-            set(INSTALL_WHEEL_VENV ${PYTHON_VENV_PROJECT})    
-        else()
-            set(PYTHON_VENV_PROJECT ${INSTALL_WHEEL_VENV})    
-        endif() 
-    endif()
+if (WITH_GENERICAPPENV)    
     if(CMAKE_SYSTEM_NAME MATCHES Windows)
         msys_to_win_path( ${Qt5_HOME} Qt5_HOME)
         configure_file(${CMAKE_SOURCE_DIR}/cmake/GenericAppEnv.in ${CMAKE_BINARY_DIR}/GenericAppEnv.bat @ONLY)
@@ -44,10 +52,10 @@ if (WITH_GENERICAPPENV)
     endif()
 endif()
 
-if (BUILD_CAIRN)  
+if (BUILD_CAIRN)              
     # Generate resources/modelTypes.txt (needed for api)
-    execute_process(COMMAND python generateModelTypes.py ${WITH_PRIVATEMODELS}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts)
+    file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/modelTypes.txt CONTENT "${list_models}")
+    install(FILES ${CMAKE_BINARY_DIR}/modelTypes.txt DESTINATION resources)
 endif()
 
 # ============= Doc configuration =============

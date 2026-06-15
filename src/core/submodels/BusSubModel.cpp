@@ -10,6 +10,10 @@ BusSubModel::BusSubModel(CairnObject* aParent) :
 BusSubModel::~BusSubModel(){
 }
 
+int BusSubModel::checkConsistency() {
+    return SubModel::checkConsistency();
+}
+
 void BusSubModel::computeDefaultIndicators(const double* optSol)
 {
 }

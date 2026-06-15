@@ -72,13 +72,14 @@ public:
         addIO("EstockUnit", &mExpEsto, true, mMainCarrier->pStorageUnit()) ;		/** Computed current Storage Unit content, in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
         addIO("FlowUnit", &mExpFlow, true, mMainCarrier->pFluxUnit()) ;		/** Storage Unit balance of flows = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
 
+
         //PressureModel
-        MilpPort* portFluid = getPortByType("Fluid");
+        MilpPort* portFluid = getPortByType("MaterialCarrier");
         if (portFluid != nullptr) {
             addIO("PressureIn", &mExpPressure, &mAddPressureModel, portFluid->pFluxUnit()); /** Inlet Pressure if pressure mode used {"Bar/Pa"}*/
         }
         else if (mAddPressureModel) {
-            Cairn_Exception persee_error("Error: a Fluid port is expected for StorageGen when AddPressureModel is used (componenet " + mParentCompo->Name() + ")", -1);
+            Cairn_Exception persee_error("Error: a port with MaterialCarrier is expected for StorageGen when AddPressureModel is used (componenet " + mParentCompo->Name() + ")", -1);
             throw persee_error;
         }
 

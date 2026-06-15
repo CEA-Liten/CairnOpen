@@ -79,7 +79,8 @@ bool ZEVariables::set_Values(ModelParam* a_Param, double aTimeStepOut, const std
                 m_Values.resize(lptr->size());
             }
             if (m_Values.size() > 0) {
-                GS::uExpandVecxf2QVector(&m_Values, m_Values.size(), *lptr, aTimeStepOut, aTimeStepsIn, aNpdtPast, mCoeffExport);
+                GS::uExpandVecxf2QVector(&m_Values, m_Values.size(), *lptr, aTimeStepOut, 
+                    aTimeStepsIn, aNpdtPast, mCoeffExport, mCoeffOffset);
                 vRet = true;
             }
         }

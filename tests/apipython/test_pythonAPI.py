@@ -129,6 +129,16 @@ def write_energy_carrier(problem):
 def load_timeseries(problem, file):
     problem.add_timeseries(file)
 
+def load_df_timeseries(problem, file):
+     df = pd.read_csv(file, header=None, sep=";")
+     sizeValues = df.index.stop          
+     for col in df.columns:
+         values = []
+         for row in range(4,sizeValues):
+             values.append(df.values[row][col])
+         ts = {"Name": df.values[0][col], "Unit": df.values[2][col], "Description": df.values[1][col], "Values": values}
+         problem.add_onetimeseries(ts)
+     
 
 def save(problem, folder, new_name):
     if not os.path.exists(folder):
@@ -284,7 +294,7 @@ def test_modify_port(problem):
 def test_get_energy_carrier(problem):
     # Add a new energy carrier
     energy_carrier_name = "ElectricityDistrib2"
-    energy_carrier_type = "Electrical"
+    energy_carrier_type = "ElectricalCarrier"
     problem.create_energy_carrier(energy_carrier_name, energy_carrier_type)
 
     # Get the energy vector
@@ -297,14 +307,14 @@ def test_get_energy_carrier(problem):
     # Check the settings
     ev_settings = energy_carrier.settings
     assert isinstance(ev_settings, list)
-    assert "Potential" in ev_settings
+    assert "Voltage" in ev_settings
 
     # Check values
-    setting_value = energy_carrier.get_setting_value("Potential")
+    setting_value = energy_carrier.get_setting_value("Voltage")
     assert setting_value is not None
     new_value = 440
-    energy_carrier.set_setting_value("Potential", new_value)
-    updated_value = energy_carrier.get_setting_value("Potential")
+    energy_carrier.set_setting_value("Voltage", new_value)
+    updated_value = energy_carrier.get_setting_value("Voltage")
     assert updated_value == new_value
 
 @pytest.mark.Cairn
@@ -419,6 +429,28 @@ def test_sequence_run_compare(problem):
     solution = run(problem, "")
     get_plan_results(problem)
     get_ts_results(problem)
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_df_timeseries(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath =  path.join(app_home, 'data')
+    load_df_timeseries(problem, path.join(dataPath,  "cairn_training_dataseries.csv"))
+    solution = run(problem, "")
+    get_plan_results(problem)
+    get_ts_results(problem) 
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_df_timeseries2(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath =  path.join(app_home, 'data')
+    add_df_timeseries(problem, pd.read_csv(path.join(dataPath,  "cairn_training_dataseries.csv"), header=None, sep=";"))
+    solution = run(problem, "")
+    get_plan_results(problem)
+    get_ts_results(problem)        
 
 
 @pytest.mark.Cairn
