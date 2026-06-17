@@ -14,7 +14,7 @@
 #include <ctime> 
 #include <algorithm>
 #include <iterator>
-#include <math>   
+#include <math.h>   
 #include <filesystem>
 namespace fs = std::filesystem;
 
