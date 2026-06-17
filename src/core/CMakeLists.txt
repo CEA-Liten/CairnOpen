@@ -98,7 +98,16 @@ if (WITH_PYBIND)
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 
 	# virtual environment with pybind11	
-	python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+	#python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+	message("create build environment: ${PYTHON_VENV}")
+	execute_process (COMMAND "${Python_EXECUTABLE}" -m venv "${PYTHON_VENV}" COMMAND_ERROR_IS_FATAL ANY)
+	set(ENV{VIRTUAL_ENV} "${PYTHON_VENV}")
+    set(Python_FIND_VIRTUALENV FIRST)
+    unset(Python_EXECUTABLE)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development)    
+    message("Python_EXECUTABLE: ${Python_EXECUTABLE}")
+	 execute_process(COMMAND ${Python_EXECUTABLE} -m pip install -r "${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt")
+
 	
 	set(PYBIND11_FINDPYTHON ${Python_FOUND})
 	find_package(pybind11 CONFIG REQUIRED)
