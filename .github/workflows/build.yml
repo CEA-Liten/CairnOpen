@@ -31,7 +31,7 @@ jobs:
       - name: Set CAIRN_HOME
         run: echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: buildALL
-        run: bash ./buildAll.sh
+        run: bash ./buildAll.sh Release open no-deps no-cov github_options.cmake
       
       - name: TNR PyTest
         run: bash ./tests/scripts/startPytest.sh
