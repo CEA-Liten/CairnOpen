@@ -7,13 +7,14 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
-#include<cstdio>
+#include <cstdio>
 #include <map>
 #include <iomanip>
 #include <cstring>
 #include <ctime> 
 #include <algorithm>
 #include <iterator>
+#include <math>   
 #include <filesystem>
 namespace fs = std::filesystem;
 
