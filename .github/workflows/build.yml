@@ -1,8 +1,10 @@
 name: cairn Workflow
+# on:
+#   push:  #disabling auto run
+#     branches:
+#       - main
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
