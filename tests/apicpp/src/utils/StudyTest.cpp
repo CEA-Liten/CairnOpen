@@ -146,11 +146,11 @@ StudyTest::t_mapDict StudyTest::readCSV(const fs::path& a_filename)
 
 double StudyTest::getDiff(double a_Value1, double a_Value2)
 {
-	double diff = fabs(a_Value1 - a_Value2);
+	double diff = std::fabs(a_Value1 - a_Value2);
 	if (a_Value1)
-		diff /= fabs(a_Value1);
+		diff /= std::fabs(a_Value1);
 	else if (a_Value2)
-		diff /= fabs(a_Value2);
+		diff /= std::fabs(a_Value2);
 
 	return diff;
 }
