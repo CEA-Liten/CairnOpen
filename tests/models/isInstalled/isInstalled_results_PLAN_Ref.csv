@@ -1,0 +1,84 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEco;NbYear;20;year;NbYear
+TecEco;Discount Rate;0.07;-;DiscountRate
+TecEco;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEco;NbYears in TS;1;year;NbYearsinTS
+TecEco;Leap Year Position;0;-;LeapYearPosition
+TecEco;Payback period offset;0;-;PaybackPeriodOffset
+TecEco;Discount Factor;11.3356;-;DiscountFactor
+TecEco;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEco;Extrapolation Factor;876;-;ExtrapolationFactor
+TecEco;OBJECTIVE;0;EUR;Objective
+TecEco;Net Present Value (Levelized Profit);0;EUR;NPV
+TecEco;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEco;Total CAPEX;0;EUR;CAPEX
+TecEco;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEco;Total project discounted operation cost;0;EUR;DiscountedNetOPEX
+TecEco;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEco;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEco;Total project income;0;EUR;DiscountedSellPart
+TecEco;Total project buying costs;0;EUR;DiscountedBuyPart
+TecEco;Annual operation cost;0;EUR;NetOPEX
+TecEco;Annual OPEX;0;EUR;PureOPEX
+TecEco;Annual replacement costs;0;EUR;ReplacementPart
+TecEco;Annual income;0;EUR;SellPart
+TecEco;Annual buying costs;0;EUR;BuyPart
+Converter#1;CAPEX;0;EUR;CAPEX
+Converter#1;is installed;1;-;IsInstalled
+Converter#1;Annual operation cost;0;EUR;OPEX
+Converter#1;Annual fixed OPEX;0;EUR;PureOPEX
+Converter#1;Annual variable OPEX;0;EUR;VariableOPEX
+Converter#1;Annual replacement costs;0;EUR;Replacement
+Converter#1;Installed Optimal Size;10;MW;Size
+Converter#1;Running time at power >0.;8760;h;RunningTime
+Converter#1;Running time availability;1;-;RunningTimeAvailable
+Converter#1;Annual consumption of ElectricalEnergy PowerIn;-8760;MWh;TotConsPowerIn
+Converter#1;Mean consumption of ElectricalPower PowerIn;-1;MW;MeanConsPowerIn
+Converter#1;Load factor PowerIn;0.1;-;UseRatePowerIn
+Converter#1;Annual production of ElectricalEnergy PowerOut;8760;MWh;TotProdPowerOut
+Converter#1;Mean production of ElectricalPower PowerOut;1;MW;MeanProdPowerOut
+Converter#2;CAPEX;0;EUR;CAPEX
+Converter#2;is installed;0;-;IsInstalled
+Converter#2;Annual operation cost;0;EUR;OPEX
+Converter#2;Annual fixed OPEX;0;EUR;PureOPEX
+Converter#2;Annual variable OPEX;0;EUR;VariableOPEX
+Converter#2;Annual replacement costs;0;EUR;Replacement
+Converter#2;Installed Optimal Size;0;MW;Size
+Converter#2;Running time at power >0.;0;h;RunningTime
+Converter#2;Running time availability;0;-;RunningTimeAvailable
+Converter#2;Annual consumption of ElectricalEnergy PowerIn;0;MWh;TotConsPowerIn
+Converter#2;Mean consumption of ElectricalPower PowerIn;0;MW;MeanConsPowerIn
+Converter#2;Load factor PowerIn;0;-;UseRatePowerIn
+Converter#2;Annual production of ElectricalEnergy PowerOut;0;MWh;TotProdPowerOut
+Converter#2;Mean production of ElectricalPower PowerOut;0;MW;MeanProdPowerOut
+Converter#3;CAPEX;0;EUR;CAPEX
+Converter#3;is installed;0;-;IsInstalled
+Converter#3;Annual operation cost;0;EUR;OPEX
+Converter#3;Annual fixed OPEX;0;EUR;PureOPEX
+Converter#3;Annual variable OPEX;0;EUR;VariableOPEX
+Converter#3;Annual replacement costs;0;EUR;Replacement
+Converter#3;Installed Optimal Size;0;MW;Size
+Converter#3;Running time at power >0.;0;h;RunningTime
+Converter#3;Running time availability;0;-;RunningTimeAvailable
+Converter#3;Annual consumption of ElectricalEnergy PowerIn;0;MWh;TotConsPowerIn
+Converter#3;Mean consumption of ElectricalPower PowerIn;0;MW;MeanConsPowerIn
+Converter#3;Load factor PowerIn;0;-;UseRatePowerIn
+Converter#3;Annual production of ElectricalEnergy PowerOut;0;MWh;TotProdPowerOut
+Converter#3;Mean production of ElectricalPower PowerOut;0;MW;MeanProdPowerOut
+GridFree#1;is installed;1;-;IsInstalled
+GridFree#1;Annual operation cost;0;EUR;OPEX
+GridFree#1;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#1;Grid extraction time;8760;h;extractionTime
+GridFree#1;Grid extraction ElectricalEnergy GridFlow;8760;MWh;TotGridFlow
+GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;99299.8;MWh;LvlzdTotGridFlow
+GridFree#1;Mean extraction ElectricalPower GridFlow;1;MW;MeanGridFlow
+NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
+NodeLaw#2;Integrated bus balance;0;MWh;BusBalance
+SourceLoad#1;is installed;1;-;IsInstalled
+SourceLoad#1;Annual operation cost;0;EUR;OPEX
+SourceLoad#1;Annual variable OPEX;0;EUR;VariableOPEX
+SourceLoad#1;Component Weight;1;Unit;Weight
+SourceLoad#1;ImposedProfile load time;8760;h;ImposedProfileTime
+SourceLoad#1;ImposedProfile ElectricalEnergy SourceLoadFlow;-8760;MWh;TotImposedProfileSourceLoadFlow
+SourceLoad#1;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-99299.8;MWh;LvlzdTotImposedProfileSourceLoadFlow
+SourceLoad#1;Mean ElectricalPower SourceLoadFlow;-1;MW;MeanImposedProfileSourceLoadFlow

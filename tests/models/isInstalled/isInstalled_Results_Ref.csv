@@ -1,0 +1,11 @@
+﻿Time;Converter#1.FixedOpex;Converter#1.Opex;Converter#1.PortL0.PowerIn;Converter#1.PortR0.PowerOut;Converter#1.PowerIn;Converter#1.PowerOut;Converter#1.Replacement;Converter#1.VariableCosts;Converter#2.FixedOpex;Converter#2.Opex;Converter#2.PortL0.PowerIn;Converter#2.PortR0.PowerOut;Converter#2.PowerIn;Converter#2.PowerOut;Converter#2.Replacement;Converter#2.VariableCosts;Converter#3.FixedOpex;Converter#3.Opex;Converter#3.PortL0.PowerIn;Converter#3.PortR0.PowerOut;Converter#3.PowerIn;Converter#3.PowerOut;Converter#3.Replacement;Converter#3.VariableCosts;GridFree#1.GridFlow;GridFree#1.GridPrice;GridFree#1.PortR0.GridFlow;GridFree#1.VariableCosts;NodeLaw#1.BusBalance;NodeLaw#2.BusBalance;SourceLoad#1.OUTPUTFlux1;SourceLoad#1.PortL0.SourceLoadFlow;SourceLoad#1.SourceLoadFlow;SourceLoad#1.VariableCosts;SourceLoad#1.WeightedImposedFlux;
+3600;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+7200;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+10800;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+14400;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+18000;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+21600;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+25200;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+28800;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+32400;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
+36000;0;0;-1;1;1;1;0;0;0;0;-0;0;0;0;0;0;0;0;-0;0;0;0;0;0;1;0;1;0;0;0;1;-1;1;0;1;
