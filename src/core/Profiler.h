@@ -227,7 +227,7 @@ private:
 #  define CAIRN_PROFILE_SCOPE(name, iter)  do {} while(false)
 #  define CAIRN_PROFILE_ITERATION(iter)    do {} while(false)
 #  define CAIRN_PROFILE_PROGRAM_START()    do {} while(false)
-#  define CAIRN_PROFILE_FLUSH(dir)         do {} while(false)
+#  define CAIRN_PROFILE_FLUSH(dir, studyName)         do {} while(false)
 
 #endif  // ENABLE_PROFILING
 
