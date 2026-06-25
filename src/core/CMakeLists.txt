@@ -88,7 +88,8 @@ if (WITH_PYBIND)
 	# virtual environment with pybind11		
 	python_venv3(${PYTHON_VENV} ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
 		
-	set(PYBIND11_FINDPYTHON ${Python_FOUND})
+	#set(PYBIND11_FINDPYTHON ${Python_FOUND})
+	message(STATUS "pybind11_DIR: ${pybind11_DIR}") 
 	find_package(pybind11 CONFIG REQUIRED)
 	
 	create_component(${COMPONENT})
