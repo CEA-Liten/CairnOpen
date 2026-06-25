@@ -85,9 +85,9 @@ if (WITH_PYBIND)
     message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 		
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 
-	# virtual environment with pybind11	
-	python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
-	
+	# virtual environment with pybind11		
+	python_venv3(${PYTHON_VENV} ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
+		
 	set(PYBIND11_FINDPYTHON ${Python_FOUND})
 	find_package(pybind11 CONFIG REQUIRED)
 	
