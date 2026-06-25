@@ -34,6 +34,7 @@ class OptimProblem;
 #include "StudyPathManager.h"
 #include "ModelVar.h"
 
+#include "ErrorCollector.h"
 #include "CairnAPI.h"
 
 /**
@@ -97,6 +98,7 @@ public:
     int initProblem();
     void redeclareEnvImpactParameters();
     int initSubModelInput();
+    void exportRHVariableInModel();
     int setParameters();
     int getNumberOfSolutions();
 
@@ -136,8 +138,6 @@ public:
     
     void computeHistState();
     void exportOptimaSizeAllCycles(const std::string& aFileName, int cycle, const std::string &encoding = "UTF-8");
-
-    double getSolverRunningTime() { return mSolver->getSolverRunningTime();  }
 
     void buildComponentConstraints();
     void buildBusConstraints();
@@ -185,6 +185,32 @@ public:
 
     void addGroup(const std::vector<std::string>& compoNames, 
         const std::string& mainCompo = "", const std::string& groupName = "");
+
+    // ------------------------------------------------------------------------ //
+
+    /** Returns all collected errors since last flush and clears the list */
+    std::vector<CairnLogger::ErrorEntry> flushErrors()
+    {
+        return CairnLogger::ErrorCollector::flushErrors();
+    }
+
+    /** Returns true if any errors occurred since last flush */
+    bool hasErrors() const
+    {
+        return CairnLogger::ErrorCollector::hasErrors();
+    }
+
+    /** Returns number of errors since last flush */
+    int errorCount() const
+    {
+        return CairnLogger::ErrorCollector::errorCount();
+    }
+
+    /** Clears errors without returning them */
+    void clearErrors()
+    {
+        CairnLogger::ErrorCollector::clear();
+    }
 
 private:    
     MilpData* mMilpData{ nullptr };  /** Pointer to Milp Time Data */

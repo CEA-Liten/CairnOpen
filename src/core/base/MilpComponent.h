@@ -60,16 +60,18 @@ public:
 
     // Component IO with PEGASE
 
-    //Published variables
-    void createZEUserVariablesList(std::string Full_File_Name, t_mapExchange& a_Exchange) ;  // common function to publish other variables
+    //Publish user variables
+    void createZEUserVariablesList(const std::string& Full_File_Name, t_mapExchange& a_Exchange);  
+
     //Subscribed variables : hist persistent timeseries
     void exportRHVariableInModel(); /** function to export the list of the data saved for rolling horizon into models */
-    int  createHistFXLists();
+    virtual int  setTimeSeriesValues();
 
     virtual void prepareOptim();                                                                /** pre-treatment of PEGASE exchange Zone */
-    virtual void populatePublishedVars(t_mapExchange& a_Export);                                                             /** export results to PEGASE exchange Zone */
-    virtual void populatePublishedPortVars(t_mapExchange& a_Export, uint modinitTS);
-    virtual void setDefaultsResults();                                                        /** define default values in case optimization fails */
+    void populatePublishedVars(t_mapExchange& a_Export);                                                             /** export results to PEGASE exchange Zone */
+    void populatePublishedPortVars(t_mapExchange& a_Export, uint modinitTS);
+    void initializeSubmodelIO();                                                        /** define default values in case optimization fails */
+    void setDefaultsResults();
 
     // Utility functions for PEGASE IO management
     virtual bool findFirstCoeff(std::string aVarName, t_mapExchange aList , float &coeff, float &offset) ;
@@ -77,12 +79,11 @@ public:
     // MILP functions
     virtual int initSubModelConfiguration(const bool& readParams = true) ;      /** Read model Input parameters from SettingsFile and Input timeseries from Pegase Exchange Zone */
     virtual void redeclareEnvImpactParameters(); /** when selected impacts get modified */
-    virtual int initSubModelInput() ;              /** Read model Input parameters from SettingsFile and Input timeseries from simulation environment */
+    virtual int initSubModelInput();              /** Read model Input parameters from SettingsFile and Input timeseries from simulation environment */
     int initPorts();                                                                        /** port Milp flux expression init (allocation) */
     virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
     void setSubModelEnvImpacts();
 
-    virtual int createRHVariables();
     int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
     void createCompoModel();                              
     void deleteCompoModel();
@@ -207,7 +208,7 @@ std::string getUniquePortID();
 
     std::string getAbsoluteFileName(const std::string& filename);
 
-    void createImportListVars(t_mapExchange& a_Import);
+    virtual void createImportListVars(t_mapExchange& a_Import);
     void createExportListVars(t_mapExchange& a_Export);
     void createPortsExportListVars(t_mapExchange& a_Exchange);
 

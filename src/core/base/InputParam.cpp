@@ -285,23 +285,24 @@ int InputParam::fillVectorData(const std::string& aName, const InputParam& aSrc,
                                 size_t vDestSize = val->size();                                
                                 if (vDestSize == 0 && isBlocking)
                                 {
-                                    cCritical() << "ERROR fillVectorData: in SubModel, allocation of vector variable is missing for " << (aName + "." + key);
+                                    cError() << "fillVectorData: allocation of vector variable is missing for " << (aName + "." + key);
                                     return -1;
                                 }
                                 else if (vDestSize == 0)
                                 {
-                                    cWarning() << "Warning fillVectorData: in SubModel, allocation of vector variable is missing for " << (aName + "." + key);
+                                    cWarning() << "fillVectorData: allocation of vector variable is missing for " << (aName + "." + key) << ". Skip!";
                                     continue;
                                 }                                
                                 try
                                 {
                                     val->copyValues(*vIter->second, aOffset);
-                                    cInfo() << "- Read Vector Data Time Series : " << (aName + "." + key); //<< (*val)[0] ; // << " = " << (*versSubModel).at(0) << (*versSubModel).at((*versSubModel).size() - 1);
+                                    cDebug() << "Read Vector Data Time Series : " << (aName + "." + key); //<< (*val)[0] ; // << " = " << (*versSubModel).at(0) << (*versSubModel).at((*versSubModel).size() - 1);
                                 }
                                 catch (const std::exception&e)
                                 {
-                                    cCritical() << "ERROR fillVectorData: in SubModel, variable size of " << (aName + "." + key) << vDestSize;
-                                    cCritical() << e.what();
+                                    cError() << "ERROR fillVectorData: variable size of " 
+                                        << (aName + "." + key) << vDestSize 
+                                        << e.what();
                                     return -1;
                                 }                                                                
                             }
@@ -310,12 +311,13 @@ int InputParam::fillVectorData(const std::string& aName, const InputParam& aSrc,
                     if (!vFindSrc) {
                         if (isBlocking)
                         {
-                            cCritical() << "ERROR: nullptr pointer for component variable name " << (aName + "." + key);
+                            cError() << "ERROR: nullptr pointer for component variable name " << (aName + "." + key);
                             return -1;
                         }
                         else
                         {
-                            if (GS::iVerbose > 0) cWarning() << "Optionnal parameter not found in component - Hope will not be used by submodel ! " << (aName + "." + key);
+                            if (GS::iVerbose > 0) 
+                                cWarning() << "Optionnal parameter not found in component: " << (aName + "." + key);
                             continue;
                         }
                     }
@@ -323,13 +325,14 @@ int InputParam::fillVectorData(const std::string& aName, const InputParam& aSrc,
                 else {
                     if (isBlocking)
                     {
-                        cCritical() << "ERROR fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
+                        cError() << "ERROR fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
                         return -1;
                     }
                     else
                     {
-                        if (GS::iVerbose > 0) cWarning() << "WARNING fillVectorData: nullptr pointer for component variable name " << (aName + "." + key);
-                        if (GS::iVerbose > 0) cWarning() << "SubModel vector variable will then NOT be initialized " << (aName + "." + key);
+                        if (GS::iVerbose > 0) 
+                            cWarning() << "fillVectorData: nullptr pointer for component variable name " << (aName + "." + key) 
+                            << ". Will then NOT be initialized!";
                     }
                 }
             }

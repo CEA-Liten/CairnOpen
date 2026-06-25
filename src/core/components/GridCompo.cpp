@@ -40,7 +40,7 @@ void GridCompo::readTSVariablesFromModel()
 
 // -----------------------------------------------------------------------------
 
-int GridCompo::createRHVariables()
+int GridCompo::setTimeSeriesValues()
 {
     EnergyVector* carrier = mCompoModel->getMainCarrier();
 
@@ -51,14 +51,17 @@ int GridCompo::createRHVariables()
     if (rc != 0)
         return rc;
 
-    createHistFXLists();
+    MilpComponent::setTimeSeriesValues();
+
     return 0;
 }
 
 // -----------------------------------------------------------------------------
 
-void GridCompo::setDefaultsResults()
+void GridCompo::createImportListVars(t_mapExchange& a_Import)
 {
+    MilpComponent::createImportListVars(a_Import);
+
     if (mCompoModel->Sens() > 0)
     {
         m_timeSeries["UseProfileBuyPrice"].set_Values(npdt(), 0.);
@@ -80,7 +83,7 @@ int GridCompo::initBuyPriceDefaults(EnergyVector* aCarrier)
     if (!mEnergyPriceProfileName.empty())
     {
         if (aCarrier->BuyPrice() != 0.)
-            cWarning() << "Grid flat buy price ignored because UseProfileBuyPrice"
+            cInfo() << "Grid flat buy price ignored because UseProfileBuyPrice"
                           " was specified for carrier" << aCarrier->Name();
     }
     else
@@ -118,7 +121,7 @@ void GridCompo::initSellPriceDefaults(EnergyVector* aCarrier)
     if (!mEnergyPriceProfileName.empty())
     {
         if (aCarrier->SellPrice() != 0.)
-            cWarning() << "Grid flat sell price ignored because UseProfileSellPrice"
+            cInfo() << "Grid flat sell price ignored because UseProfileSellPrice"
                           " was specified for carrier" << aCarrier->Name();
     }
     else

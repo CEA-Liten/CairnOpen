@@ -32,7 +32,7 @@ public:
     void computeNetOpexContribution();            /** Compute Net Opex contribution expression */
     virtual void computeAgeingModelContribution() { /* only relevant for ConverterSubModel */ };
     virtual void computeDefaultIndicators(const double* optSol);
-    void resetHistStoredVaues();
+    void resetHistStoredValues();
     /** -------------------------------------------------------------------------------------------------------------- */
 
     void removeImpactSettings(const std::string& impactName);
@@ -95,7 +95,6 @@ public:
         addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", pCurrency(), "EcoInvestModel");  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
         addParameter("FixedOpex", &mFixedOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Fixed Opex in proportion of Elementary Capex", "%CAPEX/year", "EcoInvestModel");					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
         addParameter("FixedOpexConstant", &mFixedOpexConstant, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", "EcoInvestModel");					/** The constant part of the yearly Opex : Opex = mFixedOpex * mCapex + mFixedOpexConstant */
-        addParameter("VariableOpex", &mVariableOpex, 0., false, true, "Variable Opex", "Currency/EnergyUnit", "EcoInvestModel");
         addParameter("Replacement", &mReplacement, 0., false, &mEcoInvestModel, "Replacement costs in proportion of Elementary Capex", "%CAPEX", "EcoInvestModel");   /** Replacement costs in percent of Elementary Capex, ie cost += Capex* Replacement*Use_Time*levelization */
         addParameter("ReplacementConstant", &mReplacementConstant, 0., false, &mEcoInvestModel, "The constant part of the replacement cost", pCurrency(), "EcoInvestModel");   /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant */
         addParameter("MinSize", &mMinSize, 0., false, true, "Minimal size of the component", pOptimalSizeUnit()); /** Minimum capacity  */
@@ -249,7 +248,7 @@ public:
     }
 
 protected:
-
+    void computeVariableOpexContribution();
     void computeAllContribution();       /** MILP Model description : all expressions */
 
     /** Flags */
@@ -361,7 +360,6 @@ protected:
 
     //Opex = mFixedOpex * mCapex + mFixedOpexConstant and Replacement = mReplacement * mCapex + mReplacementConstant
     double mFixedOpex;                              /** Opex yearly Opex of component, per unit Capex **/
-    double mVariableOpex;
     double mReplacement;                       /** Replacement cost, in proportion of Capex **/
     double mLifeTime;                           /** Component LifeTime in years **/
     double mFixedOpexConstant;                       /** The constant part of the yearly Opex : Opex = mFixedOpex * mCapex + mFixedOpexConstant **/

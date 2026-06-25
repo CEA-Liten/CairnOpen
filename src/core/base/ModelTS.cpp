@@ -117,7 +117,7 @@ void ModelTS::set_Values(uint aNpdtPast)
                 }
                 catch (const std::exception& e)
                 {
-                    cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name << ", size of " << vDestSize;
+                    cCritical() << "ModelTS: variable: " << m_Name << ", size of " << vDestSize;
                     cCritical() << e.what();                        
                 }
             }                
@@ -125,10 +125,10 @@ void ModelTS::set_Values(uint aNpdtPast)
 
         if (!vFill) {
             if (isBlocking) {
-                cCritical() << "ERROR fillVectorData: in SubModel, variable: " << m_Name;
+                cCritical() << "ModelTS: mandatory variable " << m_Name << " has not been filled!";
             }
             else  {
-                cWarning() << "Warning fillVectorData: in SubModel, variable: " << m_Name;
+                cWarning() << "ModelTS: optional variable: " << m_Name << " has not been filled!";
             }
         }        
     }   

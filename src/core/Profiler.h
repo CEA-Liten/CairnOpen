@@ -91,14 +91,17 @@ public:
     static ProfilerManager& instance();
 
     // Called once before the first doInit() to stamp program start time.
-    void notifyProgramStart() noexcept;
+    //void notifyProgramStart() noexcept;
 
     // Append a completed record (thread-safe).
     void addRecord(ProfileRecord rec);
 
+    // Clear all records, timestamps, ...
+    void reset() noexcept;
+
     // Write profiling_results.csv and profiling_summary.txt.
     // Called automatically from destructor; may also be called manually.
-    void flush(const std::string& outputDir = ".");
+    void flush(const std::string& outputDir = ".", const std::string& studyName = "");
 
     // Total iterations seen so far (incremented by ScopedProfiler when
     // phaseName == CAIRN_PROFILE_ITERATION_PHASE).
@@ -124,6 +127,7 @@ private:
     std::atomic<int> mIterationCount{0};
     bool mFlushed{false};
     std::string mOutputDir{"."};
+    std::string mStudyName{};
 };
 
 // -----------------------------------------------------------------------------
@@ -207,12 +211,15 @@ private:
     CairnProfiling::ScopedProfiler _cairn_profiler_(CAIRN_PROFILE_ITERATION_PHASE, (iter))
 
 // Stamp program start (call once, before doInit).
+//#  define CAIRN_PROFILE_PROGRAM_START() \
+//    CairnProfiling::ProfilerManager::instance().notifyProgramStart()
+
 #  define CAIRN_PROFILE_PROGRAM_START() \
-    CairnProfiling::ProfilerManager::instance().notifyProgramStart()
+    CairnProfiling::ProfilerManager::instance().reset()
 
 // Force early flush (optional; also happens at program exit in the destructor).
-#  define CAIRN_PROFILE_FLUSH(dir) \
-    CairnProfiling::ProfilerManager::instance().flush(dir)
+#  define CAIRN_PROFILE_FLUSH(dir, studyName) \
+    CairnProfiling::ProfilerManager::instance().flush(dir, studyName)
 
 #else  // ENABLE_PROFILING == 0 -> zero overhead
 

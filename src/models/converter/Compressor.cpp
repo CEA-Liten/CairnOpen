@@ -385,13 +385,7 @@ void Compressor::computeModelContribution()
 void Compressor::computeEconomicalContribution()
 {
     TechnicalSubModel::computeEconomicalContribution();
-
-    //Variable OPEX
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpVariableOpex[t] += mExpOutMassFlow[t] * mVariableOpex * TimeStep(t);
-    }
 }
-
 
 void Compressor::computeAllIndicators(const double* optSol)
 {

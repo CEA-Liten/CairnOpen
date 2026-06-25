@@ -100,7 +100,7 @@ void GUIData::jsonSaveGUILine(ojson& componentObject, const std::string& compone
     componentObject = ojson{
         {"nodeId", nodeID},
         {"nodeName", Name()},
-        {"componentPERSEEType", mGuiComponentType},
+        {"componentType", mGuiComponentType},
         {"nodeType", mGuiNodeModelType},
         {"nodeTechnoType", mGuiNodeTechnoType},
         {"x", mXpos},

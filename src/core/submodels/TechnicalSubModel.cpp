@@ -101,7 +101,7 @@ void TechnicalSubModel::setTimeData()
     mComponentAvailabilityTS.resize(mHorizon);
 }
 
-void TechnicalSubModel::resetHistStoredVaues()
+void TechnicalSubModel::resetHistStoredValues()
 {
     mHistFixedOpexContributionDiscounted = 0.;
     mHistReplacementPartDiscounted = 0.;
@@ -339,56 +339,129 @@ void TechnicalSubModel::computePiecewiseContribution(const MIPModeler::MIPData1D
     aExp += aOffset;
 }
 
-
 void TechnicalSubModel::computeEconomicalContribution()
 {
+    // -----------------------------------------
+    // Allocation: initialize expressions
+    // -----------------------------------------
     if (mAllocate)
     {
+        const std::size_t n = mTimeSteps.size();
+
         if (mEcoInvestModel)
         {
-            mExpOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-            mExpFixedOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-            mExpReplacement = MIPModeler::MIPExpression1D(mTimeSteps.size());
+            mExpOpex = MIPModeler::MIPExpression1D(n);
+            mExpFixedOpex = MIPModeler::MIPExpression1D(n);
+            mExpReplacement = MIPModeler::MIPExpression1D(n);
         }
-        mExpVariableOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-        mExpVariableCosts = MIPModeler::MIPExpression1D(mTimeSteps.size());
+
+        mExpVariableOpex = MIPModeler::MIPExpression1D(n);
+        mExpVariableCosts = MIPModeler::MIPExpression1D(n);
     }
 
-    if (mEcoInvestModel)
+    // -----------------------------------------
+    // Validation & Configuration
+    // -----------------------------------------
+    if (!mEcoInvestModel)
+        return;
+
+    constexpr double EPSILON = 1e-6;
+    constexpr double HOURS_PER_YEAR = 8760.0;
+
+    // Validate LifeTime
+    if (std::fabs(mLifeTime) < EPSILON) {
+        throw Cairn_Exception(
+            "An error occurred while computing the replacement cost of " + Name() +
+            ". The value of the parameter LifeTime cannot be 0.",
+            -1
+        );
+    }
+
+    // Normalize near-zero Capex
+    if (std::fabs(mCapex) < EPSILON)
+        mCapex = 0.0;
+
+    // -----------------------------------------
+    // Capex contribution
+    // -----------------------------------------
+    if (mPiecewiseCapex)
     {
-        const double EPSILON = 1.e-6;
-        const double HOURS_PER_YEAR = 8760.0;
+        cInfo() << "Add Piecewise Capex. Try Relaxation: " << mTryRelaxationCapex;
+        computePiecewiseContribution(
+            mCapexCapacitySetPoint,
+            mCapexSetPoint,
+            mTryRelaxationCapex,
+            0,
+            mExpCapex
+        );
+    }
+    else
+    {
+        mExpCapex = mTotalCapexCoefficient * mCapex * mExpSizeMax +
+            mTotalCapexOffset * mExpInstalled;
+    }
 
-        // Validate LifeTime before computing costs
-        if (std::fabs(mLifeTime) < EPSILON) {
-            throw Cairn_Exception( "An error occurred while computing the replacement cost of " + Name() +
-                ". The value of the parameter LifeTime cannot be 0.", -1);
+    // -----------------------------------------
+    // Fixed Opex and Replacement contributions
+    // -----------------------------------------
+    const std::size_t T = mTimeSteps.size();
+
+    for (std::size_t t = 0; t < T; ++t)
+    {
+        const double dt = TimeStep(t);
+
+        // Fixed Opex
+        mExpFixedOpex[t] += dt * (mCapex * mFixedOpex * mExpSizeMax +
+            mFixedOpexConstant * mExpInstalled) / HOURS_PER_YEAR; 
+
+        // Replacement
+        mExpReplacement[t] += dt * (mCapex * mReplacement * mExpSizeMax +
+            mReplacementConstant * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
+    }
+
+    // -----------------------------------------
+    // Variable Opex contribution
+    // -----------------------------------------
+    computeVariableOpexContribution();
+}
+
+void TechnicalSubModel::computeVariableOpexContribution()
+{
+    const std::size_t T = mTimeSteps.size();
+
+    for (MilpPort* port : mListPort)
+    {
+        if (!port) {
+            throw Cairn_Exception("Null port encountered while computing variable Opex in " + Name(), -1);
         }
 
-        // Normalize near-zero capex values
-        if (std::fabs(mCapex) < EPSILON) {
-            mCapex = 0.0;
-        }
+        const double  opex = port->VariableOpex();
+        const std::string variable = port->Variable();
 
-        // Compute Capex contribution
-        if (mPiecewiseCapex) {
-            cInfo() << "Add Piecewise Capex. Try Relaxation: " << mTryRelaxationCapex;
-            computePiecewiseContribution(mCapexCapacitySetPoint, mCapexSetPoint, mTryRelaxationCapex, 0, mExpCapex);
+        MIPModeler::MIPExpression*   exp0D = getMIPExpression(variable);
+        MIPModeler::MIPExpression1D* exp1D = getMIPExpression1D(variable);
+
+        if (exp0D) {
+            for (std::size_t t = 0; t < T; ++t) {
+                const double dt = TimeStep(t);
+                mExpVariableOpex[t] += dt * opex * (*exp0D);
+            }
+        }
+        else if (exp1D) {
+            for (std::size_t t = 0; t < T; ++t) {
+                const double dt = TimeStep(t);
+                mExpVariableOpex[t] += dt * opex * (*exp1D)[t];
+            }
         }
         else {
-            mExpCapex = mTotalCapexCoefficient * mCapex * mExpSizeMax + mTotalCapexOffset * mExpInstalled;
-        }
-
-        // Compute Opex and replacement contributions
-        for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
-        {
-            mExpFixedOpex[t] += TimeStep(t) * (mCapex * mFixedOpex * mExpSizeMax + mFixedOpexConstant * mExpInstalled) / HOURS_PER_YEAR;
-            mExpReplacement[t] += TimeStep(t) * (mCapex * mReplacement * mExpSizeMax + mReplacementConstant * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
+            throw Cairn_Exception("Missing expression for port '" + variable +
+                "' in component '" + Name() + "'", -1);
         }
     }
 }
 
-void TechnicalSubModel::computeNetOpexContribution() {
+void TechnicalSubModel::computeNetOpexContribution() 
+{
     //Next Opex should be computet at the end because it is a sum of other expressions
     if (mEcoInvestModel) {
         for (uint64_t t = 0; t < mTimeSteps.size(); ++t) {

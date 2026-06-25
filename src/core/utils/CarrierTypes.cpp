@@ -84,12 +84,14 @@ double CarrierTypes::getProperty(const std::map<std::string, size_t>& a_mapElems
 		vRet = (*a_Elems)[vIter->second].getProp(a_PropName);
 	}
 	else {
-		cError() << "cannot find " << a_ElemName;
-		const std::vector<std::string> supportedTypes = get(a_mapElems);
-		cError() << "Supported types: ";
-		for (const auto& type : supportedTypes) {
-			cError() << type << " ";
-		}
+		const auto supportedTypes = get(a_mapElems);
+
+		std::ostringstream oss;
+		oss << "Supported types: ";
+		for (const auto& t : supportedTypes)
+			oss << t << " ";
+
+		cError() << "Cannot find element '" << a_ElemName << "'." << oss.str();
 	}
 	return vRet;
 }

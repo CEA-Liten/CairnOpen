@@ -2,6 +2,7 @@
 #include "MilpPort.h"
 #include "BusCompo.h"
 #include "MaterialCarrier.h"
+#include "TechnicalSubModel.h"
 
 MilpPort::MilpPort(CairnObject* aParent, const std::string& aID, const std::string& aName, 
     const t_mapParamData& aPort, EnergyVector * carrier)
@@ -85,18 +86,35 @@ void MilpPort::declareAttributes() {
     mAttributes->addParameter("Offset", &mVarOffset, 0., false, true, "Port offset");
 }
 
-void MilpPort::declareParameters() {
-    // Parameters : only for MilpComponent
-    if (parent()->objectType() != "MilpComponent") {
+void MilpPort::declareParameters()
+{
+    // -----------------------------------------
+    // Only MilpComponent ports declare parameters
+    // -----------------------------------------
+    auto* parentObj = parent();
+    if (!parentObj) // || parentObj->objectType() != "MilpComponent")
         return;
-    }
 
+    auto* component = dynamic_cast<MilpComponent*>(parentObj);
+    if (!component)
+        return;
+
+    // Reset input parameters
     delete mInputParam;
-
     mInputParam = new InputParam(this, "InputParam" + Name());
 
-    mInputParam->addParameter("VariableOpex", &mVariableOpex, 0., false, true, "Variable Opex",
-        SFunctionUnit({ eFTypeDivision, { pCurrency(), pQuantity("EnergyUnit") } }), "EcoInvestModel");
+    // -----------------------------------------
+    // EcoInvest parameters: only for TechnicalSubModel
+    // -----------------------------------------
+    auto* model = dynamic_cast<TechnicalSubModel*>(component->compoModel());
+    if (model) {
+        mInputParam->addParameter( "VariableOpex", &mVariableOpex, 0.0,
+            false, true,
+            "Variable Opex",
+            SFunctionUnit({ eFTypeDivision, { pCurrency(), pQuantity("EnergyUnit") } }),
+            "EcoInvestModel"
+        );
+    }
 }
 
 void MilpPort::setAttributes(const t_mapParamData& portParams)
@@ -393,6 +411,33 @@ bool MilpPort::checkCarrierType(const std::string& expectedTechnoType) const
 
     return true;
 }
+
+bool MilpPort::checkCarrierType(const std::vector<std::string>& allowedTypes) const
+{
+    const EnergyVector* carrier = getCarrier();
+    if (!carrier) {
+        cCritical() << "Port " << ID()
+            << " has no carrier assigned (expected one of: " << CairnUtils::joinStrings(allowedTypes) << ")";
+        return false;
+    }
+
+    const std::string actual = carrier->TechnoType();
+
+    // Check if actual type is in the allowed list
+    const bool match = std::find(allowedTypes.begin(),
+        allowedTypes.end(),
+        actual) != allowedTypes.end();
+
+    if (!match) {
+        cCritical() << "Port " << ID()
+            << " has carrier type '" << actual
+            << "' but expected one of: " << CairnUtils::joinStrings(allowedTypes);
+        return false;
+    }
+
+    return true;
+}
+
 
 std::string MilpPort::GAMSVarName()
 {

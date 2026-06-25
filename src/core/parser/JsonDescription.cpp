@@ -142,7 +142,7 @@ void JsonDescription::extractCompoParamData()
 
         cDebug() << "\n >>>>>>>>>>>> nodeName : " << nodeName;
         cDebug() << "\t - nodeId  \t\t" << nodeId;
-        cDebug() << "\t - componentPERSEEType \t\t" << componentType;
+        cDebug() << "\t - componentType \t\t" << componentType;
         cDebug() << "\t - nodeType \t\t" << nodeType;
         cDebug() << "\t - nodeTechnoType \t" << nodeTechnoType;
         cDebug() << "\t - componentCarrier \t" << componentCarrier;
@@ -262,15 +262,15 @@ JsonDescription::extractPortParamData(const std::string& compoName) const
 
             if (portVariable.empty()) {
                 if (!isBus)
-                    cWarning() << "Variable not defined for" << portLabel;
+                    cDebug() << "Variable not defined for" << portLabel;
                 continue;
             }
             if (portDirection.empty()) {
-                cWarning() << "Direction not defined for" << portLabel;
+                cDebug() << "Direction not defined for" << portLabel;
                 continue;
             }
             if (portCarrier.empty() || portCarrier == "NO_CARRIER") {
-                cWarning() << "Carrier not defined for" << portLabel;
+                cDebug() << "Carrier not defined for" << portLabel;
                 continue;
             }
 
@@ -576,7 +576,7 @@ std::vector<t_mapGroups> JsonDescription::extractGroupData() const
 // ============================================================
 std::string JsonDescription::extractComponentType(const json& comp) const
 {
-    // Prefer PERSEE-specific type; fall back to generic componentType.
+    // For backward compatibility
     if (const auto it = comp.find("componentPERSEEType"); it != comp.end())
         return it->get<std::string>();
     return comp.value("componentType", std::string{});

@@ -1,6 +1,9 @@
 
 import pytest
-from cairn import *
+try:
+    from cairn import *
+except:
+    from cairnopen import *
 from os import path
 
 scripts_home = os.path.join(path.dirname(path.realpath(__file__)), "../scripts")

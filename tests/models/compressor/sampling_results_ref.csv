@@ -1,3 +1,4 @@
 ;Case;TecEcoAnalysis#1.OBJECTIVE;Compressor.Installed Size;H2Grid.Grid extraction MaterialMass GridFlow
 0;withoutLosses;23.8534;2.14248;1.46e+07
 1;withLosses;24.0944;2.16412;1.47475e+07
+2;withManualPowerConsumption;11.1336;1;1.46e+07

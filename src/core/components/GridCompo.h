@@ -35,8 +35,8 @@ public:
 
     // MilpComponent overrides
     void readTSVariablesFromModel() override;
-    int  createRHVariables()        override;
-    void setDefaultsResults()       override;
+    void createImportListVars(t_mapExchange& a_Import) override;
+    int  setTimeSeriesValues() override;
 
 protected:
     std::string mEnergyPriceProfileName;          /* Grid energy price profile name */

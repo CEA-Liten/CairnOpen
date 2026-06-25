@@ -85,8 +85,7 @@ public:
     OptimProblem* getProblem() {return mProblem ;}
     MilpComponent* getComponent(const std::string & aName) {return mProblem->findChild<MilpComponent>(aName); }
        
-    void exportTotalTimeResolutionAllCycles(const std::string& aFileName, const std::string& encoding = "UTF-8");
-    int exportResults(int aNsol, bool isRollingHorizon, int istat, const std::string& encoding = "UTF-8");
+    int  exportResults( int aNsol, bool isRollingHorizon, int istat, const std::string& encoding = "UTF-8");
     void exportAnalysis(int aNsol, bool isRollingHorizon, const std::string& encoding = "UTF-8");
 
     void setStudyName(const std::string& aStudyName, const std::string& aResultFile="");
@@ -134,8 +133,6 @@ private:
 
     std::string mOptimLogFile; 
     StudyPathManager mStudy;
-    
-    std::vector<double> mSolverRunningTimeAllCycles;
 };
 
 #endif // CAIRNCORE_H

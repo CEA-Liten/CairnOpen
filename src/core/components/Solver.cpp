@@ -8,14 +8,11 @@
 #include <sys/timeb.h>
 
 #include <algorithm>
-#include <chrono>
 #include <ctime>
 #include <iostream>
 
-
 template<typename T1, typename T2>
 using mul = std::ratio_multiply<T1, T2>;
-using namespace std::chrono_literals;
 
 static inline double CoinCpuTime()
 {
@@ -44,8 +41,7 @@ Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const t_mapPara
     mGUIData(nullptr),
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
-    mTerminateSignal(nullptr),
-    mSolverRunningTime(0.)
+    mTerminateSignal(nullptr)
 {
     //this->setObjectName(aName);
     this->setObjectType("Solver");
@@ -255,15 +251,7 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
         cInfo() << "Begin problem solving with " << mSolverName;
         //cInfo() << "  ";
 
-        std::chrono::time_point<std::chrono::steady_clock> start, end;
-        start = std::chrono::steady_clock::now();
-
         int ierr = mSolvers.solve(mSolverName, mModel, vParams, mSolverResults);
-
-        end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        //cInfo() << "Elapsed time" << elapsed_seconds.count();
-        mSolverRunningTime = elapsed_seconds.count();
 
         if(ierr < 0)
             cCritical() << "An error has found while building the optimal problem: NAN value " << mSolverName;
@@ -344,10 +332,6 @@ int Solver::getNumberOfSolutions(){
         return mSolverResults.getNumberOfSolutions();
      }
     return 1;
-}
-
-double Solver::getSolverRunningTime() { 
-    return mSolverRunningTime; 
 }
 
 void Solver::jsonSaveGuiComponent(ojson &componentsArray)

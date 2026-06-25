@@ -1,9 +1,11 @@
 import sys
 import os
-import CairnNRT as CNRT
+import defNRT as NRT
+
+
 
 def checkResults(name_study, app_home, refResults="", refPLAN="", refHIST="", refLP="", rollingHorizon=""):
-    tnr = CNRT.CairnNRT(name=name_study,app_home=app_home)
+    tnr = NRT.defNRT(name=name_study,app_home=app_home)
 
     status = {}        
     #status["OPTIM"] = solution.status

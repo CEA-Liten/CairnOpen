@@ -39,10 +39,47 @@ void MaterialCarrier::declareConfigurationParameters()
 	}
 
 	// TODO: ensure that the profile is [0, inf). The same for LHV ... ?!
+
+	static const std::unordered_map<std::string, std::string> kElementDescriptions = {
+		{ "C", "Atomic count of Carbon (C) in the molecular formula. "
+			   "Defines the number of carbon atoms in the pseudo-molecule "
+			   "(e.g. C = 1 in C_1H_1.5O_0.65)." },
+
+		{ "H", "Atomic count of Hydrogen (H) in the molecular formula. "
+			   "Defines the number of hydrogen atoms in the pseudo-molecule "
+			   "(e.g. H = 1.5 in C_1H_1.5O_0.65)." },
+
+		{ "O", "Atomic count of Oxygen (O) in the molecular formula. "
+			   "Defines the number of oxygen atoms in the pseudo-molecule "
+			   "(e.g. O = 0.65 in C_1H_1.5O_0.65)." },
+
+		{ "N", "Atomic count of Nitrogen (N) in the molecular formula. "
+			   "Defines the number of nitrogen atoms in the pseudo-molecule " 
+		       "(e.g. N = 2 in CH_4N_2S)." },
+
+		{ "S", "Atomic count of Sulfur (S) in the molecular formula. "
+		       "Defines the number of sulfur atoms in the pseudo-molecule " 
+		       "(e.g. S = 1 in CH_4N_2S)." }
+	};
+
 	std::vector<std::string> vChemicalCompositions = CarrierTypes::getChemicalCompositions();
-	for (auto& vChemicalComposition : vChemicalCompositions) {
-		mParamTS[vChemicalComposition] = ParamCarrier("Chemical composition " + vChemicalComposition, "", 0.0, isUsed, "Chemical Composition");
+	for (const auto& elem : vChemicalCompositions)
+	{
+		std::string description;
+
+		auto it = kElementDescriptions.find(elem);
+		if (it != kElementDescriptions.end()) {
+			description = it->second;
+		}
+		else {
+			description =
+				"Atomic count in the molecular formula. "
+				"Defines the number of atoms of this element in the pseudo-molecule.";
+		}
+
+		mParamTS[elem] = ParamCarrier(description, "", 0.0, isUsed, "Molecular Composition");
 	}
+
 
 	EnergyVector::declareConfigurationParameters();
 }

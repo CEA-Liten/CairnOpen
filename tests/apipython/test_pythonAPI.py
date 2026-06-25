@@ -6,7 +6,10 @@ Created on Sun Dec 22 15:33:30 2024
 """
 
 import pytest
-from cairn import *
+try:
+    from cairn import *
+except:
+    from cairnopen import *
 import os
 import shutil
 from os import path
@@ -452,6 +455,27 @@ def test_df_timeseries2(problem):
     get_plan_results(problem)
     get_ts_results(problem)        
 
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_add_comment(problem):
+    ely_pem = problem.get_component("ELY_PEM")
+    ely_pem.set_setting_comment("Capex", "source = xxxxx")
+    comment = ely_pem.get_setting_comment("Capex")
+    assert comment == "source = xxxxx"
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_get_object(problem):
+    cairn = problem.get_object("Cairn")
+    cairn.set_setting_value("FutureSize", 24)
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath = path.join(app_home, 'data')
+    load_timeseries(problem, path.join(dataPath, "cairn_training_dataseries.csv"))
+    run(problem, "")
+    tececo = problem.get_object("TecEco")
+    assert tececo.get_indicator_value("Extrapolation Factor") == 365
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI

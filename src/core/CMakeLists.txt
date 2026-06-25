@@ -58,18 +58,6 @@ include(SpdlogSetup)
 find_package(MIPModeler REQUIRED ModelerInterface MIPSolver)
 find_package(Cairn REQUIRED CairnModelInterface)
 
-if (WITH_PROFILING)
-    message("\n---------- profiling --------------------------")
-    target_compile_definitions(CairnCore
-        PRIVATE
-            ENABLE_PROFILING=1
-    )
-    # Windows requires Psapi for GetProcessMemoryInfo()
-    if (WIN32)
-        target_link_libraries(CairnCore PRIVATE Psapi)
-    endif()
-endif()
-
 if (WITH_PYBIND)
 	# --- build package for python
 	set(COMPONENT cairn)
@@ -98,16 +86,7 @@ if (WITH_PYBIND)
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 
 	# virtual environment with pybind11	
-	#python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
-	message("create build environment: ${PYTHON_VENV}")
-	execute_process (COMMAND "${Python_EXECUTABLE}" -m venv "${PYTHON_VENV}" COMMAND_ERROR_IS_FATAL ANY)
-	set(ENV{VIRTUAL_ENV} "${PYTHON_VENV}")
-    set(Python_FIND_VIRTUALENV FIRST)
-    unset(Python_EXECUTABLE)
-    find_package(Python REQUIRED COMPONENTS Interpreter Development)    
-    message("Python_EXECUTABLE: ${Python_EXECUTABLE}")
-	 execute_process(COMMAND ${Python_EXECUTABLE} -m pip install -r "${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt")
-
+	python_venv(${PYTHON_VENV} ${Python_EXECUTABLE} REQS ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
 	
 	set(PYBIND11_FINDPYTHON ${Python_FOUND})
 	find_package(pybind11 CONFIG REQUIRED)
@@ -208,12 +187,33 @@ else()
 		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/lib DESTINATION .)
 		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/include DESTINATION .)
 		install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/share DESTINATION .)
+
+		if(MSVC)
+			# Bidouille pour recopier les fichiers deps dans le répertoire de travail des tests, permet de lancer les tests avec le TestExplorer de VS
+			# La commande ci-dessous serait plus 'propre' mais ne fonctionne pas (à ajouter dans CTestTools après une commande add_test):
+			#	set_tests_properties(
+			#		${TESTUNIT_NAME}
+			#		PROPERTIES
+			#		ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:D:/Users/JC799343/Cairn/cairnopen/deps/bin/Debug/bin"
+			#	)
+			install(DIRECTORY ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin DESTINATION $<TARGET_FILE_DIR:${COMPONENT}>/..)
+
+			# La commande ci-dessous ne fonctionne pas non plus...
+			#add_custom_command(TARGET ${COMPONENT} POST_BUILD
+			#	COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_ROOT}/bin/${CMAKE_BUILD_TYPE}/bin ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+			#)
+		endif()		
+
 	endif()
+	
 	
 endif()
 
 if(WITH_TESTING)	
 	include(CTestTools)
+	
+	find_package(Python REQUIRED COMPONENTS Interpreter Development)		
+	python_venv3(${PYTHON_VENV_PROJECT} ${Python_EXECUTABLE} ${CAIRNTESTS_HOME}/scripts/reqs_tests.txt)		
 
 	set(CAIRN_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts)
 
@@ -224,18 +224,18 @@ if(WITH_TESTING)
 		list(APPEND ${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/GenericTests.cpp)
 	endif()
 
-	# CTests
+	# CTests : API C
 	if (TEST_WITH_CTESTS)
 		add_tests(${CAIRNTESTS_HOME}/apicpp/src 
 			DATA ${CAIRNTESTS_HOME}/apicpp/data 
 			RESULTS ${CAIRNTESTS_HOME}/apicpp/results 
 			DEPS CairnCore CairnModelInterface spdlog::spdlog
 			EXTRA_DIR_SRC ${CAIRNTESTS_HOME}/apicpp/src/utils
-			EXCLUDE_TESTS ${${COMPONENT}_EXCLUDE_TESTS}
+			EXCLUDE_TESTS ${${COMPONENT}_EXCLUDE_TESTS}			
 		)
 	endif()
 
-	# generic NRTs
+	# CTests: generic NRTs
 	if (TEST_WITH_GENERICTESTS)
 		create_genericTest(GenericTests 
 			${CAIRNTESTS_HOME}/apicpp/src

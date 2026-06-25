@@ -157,12 +157,11 @@ void Electrolyzer::computeModelContribution()
 void Electrolyzer::computeEconomicalContribution() { 
     TechnicalSubModel::computeEconomicalContribution();
 
-    //Variable OPEX
     for (uint64_t t = 0; t < mHorizon; t++) {
         mExpVariableCosts[t] += mExpPower_H2[t] * mCost * TimeStep(t);
-        mExpVariableOpex[t] += mExpFlow_H2[t] * mVariableOpex * TimeStep(t);
     }
 }
+
 //-----------------------------------------------------------------------------
 void Electrolyzer::computeAllIndicators(const double* optSol) // DO NOT SHOW
 {

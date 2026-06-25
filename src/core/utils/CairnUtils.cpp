@@ -33,7 +33,7 @@ namespace CairnUtils {
             return true;
         }
 
-        cWarning() << "Couldn't open " << fileName << " for writing!";
+        cError() << "Couldn't open " << fileName << " for writing!";
         file.close(); // safety
 
         const std::string stampedName = addTimeStampToFileName(fileName);
@@ -44,7 +44,7 @@ namespace CairnUtils {
             return true;
         }
 
-        cWarning() << "Couldn't open " << stampedName << " for writing!";
+        cError() << "Couldn't open " << stampedName << " for writing!";
         return false;
     }
 

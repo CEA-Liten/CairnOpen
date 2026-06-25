@@ -145,8 +145,9 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
         throw cairn_error;
     }
 
-    // create input ZEvariable (associated to input time series) list by component, and register them at Problem level.
-    createImportZEVariablesList(); //TODO: move to MilpComponent::initProblem so a component-related vars are published at the component creation
+    //TODO: move to MilpComponent::initProblem so a component-related vars are published at the component creation
+    createImportZEVariablesList(); 
+
     createExportZEVariablesList();
 }
 
@@ -225,7 +226,7 @@ void OptimProblem::createBaseComponents(JsonDescription* jsonDesc)
         }
     }
     else {
-        cWarning() << "No SimulationControl found. The default SimulationControl will be used.";
+        cInfo() << "No SimulationControl found. The default SimulationControl will be used.";
     }
 
     // Solver - order not important
@@ -770,8 +771,8 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
                     }                    
                     if (!isFound)
                     {
-                        cWarning() << warningMessage;
-                        cWarning() << "Indicator" << mipExpName << "of componenet" << compoName << "not found!";
+                        cWarning() << warningMessage 
+                            << ", indicator" << mipExpName << "of componenet" << compoName << "not found!";
                     }
                 }
                 //Other components
@@ -796,22 +797,23 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
                             }
                             if (!isFoundIndicator)
                             {
-                                cWarning() << warningMessage;
-                                cWarning() << "Indicator" << mipExpName << "of componenet" << compoName << "not found!";
+                                cWarning() << warningMessage 
+                                           << ", indicator" << mipExpName << "of componenet" << compoName << "not found!";
                             }
                             isFoundComponent = true;
                             break;//component
                         }
                     }
                     if (!isFoundComponent) {
-                        cWarning() << warningMessage;
-                        cWarning() << "Componenet" << compoName << "not found!";
+                        cWarning() << warningMessage << ", componenet" << compoName << "not found!";
                     }
                 }
             }
             else {
-                cWarning() << warningMessage;
-                cWarning() << value << " is not a valid variable format. It should be in the form ComponentName.VarName";
+                cWarning() << warningMessage
+                    << ", an invalid variable format detected ('" << value
+                    << "'). Expected format is: ComponentName.VarName";
+
                 break; //while loop
             }
         }
@@ -959,7 +961,7 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
                 else
                 {
                     //Linked component is not defined !
-                    cWarning() << "The linked component " + linkedBusName + " to the port " + lptrComponent->Name()
+                    cInfo() << "The linked component " + linkedBusName + " to the port " + lptrComponent->Name()
                         + "." + lptrport->Name() + " is not defined (a Bus is expected). Link skipped !!";
                 }
             }
@@ -1009,13 +1011,6 @@ void OptimProblem::createImportZEVariablesList()
         //register subscribed lists at OptimProblem level
         lptr->createImportListVars(mListSubscribedVars);
     }
-
-    //TecEco doesn't have timeseries
-    //TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
-    //if (lptrTecEco) {
-    //    lptrTecEco->readTSVariablesFromModel();
-    //    lptrTecEco->createImportListVars(mListSubscribedVars);
-    //}
 }
 
 void OptimProblem::createExportZEVariablesList()
@@ -1302,7 +1297,7 @@ void OptimProblem::jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& co
             linksArray = ojson::array();
         }
         else {
-            cWarning() << "linksArray is not an array; type=" << linksArray.type_name()
+            cDebug() << "linksArray is not an array; type=" << linksArray.type_name()
                 << ". Re-initializing it to an array.";
             linksArray = ojson::array();
         }
@@ -1626,6 +1621,28 @@ int OptimProblem::initSubModelInput()
     return ierr ;
 }
 
+void OptimProblem::exportRHVariableInModel()
+{
+    // Export for all MILP components
+    for (auto& [key, comp] : MilpComponents()) {
+        comp->exportRHVariableInModel();
+    }
+
+    // Export for TecEcoCompo (parent of TecEcoAnalysis) -- TecEcoAnalysis is not expected to have Control IOs
+    auto* tecEco = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    if (!tecEco) {
+        //throw Cairn_Exception(
+        //    "Error while initializing OptimProblem: TecEcoAnalysis has no valid TecEcoCompo parent.",
+        //    -1
+        //);
+        cWarning() << "Error while initializing OptimProblem: TecEcoAnalysis has no valid TecEcoCompo parent.";
+        return;
+    }
+
+    tecEco->exportRHVariableInModel();
+}
+
+
 //------------------------------------------------------------------------------
 //  Build Problem
 //------------------------------------------------------------------------------
@@ -1745,6 +1762,8 @@ void OptimProblem::buildProblem()
     if (ierr < 0) {
         throw Cairn_Exception("Error in OptimProblem init!", -1);
     }
+
+    exportRHVariableInModel();
 
     // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
     //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()

@@ -88,7 +88,7 @@
             "inherits": "windows-base",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/src"
+                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/bin"
             }
         },
         {
@@ -223,11 +223,11 @@
             "name": "debug",
             "displayName": "Debug",
             "configurePreset": "debug",
-            "configuration": "debug",
+            "configuration": "debug",            
             "environment": {
                 "GUI_HOME": "${sourceDir}/gui",
                 "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
-                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/src/models",
+                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/bin",
                 "PATH": "${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
             }
         },

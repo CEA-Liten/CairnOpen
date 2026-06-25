@@ -49,14 +49,16 @@ void MultiConverter::readUpperBounds()
     // ---------------------------------------------------------------------
     if (!fs::exists(absoluteFileName)) {
         cWarning() << Name() << ": upper-bounds file \"" << absoluteFileName
-            << "\" not found.";
+            << "\" not found. MaxPower * weight will be used as an upper-bound only on the first output. " 
+            << " No upper-bounds will be set on inputs and other outputs.";
         return;
     }
 
     const auto csvData = CairnUtils::readFromCsvFile(absoluteFileName, ";");
     if (csvData.empty()) {
         cWarning() << Name() << ": upper-bounds file \"" << absoluteFileName
-            << "\" is empty.";
+            << "\" is empty. MaxPower * weight will be used as an upper-bound only on the first output. " 
+            << " No upper-bounds will be set on inputs and other outputs.";
         return;
     }
 
@@ -78,7 +80,7 @@ void MultiConverter::readUpperBounds()
         const double k = mUpperBounds[0];
         mUpperBounds.assign(expectedSize, k);
 
-        cWarning() << Name() << ": upper-bounds file \"" << absoluteFileName
+        cInfo() << Name() << ": upper-bounds file \"" << absoluteFileName
             << "\" contains a single value (" << k
             << "). Using this value to all "
             << expectedSize << " bounds.";
@@ -88,13 +90,10 @@ void MultiConverter::readUpperBounds()
     // ---------------------------------------------------------------------
     // Invalid size -> error
     // ---------------------------------------------------------------------
-    throw Cairn_Exception(
-        Name() + ": invalid upper-bounds file \"" + absoluteFileName +
+    cError() << Name() + ": invalid upper-bounds file \"" + absoluteFileName +
         "\". Expected " + std::to_string(expectedSize) +
         " values (NbInputFlux + NbOutputFlux), but found " +
-        std::to_string(mUpperBounds.size()),
-        -1
-    );
+        std::to_string(mUpperBounds.size());
 }
 
 //double MultiConverter::smallestNonZeroCoefficient(const Eigen::MatrixXd& matrix) {
@@ -214,7 +213,7 @@ void MultiConverter::computeModelContribution()
     }    
 }
 
-void MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC)
+int MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC)
 {
     std:string matrixName = "MatrixA";
     if(isMatrixC) matrixName = "MatrixC";
@@ -222,9 +221,8 @@ void MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vect
     //verify that the file exists
     std::string absoluteFileName = getAbsoluteFileName(filename);
     if (!fs::exists(absoluteFileName)) {
-        Cairn_Exception cairn_error(Name() + " - the file of matrix \"" + matrixName + "\" doesn't exist:" 
-            + absoluteFileName, -1);
-        throw cairn_error;
+        cError() << Name() + " - the file of matrix \"" + matrixName + "\" doesn't exist:"
+            + absoluteFileName;
     }
 
     //read the matrix from the file
@@ -237,30 +235,29 @@ void MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vect
     Eigen::MatrixXd matrixEigenA = convertToEigen(mCoefficient_A);
     
     if (matrixEigenA.rows() != mNbInputFlux + mNbOutputFlux) {
-        Cairn_Exception cairn_error(Name() + ": please verify the number of rows of the conversion matrix \"" + matrixName 
+        cError() << Name() + ": please verify the number of rows of the conversion matrix \"" + matrixName
             + "\". The number of rows should be NbInputFlux + NbOutputFlux = " + std::to_string(mNbInputFlux + mNbOutputFlux)
-            + ". File: " + absoluteFileName, -1);
-        throw cairn_error;
+            + ". File: " + absoluteFileName;
     }
 
     if (matrixEigenA.cols() != mNbInputFlux + mNbOutputFlux) {
-        Cairn_Exception cairn_error(Name() + ": please verify the number of columns of the conversion matrix \"" + matrixName
+        cError() << Name() + ": please verify the number of columns of the conversion matrix \"" + matrixName
             + "\". The number of columns should be NbInputFlux + NbOutputFlux = " + std::to_string(mNbInputFlux + mNbOutputFlux)
-            + ". File: " + absoluteFileName, -1);
-        throw cairn_error;
+            + ". File: " + absoluteFileName;
     }
 
     //verify that the column mNbInputFlux + 1 (first output column i.e OUTPUTFlux1) is not a vector of Zeros
     bool isNotZeroColumn = matrixEigenA.col(mNbInputFlux).any();
 
     if (!isNotZeroColumn) {
-        Cairn_Exception cairn_error(Name() + ": please verify the conversion matrix \"" + matrixName
-            + "\" as the entier column corresponding to OUTPUTFlux1 is zero. File: " + absoluteFileName, -1);
-        throw cairn_error;
+        cError() << Name() + ": please verify the conversion matrix \"" + matrixName
+            + "\" as the entier column corresponding to OUTPUTFlux1 is zero. File: " + absoluteFileName;
     }
+
+    return 0;
 }
 
-void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vector<double>& aVector, const bool& isVectorD)
+int MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vector<double>& aVector, const bool& isVectorD)
 {
     /*
     * It is not mandatory to provide files for matrices B and C.
@@ -273,12 +270,6 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
     if (isVectorD) matrixName = "MatrixD";
 
     std::string absoluteFileName = getAbsoluteFileName(filename);
-
-    //if (!fs::exists(absoluteFileName)) {
-    //    Cairn_Exception cairn_error(Name() + " - The file of matrix \"" + matrixName + "\" doesn't exist:"
-    //        + absoluteFileName, -1);
-    //    throw cairn_error;
-    //}
 
     //if file exist read values
     if (fs::exists(absoluteFileName)) {
@@ -298,34 +289,34 @@ void MultiConverter::readAndVerifyVectorB(const std::string& filename, std::vect
             //resize the vector using equal values
             double k = aVector[0];
             aVector.resize(mNbOutputFlux + mNbInputFlux, k);
-            cWarning() << Name() + ": the file " + absoluteFileName + " of matrix \"" + matrixName + "\" contains only one value: " + std::to_string(k)
+            cInfo() << Name() + ": the file " + absoluteFileName + " of matrix \"" + matrixName + "\" contains only one value: " + std::to_string(k)
                 + ". All the values of the matrix will be set to " + std::to_string(k);
         }
         else {
-            Cairn_Exception cairn_error(Name() + ": please check the dimensions of matrix \"" + matrixName
+            cError() << Name() + ": please check the dimensions of matrix \"" + matrixName
                 + "\". The dimensions should be NbInputFlux + NbOutputFlux (" + std::to_string(mNbInputFlux + mNbOutputFlux)
-                + ") rows and 1 column. File: " + absoluteFileName, -1);
-            throw cairn_error;
+                + ") rows and 1 column. File: " + absoluteFileName;
+            return -1;
         }
     }
+
+    return 0;
 }
 
 void MultiConverter::computeEconomicalContribution()
 {
     TechnicalSubModel::computeEconomicalContribution();
-
-    //Variable OPEX
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpVariableOpex[t] += mExpOutput[0][t] * mVariableOpex * TimeStep(t);
-    }
 }
 
 int MultiConverter::checkConsistency()
 {
+    int ier = 0;
+
     if (mNbInputFlux > mNbInputPorts || mNbOutputFlux > mNbOutputPorts) {
-        Cairn_Exception persee_error("Error: the number of NbInputFlux/NbOutputFlux of " + Name() 
-            + " must be less than the number of Input/Output ports.", -1);
-        throw persee_error;
+        cError() << "Error: the number of NbInputFlux/NbOutputFlux of " + Name() 
+            + " must be less than the number of Input/Output ports.";
+
+        ier = -1;
     }
 
     //initialize matrices
@@ -336,16 +327,34 @@ int MultiConverter::checkConsistency()
     mCoefficient_D.resize(mNbOutputFlux + mNbInputFlux, 0.0);
 
     //Read matrices and check their consistency 
-    readAndVerifyMatrixA(mMatrixA, mCoefficient_A, false);
-    readAndVerifyVectorB(mMatrixB, mCoefficient_B, false);
+    if (readAndVerifyMatrixA(mMatrixA, mCoefficient_A, false) < 0) 
+    {
+        ier = -1;
+    };
+
+    if (readAndVerifyVectorB(mMatrixB, mCoefficient_B, false)) 
+    {
+        ier = -1;
+    }
     
     if (mIsIneqCstr) {
         /* If add inequality constraint is true */
-        readAndVerifyMatrixA(mMatrixC, mCoefficient_C, true);
-        readAndVerifyVectorB(mMatrixD, mCoefficient_D, false);
+        if (readAndVerifyMatrixA(mMatrixC, mCoefficient_C, true))
+        {
+            ier = -1;
+        }
+
+        if (readAndVerifyVectorB(mMatrixD, mCoefficient_D, false))
+        {
+            ier = -1;
+        }
     }
 
-    int ier = TechnicalSubModel::checkConsistency();
+    if (TechnicalSubModel::checkConsistency() < 0)
+    {
+        ier = -1;
+    };
+
     return ier;
 }
 

@@ -129,7 +129,7 @@ bool TimeSeriesManager::importTS(TimeSeriesReader& a_Reader, const std::wstring&
     const std::string strTSfile = CairnUtils::toUTF8String(aTSfile);
 
     if (!a_Reader.open(aTSfile)) {
-        cWarning() << "Timeseries file not found: " << strTSfile;
+        cError() << "Timeseries file not found: " << strTSfile;
         return false;
     }
 
@@ -195,7 +195,7 @@ bool TimeSeriesManager::importTS(TimeSeriesReader& a_Reader, const std::wstring&
         if (isCheckTimeSeriesUnits)
             throw Cairn_Exception(errMsg, -1);
         else
-            cWarning() << errMsg;
+            cInfo() << errMsg;
     }
 
     return true;
@@ -225,9 +225,8 @@ void TimeSeriesManager::readTimes(TimeSeriesReader& a_Reader, const std::wstring
             throw cairn_error;
         }
         else if (vReadTimes[0] < r_MilpData.pdt()) {
-            cWarning() << "The first time value is " << vReadTimes[0] << " which is less than TimeStep=" << r_MilpData.pdt() << ".";
-            cWarning() << "The first point is at time=TimeStep." + r_MilpData.readingMode() + "will be applied in this case.";
-
+            cWarning() << "The first time value is " << vReadTimes[0] << " which is less than TimeStep=" << r_MilpData.pdt() << ". " 
+                       << "The first point is at time=TimeStep." + r_MilpData.readingMode() + "will be applied in this case.";
         }
 
         //Find the first row where time is greater than or equal to r_MilpData.pdt() * iShift
@@ -257,8 +256,9 @@ void TimeSeriesManager::readTimes(TimeSeriesReader& a_Reader, const std::wstring
                 else if (k == vReadTimes.size() - 1) {
                     if (r_MilpData.rollingMode() == "Periodic" || r_MilpData.rollingMode() == "Persistent") {
                         if (k_periodic == 0) {
-                            cWarning() << "Importing: " + strTSfile;
-                            cWarning() << "The TimeShift used is beyond the Time values! Reading recursively - Rolling Mode is : " + r_MilpData.rollingMode();
+                            cInfo() << "Importing: " + strTSfile << ". "
+                                       << "The TimeShift used is beyond the Time values! " 
+                                       << "Reading recursively - Rolling Mode is: " + r_MilpData.rollingMode();
                             cDebug() << "Number of lines = " << vReadTimes.size() << ", current TimeShift in TimeStep = " << iShift;
                         }
                         k = 0;
@@ -349,7 +349,7 @@ void TimeSeriesManager::extrapolation(const std::wstring& aTSfile, const int& iS
             }
             else {
                 if (i + m_rowShift == vValues.size()) {
-                    cWarning() << "Last point for " + aHeader.Name + " has been reached!";
+                    cInfo() << "Last point for " + aHeader.Name + " has been reached!";
                     cInfo() << r_MilpData.rollingMode() + " mode will be applied for " + aHeader.Name;
                 }
                 if (r_MilpData.rollingMode() == "Periodic") {//loop from the beginning not timeshift

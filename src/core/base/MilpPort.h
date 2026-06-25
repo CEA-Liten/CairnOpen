@@ -139,6 +139,7 @@ public:
     double VariableOpex() const { return mVariableOpex; }
 
     bool checkCarrierType(const std::string& expectedTechnoType) const;
+    bool checkCarrierType(const std::vector<std::string>& allowedTypes) const;
 
 private:
     

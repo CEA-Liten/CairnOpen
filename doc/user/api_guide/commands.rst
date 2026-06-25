@@ -51,7 +51,11 @@ cairn toolbox
 
 .. autofunction:: cairn.run_sensitivity
 
+.. autofunction:: cairn.add_df_timeseries
+
 .. autofunction:: cairn.set_param
 
 .. autofunction:: cairn.copy_component
+
+
 

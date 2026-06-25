@@ -166,7 +166,7 @@ void SubModel::resetIndicators()
         delete(mInputIndicators);
     }
 
-    resetHistStoredVaues();
+    resetHistStoredValues();
 }
 
 const std::string* SubModel::pCurrency() const {
@@ -756,14 +756,14 @@ int SubModel::checkUnit(MilpPort* port)
     const std::string ExprUnit = ExpUnit(varName) ;
 
     if (direction.empty()) {
-        cWarning() << ("Variable " + varName +" neither defined as INPUT nor OUTPUT for the component ! ") ;
+        cWarning() << Name() << ": the direction of port " << varName << " is not defined!";
     }
 
     if (checkVariable(varName) < 0) {
         return -1;
     }
 
-    if (port->PortType()=="BusSameValue")
+    if (port->PortType() == "BusSameValue")
     {
          if (!CairnUtils::contains(ExprUnit, varFluxUnit) && !CairnUtils::contains(ExprUnit, varStorageUnit) 
              && CairnUtils::toUpper(port->VarCheckUnit()) == "YES")
@@ -1375,7 +1375,7 @@ void SubModel::addVariable(MIPModeler::MIPVariable0D& variable0D, const std::str
     if (mAllocate) {
         variable0D = MIPModeler::MIPVariable0D(lowerBound, upperBound, varType);
     }
-    mModel->add(variable0D, CName(name));
+    mModel->add(variable0D, VName(name));
 }
 
 void SubModel::addVariable(MIPModeler::MIPVariable1D& variable1D, const std::string& name, const double& lowerBound, 
@@ -1386,7 +1386,7 @@ void SubModel::addVariable(MIPModeler::MIPVariable1D& variable1D, const std::str
         if (dimension < 0) dimension = mHorizon;
         variable1D = MIPModeler::MIPVariable1D(dimension, lowerBound, upperBound, varType);
     }
-    mModel->add(variable1D, CName(name)); 
+    mModel->add(variable1D, VName(name)); 
 }
 
 void SubModel::addConstraint(MIPModeler::MIPConstraint constraint, const std::string& name, const uint& t)

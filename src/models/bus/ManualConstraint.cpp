@@ -525,8 +525,8 @@ void ManualConstraint::addMaxFlexIntegrateConstraint()
 void ManualConstraint::addMinIntegrateConstraint(int period)
 {
 
-    if(period>(int)mHorizon){
-        cWarning() << "ERROR : the period has to be smaller than the timeshift. MaxIntegrateConstraint to be checked ! " ;
+    if(period > (int)mHorizon){
+        cWarning() << "The period has to be smaller than the timeshift. MaxIntegrateConstraint to be checked!" ;
         addMinIntegrateConstraint();
     }
     else{

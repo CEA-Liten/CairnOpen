@@ -142,13 +142,8 @@ void Converter::computeModelContribution()
 void Converter::computeEconomicalContribution()
 {
     TechnicalSubModel::computeEconomicalContribution();
-
-    //Variable OPEX
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpVariableOpex[t] += mExpPower_Out[t] * mVariableOpex * TimeStep(t);
-    }
-
 }
+
 //-----------------------------------------------------------------------------
 void Converter::computeAllIndicators(const double* optSol)
 {

@@ -21,6 +21,8 @@
 #include <iostream>
 #include <numeric>
 #include <sstream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 // -----------------------------------------------------------------------------
 //  Platform headers for memory sampling
@@ -164,15 +166,15 @@ ProfilerManager::ProfilerManager()
 
 ProfilerManager::~ProfilerManager()
 {
-    flush(mOutputDir);
+    flush(mOutputDir, mStudyName);
 }
 
-void ProfilerManager::notifyProgramStart() noexcept
-{
-    std::lock_guard<std::mutex> lk(mMutex);
-    mProgramStart = ScopedTimer::Clock::now();
-    mProgramStartISO = wallClockISO();
-}
+//void ProfilerManager::notifyProgramStart() noexcept
+//{
+//    std::lock_guard<std::mutex> lk(mMutex);
+//    mProgramStart = ScopedTimer::Clock::now();
+//    mProgramStartISO = wallClockISO();
+//}
 
 void ProfilerManager::addRecord(ProfileRecord rec)
 {
@@ -185,19 +187,31 @@ void ProfilerManager::addRecord(ProfileRecord rec)
     mRecords.push_back(std::move(rec));
 }
 
+void ProfilerManager::reset() noexcept
+{
+    std::lock_guard<std::mutex> lk(mMutex);
+    mRecords.clear();
+    mFlushed = false;
+    mIterationCount.store(0);
+    mProgramStart = ScopedTimer::Clock::now();
+    mProgramStartISO = wallClockISO();
+}
+
 // -----------------------------------------------------------------------------
 //  flush() - writes CSV + summary
 // -----------------------------------------------------------------------------
 
-void ProfilerManager::flush(const std::string& outputDir)
+void ProfilerManager::flush(const std::string& outputDir, const std::string&  studyName)
 {
     std::lock_guard<std::mutex> lk(mMutex);
     if (mFlushed || mRecords.empty()) return;
     mFlushed = true;
     mOutputDir = outputDir;
+    mStudyName = studyName;
 
-    const std::string csvPath = outputDir + "/profiling_results.csv";
-    const std::string summaryPath = outputDir + "/profiling_summary.txt";
+    const std::string prefix = studyName.empty() ? "" : studyName + "_";
+    const std::string csvPath = (fs::path(outputDir) / (prefix + "profiling_results.csv")).string();
+    const std::string summaryPath = (fs::path(outputDir) / (prefix + "profiling_summary.txt")).string();
 
     try { writeCSV(csvPath); }
     catch (const std::exception& e) {

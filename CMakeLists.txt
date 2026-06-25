@@ -62,10 +62,12 @@ if (BUILD_CAIRN)
 else()
     project(${PROJECT_NAME} LANGUAGES NONE VERSION ${${PROJECT_NAME}_VERSION}) 
 endif()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE PATH "")
 
 # ========= Tests setup =========
 if(WITH_TESTING)  
   include(CTest)
+  list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
   enable_testing()  
 endif()
 

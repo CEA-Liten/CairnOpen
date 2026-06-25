@@ -1,5 +1,5 @@
 {
-	"Saved with PERSEE version": "4.4.6",
+	"Saved with Cairn version": "5.4.100",
 	"numberPages": 1,
 	"studyComment": "",
 	"mapParameters": {
@@ -7,21 +7,35 @@
 		"longitude": 5.87,
 		"zoomlevel": 13.5
 	},
+	"DynamicIndicators": [],
 	"Page1": {
 		"PageId": "",
 		"Components": [
 			{
-				"nodeType": "TecEcoAnalysis",
 				"nodeId": "11301",
 				"nodeName": "TecEcoAnalysis#1",
+				"nodeType": "TecEcoAnalysis",
 				"nodeTechnoType": "TecEcoAnalysis",
 				"componentPERSEEType": "TecEcoAnalysis",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 50,
 				"y": 2,
-				"componentWidth": 40,
-				"componentCarrier": "TecEcoAnalysis#1",
-				"nodePortsData": [],
+				"componentCarrier": "NO_CARRIER",
+				"paramListJson": [
+					{
+						"key": "ConsideredEnvironmentalImpacts",
+						"value": []
+					},
+					{
+						"key": "ForceExportAllIndicators",
+						"value": false
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					}
+				],
 				"optionListJson": [
 					{
 						"key": "Currency",
@@ -68,37 +82,18 @@
 						"value": "HISTandPLAN"
 					}
 				],
-				"paramListJson": [
-					{
-						"key": "ConsideredEnvironmentalImpacts",
-						"value": []
-					},
-					{
-						"key": "ForceExportAllIndicators",
-						"value": false
-					},
-					{
-						"key": "EcoInvestModel",
-						"value": false
-					}
-				],
-				"envImpactsListJson": [],
-				"timeSeriesListJson": [],
-				"filterConfigListJson": []
+				"labelList": []
 			},
 			{
-				"nodeType": "SimulationControl",
 				"nodeId": "11401",
 				"nodeName": "Cairn",
+				"nodeType": "SimulationControl",
 				"nodeTechnoType": "SimulationControl",
 				"componentPERSEEType": "SimulationControl",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 330,
 				"y": 2,
-				"componentWidth": 40,
-				"componentCarrier": "none",
-				"nodePortsData": [],
-				"optionListJson": [],
 				"paramListJson": [
 					{
 						"key": "CheckTimeSeriesUnits",
@@ -164,22 +159,40 @@
 						"key": "UseExtrapolationFactor",
 						"value": true
 					}
-				],
-				"timeSeriesListJson": [],
-				"filterConfigListJson": []
+				]
 			},
 			{
-				"nodeType": "Solver",
 				"nodeId": "11501",
 				"nodeName": "Solver#1",
-				"nodeTechnoType": "MIPModeler",
+				"nodeType": "Solver",
+				"nodeTechnoType": "Solver",
 				"componentPERSEEType": "Solver",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 190,
 				"y": 2,
-				"componentWidth": 40,
-				"componentCarrier": "none",
-				"nodePortsData": [],
+				"paramListJson": [
+					{
+						"key": "Gap",
+						"value": 0
+					},
+					{
+						"key": "NbSolToKeep",
+						"value": 1
+					},
+					{
+						"key": "Threads",
+						"value": 8
+					},
+					{
+						"key": "TimeLimit",
+						"value": 10000
+					},
+					{
+						"key": "TreeMemoryLimit",
+						"value": 50000
+					}
+				],
 				"optionListJson": [
 					{
 						"key": "Category",
@@ -209,45 +222,53 @@
 						"key": "WriteMipStart",
 						"value": ""
 					}
-				],
+				]
+			},
+			{
+				"nodeId": "11601",
+				"nodeName": "Electricity",
+				"nodeType": "Electricity",
+				"nodeTechnoType": "Electricity",
+				"componentPERSEEType": "ElectricalCarrier",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 470,
+				"y": 2,
+				"energyTypeColor": "#E8A317",
 				"paramListJson": [
 					{
-						"key": "Gap",
+						"key": "BuyPrice",
 						"value": 0
 					},
 					{
-						"key": "NbSolToKeep",
+						"key": "CP",
+						"value": 0
+					},
+					{
+						"key": "GHV",
+						"value": 0
+					},
+					{
+						"key": "LHV",
 						"value": 1
 					},
 					{
-						"key": "Threads",
-						"value": 8
+						"key": "Potential",
+						"value": 230
 					},
 					{
-						"key": "TimeLimit",
-						"value": 10000
+						"key": "RHO",
+						"value": 0
 					},
 					{
-						"key": "TreeMemoryLimit",
-						"value": 50000
+						"key": "SellPrice",
+						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
-				"timeSeriesListJson": [],
-				"filterConfigListJson": []
-			},
-			{
-				"nodeType": "Electricity",
-				"nodeId": "11601",
-				"nodeName": "Electricity",
-				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "ElectricalCarrier",
-				"energyTypeColor": "#E8A317",
-				"nodeComment": "",
-				"x": 470,
-				"y": 2,
-				"componentWidth": 40,
-				"componentCarrier": "Electricity",
-				"nodePortsData": [],
 				"optionListJson": [
 					{
 						"key": "EnergyName",
@@ -322,40 +343,6 @@
 						"value": "MWc"
 					}
 				],
-				"paramListJson": [
-					{
-						"key": "BuyPrice",
-						"value": 0
-					},
-					{
-						"key": "CP",
-						"value": 0
-					},
-					{
-						"key": "GHV",
-						"value": 0
-					},
-					{
-						"key": "LHV",
-						"value": 1
-					},
-					{
-						"key": "Potential",
-						"value": 230
-					},
-					{
-						"key": "RHO",
-						"value": 0
-					},
-					{
-						"key": "SellPrice",
-						"value": 0
-					},
-					{
-						"key": "Voltage",
-						"value": 230
-					}
-				],
 				"timeSeriesListJson": [
 					{
 						"key": "UseProfileBuyPrice",
@@ -369,22 +356,53 @@
 						"key": "UseProfileSellPrice",
 						"value": ""
 					}
-				],
-				"filterConfigListJson": []
+				]
 			},
 			{
-				"nodeType": "H2Vector",
 				"nodeId": "11701",
 				"nodeName": "H2_HP",
+				"nodeType": "H2Vector",
 				"nodeTechnoType": "H2Vector",
 				"componentPERSEEType": "MaterialCarrier",
-				"energyTypeColor": "#2b451a",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 750,
 				"y": 2,
-				"componentWidth": 40,
-				"componentCarrier": "H2_HP",
-				"nodePortsData": [],
+				"energyTypeColor": "#2b451a",
+				"paramListJson": [
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "CP",
+						"value": 0
+					},
+					{
+						"key": "GHV",
+						"value": 0
+					},
+					{
+						"key": "LHV",
+						"value": 0.03332
+					},
+					{
+						"key": "Potential",
+						"value": 200
+					},
+					{
+						"key": "RHO",
+						"value": 0.0899
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 200
+					}
+				],
 				"optionListJson": [
 					{
 						"key": "EnergyName",
@@ -459,41 +477,6 @@
 						"value": "MWc"
 					}
 				],
-				"paramListJson": [
-					{
-						"key": "BuyPrice",
-						"value": 0
-					},
-					{
-						"key": "CP",
-						"value": 0
-					},
-					{
-						"key": "GHV",
-						"value": 0
-					},
-					{
-						"key": "LHV",
-						"value": 0.03332
-					},
-					{
-						"key": "Potential",
-						"value": 200
-					},
-					{
-						"key": "RHO",
-						"value": 0.0899
-					},
-					{
-						"key": "SellPrice",
-						"value": 0
-					},
-					{
-						"key": "Pressure",
-						"value": 200
-					}
-
-				],
 				"timeSeriesListJson": [
 					{
 						"key": "UseProfileBuyPrice",
@@ -514,18 +497,50 @@
 				]
 			},
 			{
-				"nodeType": "H2Vector",
 				"nodeId": "11801",
 				"nodeName": "H2_LP",
+				"nodeType": "H2Vector",
 				"nodeTechnoType": "H2Vector",
 				"componentPERSEEType": "MaterialCarrier",
-				"energyTypeColor": "green",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 610,
 				"y": 2,
-				"componentWidth": 40,
-				"componentCarrier": "H2_LP",
-				"nodePortsData": [],
+				"energyTypeColor": "green",
+				"paramListJson": [
+					{
+						"key": "BuyPrice",
+						"value": 0
+					},
+					{
+						"key": "CP",
+						"value": 0
+					},
+					{
+						"key": "GHV",
+						"value": 0
+					},
+					{
+						"key": "LHV",
+						"value": 0.03332
+					},
+					{
+						"key": "Potential",
+						"value": 30
+					},
+					{
+						"key": "RHO",
+						"value": 0.0899
+					},
+					{
+						"key": "SellPrice",
+						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 30
+					}
+				],
 				"optionListJson": [
 					{
 						"key": "EnergyName",
@@ -600,40 +615,6 @@
 						"value": "MWc"
 					}
 				],
-				"paramListJson": [
-					{
-						"key": "BuyPrice",
-						"value": 0
-					},
-					{
-						"key": "CP",
-						"value": 0
-					},
-					{
-						"key": "GHV",
-						"value": 0
-					},
-					{
-						"key": "LHV",
-						"value": 0.03332
-					},
-					{
-						"key": "Potential",
-						"value": 30
-					},
-					{
-						"key": "RHO",
-						"value": 0.0899
-					},
-					{
-						"key": "SellPrice",
-						"value": 0
-					},
-					{
-						"key": "Pressure",
-						"value": 30
-					}
-				],
 				"timeSeriesListJson": [
 					{
 						"key": "UseProfileBuyPrice",
@@ -654,74 +635,16 @@
 				]
 			},
 			{
-				"nodeType": "NodeLaw",
 				"nodeId": "11901",
 				"nodeName": "NodeLaw#1",
+				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
 				"nodeComment": "",
+				"componentWidth": 20,
 				"x": 602,
 				"y": 190,
-				"componentWidth": 20,
 				"componentCarrier": "Electricity",
-				"nodePorts": {
-					"left": 1,
-					"right": 1
-				},
-				"nodePortsData": [
-					{
-						"pos": "left",
-						"ports": [
-							{
-								"name": "I0",
-								"carrier": "Electricity",
-								"carrierType": "ANY_TYPE",
-								"direction": "OUTPUT",
-								"variable": "UsedPower",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					},
-					{
-						"pos": "right",
-						"ports": [
-							{
-								"name": "O0",
-								"carrier": "Electricity",
-								"carrierType": "ANY_TYPE",
-								"direction": "INPUT",
-								"variable": "GridFlow",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					}
-				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "ModelClass",
-						"value": "NodeLaw"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
 				"paramListJson": [
 					{
 						"key": "ExportIndicators",
@@ -820,80 +743,81 @@
 						"value": "-"
 					}
 				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
-				"timeSeriesListJson": [],
-				"filterConfigListJson": []
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "I0",
+								"position": "left",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "O0",
+								"position": "right",
+								"carrier": "Electricity",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					}
+				],
+				"labelListJson": []
 			},
 			{
-				"nodeType": "NodeLaw",
 				"nodeId": "12001",
 				"nodeName": "NodeLaw#2",
+				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
 				"nodeComment": "",
+				"componentWidth": 20,
 				"x": 244,
 				"y": 162,
-				"componentWidth": 20,
 				"componentCarrier": "H2_LP",
-				"nodePorts": {
-					"left": 1,
-					"right": 1
-				},
-				"nodePortsData": [
-					{
-						"pos": "left",
-						"ports": [
-							{
-								"name": "I0",
-								"carrier": "H2_LP",
-								"carrierType": "ANY_TYPE",
-								"direction": "INPUT",
-								"variable": "GridFlow",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					},
-					{
-						"pos": "right",
-						"ports": [
-							{
-								"name": "O0",
-								"carrier": "H2_LP",
-								"carrierType": "ANY_TYPE",
-								"direction": "OUTPUT",
-								"variable": "InMassFlowRate",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					}
-				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "ModelClass",
-						"value": "NodeLaw"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
 				"paramListJson": [
 					{
 						"key": "ExportIndicators",
@@ -992,80 +916,81 @@
 						"value": "-"
 					}
 				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
-				"timeSeriesListJson": [],
-				"filterConfigListJson": []
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "I0",
+								"position": "left",
+								"carrier": "H2_LP",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "O0",
+								"position": "right",
+								"carrier": "H2_LP",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					}
+				],
+				"labelListJson": []
 			},
 			{
-				"nodeType": "NodeLaw",
 				"nodeId": "12101",
 				"nodeName": "NodeLaw#3",
+				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
 				"nodeComment": "",
+				"componentWidth": 20,
 				"x": 244,
 				"y": 218,
-				"componentWidth": 20,
 				"componentCarrier": "H2_HP",
-				"nodePorts": {
-					"left": 1,
-					"right": 1
-				},
-				"nodePortsData": [
-					{
-						"pos": "left",
-						"ports": [
-							{
-								"name": "I0",
-								"carrier": "H2_HP",
-								"carrierType": "ANY_TYPE",
-								"direction": "OUTPUT",
-								"variable": "SourceLoadFlow",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					},
-					{
-						"pos": "right",
-						"ports": [
-							{
-								"name": "O0",
-								"carrier": "H2_HP",
-								"carrierType": "ANY_TYPE",
-								"direction": "INPUT",
-								"variable": "OutMassFlowRate",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					}
-				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "ModelClass",
-						"value": "NodeLaw"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
 				"paramListJson": [
 					{
 						"key": "ExportIndicators",
@@ -1164,22 +1089,247 @@
 						"value": "-"
 					}
 				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
-				"timeSeriesListJson": [],
-				"filterConfigListJson": []
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "ModelClass",
+						"value": "NodeLaw"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
+				"nodePorts": {
+					"left": 1,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "I0",
+								"position": "left",
+								"carrier": "H2_HP",
+								"carrierType": "ANY_TYPE",
+								"direction": "OUTPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port2",
+								"name": "O0",
+								"position": "right",
+								"carrier": "H2_HP",
+								"carrierType": "ANY_TYPE",
+								"direction": "INPUT",
+								"variable": "",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					}
+				],
+				"labelListJson": []
 			},
 			{
-				"nodeType": "GridFree",
 				"nodeId": "12501",
 				"nodeName": "ElecGrid",
+				"nodeType": "GridFree",
 				"nodeTechnoType": "GridFree",
 				"componentPERSEEType": "Grid",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 748,
 				"y": 180,
-				"componentWidth": 40,
 				"componentCarrier": "Electricity",
+				"paramListJson": [
+					{
+						"key": "AddMinimumCapacity",
+						"value": false
+					},
+					{
+						"key": "AddPenalties",
+						"value": false
+					},
+					{
+						"key": "AddVariableMaxFlow",
+						"value": false
+					},
+					{
+						"key": "CondenseVariablesOnTP",
+						"value": false
+					},
+					{
+						"key": "ConstantBuyPrice",
+						"value": 0
+					},
+					{
+						"key": "ConstantSellPrice",
+						"value": 0
+					},
+					{
+						"key": "Curtailment",
+						"value": false
+					},
+					{
+						"key": "EcoInvestModel",
+						"value": false
+					},
+					{
+						"key": "EnvironmentModel",
+						"value": false
+					},
+					{
+						"key": "ExportIndicators",
+						"value": true
+					},
+					{
+						"key": "GeometryModel",
+						"value": false
+					},
+					{
+						"key": "LPModelONLY",
+						"value": false
+					},
+					{
+						"key": "LPWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "MaxFlow",
+						"value": 10000
+					},
+					{
+						"key": "MinFlow",
+						"value": 0
+					},
+					{
+						"key": "PieceWiseArea",
+						"value": false
+					},
+					{
+						"key": "PieceWiseMass",
+						"value": false
+					},
+					{
+						"key": "PieceWiseVolume",
+						"value": false
+					},
+					{
+						"key": "PiecewiseCapex",
+						"value": false
+					},
+					{
+						"key": "PriceMultiplier",
+						"value": 1
+					},
+					{
+						"key": "SeasonalCosts",
+						"value": false
+					},
+					{
+						"key": "SeasonalCostsFree",
+						"value": false
+					},
+					{
+						"key": "SeasonalPrevisions",
+						"value": false
+					},
+					{
+						"key": "UseAgeing",
+						"value": false
+					},
+					{
+						"key": "UseConstantPrice",
+						"value": false
+					},
+					{
+						"key": "UseWeightOptimization",
+						"value": false
+					},
+					{
+						"key": "Weight",
+						"value": 1
+					},
+					{
+						"key": "WeightUnit",
+						"value": "-"
+					}
+				],
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					},
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
+				"timeSeriesListJson": [
+					{
+						"key": "UseGridCarbonContent",
+						"value": ""
+					},
+					{
+						"key": "UseProfileBuyPrice",
+						"value": ""
+					},
+					{
+						"key": "UseProfileBuyPriceSeasonal",
+						"value": ""
+					},
+					{
+						"key": "UseProfileGrid",
+						"value": ""
+					},
+					{
+						"key": "UseProfileGridCarbonContentSE",
+						"value": ""
+					},
+					{
+						"key": "UseVariableMaximumGridFlow",
+						"value": ""
+					},
+					{
+						"key": "UseProfileSellPrice",
+						"value": ""
+					}
+				],
 				"nodePorts": {
 					"left": 1
 				},
@@ -1188,7 +1338,9 @@
 						"pos": "left",
 						"ports": [
 							{
+								"id": "PortGridFlow",
 								"name": "PortL0",
+								"position": "left",
 								"carrier": "Electricity",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
@@ -1196,34 +1348,25 @@
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
+								"defaultport": "Yes",
+								"enabled": true
 							}
 						]
 					}
 				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "Direction",
-						"value": "ExtractFromGrid"
-					},
-					{
-						"key": "ModelClass",
-						"value": "GridFree"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "12701",
+				"nodeName": "H2Grid",
+				"nodeType": "GridFree",
+				"nodeTechnoType": "GridFree",
+				"componentPERSEEType": "Grid",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 112,
+				"y": 150,
+				"componentCarrier": "H2_LP",
 				"paramListJson": [
 					{
 						"key": "AddMinimumCapacity",
@@ -1338,8 +1481,28 @@
 						"value": "-"
 					}
 				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "Direction",
+						"value": "ExtractFromGrid"
+					},
+					{
+						"key": "ModelClass",
+						"value": "GridFree"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
 				"timeSeriesListJson": [
 					{
 						"key": "UseGridCarbonContent",
@@ -1370,19 +1533,6 @@
 						"value": ""
 					}
 				],
-				"filterConfigListJson": []
-			},
-			{
-				"nodeType": "GridFree",
-				"nodeId": "12701",
-				"nodeName": "H2Grid",
-				"nodeTechnoType": "GridFree",
-				"componentPERSEEType": "Grid",
-				"nodeComment": "",
-				"x": 112,
-				"y": 150,
-				"componentWidth": 40,
-				"componentCarrier": "H2_LP",
 				"nodePorts": {
 					"right": 1
 				},
@@ -1391,7 +1541,9 @@
 						"pos": "right",
 						"ports": [
 							{
+								"id": "PortGridFlow",
 								"name": "PortR0",
+								"position": "right",
 								"carrier": "H2_LP",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
@@ -1399,237 +1551,25 @@
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
+								"defaultport": "Yes",
+								"enabled": true
 							}
 						]
 					}
 				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "Direction",
-						"value": "ExtractFromGrid"
-					},
-					{
-						"key": "ModelClass",
-						"value": "GridFree"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
-				"paramListJson": [
-					{
-						"key": "AddMinimumCapacity",
-						"value": false
-					},
-					{
-						"key": "AddPenalties",
-						"value": false
-					},
-					{
-						"key": "AddVariableMaxFlow",
-						"value": false
-					},
-					{
-						"key": "CondenseVariablesOnTP",
-						"value": false
-					},
-					{
-						"key": "ConstantBuyPrice",
-						"value": 0
-					},
-					{
-						"key": "ConstantSellPrice",
-						"value": 0
-					},
-					{
-						"key": "Curtailment",
-						"value": false
-					},
-					{
-						"key": "EcoInvestModel",
-						"value": false
-					},
-					{
-						"key": "EnvironmentModel",
-						"value": false
-					},
-					{
-						"key": "ExportIndicators",
-						"value": true
-					},
-					{
-						"key": "GeometryModel",
-						"value": false
-					},
-					{
-						"key": "LPModelONLY",
-						"value": false
-					},
-					{
-						"key": "LPWeightOptimization",
-						"value": false
-					},
-					{
-						"key": "MaxFlow",
-						"value": 10000
-					},
-					{
-						"key": "MinFlow",
-						"value": 0
-					},
-					{
-						"key": "PieceWiseArea",
-						"value": false
-					},
-					{
-						"key": "PieceWiseMass",
-						"value": false
-					},
-					{
-						"key": "PieceWiseVolume",
-						"value": false
-					},
-					{
-						"key": "PiecewiseCapex",
-						"value": false
-					},
-					{
-						"key": "PriceMultiplier",
-						"value": 1
-					},
-					{
-						"key": "SeasonalCosts",
-						"value": false
-					},
-					{
-						"key": "SeasonalCostsFree",
-						"value": false
-					},
-					{
-						"key": "SeasonalPrevisions",
-						"value": false
-					},
-					{
-						"key": "UseAgeing",
-						"value": false
-					},
-					{
-						"key": "UseConstantPrice",
-						"value": false
-					},
-					{
-						"key": "UseWeightOptimization",
-						"value": false
-					},
-					{
-						"key": "Weight",
-						"value": 1
-					},
-					{
-						"key": "WeightUnit",
-						"value": "-"
-					}
-				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
-				"timeSeriesListJson": [
-					{
-						"key": "UseGridCarbonContent",
-						"value": ""
-					},
-					{
-						"key": "UseProfileBuyPrice",
-						"value": ""
-					},
-					{
-						"key": "UseProfileBuyPriceSeasonal",
-						"value": ""
-					},
-					{
-						"key": "UseProfileGrid",
-						"value": ""
-					},
-					{
-						"key": "UseProfileGridCarbonContentSE",
-						"value": ""
-					},
-					{
-						"key": "UseVariableMaximumGridFlow",
-						"value": ""
-					},
-					{
-						"key": "UseProfileSellPrice",
-						"value": ""
-					}
-				],
-				"filterConfigListJson": []
+				"labelListJson": []
 			},
 			{
-				"nodeType": "SourceLoad",
 				"nodeId": "12901",
 				"nodeName": "H2Load",
+				"nodeType": "SourceLoad",
 				"nodeTechnoType": "SourceLoad",
 				"componentPERSEEType": "SourceLoad",
 				"nodeComment": "",
+				"componentWidth": 40,
 				"x": 72,
 				"y": 218,
-				"componentWidth": 40,
 				"componentCarrier": "H2_HP",
-				"nodePorts": {
-					"right": 1
-				},
-				"nodePortsData": [
-					{
-						"pos": "right",
-						"ports": [
-							{
-								"name": "PortR0",
-								"carrier": "H2_HP",
-								"carrierType": "ANY_TYPE",
-								"direction": "INPUT",
-								"variable": "SourceLoadFlow",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					}
-				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "Direction",
-						"value": "Sink"
-					},
-					{
-						"key": "ModelClass",
-						"value": "SourceLoad"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
 				"paramListJson": [
 					{
 						"key": "AddHeatConsumerModel",
@@ -1768,8 +1708,28 @@
 						"value": "-"
 					}
 				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "Direction",
+						"value": "Load"
+					},
+					{
+						"key": "ModelClass",
+						"value": "SourceLoad"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
 				"timeSeriesListJson": [
 					{
 						"key": "UseProfileCostShedding",
@@ -1796,89 +1756,43 @@
 						"value": ""
 					}
 				],
-				"filterConfigListJson": []
-			},
-			{
-				"nodeType": "Compressor",
-				"nodeId": "13101",
-				"nodeName": "Compressor",
-				"nodeTechnoType": "Compressor",
-				"componentPERSEEType": "Converter",
-				"nodeComment": "",
-				"x": 392,
-				"y": 180,
-				"componentWidth": 40,
-				"componentCarrier": "H2_LP",
 				"nodePorts": {
-					"left": 2,
 					"right": 1
 				},
 				"nodePortsData": [
 					{
-						"pos": "left",
-						"ports": [
-							{
-								"name": "PortL0",
-								"carrier": "H2_LP",
-								"carrierType": "ANY_Fluid",
-								"direction": "INPUT",
-								"variable": "InMassFlowRate",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							},
-							{
-								"name": "PortL1",
-								"carrier": "H2_HP",
-								"carrierType": "Electrical",
-								"direction": "OUTPUT",
-								"variable": "OutMassFlowRate",
-								"checkunit": "Yes",
-								"coeff": 1,
-								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
-							}
-						]
-					},
-					{
 						"pos": "right",
 						"ports": [
 							{
+								"id": "PortSourceLoadFlow",
 								"name": "PortR0",
-								"carrier": "Electricity",
-								"carrierType": "ANY_Fluid",
+								"position": "right",
+								"carrier": "H2_HP",
+								"carrierType": "ANY_TYPE",
 								"direction": "INPUT",
-								"variable": "UsedPower",
+								"variable": "SourceLoadFlow",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
-								"defaultport": "No",
-								"isEnabled": true
+								"defaultport": "Yes",
+								"enabled": true
 							}
 						]
 					}
 				],
-				"optionListJson": [
-					{
-						"key": "Control",
-						"value": ""
-					},
-					{
-						"key": "DataFile",
-						"value": ""
-					},
-					{
-						"key": "ModelClass",
-						"value": "Compressor"
-					},
-					{
-						"key": "PublishUserVariable",
-						"value": ""
-					}
-				],
+				"labelListJson": []
+			},
+			{
+				"nodeId": "13101",
+				"nodeName": "Compressor",
+				"nodeType": "Compressor",
+				"nodeTechnoType": "Compressor",
+				"componentPERSEEType": "Converter",
+				"nodeComment": "",
+				"componentWidth": 40,
+				"x": 392,
+				"y": 180,
+				"componentCarrier": "H2_LP",
 				"paramListJson": [
 					{
 						"key": "AddLosses",
@@ -1974,7 +1888,7 @@
 					},
 					{
 						"key": "PowerConsumption",
-						"value": 0
+						"value": 0.0005
 					},
 					{
 						"key": "Replacement",
@@ -2049,25 +1963,95 @@
 						"value": false
 					}
 				],
-				"envImpactsListJson": [],
-				"portImpactsListJson": [],
+				"optionListJson": [
+					{
+						"key": "Control",
+						"value": ""
+					},
+					{
+						"key": "DataFile",
+						"value": ""
+					},
+					{
+						"key": "ModelClass",
+						"value": "Compressor"
+					},
+					{
+						"key": "PublishUserVariable",
+						"value": ""
+					}
+				],
 				"timeSeriesListJson": [
 					{
 						"key": "UseProfileConverterUse",
 						"value": ""
 					}
 				],
+				"nodePorts": {
+					"left": 2,
+					"right": 1
+				},
+				"nodePortsData": [
+					{
+						"pos": "left",
+						"ports": [
+							{
+								"id": "port1",
+								"name": "PortL0",
+								"position": "left",
+								"carrier": "H2_LP",
+								"carrierType": "ANY_Fluid",
+								"direction": "INPUT",
+								"variable": "InMassFlowRate",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							},
+							{
+								"id": "port2",
+								"name": "PortL1",
+								"position": "left",
+								"carrier": "H2_HP",
+								"carrierType": "Electrical",
+								"direction": "OUTPUT",
+								"variable": "OutMassFlowRate",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					},
+					{
+						"pos": "right",
+						"ports": [
+							{
+								"id": "port3",
+								"name": "PortR0",
+								"position": "right",
+								"carrier": "Electricity",
+								"carrierType": "ANY_Fluid",
+								"direction": "INPUT",
+								"variable": "UsedPower",
+								"checkunit": "Yes",
+								"coeff": 1,
+								"offset": 0,
+								"defaultport": "No",
+								"enabled": true
+							}
+						]
+					}
+				],
+				"labelListJson": [],
 				"filterConfigListJson": [
-					"Base",
-					"EcoInvestModel",
-					"EnvironmentModel",
-					"PolytropicModel",
 					"ConstantEfficiency",
-					"VariablePout",
-					"VariableTin",
-					"SteamInput",
 					"ConverterProfiles",
-					"ProfileCoefficients"
+					"ProfileCoefficients",
+					"PowerConsumption",
+					"Base"
 				]
 			}
 		],
@@ -2076,9 +2060,9 @@
 			{
 				"linkType": "straight",
 				"tailNodeName": "Compressor",
-				"tailSocketName": "Compressor.PortR0",
+				"tailSocketName": "PortR0",
 				"headNodeName": "NodeLaw#1",
-				"headSocketName": "NodeLaw#1.I0",
+				"headSocketName": "I0",
 				"listPoint": [
 					{
 						"x": 516,
@@ -2093,9 +2077,9 @@
 			{
 				"linkType": "straight",
 				"tailNodeName": "Compressor",
-				"tailSocketName": "Compressor.PortL1",
+				"tailSocketName": "PortL1",
 				"headNodeName": "NodeLaw#3",
-				"headSocketName": "NodeLaw#3.O0",
+				"headSocketName": "O0",
 				"listPoint": [
 					{
 						"x": 316,
@@ -2110,9 +2094,9 @@
 			{
 				"linkType": "straight",
 				"tailNodeName": "H2Grid",
-				"tailSocketName": "H2Grid.PortR0",
+				"tailSocketName": "PortR0",
 				"headNodeName": "NodeLaw#2",
-				"headSocketName": "NodeLaw#2.I0",
+				"headSocketName": "I0",
 				"listPoint": [
 					{
 						"x": 178,
@@ -2127,9 +2111,9 @@
 			{
 				"linkType": "straight",
 				"tailNodeName": "H2Load",
-				"tailSocketName": "H2Load.PortR0",
+				"tailSocketName": "PortR0",
 				"headNodeName": "NodeLaw#3",
-				"headSocketName": "NodeLaw#3.I0",
+				"headSocketName": "I0",
 				"listPoint": [
 					{
 						"x": 170,
@@ -2144,9 +2128,9 @@
 			{
 				"linkType": "straight",
 				"tailNodeName": "NodeLaw#1",
-				"tailSocketName": "NodeLaw#1.O0",
+				"tailSocketName": "O0",
 				"headNodeName": "ElecGrid",
-				"headSocketName": "ElecGrid.PortL0",
+				"headSocketName": "PortL0",
 				"listPoint": [
 					{
 						"x": 684,
@@ -2161,9 +2145,9 @@
 			{
 				"linkType": "straight",
 				"tailNodeName": "NodeLaw#2",
-				"tailSocketName": "NodeLaw#2.O0",
+				"tailSocketName": "O0",
 				"headNodeName": "Compressor",
-				"headSocketName": "Compressor.PortL0",
+				"headSocketName": "PortL0",
 				"listPoint": [
 					{
 						"x": 318,
@@ -2177,6 +2161,5 @@
 			}
 		],
 		"Groups": []
-	},
-	"DynamicIndicators": []
+	}
 }

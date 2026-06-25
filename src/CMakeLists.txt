@@ -4,13 +4,15 @@
 include(GNUInstallDirs)
 
 # Common setup
-set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envs/envCairn${PROJECT_VERSION})
+if (USE_ENVCAIRN) 
+    set(PYTHON_VENV_PROJECT ${PYTHON_HOME}/../envs/envCairn${PROJECT_VERSION})
+else()
+    set(PYTHON_VENV_PROJECT ${INSTALL_WHEEL_VENV})    
+endif()
 if (INSTALL_WHEEL)
     if (USE_ENVCAIRN) 
-        # force use on envCairn
-        set(INSTALL_WHEEL_VENV ${PYTHON_VENV_PROJECT})    
-    else()
-        set(PYTHON_VENV_PROJECT ${INSTALL_WHEEL_VENV})    
+        # force use on envCairn (installer)
+        set(INSTALL_WHEEL_VENV ${PYTHON_VENV_PROJECT})        
     endif() 
 endif()
 if(CMAKE_HOST_SYSTEM_NAME MATCHES Windows)	
@@ -64,8 +66,13 @@ if (BUILD_DOC)
 	set(Python_DIR ${Python_ROOT_DIR})
 	find_package(Python REQUIRED COMPONENTS Interpreter Development)	
 	
-    # get whl file    
-    file(GLOB FILES_LIST ${CMAKE_INSTALL_PREFIX}/../cairn-${PROJECT_VERSION}*.whl)
+    # get whl file   
+    if (WITH_PRIVATEMODELS)
+        set(WHEEL_NAME ${PROJECT_NAME})
+    else()
+        set(WHEEL_NAME ${PROJECT_NAME}open)
+    endif()
+    file(GLOB FILES_LIST ${CMAKE_INSTALL_PREFIX}/../${WHEEL_NAME}-${PROJECT_VERSION}*.whl)
 
     # install cairn with the wheel file
     list(LENGTH FILES_LIST nbWhl)
@@ -73,7 +80,7 @@ if (BUILD_DOC)
 	    # take the first elem
 	    list(GET FILES_LIST 0 CAIRN_WHL)	    
     else()
-        message(FATAL_ERROR "Cannot find cairn-${PROJECT_VERSION} wheel, build it before.")
+        message(FATAL_ERROR "Cannot find ${WHEEL_NAME}-${PROJECT_VERSION} wheel, build it before.")
     endif()
 
     # virtual environment 	

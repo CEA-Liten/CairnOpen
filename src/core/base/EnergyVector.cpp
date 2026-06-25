@@ -37,12 +37,12 @@ void EnergyVector::configTechnoType()
     const std::vector<std::string> supportedTechnoTypes = CarrierTypes::getCarrierTypes();
     auto it = std::find(supportedTechnoTypes.begin(), supportedTechnoTypes.end(), mCarrierTechnoType);
     if (it == supportedTechnoTypes.end() || mCarrierTechnoType.empty()) {
-        if (mCarrierType == "ElectricalCarrier") /** componentPERSEEType */
+        if (mCarrierType == "ElectricalCarrier") /** componentType */
             mCarrierTechnoType = "Electricity";  /** for the GUI : matches both nodeType and nodeTechnoType */
         else if (mCarrierType == "MaterialCarrier")
             mCarrierTechnoType = "Material";
         else
-            cWarning() << "The TechnoType (" + mCarrierTechnoType + ") of EnergyVector " + Name() + " is not supported!";
+            cWarning() << "The Type (" + mCarrierType + ") of EnergyVector " + Name() + " is not supported!";
     }
 }
 

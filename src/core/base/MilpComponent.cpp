@@ -393,7 +393,7 @@ EnergyVector* MilpComponent::getCarrier(const std::string& carrierName)
 {
     OptimProblem* optimProblem = dynamic_cast<OptimProblem*>(parent());
     if (!optimProblem) {
-        cWarning() << "Parent is not an OptimProblem";
+        cError() << "Parent is not a defined OptimProblem: " + Name();
         return nullptr;
     }
 
@@ -599,9 +599,9 @@ void MilpComponent::createExportListVars(t_mapExchange& a_Exchange)
     * createPortsExportListVars(a_Exchange);
     */
 
-    if (mPublishUserVariable != "")  /** define file for additionnal variables publication to output */
-    {
-        createZEUserVariablesList(mPublishUserVariable, a_Exchange) ;
+     /** Define PublishUserVariable file for additionnal variables publication to output */
+    if (!mPublishUserVariable.empty()) {
+        createZEUserVariablesList(mPublishUserVariable, a_Exchange);
     }
 }
 
@@ -755,7 +755,7 @@ void MilpComponent::readEnergyVectorTS(const EnergyVector* carrier, const InputP
 }
 
 
-int MilpComponent::createHistFXLists()
+int MilpComponent::setTimeSeriesValues()
 {
     int vRet = 0;
     for (auto& [varName, var] : m_timeSeries) {
@@ -788,35 +788,59 @@ void MilpComponent::exportRHVariableInModel()
     }
 }
 
-void MilpComponent::createZEUserVariablesList(std::string Full_File_Name, t_mapExchange& a_Exchange)
+void MilpComponent::createZEUserVariablesList(const std::string& Full_File_Name, t_mapExchange& a_Exchange)
 {
-//    std::string Full_File_Name="PublishUserVariable.csv" ;
-    char Separator=';' ;    
-    fs::path vFile(Full_File_Name);
-    if (!fs::exists(vFile))
-    {
-         cWarning() << "no user configurationfile for published variable - keep default list" ;
-         return ;
+    const char Separator = ';';
+
+    if (!fs::exists(Full_File_Name)) {
+        cError() << "User variable configuration file not found: " << Full_File_Name;
+        return;
     }
+
     std::fstream File(Full_File_Name, std::ios_base::in);
+    if (!File.is_open()) {
+        cError() << "Could not open user variable configuration file: " << Full_File_Name;
+        return;
+    }
+
     std::string line;
+    int lineNumber = 0;
     while (std::getline(File, line))
     {
-// read header line        
-        std::vector<std::string> fields = split(line, Separator);
-        if (contains(fields, "Error\n") || fields.size()<4)
-        {
-          cError() << "Error reading line " << line;
+        ++lineNumber;
+        const std::vector<std::string> fields = split(line, Separator);
+
+        // Check if stream went bad mid-read
+        if (File.bad()) {
+            cError() << "Read error in file:" << Full_File_Name
+                << "at line:" << lineNumber;
+            break;
         }
-        std::string compoName = fields[0] ;
-        std::string varName  = fields[1] ;
-        std::string acomment  = fields[2] ;
-        std::string aunit = fields[3] ;
-        std::string exName = Name() + "." + varName;
-        a_Exchange[std::string(exName.c_str())] = new ZEVariables(
-            std::string(exName.c_str()),
-            std::string(aunit.c_str()),
-            std::string(acomment.c_str()));
+
+        if (fields.size() < 4) {
+            cError() << "Invalid line " << lineNumber << " in " << Full_File_Name
+                << " - expected at least 4 fields (component, variable, comment, unit)"
+                << " - got " << fields.size() << " fields"
+                << " - line: " << line;
+            continue; 
+        }
+
+        const std::string varName = fields[1];
+        const std::string exName = Name() + "." + varName;
+
+        a_Exchange[exName] = new ZEVariables(
+            exName,
+            fields[3], // unit
+            fields[2]  // comment
+        );
+    }
+
+    // After loop - distinguish EOF from error
+    if (File.fail() && !File.eof()) {
+        cError() << "Unexpected read failure in:" << Full_File_Name;
+    }
+    else {
+        cDebug() << "File read successfully:" << Full_File_Name;
     }
 }
 
@@ -867,18 +891,10 @@ void MilpComponent::redeclareEnvImpactParameters()
         declareIOVariables(); //TODO: filter only for Env Impact IOs?!
         TechnicalCompoModel->declareEnvImpactParameters();
         declareIndicators(); //TODO: filter only for Env Impact indicators?!
-
-        /*
-        * Publish all IO variables. Then, in exportSubmodelIO(..), export only the IO variables that have isUsed == True
-        * Note, the value of isUsed may change later on, e.g., in buildModel()
-        */
-        for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
-        {
-            std::string varName = ivar1D->getName();
-            cDebug() << " - AUTO_PlugSubmodelIO vector : " << objectName() + "." + varName << npdtTot() << TimeSteps().size();
-            mPlugSubmodelIO->publishData(varName, npdtTot(), NAN);
-        }
     }
+
+    //Publish IO variables 
+    initializeSubmodelIO();
 }
 
 int MilpComponent::initSubModelConfiguration(const bool& readParams)
@@ -964,16 +980,16 @@ int MilpComponent::initSubModelConfiguration(const bool& readParams)
         if (ierr < 0) { cCritical() << " Error reading PortImpact of SubModel " << (objectName()); return -1; }
     }
 
-    /*
-    * Publish all IO variables. Then, in exportSubmodelIO(..), export only the IO variables that have isUsed == True
-    * Note, the value of isUsed may change later on, e.g., in buildModel()
-    */
-    for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
-    {        
-        std::string varName = ivar1D->getName() ;
-        cDebug() << " - AUTO_PlugSubmodelIO vector : " <<  objectName() +"."+varName << npdtTot() << TimeSteps().size();
-        mPlugSubmodelIO->publishData(varName, npdtTot(), NAN) ;
-    }
+    //Publish IO variables 
+    initializeSubmodelIO();
+
+    // Read performance-map files, if needed
+    mModelPerfParam = mCompoModel->getInputPerfParam();
+    if (readPerfMapFiles() < 0)
+        return -1;
+
+
+    mCompoModel->computeInitialData();
 
     return 0 ;
 }
@@ -1014,7 +1030,7 @@ int MilpComponent::readPerfMapFiles()
             continue;
 
         if (it->second->IsBlocking()) {
-            cCritical() << "ERROR readVectorParameters: No data found in DataFile "
+            cError() << "ERROR readVectorParameters: No data found in DataFile "
                 << mDataFile << " for variable " << Name() + "." + name;
             missing = true;
         }
@@ -1029,9 +1045,7 @@ int MilpComponent::readPerfMapFiles()
 
 int MilpComponent::initializeModel()
 {
-    mCompoModel->computeInitialData();
-
-    if (createRHVariables() < 0)
+    if (setTimeSeriesValues() < 0)
         return -1;
 
     if (mCompoModel->checkConsistency() < 0) {
@@ -1049,24 +1063,11 @@ int MilpComponent::initializeModel()
 
 int MilpComponent::initSubModelInput()
 {
-    mModelPerfParam = mCompoModel->getInputPerfParam();
-
-    // Read performance-map files, if needed
-    if (readPerfMapFiles() < 0)
-        return -1;
-
     // Initialize model (initial data, RH variables, consistency, ports)
     if (initializeModel() < 0)
         return -1;
 
     return 0;
-}
-
-
-int MilpComponent::createRHVariables()
-{
-    MilpComponent::exportRHVariableInModel();
-    return MilpComponent::createHistFXLists();
 }
 
 // TODO: move initProblem to CairnObject
@@ -1349,21 +1350,49 @@ void MilpComponent::populatePublishedPortVars(t_mapExchange& a_Export, uint modi
     if (modinitTS == 1) mFirstInitTS = 1;
 }
 
+void MilpComponent::initializeSubmodelIO()
+{
+    /*
+     * Publish all IO variables. Then, in exportSubmodelIO(..), export only 
+     * the IO variables that have isUsed == true.
+     * Note: the value of isUsed may change later on, e.g., in buildModel().
+     */
+    for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
+    {
+        const std::string varName = ivar1D->getName();
+
+        cDebug() << " - AUTO_PlugSubmodelIO vector : " << objectName() << "." << varName
+            << " size=" << npdtTot() << " timeSteps=" << TimeSteps().size();
+
+        mPlugSubmodelIO->publishData(varName, npdtTot(), NAN);
+    }
+
+    setDefaultsResults();
+}
+
 void MilpComponent::setDefaultsResults()
 {
-    // Write default value
-    std::vector<ModelParam*> vList;
-    mPlugSubmodelIO->getParameters(vList, EParamType::eVectorEigen);
-    for (auto& vParam : vList) {
-        VectorXf* lptr = std::get< Eigen::VectorXf*>(vParam->getPtr());            
-        if (lptr->size() == 0)
+    /*
+ * Initialize default values for all vector-type IO parameters.
+ * These vectors must have been allocated by the ModelParam constructor.
+ */
+    std::vector<ModelParam*> paramList;
+    mPlugSubmodelIO->getParameters(paramList, EParamType::eVectorEigen);
+
+    for (auto* param : paramList)
+    {
+        auto* vec = std::get<Eigen::VectorXf*>(param->getPtr());
+
+        if (!vec || vec->size() == 0)
         {
-            cCritical () << "MilpComponen::setDefaultsResults " << vParam->getName() << " should have been allocated by component constructor ! "  ;
+            cInfo() << "MilpComponent::initializeSubmodelIO: parameter '"
+                << param->getName()
+                << "' should have been allocated by the component constructor! Skiped!";
+            continue;
         }
-        else
-        {
-            lptr->tail(npdt()).setConstant(0.);
-        }
+
+        // Initialize only the tail (npdt() time steps)
+        vec->tail(npdt()).setConstant(0.f);
     }
 }
 
@@ -1447,11 +1476,11 @@ void MilpComponent::exportSubmodelIO(Solver* aSolver, int aNsol)
                         }
                     }
                     else {
-                        cWarning() << " - Solution1D for " << objectName() << "." << ivar1D->getName() << " of model " << mCompoModelName << " cannot be saved : missing corresponding VectorXf in MilpComponent ! ";
+                        cWarning() << " - Solution1D for " << Name() << "." << ivar1D->getName() << " of model " << mCompoModelName << " cannot be saved : missing corresponding VectorXf in MilpComponent!";
                     }
                 }
                 else {
-                    cWarning() << " - Vector Expression1D " << objectName() << "." << ivar1D->getName() << " of model " << mCompoModelName << " has not been allocated in submodel ! ";
+                    cWarning() << " - Vector Expression1D " << Name() << "." << ivar1D->getName() << " of model " << mCompoModelName << " has not been allocated in submodel!";
                 }
             }
         }
@@ -1580,7 +1609,7 @@ void MilpComponent::jsonSaveGUINodePortsData(ojson &nodePortsArray, const std::s
             nodePortsArray = ojson::array();
         }
         else {
-            cWarning() << "nodePortsArray must be an array; got type=" << nodePortsArray.type_name()
+            cDebug() << "nodePortsArray must be an array; got type=" << nodePortsArray.type_name()
                 << ". Re-initializing to array.";
             nodePortsArray = ojson::array();
         }
@@ -1890,7 +1919,7 @@ const std::vector<double>* MilpComponent::getTimeSeries(const std::string& varNa
     const auto it = m_timeSeries.find(varName);
     if (it == m_timeSeries.end())
     {
-        cWarning() << "Time series not found:" << varName;
+        cWarning() << "Time series " << varName << " of component " << Name() << " not found!";
         return nullptr;
     }
     return it->second.get_Values(npdtPast());

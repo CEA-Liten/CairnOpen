@@ -25,6 +25,7 @@ set(PYTHON_VENVDOC C:/Python/envs/docCairn CACHE STRING "Python virtual environm
 option(WITH_TESTING "Build tests. Default = OFF" ON)
 option(TEST_WITH_CTESTS "Build C unit tests. Default = OFF" ON)
 option(TEST_WITH_GENERICTESTS "Build generic tests. Default = OFF" ON)
+option(WITH_PROFILING "Enable runtime profiling instrumentation" ON)
 option(BUILD_WHEEL "build python wheel of cairn" ON)
 
 # TODO!!

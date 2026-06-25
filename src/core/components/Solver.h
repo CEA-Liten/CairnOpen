@@ -29,7 +29,6 @@ public:
     void SolveProblem(MIPModeler::MIPModel* aModel, const std::string &location, const int cycle=0, const std::map<std::string, bool> paramMap = std::map<std::string, bool>());
     std::string getOptimisationStatus();
     int getNumberOfSolutions();
-    double getSolverRunningTime();
 
     const double* getOptimalSolution(int aNsol, const std::string& varname="");
     bool getIsCheckConflicts();
@@ -110,8 +109,6 @@ private:
     int mTreeMemoryLimit; // MB
 
     int* mTerminateSignal;
-
-    double mSolverRunningTime;
 };
 
 #endif // SOLVERCOMPO_H

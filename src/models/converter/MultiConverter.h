@@ -144,8 +144,8 @@ public:
     void setTimeData();
     int checkConsistency();
 
-    void readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC);
-    void readAndVerifyVectorB(const std::string& filename, std::vector<double>& aVector, const bool& isVectorD);
+    int readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC);
+    int readAndVerifyVectorB(const std::string& filename, std::vector<double>& aVector, const bool& isVectorD);
     void readUpperBounds();
 
     Eigen::MatrixXd convertToEigen(const std::vector<std::vector<double>>& matrix) {

@@ -43,9 +43,6 @@ CairnCore::CairnCore(
     mIter(-1),
     mOptimLogFile("")
 {    
-    // [PROFILING] Stamp program start as early as possible
-    CAIRN_PROFILE_PROGRAM_START();
-
     GS::IDCount=0 ;
     GS::iVerbose=0;
 
@@ -74,9 +71,6 @@ CairnCore::CairnCore(
     mIter(-1),
     mOptimLogFile("")
 {
-    // [PROFILING] Stamp program start as early as possible
-    CAIRN_PROFILE_PROGRAM_START();
-
     GS::IDCount=0 ;
     GS::iVerbose=0;
 
@@ -149,6 +143,9 @@ void CairnCore::setTypicalPeriodsFile(const std::string& aTypicalPeriodsFile) {
 
 void CairnCore::doInit(bool aLoad)
 {
+    // [PROFILING] Stamp program start as early as possible
+    CAIRN_PROFILE_PROGRAM_START();
+
     // --- [PROFILING] Measure the entire init phase ------------------
     // iterationId = -1 -> "not part of a rolling-horizon cycle"
     CAIRN_PROFILE_SCOPE("doInit", -1);
@@ -188,8 +185,6 @@ void CairnCore::doInit(bool aLoad)
 
     // ensure reset in case of several doInit from GUI
     mMilpData->setStartingAbsoluteTimeStep(0);
-
-    mProblem->setDefaultsResults();
 
     //cInfo() << "  ";
     //cInfo() << "----- Successful DoInit step -----";
@@ -277,7 +272,7 @@ int CairnCore::exportTS(const std::string& aTSfile,
 
     std::fstream out;
     if (!CairnUtils::openFileForWriting(out, aTSfile, mode)) {
-        cWarning() << "OptimProblem: couldn't open result file for writing: " << aTSfile;
+        cError() << "OptimProblem: couldn't open result file for writing: " << aTSfile;
         return 1;
     }
 
@@ -343,7 +338,7 @@ int CairnCore::exportTS(const std::string& aTSfile,
 
     std::fstream out;
     if (!CairnUtils::openFileForWriting(out, aTSfile, mode)) {
-        cWarning() << "OptimProblem: Couldn't open result file for writing: " << aTSfile;
+        cError() << "OptimProblem: Couldn't open result file for writing: " << aTSfile;
         return 1;
     }
 
@@ -508,8 +503,6 @@ int CairnCore::doStep(const std::string& encoding, const std::map<std::string, b
 
     cInfo() << "Total number of solutions: " << nbSol;
 
-    mSolverRunningTimeAllCycles.push_back(mProblem->getSolverRunningTime());
-
     // Stop here in case of check-conflicts only; don't export results
     if (mProblem->getIsCheckConflicts()) {
         return istat;
@@ -606,34 +599,6 @@ void CairnCore::processSolutions(int nbSol, const std::string& status, bool isRo
         if (isExportResults) {
             istat = exportResults(i, isRollingHorizon, istat);
         }
-    }
-}
-
-void CairnCore::exportTotalTimeResolutionAllCycles(const std::string& fileName, const std::string& encoding)
-{
-    std::fstream out; 
-    if (!CairnUtils::openFileForWriting(out, fileName, std::ios::out | std::ios::binary)) { 
-        throw Cairn_Exception("CairnCore: Couldn't open file for writing: " + fileName, -1); 
-    }
-
-    // UTF‑8 BOM for Excel
-    if (encoding == "UTF-8") {
-        writeUTF8BOM(out);
-    }
-
-    // Header
-    out << ";Solver Running Time;Cumulative Time\n";
-
-    double cumulative = 0.0;
-
-    for (size_t i = 0; i < mSolverRunningTimeAllCycles.size(); ++i) {
-        const double current = mSolverRunningTimeAllCycles[i];
-        cumulative += current;
-
-        out << "Cycle " << (i + 1)
-            << ";" << current
-            << ";" << cumulative
-            << "\n";
     }
 }
 
@@ -748,12 +713,6 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
                 mIter + 1
             );
         }
-
-        // Solver running time export
-        exportTotalTimeResolutionAllCycles(
-            mStudy.getScenarioFile("_solverRunningTime.csv", aNsol, false),
-            encoding
-        );
     }
     catch (...) {
         throw Cairn_Exception("export analysis failed!!", -1);
@@ -797,7 +756,7 @@ int CairnCore::doTerminate()
     {
         std::string outDir = mStudy.resultsDir();
         if (outDir.empty()) outDir = ".";
-        CAIRN_PROFILE_FLUSH(outDir);
+        CAIRN_PROFILE_FLUSH(outDir, mStudy.StudyName());
     }
 
     return 0 ;

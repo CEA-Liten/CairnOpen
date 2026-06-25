@@ -20,7 +20,7 @@ ModelParam::ModelParam(const std::string& a_Name, t_flag a_IsBlocking, t_flag a_
         m_ShowConfig = "Base";
 
     if (IsBlocking() && !IsUsed()) {
-        cWarning() << "Parameter " + a_Name + " is mandatory but marked as not used! It would be good to review the flags of this parameter!";
+        cInfo() << "Parameter " + a_Name + " is mandatory but marked as not used! It would be good to review the flags of this parameter!";
     }
 }
 

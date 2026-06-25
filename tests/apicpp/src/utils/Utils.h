@@ -7,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
-#include <cstdio>
+#include<cstdio>
 #include <map>
 #include <iomanip>
 #include <cstring>

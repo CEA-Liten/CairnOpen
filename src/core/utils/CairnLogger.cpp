@@ -179,6 +179,10 @@ namespace CairnLogger {
             fileSrv_sink->set_pattern("[%c %l] %v");
             sinks.push_back(fileSrv_sink);
         }
+
+        // Add error collector sink
+        sinks.push_back(ErrorSink::instance());
+
         return sinks;
     }
 

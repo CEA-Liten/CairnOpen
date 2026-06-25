@@ -620,8 +620,9 @@ def sankey_xml_from_json(json_file: str, output: str, overwrite: bool = False, a
     # All Energy Vectors
     eVectors = dict()
     eConvert = dict()
+    EnergyVectorTypes = [ "EnergyVector", "MaterialCarrier", "ElectricalCarrier" ]
     for i in parser["Components"]:
-        if i["componentPERSEEType"] == "EnergyVector":
+        if i["componentPERSEEType"] in EnergyVectorTypes or i["componentType"] in EnergyVectorTypes:
             name = (i["nodeName"])
             massUnit = ""
             powerUnit = ""
@@ -659,9 +660,9 @@ def sankey_xml_from_json(json_file: str, output: str, overwrite: bool = False, a
     bus_types = ["BusFlowBalance", "BusSameValue"]
     other_types = ["Converter", "SourceLoad", "Grid", "Source","Storage"]
     for i in parser["Components"]:
-        if i["componentPERSEEType"] in bus_types:
+        if i["componentPERSEEType"] in bus_types or i["componentType"] in bus_types:
             eBus[i["nodeName"]] = i["componentCarrier"]
-        if i["componentPERSEEType"] in other_types:
+        if i["componentPERSEEType"] in other_types or i["componentType"] in other_types:
             es.append(i)
 
     fluxes = {}
@@ -690,7 +691,9 @@ def sankey_xml_from_json(json_file: str, output: str, overwrite: bool = False, a
                 if p.get('coeff'):
                     entry['factor'] = float(p.get('coeff'))
 
-                if ("Storage" in ( e["componentPERSEEType"]) and p.get('variable') == "Flow"):
+                type1 = e.get("componentPERSEEType")
+                type2 = e.get("componentType")
+                if (type1 == "Storage" or type2 == "Storage") and p.get("variable") == "Flow":
                     entry["variable"] = name + '.ChargeFlow'
                     d['conso'].append(entry)
                     entry2 = entry.copy()
