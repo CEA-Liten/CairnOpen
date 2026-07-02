@@ -158,7 +158,12 @@ jobs:
           #  platform: linux_x86_64
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Update submodules
+        run: git submodule update --init --recursive --remote
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
