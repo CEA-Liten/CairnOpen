@@ -2020,7 +2020,7 @@ void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, c
                     header1 += ";" + impact + ";" + impact + ";" + impact;
                     header2 += ";Cumulative impact mass"
                         ";Env impact mass"
-                        ";EnvGrey impact mass";
+                        ";Embodied impact mass";
                     headerUnits += ";" + unit + ";" + unit + ";" + unit;
                 }
 

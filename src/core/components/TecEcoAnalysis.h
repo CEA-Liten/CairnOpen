@@ -95,7 +95,7 @@ public:
             const auto& impact = mSelectedEnvImpacts[i];
             const auto unit = EnvImpactUnit(impact);
             addIO("Total Undiscounted " + impact + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env impact  mass" */
-            addIO("Total Undiscounted " + impact + " Grey EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env grey impact mass" */
+            addIO("Total Undiscounted " + impact + " Embodied EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env grey impact mass" */
         }
     }
 
@@ -143,7 +143,7 @@ public:
 
         mVDEnvImpactsTotalCostDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsTotalMassDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
-        mVDEnvGreyImpactsMassContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEmbodiedMassContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsCostContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsMassContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsCostContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
@@ -157,7 +157,7 @@ public:
 
         for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
             const std::string& impact = mSelectedEnvImpacts[i];
-            mInputIndicators->addIndicator( "Total Project Embodied env impact of " + impact, &mVDEnvGreyImpactsMassContribution[i], &mExportIndicators, "Total Project Embodied env impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "GreyEnvImpactMass");
+            mInputIndicators->addIndicator( "Total Project Embodied env impact of " + impact, &mVDEmbodiedMassContribution[i], &mExportIndicators, "Total Project Embodied env impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "GreyEnvImpactMass");
         }
 
         for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
@@ -363,8 +363,8 @@ private :
 
     // ----------- Env Impacts ------------- 
     // grey
-    std::vector<std::vector<double>> mVDEnvGreyImpactsCostContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
-    std::vector<std::vector<double>> mVDEnvGreyImpactsMassContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEmbodiedCostContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEmbodiedMassContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
 
     // undiscounted
     std::vector<std::vector<double>> mVDEnvImpactsCostContribution; /** Resulting cost of all the Direct environmental impacts the user wants to consider*/

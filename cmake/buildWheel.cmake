@@ -7,13 +7,16 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)
   
     string(JOIN , PROJECT_OPTIONS                       
             "'-DPRESETNAME:STRING=${PRESETNAME}'"
-            "'-DWITH_PRIVATEMODELS:BOOL=${WITH_PRIVATEMODELS}'"
-            "'-DCPLEX_ROOT:STRING=${CPLEX_ROOT}'"
+            "'-DWITH_PRIVATEMODELS:BOOL=${WITH_PRIVATEMODELS}'"        
             "'-DPYTHON_HOME:STRING=${PYTHON_HOME}'"
             "'-DPYTHON_VENV:STRING=${PYTHON_VENV}'"
             "'-Dpybind11_DIR:STRING=${pybind11_DIR}'"
             "'-DPYTHON_PACKAGES:STRING=${PYTHON_PACKAGES}'")  
-        
+   
+    if (DEFINED CPLEX_ROOT)
+        string(JOIN , PROJECT_OPTIONS ${PROJECT_OPTIONS}                              
+            "'-DCPLEX_ROOT:STRING=${CPLEX_ROOT}'")        
+    endif()
     if (DEFINED DEPS_ROOT)
         string(JOIN , PROJECT_OPTIONS ${PROJECT_OPTIONS}
             "'-DDEPS_INSTALL:BOOL=ON'"
@@ -46,6 +49,11 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)
 
     file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/_skbuild/)
     message("-- Build Wheel in ${CMAKE_HOME_DIRECTORY}/${CMAKE_INSTALL_BINDIR}")           
+    set(COMPONENT buildWheel)
+    
+    python_venv2(${PYTHON_VENV} ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)
+    
+    message(STATUS "Python: ${Python_EXECUTABLE}")
     install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} -m pip wheel ${CMAKE_HOME_DIRECTORY} -w ${CMAKE_HOME_DIRECTORY}/${CMAKE_INSTALL_BINDIR})")
 
     if (INSTALL_WHEEL)

@@ -213,7 +213,7 @@ double MaterialCarrier::MolarMass() const
 
 	// A general material carrier may have time-dependent molar mass : technoType == "Material"
 	throw Cairn_Exception(
-		Name() + ": MolarMass() without time index is invalid for a MaterialCarrier." 
+		Name() + ": MolarMass() without time index is invalid for a MaterialCarrier. " 
 		"Use MolarMass(t) instead because the value might be time-dependent.",
 		-1
 	);

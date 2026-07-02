@@ -14,7 +14,7 @@ mFixedOpexContribution(2, 0.),
 mVariableOpexContribution(2, 0.),
 mReplacementPart(2, 0.),
 mEnvImpactPart(2, 0.),
-mEnvGreyImpactCost(2, 0.),
+mEmbodiedCost(2, 0.),
 mSumUp(2, 0.),
 mRunningTime(2, 0.),
 mMaxRunningTime(2, 0.),
@@ -412,11 +412,11 @@ void TechnicalSubModel::computeEconomicalContribution()
 
         // Fixed Opex
         mExpFixedOpex[t] += dt * (mCapex * mFixedOpex * mExpSizeMax +
-            mFixedOpexConstant * mExpInstalled) / HOURS_PER_YEAR; 
+            mFixedOpexOffset * mExpInstalled) / HOURS_PER_YEAR; 
 
         // Replacement
         mExpReplacement[t] += dt * (mCapex * mReplacement * mExpSizeMax +
-            mReplacementConstant * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
+            mReplacementOffset * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
     }
 
     // -----------------------------------------
@@ -487,7 +487,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     mVariableCosts.at(0) = 0.;
     mReplacementPart.at(0) = 0.;
     mEnvImpactPart.at(0) = 0.;
-    mEnvGreyImpactCost.at(0) = 0.;
+    mEmbodiedCost.at(0) = 0.;
 
     mOptimalSize.at(0) = mExpSizeMax.evaluate(optSol);
     double sauv = mOptimalSize.at(1);
@@ -533,7 +533,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
             computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassPLAN());
             computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassHIST());
             //Grey impact
-            impact->evaluateEnvGreyImpact(optSol);
+            impact->evaluateEmbodiedImpact(optSol);
             computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvReplacement(), optSol, 1., 0., *impact->getEnvImpactReplacementPLAN());
             computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvReplacement(), optSol, 1., 0., *impact->getEnvImpactReplacementHIST());
         }

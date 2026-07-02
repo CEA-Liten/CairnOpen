@@ -85,13 +85,7 @@ if (WITH_PYBIND)
     message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}") 		
 	set(Python_EXECUTABLE ${Python_EXECUTABLE} PARENT_SCOPE)
 
-	# virtual environment with pybind11		
-	python_venv3(${PYTHON_VENV} ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/reqs_Build.txt)		
-		
-	#set(PYBIND11_FINDPYTHON ${Python_FOUND})
-	message(STATUS "pybind11_DIR: ${pybind11_DIR}") 
-	find_package(pybind11 CONFIG REQUIRED)
-	
+	find_package(pybind11 CONFIG REQUIRED)	
 	create_component(${COMPONENT})
 
 	target_compile_definitions(${COMPONENT} PRIVATE -DUNICODE)
@@ -143,7 +137,9 @@ if (WITH_PYBIND)
 	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::ModelerInterface)
 	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPSolver)
 	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPHiGHSSolver)
-	install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPCpxSolver)
+	if (DEFINED CPLEX_ROOT)
+		install(IMPORTED_RUNTIME_ARTIFACTS mipmodeler::MIPCpxSolver)
+	endif()
 
 	install(IMPORTED_RUNTIME_ARTIFACTS cairn::CairnCore)
 	
@@ -212,20 +208,36 @@ endif()
 
 if(WITH_TESTING)	
 	include(CTestTools)
-	
-	find_package(Python REQUIRED COMPONENTS Interpreter Development)		
-	python_venv3(${PYTHON_VENV_PROJECT} ${Python_EXECUTABLE} ${CAIRNTESTS_HOME}/scripts/reqs_tests.txt)		
-
 	set(CAIRN_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts)
+	# Install Python environement for tests (useful to compare tests results)
+	find_package(Python REQUIRED COMPONENTS Interpreter Development)		
+	python_venv2(${PYTHON_VENV_PROJECT} ${Python_EXECUTABLE} ${CAIRNTESTS_HOME}/scripts/reqs_tests.txt)	
 
+	# CTests : API Python
+	if (INSTALL_WHEEL)
+		#add_test (NAME cairn.python.python-tests
+		#	COMMAND ${Python_EXECUTABLE} -m pytest ${CAIRNTESTS_HOME}/apipython
+		#	WORKING_DIRECTORY ${CAIRN_SCRIPTS}
+		#)
+		#list(APPEND CMAKE_MODULE_PATH ${PYTHON_VENV_PROJECT}/share/Pytest/cmake) 	
+		#set(Pytest_ROOT ${Python_BIN})
+		#find_package(Pytest)	
+		#if (${Pytest_FOUND})
+		#	pytest_discover_tests( python			
+		#		WORKING_DIRECTORY ${CAIRNTESTS_HOME}/apipython
+		#		PYTHON_PATH_PREPEND ${CAIRN_SCRIPTS}		
+		#		INCLUDE_FILE_PATH
+		#	)
+		#endif()
+	endif()
+	
+	# CTests : API C
 	if (NOT WITH_PRIVATEMODELS)
 		set(${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/ChangeModelClassTest.cpp)
 	endif()
 	if (NOT TEST_WITH_COVERAGE)
 		list(APPEND ${COMPONENT}_EXCLUDE_TESTS ../../tests/apicpp/src/GenericTests.cpp)
 	endif()
-
-	# CTests : API C
 	if (TEST_WITH_CTESTS)
 		add_tests(${CAIRNTESTS_HOME}/apicpp/src 
 			DATA ${CAIRNTESTS_HOME}/apicpp/data 

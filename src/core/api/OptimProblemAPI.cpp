@@ -850,8 +850,8 @@ void CairnAPI::OptimProblemAPI::remove_Bus(BusAPI& a_Bus)
 		// Suppression des liens
 		BusCompo* vBus = a_Bus.get_BusCompo();
 		if (vBus) {			
-			for (auto& vPort : vBus->PortList()) {
-				vPort->setLinkedBus(nullptr);
+			for (auto& vPort : vBus->LinkedPorts()) {
+				vPort->unlinkBus();
 			}
 		}		
 		// Suppression du composant		

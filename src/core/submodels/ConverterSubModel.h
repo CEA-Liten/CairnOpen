@@ -126,10 +126,15 @@ public:
     void computeDefaultIndicators(const double* optSol);
 
     //used in MultiConverter and Cogeneration
-    void cleanFluxIOs(std::string name); 
+    void cleanFluxIOs(const std::string& base);
     virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr);
     virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr);
     
+    inline std::string fluxName(const std::string& base, int index) const
+    {
+        return base + std::to_string(index + 1);
+    }
+
     inline double EfficiencyAgeing() const {
         if (mAgeingModel && mUseAgeing) {
             const double efficiencyAgeing = mAgeingModel->EfficiencyAgeing();

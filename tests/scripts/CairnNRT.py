@@ -176,7 +176,7 @@ class CairnNRT(defNRT.defNRT):
         #force dtype of Case column to string in order to avoid type difference
         tab_res["Case"] = tab_res["Case"].astype(str)
         tab_ref["Case"] = tab_ref["Case"].astype(str)
-        diff = (tab_res.round(decimals=3).reindex(sorted(tab_res.columns), axis=1)).compare(tab_ref.round(decimals=3).reindex(sorted(tab_ref.columns), axis=1))
+        diff = (tab_res.round(decimals=3).sort_values('Case', ignore_index=True).reindex(sorted(tab_res.columns), axis=1)).compare(tab_ref.round(decimals=3).sort_values('Case', ignore_index=True).reindex(sorted(tab_ref.columns), axis=1))
         self.output("\n Sampling test \n ================ \n")
         if len(diff)==0:
             self.output("Results are identical\n")

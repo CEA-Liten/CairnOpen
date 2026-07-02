@@ -238,7 +238,7 @@
 						"value": false
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -867,7 +867,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					}
 				],

@@ -73,8 +73,8 @@ int main()
 		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
-	TESTAPI2("Verify the value of ELY_PEM.GWP#EnvGreyContentCoefficient_A.",
-		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A"), 100.0, eDouble)
+	TESTAPI2("Verify the value of ELY_PEM.GWP#EmbodiedCoefficient_A.",
+		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Climate change#Global Warming Potential 100 EmbodiedCoefficient_A"), 100.0, eDouble)
 	)
 
 	TESTAPI2("Verify the value of ELY_PEM.ModelClass.",

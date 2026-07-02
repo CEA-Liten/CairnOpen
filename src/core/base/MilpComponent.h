@@ -64,14 +64,14 @@ public:
     void createZEUserVariablesList(const std::string& Full_File_Name, t_mapExchange& a_Exchange);  
 
     //Subscribed variables : hist persistent timeseries
-    void exportRHVariableInModel(); /** function to export the list of the data saved for rolling horizon into models */
+    virtual void exportRHVariableInModel(); /** function to export the list of the data saved for rolling horizon into models */
     virtual int  setTimeSeriesValues();
 
     virtual void prepareOptim();                                                                /** pre-treatment of PEGASE exchange Zone */
     void populatePublishedVars(t_mapExchange& a_Export);                                                             /** export results to PEGASE exchange Zone */
     void populatePublishedPortVars(t_mapExchange& a_Export, uint modinitTS);
     void initializeSubmodelIO();                                                        /** define default values in case optimization fails */
-    void setDefaultsResults();
+    virtual void setDefaultsResults();
 
     // Utility functions for PEGASE IO management
     virtual bool findFirstCoeff(std::string aVarName, t_mapExchange aList , float &coeff, float &offset) ;
@@ -242,7 +242,11 @@ std::string getUniquePortID();
 
     inline t_list getPossibleControlValues() const { return { "", "RollingHorizon", "MPC" }; }
 
+    bool& BeingInitialized() { return mBeingInitialized; }
+
 protected:
+    bool mBeingInitialized = false;
+
     Cairn_Exception mException;
     MIPModeler::MIPModel* mModel;     /** Pointer to global Optimization Problem Model */
     GUIData* mGUIData{ nullptr };      /** Pointer to GUI Data */

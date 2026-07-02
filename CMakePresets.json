@@ -59,7 +59,7 @@
                     "rsyncCommandArgs": [ "-t", "--delete" ],
                     "copySourcesOptions": {
                         "method": "rsync",
-                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h" ]
+                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "lib/PegaseInstall", "lib/ModuleCairn", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h", "tests/privateTests/Tests_Base_National", "tests/privateTests/pegase", "tests/toolbox", "lib/MIPModeler/core/MIPModelerVersion.h", "src/core/CairnDefine.h", "src/core/CairnVersion.h" ]
                     },
                     "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
                 }
@@ -71,7 +71,7 @@
             "displayName": "Linux Debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "TEST_WITH_COVERAGE": "ON"
+                "TEST_WITH_COVERAGE": "OFF"
             }
         },
         {

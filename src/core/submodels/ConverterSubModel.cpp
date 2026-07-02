@@ -171,108 +171,134 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
     } 
 }
 
-void ConverterSubModel::cleanFluxIOs(std::string name) 
+void ConverterSubModel::cleanFluxIOs(const std::string& base)
 {
-    if (name != "INPUTFlux" && name != "OUTPUTFlux")
+    if (base != "INPUTFlux" && base != "OUTPUTFlux")
         return;
-    for (auto& [key, vIO] : mIOExpressions) {
-        if (CairnUtils::contains( key, name) && key != name + "1")
-        {
-            bool vOK = false;
-            for (int i = 1; i < mNbInputFlux; i++)
-            {
-                if (key == name + std::to_string(i + 1)) {
-                    vOK = true;
-                    break;
-                }
-            }
-            if (!vOK) {//=> key == name + "j", where j > mNbInputFlux/mNbOutputFlux
-                for(MilpPort * lptrport: mListPort)
-                {
-                    if (lptrport->Variable() == key) {
-                        std::string paramName;
-                        std::string paramValue;
-                        if (name == "INPUTFlux") {
-                            paramName = "NbInputFlux";
-                            paramValue = std::to_string(mNbInputFlux);
-                        }
-                        else {
-                            paramName = "NbOutputFlux";
-                            paramValue = std::to_string(mNbOutputFlux);
-                        }
-                        Cairn_Exception error("ERROR at " + Name()  + ": " + paramName + " cannot be set to " + paramValue + " because " + key + " is used at port " + lptrport->ID() + "(" + lptrport->Name()+")", -1);
-                        throw error;
-                    }
-                }
-                //delete
-                removeIO(key);
+
+    const int maxCount = (base == "INPUTFlux" ? mNbInputFlux : mNbOutputFlux);
+
+    for (auto it = mIOExpressions.begin(); it != mIOExpressions.end(); )
+    {
+        const std::string& key = it->first;
+
+        // Skip non-matching keys and skip base + "1"
+        if (!CairnUtils::contains(key, base) || key == fluxName(base, 0)) {
+            ++it;
+            continue;
+        }
+
+        // Check if key is valid (base + index)
+        bool valid = false;
+        for (int i = 0; i < maxCount; ++i) {
+            if (key == fluxName(base, i)) {
+                valid = true;
+                break;
             }
         }
+
+        if (valid) {
+            ++it;
+            continue;
+        }
+
+        // Invalid key: base + j where j > maxCount
+        // Check if a port still uses this variable
+        for (MilpPort* port : mListPort)
+        {
+            if (port && port->Variable() == key)
+            {
+                const std::string paramName = (base == "INPUTFlux" ? "NbInputFlux" : "NbOutputFlux");
+                const std::string paramValue = std::to_string(maxCount);
+
+                throw Cairn_Exception("ERROR at " + Name() + ": " + paramName + " cannot be set to " +
+                    paramValue + " because " + key + " is used at port " + port->ID() + "(" + port->Name() + ")", -1);
+            }
+        }
+
+        // Remove IO
+        it = removeIO(it);   // deletes + erases + returns next iterator
     }
 }
 
 void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
 {
-    if (defaultPort == nullptr)
+    if (!defaultPort)
         defaultPort = getPort("PortINPUTFlux1");
 
-    //Delete IOs with index > mNbInputFlux !!
-    ConverterSubModel::cleanFluxIOs("INPUTFlux");
+    cleanFluxIOs("INPUTFlux"); 
 
-    //Add INPUTFlux IOs
     mExpInput.resize(mNbInputFlux);
-    for (int i = 1; i < mNbInputFlux; i++)
+
+    for (int i = 0; i < mNbInputFlux; ++i)
     {
-        if (getIOExpression("INPUTFlux" + std::to_string(i + 1)) == nullptr) {
-            bool found = false;
-            //Look if there is a port whose Variable = "INPUTFlux" + std::to_string(i + 1)
-            for(MilpPort * lptrport: mListPort)//InnerLoop
-            {
-                if (lptrport->Variable() == "INPUTFlux" + std::to_string(i + 1))
-                {
-                    addIO("INPUTFlux" + std::to_string(i + 1), &mExpInput[i], true, lptrport->pFluxUnit()); /** Computed input flow at port N_i */
-                    found = true;
-                    break; //InnerLoop
-                }
+        const std::string name = fluxName("INPUTFlux", i);
+
+        if (getIOExpression(name) != nullptr)
+            continue;
+
+        MilpPort* matchedPort = nullptr;
+
+        for (MilpPort* port : mListPort)
+        {
+            if (port && port->Variable() == name) {
+                matchedPort = port;
+                break;
             }
-            if (!found) {//Use default port mPortINPUTFlux1. Don't use a dynamic unit!
-                std::string unit = "FluxUnit";
-                if (defaultPort) unit = defaultPort->getCarrier()->FluxUnit();
-                addIO("INPUTFlux" + std::to_string(i + 1), &mExpInput[i], true, unit); /** Computed input flow at port N_i */
-            }
+        }
+
+        if (matchedPort) {
+            // Use the port's unit (dynamic)
+            addIO(name, &mExpInput[i], true, matchedPort->pFluxUnit());
+        }
+        else {
+            // Use OUTPUTFlux1's port unit
+            std::string unit = "FluxUnit";
+            if (defaultPort)
+                unit = defaultPort->FluxUnit();
+
+            addIO(name, &mExpInput[i], true, unit);
         }
     }
 }
 
-void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort) 
+void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
 {
-    if (defaultPort == nullptr)
+    if (!defaultPort)
         defaultPort = getPort("PortOUTPUTFlux1");
 
-    //Delete IOs with index > mNbOutputFlux !!
-    ConverterSubModel::cleanFluxIOs("OUTPUTFlux");
+    cleanFluxIOs("OUTPUTFlux");
 
-    //Add OUTPUTFlux IOs
     mExpOutput.resize(mNbOutputFlux);
-    for (int i = 1; i < mNbOutputFlux; i++)
+
+    for (int i = 0; i < mNbOutputFlux; ++i)
     {
-        if (getIOExpression("OUTPUTFlux" + std::to_string(i + 1)) == nullptr) {
-            bool found = false;
-            //Look if there is a port whose Variable = "OUTPUTFlux" + std::to_string(i + 1)
-            for(MilpPort * lptrport: mListPort)//InnerLoop
-            {
-                if (lptrport->Variable() == "OUTPUTFlux" + std::to_string(i + 1))
-                {
-                    addIO("OUTPUTFlux" + std::to_string(i + 1), &mExpOutput[i], true, lptrport->pFluxUnit()); /** Computed output flow at port N_i */
-                    found = true;
-                    break; //InnerLoop
-                }
+        const std::string name = fluxName("OUTPUTFlux", i);
+
+        if (getIOExpression(name) != nullptr)
+            continue;
+
+        MilpPort* matchedPort = nullptr;
+
+        for (MilpPort* port : mListPort)
+        {
+            if (port && port->Variable() == name) {
+                matchedPort = port;
+                break;
             }
-            if (!found) {//Use default port PortOUTPUTFlux1 ! Don't use a dynamic unit!
-                std::string unit = "FluxUnit";
-                if (defaultPort) unit = defaultPort->getCarrier()->FluxUnit();
-                addIO("OUTPUTFlux" + std::to_string(i + 1), &mExpOutput[i], true, unit); /** Computed output flow at port N_i */
-            }
+        }
+
+        if (matchedPort) {
+            // Use the port's unit (dynamic)
+            addIO(name, &mExpOutput[i], true, matchedPort->pFluxUnit());
+        }
+        else {
+            // Use OUTPUTFlux1's port unit
+            std::string unit = "FluxUnit";
+            if (defaultPort && defaultPort->getCarrier())
+                unit = defaultPort->getCarrier()->FluxUnit();
+
+            addIO(name, &mExpOutput[i], true, unit);
         }
     }
 }

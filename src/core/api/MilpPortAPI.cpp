@@ -144,15 +144,21 @@ std::shared_ptr < CairnAPI::EnergyVectorAPI> CairnAPI::MilpPortAPI::get_EnergyCa
 	return vEnergyCarrier;
 }
 
-bool CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& a_EnergyVector)
+bool CairnAPI::MilpPortAPI::set_EnergyCarrier(const EnergyVectorAPI& newCarrier)
 {
-	bool configured = false;
-	MilpPort* pPort = get_MilpPort();
-	if (pPort) {
-		pPort->setCarrier(a_EnergyVector.get_EnergyVector());
-		configured = configureParentComponent();
-	}
-	return configured; // Might be confusing because the return value might be false even if the carrier is correctly set!
+	MilpPort* port = get_MilpPort();
+	if (!port)
+		return false;
+
+	const EnergyVector* oldCarrier = port->getCarrier();
+	EnergyVector* newCarrierPtr = newCarrier.get_EnergyVector();
+
+	// Set the carrier
+	port->setCarrier(newCarrierPtr);
+
+	// Reconfigure only if the carrier actually changed
+	const bool carrierChanged = (oldCarrier != newCarrierPtr);
+	return carrierChanged ? configureParentComponent() : false; //might be false even if the carrier is correctly set!
 }
 
 bool CairnAPI::MilpPortAPI::configureParentComponent() {
@@ -167,20 +173,16 @@ bool CairnAPI::MilpPortAPI::configureParentComponent() {
 
 	const bool allCarriersReady = comp->allDefaultPortsHaveCarriers();
 	const bool hasModel = comp->compoModel() != nullptr;
-	const bool firstInit = hasModel &&
-		comp->compoModel()->getInputParam()->getMapParams().empty(); // TODO: replace with robust flag
-	const bool noMainCarrier = comp->getMainCarrier() == nullptr;
 
-	if (allCarriersReady && hasModel && firstInit && noMainCarrier)
+	if (allCarriersReady && hasModel)
 	{
 		/*
 		 * Declare parameters and IOs only after EnergyVectors of all default ports are set.
-		 * Should be called only once (first EnergyVector set).
-		 * Should not be called if the EnergyVector is changed later on.
-		 * Otherwise, parameter values should be saved.
+		 * If an EnergyVector is changed later on => re-initialize  to update unit pointers.
 		 */
 		try {
-			comp->initSubModelConfiguration(false);
+			std::shared_ptr <CairnAPI::MilpComponentAPI> compoAPI = std::make_shared<CairnAPI::MilpComponentAPI>(comp);
+			compoAPI->reconfigureModel();
 		}
 		catch (...) {
 			return false;

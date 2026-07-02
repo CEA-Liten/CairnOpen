@@ -450,55 +450,55 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Ionising radiation human health#Human exposure efficiency relative to U EnvGreyContentCoefficient_A",
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyReplacementConstant",
+						"key": "Water use#User Deprivation Potential EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyReplacement",
+						"key": "Water use#User Deprivation Potential EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential PiecewiseEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyContentOffset_B",
+						"key": "Water use#User Deprivation Potential EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyContentCoefficient_A",
+						"key": "Water use#User Deprivation Potential EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					}
 				],
@@ -634,11 +634,11 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -741,55 +741,55 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyContentCoefficient_A",
+						"key": "Water use#User Deprivation Potential EmbodiedCoefficient_A",
 						"value": 10
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 100
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 250
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyReplacementConstant",
+						"key": "Water use#User Deprivation Potential EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyReplacement",
+						"key": "Water use#User Deprivation Potential EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential PiecewiseEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyContentOffset_B",
+						"key": "Water use#User Deprivation Potential EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Ionising radiation human health#Human exposure efficiency relative to U EnvGreyContentCoefficient_A",
+						"key": "Ionising radiation human health#Human exposure efficiency relative to U EmbodiedCoefficient_A",
 						"value": 0
 					}
 				],

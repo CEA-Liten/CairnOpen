@@ -364,8 +364,27 @@ public:
 	};
 
 	// --------------------------------------------------------------------------------	
+
 	class DECLSPEC MilpComponentAPI : public ObjectAPI {
 	public:
+
+		struct ComponentState {
+			std::map<std::string, t_dict> portSettings;
+			std::map<std::string, CairnAPI::EnergyVectorAPI> portCarriers;
+			t_dict links;
+
+			t_dict paramValues;
+			t_dictComment paramComments;
+			t_dict labelValues;
+		};
+
+		struct ReentranceGuard
+		{
+			explicit ReentranceGuard(bool& flag) : m_flag(flag) { m_flag = true; }
+			~ReentranceGuard() { m_flag = false; } // always resets - even on exception
+			bool& m_flag;
+		};
+
 		MilpComponentAPI(class MilpComponent* ap_Component=nullptr);
 		MilpComponentAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, const std::string& a_ModelName);
 
@@ -399,6 +418,9 @@ public:
 		void set_TimeSeriesVector(const std::string& a_TimeSeriesName, const std::vector<double> a_TimeSeriesValue);
 
 		void modify_ModelClass(const std::string& a_prevModelClass, const std::string& a_newModelClass);
+
+		void rebuildModel();
+		void reconfigureModel();
 
 		t_list get_ShowConfigList() override;
 
@@ -444,7 +466,11 @@ public:
 		t_value get_OptimalSizeExpression();
 
 	private:
-		void checkDefaultPortCarriers() const;		
+		void checkDefaultPortCarriers() const;	
+
+		ComponentState saveComponentState();
+		void rebuildComponentModel(const std::map<std::string, CairnAPI::EnergyVectorAPI>& portCarriers);
+		void restoreComponentState(const ComponentState& st);
 	};
 
 	// --------------------------------------------------------------------------------	

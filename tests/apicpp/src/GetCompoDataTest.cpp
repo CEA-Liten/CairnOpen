@@ -78,8 +78,8 @@ int main()
 
 	vIndicators = vELY_PEM.get_IndicatorNames();
 	TESTAPI2("Check that Installed Optimal Size is in list of indicators", TestUtils::contains(vIndicators, "Installed Optimal Size"))
-	TESTAPI2("Check that GWP Env impact mass is in list of indicators", TestUtils::contains(vIndicators, "Climate change#Global Warming Potential 100 Env impact mass"))
-	TESTAPI2("Check that AP Env impact mass is in list of indicators", TestUtils::contains(vIndicators, "Acidification#Accumulated Exceedance Env impact mass"))
+	TESTAPI2("Check that GWP Operational impact mass is in list of indicators", TestUtils::contains(vIndicators, "Climate change#Global Warming Potential 100 Operational impact mass"))
+	TESTAPI2("Check that AP Operational impact mass is in list of indicators", TestUtils::contains(vIndicators, "Acidification#Accumulated Exceedance Operational impact mass"))
 
 	// Unselect EnvImpacts AP
 	TESTAPI("Unselect EnvImpacts AP",
@@ -98,8 +98,8 @@ int main()
 	)
 
 	vIndicators = vELY_PEM.get_IndicatorNames();
-	TESTAPI2("Check that GWP Env impact mass is in list of indicators", TestUtils::contains(vIndicators, "Climate change#Global Warming Potential 100 Env impact mass"))
-	TESTAPI2FALSE("Check that AP Env impact mass is NOT in list of indicators", TestUtils::contains(vIndicators, "Acidification#Accumulated Exceedance Env impact mass"))
+	TESTAPI2("Check that GWP Operational impact mass is in list of indicators", TestUtils::contains(vIndicators, "Climate change#Global Warming Potential 100 Operational impact mass"))
+	TESTAPI2FALSE("Check that AP Operational impact mass is NOT in list of indicators", TestUtils::contains(vIndicators, "Acidification#Accumulated Exceedance Operational impact mass"))
 
 	//Change the variable of port vELY_PEM_L0 
 	vELY_PEM_L0->set_SettingValues({

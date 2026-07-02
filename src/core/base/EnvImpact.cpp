@@ -9,12 +9,12 @@ mImpactUnit(aUnit),
 mShortName(aShortName),
 mNewlySelected(true),
 mEnvImpactCost(0.),
-mPiecewiseEnvGreyContentCoeff(false),
-mTryRelaxationEnvGreyContentCoeff(true),
-mEnvGreyContentCoefficient(0.),
-mEnvGreyContentOffset(0.),
-mEnvGreyReplacement(0.),
-mEnvGreyReplacementConstant(0.),
+mPiecewiseEmbodiedCoeff(false),
+mTryRelaxationEmbodiedCoeff(true),
+mEmbodiedCoefficient(0.),
+mEmbodiedOffset(0.),
+mEmbodiedReplacement(0.),
+mEmbodiedReplacementOffset(0.),
 mEnvContentCoefficients(0),
 mEnvContentOffsets(0),
 mEnvImpactPart(2,0.),
@@ -56,7 +56,7 @@ void EnvImpact::addConfigParameters(std::string aPortName, int j)
 {
     // componenet parameters
     if (j == 0) {
-        InputEnvImpacts()->addParameter(mName + " PiecewiseEnvGreyContentCoeff_A", &mPiecewiseEnvGreyContentCoeff, false, false, mParentModel->pEnvironmentModel(), "If true use piecewise linear functionality for Grey environmental impacts", "", "EnvironmentModel");
+        InputEnvImpacts()->addParameter(mName + " PiecewiseEmbodiedCoeff_A", &mPiecewiseEmbodiedCoeff, false, false, mParentModel->pEnvironmentModel(), "If true use piecewise linear functionality for Grey environmental impacts", "", "EnvironmentModel");
     }
     // port parameters
     InputPortImpacts()->addParameter(aPortName + "." + mName + " UseEnvContentTS_A", &mUseTSEnvContentCoeff[j], false, false, mParentModel->pEnvironmentModel(), "Comment", "", "EnvironmentModel");
@@ -65,12 +65,12 @@ void EnvImpact::addConfigParameters(std::string aPortName, int j)
 void EnvImpact::addGreyParameters()
 {
     //bool
-    InputEnvImpacts()->addParameter(mName + " TryRelaxationEnvGreyContentCoeff_A", &mTryRelaxationEnvGreyContentCoeff, true, &mPiecewiseEnvGreyContentCoeff, &mPiecewiseEnvGreyContentCoeff, "If the EnvGreyContentCoefficient is a convex function of size the linearization variables will be continuous", "", "EnvironmentModel");
+    InputEnvImpacts()->addParameter(mName + " TryRelaxationEmbodiedCoeff_A", &mTryRelaxationEmbodiedCoeff, true, &mPiecewiseEmbodiedCoeff, &mPiecewiseEmbodiedCoeff, "If the EnvGreyContentCoefficient is a convex function of size the linearization variables will be continuous", "", "EnvironmentModel");
     //double
-    InputEnvImpacts()->addParameter(mName + " EnvGreyContentCoefficient_A", &mEnvGreyContentCoefficient, 0., false, mParentModel->pEnvironmentModel(), "Environmental impact linked to manufacturing - Coefficient A. Grey impact calculation: A*X+B with X the size and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "Unit" }), "EnvironmentModel");  /** Always optional : Grey Environmental Emission Mass in kg per unit of input flux (power, flowrate) - Default value is 0 */
-    InputEnvImpacts()->addParameter(mName + " EnvGreyContentOffset_B", &mEnvGreyContentOffset, 0., false, mParentModel->pEnvironmentModel(), "Environmental impact linked to manufacturing - Offset B. Grey impact calculation: A*X+B with X the size and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", &mImpactUnit, "EnvironmentModel");  /** Always optional : Grey Environmental Emission Mass in kg per unit of input flux (power, flowrate) - Default value is 0 */
-    InputEnvImpacts()->addParameter(mName + " EnvGreyReplacement", &mEnvGreyReplacement, 0., false, mParentModel->pEnvironmentModel(), "Environmental impact linked to future manufacturing for replacement - Replacement env impact contribution ", SFunctionUnit({ eFTypeDivision, { &mImpactUnit, mParentModel->pOptimalSizeUnit()}, "Replacement" }), "EnvironmentModel");
-    InputEnvImpacts()->addParameter(mName + " EnvGreyReplacementConstant", &mEnvGreyReplacementConstant, 0., false, mParentModel->pEnvironmentModel(), "The constant part of replacement env impact contribution ", SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "Replacement" }), "EnvironmentModel");
+    InputEnvImpacts()->addParameter(mName + " EmbodiedCoefficient_A", &mEmbodiedCoefficient, 0., false, mParentModel->pEnvironmentModel(), "Environmental impact linked to manufacturing - Coefficient A. Grey impact calculation: A*X+B with X the size and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "Unit" }), "EnvironmentModel");  /** Always optional : Grey Environmental Emission Mass in kg per unit of input flux (power, flowrate) - Default value is 0 */
+    InputEnvImpacts()->addParameter(mName + " EmbodiedOffset_B", &mEmbodiedOffset, 0., false, mParentModel->pEnvironmentModel(), "Environmental impact linked to manufacturing - Offset B. Grey impact calculation: A*X+B with X the size and A = Multiplying coefficient - Default value is 1 - B = Offset - Default value is 0", &mImpactUnit, "EnvironmentModel");  /** Always optional : Grey Environmental Emission Mass in kg per unit of input flux (power, flowrate) - Default value is 0 */
+    InputEnvImpacts()->addParameter(mName + " EmbodiedReplacement", &mEmbodiedReplacement, 0., false, mParentModel->pEnvironmentModel(), "Environmental impact linked to future manufacturing for replacement - Replacement env impact contribution ", SFunctionUnit({ eFTypeDivision, { &mImpactUnit, mParentModel->pOptimalSizeUnit()}, "Replacement" }), "EnvironmentModel");
+    InputEnvImpacts()->addParameter(mName + " EmbodiedReplacementOffset", &mEmbodiedReplacementOffset, 0., false, mParentModel->pEnvironmentModel(), "The constant part of replacement env impact contribution ", SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "Replacement" }), "EnvironmentModel");
 }
 
 void EnvImpact::addPortParameters(std::string aPortName, int j, EnergyVector* aCarrier)
@@ -84,8 +84,8 @@ void EnvImpact::addPortParameters(std::string aPortName, int j, EnergyVector* aC
 
 void EnvImpact::addPerfParameters() {
     //vector
-    InputPerfParam()->addPerfParam(mName + " CapacitySetPoint", &mImpactCapacitySetPoint, &mPiecewiseEnvGreyContentCoeff, &mPiecewiseEnvGreyContentCoeff, "name of vector impact capacity that will be defined from DataFile specification by the User");
-    InputPerfParam()->addPerfParam(mName + " SetPoint", &mImpactSetPoint, &mPiecewiseEnvGreyContentCoeff, &mPiecewiseEnvGreyContentCoeff, "name of vector impact SetPoint that will be defined from DataFile specification by the User");
+    InputPerfParam()->addPerfParam(mName + " CapacitySetPoint", &mImpactCapacitySetPoint, &mPiecewiseEmbodiedCoeff, &mPiecewiseEmbodiedCoeff, "name of vector impact capacity that will be defined from DataFile specification by the User");
+    InputPerfParam()->addPerfParam(mName + " SetPoint", &mImpactSetPoint, &mPiecewiseEmbodiedCoeff, &mPiecewiseEmbodiedCoeff, "name of vector impact SetPoint that will be defined from DataFile specification by the User");
 }
 
 void EnvImpact::addIOExpressions()
@@ -97,28 +97,22 @@ void EnvImpact::addIOExpressions()
     mParentModel->
         addIO(mName + " Env impact cost", &mExpOpEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency()); /** "mName Env impact cost" */
     mParentModel->
-        addIO(mName + " Env grey impact mass", &mExpEmbodiedEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit); /** "mName Env grey impact mass" */
+        addIO(mName + " Env embodied impact mass", &mExpEmbodiedEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit); /** "mName Env embodied impact mass" */
     mParentModel->
-        addIO(mName + " Env grey impact cost", &mExpEmbodiedEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency()); /** "mName Env grey impact cost" */
+        addIO(mName + " Env embodied impact cost", &mExpEmbodiedEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency()); /** "mName Env embodied impact cost" */
     mParentModel->
         addIO(mName + " Env impact replacement", &mExpReplacementEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit);
 }
 
 void EnvImpact::addIndicators()
 {
-    InputIndicators()->addIndicator(mName + " Env impact penalty part", &mEnvImpactPart, mParentModel->pEnvironmentModel(), 
-        "Penalty contribution due to direct environmental impact linked to usage ", mParentModel->pCurrency(), mShortName + "DirectCost"); 
-
-    InputIndicators()->addIndicator(mName + " Env impact mass", &mEnvImpactMass, mParentModel->pEnvironmentModel(), 
+    InputIndicators()->addIndicator(mName + " Operational impact mass", &mEnvImpactMass, mParentModel->pEnvironmentModel(), 
         "Mass of the direct environmental impact linked to usage ", &mImpactUnit, mShortName + "DirectMass"); 
 
-    InputIndicators()->addIndicator(mName + " EnvGrey impact cost", &mEmbodiedEnvImpactCost, mParentModel->pEnvironmentModel(), 
-        "Contribution due to the grey emissions linked to manufacturing ", mParentModel->pCurrency(), mShortName + "GreyCost"); 
-
-    InputIndicators()->addIndicator(mName + " EnvGrey impact mass", &mEmbodiedEnvImpact, mParentModel->pEnvironmentModel(), 
+    InputIndicators()->addIndicator(mName + " Embodied impact mass", &mEmbodiedEnvImpact, mParentModel->pEnvironmentModel(), 
         "Mass of the grey emissions linked to manufacturing", &mImpactUnit, mShortName + "GreyMass"); 
 
-    InputIndicators()->addIndicator(mName + " Env impact replacement", &mReplacementEnvImpact, mParentModel->pEnvironmentModel(), 
+    InputIndicators()->addIndicator(mName + " Replacement impact mass", &mReplacementEnvImpact, mParentModel->pEnvironmentModel(), 
         "Env impact of replacement linked to future manufacturing for replacement", &mImpactUnit, mShortName + "Replacement"); 
 }
 
@@ -126,7 +120,7 @@ void EnvImpact::computeEmbodiedEnvImpactContribution(
     const MIPModeler::MIPExpression& aExpSizeMax,
     const MIPModeler::MIPExpression& aExpInstalled)
 {
-    mExpEmbodiedEnvImpact = mEnvGreyContentCoefficient * aExpSizeMax + mEnvGreyContentOffset * aExpInstalled;
+    mExpEmbodiedEnvImpact = mEmbodiedCoefficient * aExpSizeMax + mEmbodiedOffset * aExpInstalled;
 }
 
 void EnvImpact::computeReplacementEnvImpactContribution(
@@ -148,7 +142,7 @@ void EnvImpact::computeReplacementEnvImpactContribution(
 
     // Pre-compute the constant part
     const MIPModeler::MIPExpression replacementImpact =
-        (mEnvGreyReplacement * aExpSizeMax + mEnvGreyReplacementConstant * aExpInstalled)
+        (mEmbodiedReplacement * aExpSizeMax + mEmbodiedReplacementOffset * aExpInstalled)
         / (lifeTime * HOURS_PER_YEAR);
 
     // Assign to all time steps
@@ -195,7 +189,7 @@ void EnvImpact::computeEnvImpactContributionCost()
     }
 }
 
-void EnvImpact::evaluateEnvGreyImpact(const double* optSol)
+void EnvImpact::evaluateEmbodiedImpact(const double* optSol)
 {
     mEmbodiedEnvImpact.at(0) = mEmbodiedEnvImpact.at(1) = mExpEmbodiedEnvImpact.evaluate(optSol);
     mEmbodiedEnvImpactCost.at(0) = mEmbodiedEnvImpactCost.at(1) = mExpEmbodiedEnvImpactCost.evaluate(optSol);

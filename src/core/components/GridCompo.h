@@ -37,6 +37,8 @@ public:
     void readTSVariablesFromModel() override;
     void createImportListVars(t_mapExchange& a_Import) override;
     int  setTimeSeriesValues() override;
+    virtual void setDefaultsResults() {};
+    virtual void exportRHVariableInModel() {};
 
 protected:
     std::string mEnergyPriceProfileName;          /* Grid energy price profile name */

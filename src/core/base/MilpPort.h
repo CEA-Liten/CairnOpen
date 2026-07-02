@@ -87,6 +87,7 @@ public:
 
     BusCompo* getLinkedBus() { return mLinkedBus; }
     void setLinkedBus(BusCompo* linkedBus);
+    void unlinkBus();
 
     const std::string getFluxName() {
         if (mCarrier) return mCarrier->FluxName();

@@ -726,7 +726,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": "0.000000"
 					},
 					{
@@ -786,7 +786,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1005,7 +1005,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1089,7 +1089,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1310,7 +1310,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1382,7 +1382,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1595,7 +1595,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1667,7 +1667,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1880,7 +1880,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": "0.000000"
 					},
 					{
@@ -1952,7 +1952,7 @@
 						"value": "0.000000"
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": "0.000000"
 					},
 					{

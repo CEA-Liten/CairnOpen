@@ -111,7 +111,7 @@ void MilpPort::declareParameters()
         mInputParam->addParameter( "VariableOpex", &mVariableOpex, 0.0,
             false, true,
             "Variable Opex",
-            SFunctionUnit({ eFTypeDivision, { pCurrency(), pQuantity("EnergyUnit") } }),
+            SFunctionUnit({ eFTypeDivision, { pCurrency(), pQuantity("StorageUnit") } }),
             "EcoInvestModel"
         );
     }
@@ -155,10 +155,18 @@ void MilpPort::completePortInfo(const t_mapParamData& portParams, EnergyVector* 
 {
     setAttributes(portParams);
     setCarrier(carrier);
-    setName(CairnUtils::getParamValue(portParams, "Name"));
 
-    mBusPortName = CairnUtils::getParamValue(portParams, "BusPortName");
-    mPosition = CairnUtils::getParamValue(portParams, "Position");
+    const std::string name = CairnUtils::getParamValue(portParams, "Name");
+    if(!name.empty())
+        setName(name);
+
+    const std::string bName = CairnUtils::getParamValue(portParams, "BusPortName");
+    if (!bName.empty())
+        mBusPortName = bName;
+
+    const std::string position = CairnUtils::getParamValue(portParams, "Position");
+    if (!position.empty())
+        mPosition = position;
 
     setPosition();
 }
@@ -295,14 +303,9 @@ void MilpPort::setCarrier(EnergyVector* aptrEnergyVector)
     if (mCarrier) {
         MilpComponent* pParent = dynamic_cast<MilpComponent*>(parent()); 
 
-        updateUnits(pParent);
+        //TODO: reinitialize component to update parameter units!
 
-        //if (mIsDefaultPort) { //What about old studies?!
-        //    MilpComponent* lptrCompo = (MilpComponent*)this->parent();
-        //    if (lptrCompo) {
-        //        lptrCompo->declareIOVariables();
-        //    }
-        //}
+        updateUnits(pParent); 
 
         declareParameters();
 
@@ -327,6 +330,23 @@ void MilpPort::updateUnits(const MilpComponent* pParent)
 void MilpPort::setLinkedBus(BusCompo* linkedBus) {
     mLinkedBus = linkedBus;
 }
+
+void MilpPort::unlinkBus()
+{
+    BusCompo* bus = mLinkedBus;
+
+    if (!bus) {
+        return; // already unlinked
+    }
+
+    // Clear the port's pointer first
+    mLinkedBus = nullptr;
+
+    // Now notify the bus that this port is no longer linked
+    MilpComponent* pParent = dynamic_cast<MilpComponent*>(parent());
+    bus->removeLink(pParent, this);
+}
+
 
 void MilpPort::setFlux(const unsigned int &aTime, const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
 {

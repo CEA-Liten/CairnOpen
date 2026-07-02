@@ -601,15 +601,15 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -711,7 +711,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					}
 				],
@@ -733,15 +733,15 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -875,39 +875,39 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EnvGreyContentCoefficient_A",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EnvGreyContentOffset_B",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyContentCoefficient_A",
+						"key": "Water use#User Deprivation Potential EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Water use#User Deprivation Potential EnvGreyContentOffset_B",
+						"key": "Water use#User Deprivation Potential EmbodiedOffset_B",
 						"value": 0
 					}
 				],
@@ -1137,15 +1137,15 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1301,15 +1301,15 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Eutrophication-Aquatic freshwater#Fraction of nutrients reaching freshwater and compartment TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Water use#User Deprivation Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Water use#User Deprivation Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],

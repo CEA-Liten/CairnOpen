@@ -873,12 +873,12 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
         assert(abs(varCost - mBuyVariableCostsContribution.at(0) - mSellVariableCostsContribution.at(0)) < 10e-3);
 
         // ---------------------------- Env Impacts ----------------------------
-        mVDEnvGreyImpactsCostContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEmbodiedCostContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsReplacementContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsReplacementContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         for (int i = 0; i < mSelectedEnvImpacts.size(); i++) {
-            mVDEnvGreyImpactsCostContribution[i].at(0) = mVDEnvGreyImpactsCostContribution[i].at(1) = mExpEnvImpactEmbodiedCostVec.at(i).evaluate(optSol);
-            mVDEnvGreyImpactsMassContribution[i].at(0) = mVDEnvGreyImpactsMassContribution[i].at(1) = mExpEnvImpactEmbodiedVec.at(i).evaluate(optSol);
+            mVDEmbodiedCostContribution[i].at(0) = mVDEmbodiedCostContribution[i].at(1) = mExpEnvImpactEmbodiedCostVec.at(i).evaluate(optSol);
+            mVDEmbodiedMassContribution[i].at(0) = mVDEmbodiedMassContribution[i].at(1) = mExpEnvImpactEmbodiedVec.at(i).evaluate(optSol);
 
             SubModel::computeIndicator(mExpEnvImpactMassVec[i], optSol, mVDEnvImpactsMassContribution[i].at(0), mVDEnvImpactsMassContributionDiscounted[i].at(0), mVDEnvImpactsMassContribution[i].at(1), mVDEnvImpactsMassContributionDiscounted[i].at(1), true);
             SubModel::computeIndicator(mExpEnvImpactCostVec[i], optSol, mVDEnvImpactsCostContribution[i].at(0), mVDEnvImpactsCostContributionDiscounted[i].at(0), mVDEnvImpactsCostContribution[i].at(1), mVDEnvImpactsCostContributionDiscounted[i].at(1), false);
@@ -896,10 +896,10 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
             assert(abs(mVDEnvImpactsReplacementContributionDiscounted[i].at(0) - envImpactReplacementDiscounted_redundant_i) < 10e-3);
 
             //Flow + Grey + Replacement
-            mVDEnvImpactsTotalCostDiscounted[i].at(0) = mVDEnvGreyImpactsCostContribution.at(i).at(0) + mVDEnvImpactsCostContributionDiscounted.at(i).at(0) ;
-            mVDEnvImpactsTotalCostDiscounted[i].at(1) = mVDEnvGreyImpactsCostContribution.at(i).at(1) + mVDEnvImpactsCostContributionDiscounted.at(i).at(1) ;
-            mVDEnvImpactsTotalMassDiscounted[i].at(0) = mVDEnvGreyImpactsMassContribution.at(i).at(0) + mVDEnvImpactsMassContributionDiscounted.at(i).at(0) + mVDEnvImpactsReplacementContributionDiscounted[i].at(0);
-            mVDEnvImpactsTotalMassDiscounted[i].at(1) = mVDEnvGreyImpactsMassContribution.at(i).at(1) + mVDEnvImpactsMassContributionDiscounted.at(i).at(1) + mVDEnvImpactsReplacementContributionDiscounted[i].at(1);
+            mVDEnvImpactsTotalCostDiscounted[i].at(0) = mVDEmbodiedCostContribution.at(i).at(0) + mVDEnvImpactsCostContributionDiscounted.at(i).at(0) ;
+            mVDEnvImpactsTotalCostDiscounted[i].at(1) = mVDEmbodiedCostContribution.at(i).at(1) + mVDEnvImpactsCostContributionDiscounted.at(i).at(1) ;
+            mVDEnvImpactsTotalMassDiscounted[i].at(0) = mVDEmbodiedMassContribution.at(i).at(0) + mVDEnvImpactsMassContributionDiscounted.at(i).at(0) + mVDEnvImpactsReplacementContributionDiscounted[i].at(0);
+            mVDEnvImpactsTotalMassDiscounted[i].at(1) = mVDEmbodiedMassContribution.at(i).at(1) + mVDEnvImpactsMassContributionDiscounted.at(i).at(1) + mVDEnvImpactsReplacementContributionDiscounted[i].at(1);
 
         }
     }

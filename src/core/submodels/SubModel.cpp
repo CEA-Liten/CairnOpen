@@ -117,7 +117,7 @@ void SubModel::removeImpactExpressionName(const std::string& impactName) {
     CairnUtils::removeMatchingSubstring(mEnvImpactCostExpression, impactName);
     CairnUtils::removeMatchingSubstring(mEnvImpactMassExpression, impactName);
     CairnUtils::removeMatchingSubstring(mEnvGreyImpactCostExpression, impactName);
-    CairnUtils::removeMatchingSubstring(mEnvGreyImpactMassExpression, impactName);
+    CairnUtils::removeMatchingSubstring(mEmbodiedMassExpression, impactName);
 }
 
 void SubModel::deleteEnvImpacts()
@@ -362,17 +362,34 @@ void SubModel::addControlIO(const std::string& aIOName, MIPModeler::MIPExpressio
     mListControlIO[aIOName] = new ControlVar(aIOName, aHistPtr, aDescription, aDefaultValue, a_isMPC);
 }
 
-void SubModel::removeIO(const std::string& aName)
+void SubModel::removeIO(const std::string& name)
 {
-    if (mIOExpressions.find(aName) != mIOExpressions.end()) {
-        delete mIOExpressions[aName];
-        mIOExpressions.erase(aName);
+    auto it = mIOExpressions.find(name);
+    if (it != mIOExpressions.end()) {
+        // Delete the expression pointer
+        delete it->second;
+
+        // Erase from the map
+        mIOExpressions.erase(it);
     }
 
-    if (mListControlIO.find(aName) != mListControlIO.end()) {
-        delete mListControlIO[aName];
-        mListControlIO.erase(aName);
+    auto itControl = mListControlIO.find(name);
+    if (itControl != mListControlIO.end()) {
+        // Delete the expression pointer
+        delete itControl->second;
+
+        // Erase from the map
+        mListControlIO.erase(itControl);
     }
+}
+
+SubModel::IOIterator SubModel::removeIO(SubModel::IOIterator it)
+{
+    if (it == mIOExpressions.end())
+        return it;
+
+    delete it->second;
+    return mIOExpressions.erase(it);   // erase and returns next iterator
 }
 
 void SubModel::removeEnvImpactIOs(const std::string& aImpactName)
@@ -505,7 +522,7 @@ std::vector<ModelIO*> SubModel::getIOExpressions(const EIOModelType& aIOType)
     return vRet;
 }
 
-double* SubModel::envGreyImpactMassContribution(const int aIdxEnvImpact) { 
+double* SubModel::envEmbodiedMassContribution(const int aIdxEnvImpact) { 
     return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactMass(); 
 }
 

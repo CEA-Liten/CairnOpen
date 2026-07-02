@@ -188,14 +188,30 @@ void BusCompo::addLink(MilpComponent* linkedComponent, MilpPort* linkedPort)
 
 void BusCompo::removeLink(MilpComponent* linkedComponent, MilpPort* linkedPort)
 {
-    if (linkedComponent) {
-        std::vector<MilpComponent*>::iterator vIter = find(mListComponent.begin(), mListComponent.end(), linkedComponent);
-        if (vIter != mListComponent.end()) {
-            mListComponent.erase(vIter);
-        }
+    // Defensive: linkedPort must not be null 
+    if (!linkedPort) {
+        cError() << "BusCompo::removeLink called with null linkedPort.";
+        return;
     }
 
-    busModel()->removeLink(linkedPort);
+    // Remove component from the list 
+    if (!linkedComponent)
+        return;
+
+    auto it = std::find(mListComponent.begin(), mListComponent.end(), linkedComponent);
+    if (it != mListComponent.end()) {
+        mListComponent.erase(it);
+    }
+
+    // Defensive: busModel() must be valid 
+    auto* model = busModel();
+    if (!model) {
+        cError() << "BusCompo::removeLink: busModel() is null.";
+        return;
+    }
+
+    // Remove port link in the bus model 
+    model->removeLink(linkedPort);
 }
 
 int BusCompo::NbPorts(const std::string& aDirection)

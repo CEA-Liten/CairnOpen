@@ -70,11 +70,11 @@ int main()
 
 	//Check if ELY_PEM has GWP-related parameters after selection of GWP in TecEcoAnalysis
 	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
-	TESTAPI2("Check if ELY_PEM has GWP parameter after selection", 
-		TestUtils::contains(vELY_PEM->get_SettingsList(), "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A")
+	TESTAPI2("Check if ELY_PEM has GWP parameter after selection",
+		TestUtils::contains(vELY_PEM->get_SettingsList(), "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A")
 	)
 
-	//Check if ELY_PEM has GWP-related IO vars after selection of GWP in TecEcoAnalysis
+		//Check if ELY_PEM has GWP-related IO vars after selection of GWP in TecEcoAnalysis
 	TESTAPI2("Check if ELY_PEM has GWP IO var after selection",
 		TestUtils::contains(vELY_PEM->get_VarList(), "Climate change#Global Warming Potential 100 Env impact mass")
 	)
@@ -94,7 +94,7 @@ int main()
 	TESTAPI("Modify the parameters of Wind_farm",
 		vWind_farm->set_SettingValues({
 			{"EnvironmentModel", true},  
-			{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 250}
+			{"Climate change#Global Warming Potential 100 EmbodiedCoefficient_A", 250}
 		})
 	)
 		

@@ -2,8 +2,8 @@
 rem =========================================================
 rem
 rem startCTest [<empty>=release|debug|fullrelease|fulldebug] 
-rem			 [<empty>|tests path]	
 rem	 		 [<empty>=level]			: if not empty run test in parallel, level : limit of parallelism
+rem			 [<empty>|tests path]		 
 rem		
 rem ========================================================= 
 
@@ -22,33 +22,33 @@ if "%CONFIGURATION%"=="" (
 )
 echo Configuration: %CONFIGURATION%
 
-set TESTDIR=%2
+set PARALLEL=%2
+
+set TESTDIR=%3
 if "%TESTDIR%"=="" (
  	set TESTDIR=out/%CONFIGURATION%
 )
 
-set PARALLEL=%3
-
 rem ---------------------------------
-
 set WORKSPACE=%~dp0
+set REPORT=%WORKSPACE%\reports\CairnCtest-TNR
+rem !! Warning: current dir must be Cairn root
 call GenericAppEnv.bat %CONFIGURATION%
 
 rem "%CMAKEPATH%/ctest.exe" -I 7,7 -C release --test-dir out/release -V
 
 if "%PARALLEL%"=="" (
-	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% --test-dir %TESTDIR% --output-junit %WORKSPACE%\tests\reports\CairnCtest-TNR.xml
+	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% --test-dir %TESTDIR% --output-junit %REPORT%.xml
 ) else (
 	echo Parallel: %PARALLEL%
-	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% -j %PARALLEL% --test-dir %TESTDIR% --output-junit %WORKSPACE%\tests\reports\CairnCtest-TNR.xml
+	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% -j %PARALLEL% --test-dir %TESTDIR% --output-junit %REPORT%.xml
 )
 
 rem convert to html
-pip install junit2html
-junit2html  %WORKSPACE%\tests\reports\CairnCtest-TNR.xml %WORKSPACE%\tests\reports\CairnCtest-TNR.html
+junit2html %REPORT%.xml %REPORT%.html
 
 rem temp
-copy %WORKSPACE%\tests\reports\CairnCtest-TNR.html %WORKSPACE%\tests\reports\CairnCtest-TNR-log.html
+copy %REPORT%.html %REPORT%-log.html
 
 rem force script to return code 0
 rem exit /B 0

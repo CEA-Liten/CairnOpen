@@ -267,11 +267,14 @@ public:
         bool a_isMPC = true,
         const std::string& aDescription = "");
 
+    using t_mapIOs = std::map<std::string, ModelIO*>;
+    using IOIterator = t_mapIOs::iterator;
+
     void removeIO(const std::string& aName);
+    IOIterator removeIO(IOIterator it);
     void removeEnvImpactIOs(const std::string& aImpactName);
     void removeIOs();
 
-    using t_mapIOs = std::map<std::string, ModelIO*>;
     const t_mapIOs& getMapIOExpression() { return mIOExpressions; }
 
     ModelIO* getIOExpression(const std::string& aName) const;
@@ -480,11 +483,11 @@ public:
     void        setEnvImpactMassExpression(const std::string& aExpressionName) { mEnvImpactMassExpression.push_back(aExpressionName); }
     std::string getEnvImpactMassExpression(int i) const { return mEnvImpactMassExpression.at(i); }
 
-    void        setEnvGreyImpactCostExpression(const std::string& aExpressionName) { mEnvGreyImpactCostExpression.push_back(aExpressionName); }
-    std::string getEnvGreyImpactCostExpression(int i) const { return mEnvGreyImpactCostExpression.at(i); }
+    void        setEmbodiedCostExpression(const std::string& aExpressionName) { mEnvGreyImpactCostExpression.push_back(aExpressionName); }
+    std::string setEmbodiedCostExpression(int i) const { return mEnvGreyImpactCostExpression.at(i); }
 
-    void        setEnvGreyImpactMassExpression(const std::string& aExpressionName) { mEnvGreyImpactMassExpression.push_back(aExpressionName); }
-    std::string getEnvGreyImpactMassExpression(int i) const { return mEnvGreyImpactMassExpression.at(i); }
+    void        setEmbodiedMassExpression(const std::string& aExpressionName) { mEmbodiedMassExpression.push_back(aExpressionName); }
+    std::string getEmbodiedMassExpression(int i) const { return mEmbodiedMassExpression.at(i); }
 
     void        setPenaltyConstraintExpression(const std::string& aExpressionName) { mPenaltyConstraintExpression = aExpressionName; }
     std::string getPenaltyConstraintExpression() const { return mPenaltyConstraintExpression; }
@@ -502,7 +505,7 @@ public:
 
     std::vector<class EnvImpact*> getEnvImpacts() { return mEnvImpacts; }
 
-    double* envGreyImpactMassContribution(int aIdxEnvImpact);
+    double* envEmbodiedMassContribution(int aIdxEnvImpact);
     double* envGreyImpactCostContribution(int aIdxEnvImpact);
     double* envImpactCostContribution(int aIdxEnvImpact);
     double* envHistImpactCostContribution(int aIdxEnvImpact);
@@ -669,7 +672,7 @@ protected:
     std::string mVariableCostsExpression;     /** Variable cost expression */
     std::string mPenaltyConstraintExpression; /** Penalty constraint expression */
     std::vector<std::string> mEnvGreyImpactCostExpression; /** Grey environmental impact cost expressions */
-    std::vector<std::string> mEnvGreyImpactMassExpression; /** Grey environmental impact mass expressions */
+    std::vector<std::string> mEmbodiedMassExpression; /** Grey environmental impact mass expressions */
     std::vector<std::string> mEnvImpactCostExpression;     /** Environmental impact cost expressions */
     std::vector<std::string> mEnvImpactMassExpression;     /** Environmental impact mass expressions */
 

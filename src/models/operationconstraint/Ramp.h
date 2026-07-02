@@ -84,6 +84,9 @@ public:
         addSizeMaxIO("ComponentSize", &mExpSizeMax, true, mMainCarrier->pFluxUnit()); // multiplier of the size of the ramp
         addControlIO("ConnectRamp", &mExpInput, true, mMainCarrier->pFluxUnit(), &mHistInput, &mInitialValue);
 
+        // over-write the "State" in OperationSubModel to bind IsUsed to parameter mAddStartUpShutDownVariable (instead of mAddStateVariable)
+        addIO("State", &mExpState, &mAddStartUpShutDownVariable, "bool", "ON OFF state of the element connected to ramp");
+
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         addExp(&mExpWeight);
 

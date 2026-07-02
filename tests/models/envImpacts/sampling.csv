@@ -1,5 +1,5 @@
 ;Converter;Converter;Converter;Elec_Grid;TecEcoAnalysis#1;TecEcoAnalysis#1
-;LifeTime;Climate change#Global Warming Potential 100 EnvGreyReplacement;Water use#User Deprivation Potential EnvGreyReplacement;PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A;DiscountRate;ImpactDiscountRate
+;LifeTime;Climate change#Global Warming Potential 100 EmbodiedReplacement;Water use#User Deprivation Potential EmbodiedReplacement;PortR0.Climate change#Global Warming Potential 100 UseEnvContentTS_A;DiscountRate;ImpactDiscountRate
 base;1;0;0;false;0;0
 withReplacement;10;80;8;false;0;0
 withCO2GridTS;1;0;0;true;0;0

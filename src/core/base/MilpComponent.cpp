@@ -298,26 +298,28 @@ void MilpComponent::createOnePort(const std::string& portId,
     }
 }
 
-MilpPort* MilpComponent::mapDefaultPort(const std::string& portId, const std::map<std::string, std::string>& portParams)
+MilpPort* MilpComponent::mapDefaultPort(const std::string& portId,
+    const std::map<std::string, std::string>& portParams)
 {
-    std::string portName = portParams.at("Name");
-    MilpPort* defaultPort = getPort(portId);
-    if (defaultPort != nullptr) {
-        return defaultPort;
+    // --- Lookup by ID ------------------------------------------------
+    if (MilpPort* port = getPort(portId))
+        return port;
+
+    // --- Lookup by Name ----------------------------
+    auto itName = portParams.find("Name");
+    if (itName != portParams.end()) {
+        if (MilpPort* port = getPortByName(itName->second))
+            return port;
     }
-    else {
-        /* A mapping error may happen when two default ports are switched in the GUI. Shall also verify the port variable?! */
-        defaultPort = getPortByName(portName);
-        if (defaultPort != nullptr) {
-            return defaultPort;
-        }
-        else if (mPorts.size() == 1 && mCompoModel->DefaultPorts().size() == 1) {
-            defaultPort = PortList()[0];
-            return defaultPort;
-        }
-    }
+
+    // --- Fallback: single-port component with single default port -----------
+    if (mPorts.size() == 1 && mCompoModel->DefaultPorts().size() == 1)
+        return PortList()[0];
+
+    // --- No match -----------------------------------------------------------
     return nullptr;
 }
+
 
 t_mapParamData MilpComponent::portData(const std::string& portId, const std::string& portName) const
 {
@@ -1129,6 +1131,7 @@ void MilpComponent::deleteCompoModel()
     if (mModelFactory) {
         mModelFactory->deleteModel(mCompoModelClassName, Name());
     }
+    mPorts.clear();
     mCompoModel = nullptr;
 }
 

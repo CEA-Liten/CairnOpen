@@ -16,7 +16,7 @@ set "RUNFILE=%~dp0"
 cd "%RUN_DIR%"
 set APP_HOME=%RUN_DIR%
 set PATH=%APP_HOME%lib;%PATH%
-call %RUNFILE%\..\..\GenericAppEnv.bat
+call %RUNFILE%\..\..\GenericAppEnv.bat fullrelease
 echo exist %RUNFILE%\..\..\GenericAppEnv.bat
 if "%USE_FBSF_FULL_BATCH%" == "true" (
     echo "Using FBSF Full batch "
