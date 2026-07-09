@@ -5,13 +5,19 @@
 class ModelTS : public ModelVar
 {
 public:
-    ModelTS(const std::string& aName = "", const UnitParam* a_Unit = nullptr);
-    ModelTS(const std::string& aName, const UnitParam* a_Unit, ModelParam* ap_Variable);
+    ModelTS(const std::string& aName = "", const t_unit& aUnit = nullptr, const std::string& aDescription = "");
+    ModelTS(const std::string& aName, ModelParam* ap_Variable);
 
     ~ModelTS();
    
     void setName(const std::string& a_Name);
-    const std::string& getDescriptions() const { return m_Comment; };
+    const std::string& getDescriptions() const { return m_Description; };
+
+    std::string getUnit() const override;
+    const UnitParam* pUnitParam() const override;
+
+    bool IsUsed() const override;
+    const FlagParam* pIsUsed() const override;
 
     const std::vector<double>* get_Values(size_t aNpdtPast = 0) const;
     void set_Values(uint aNpdtPast);
@@ -24,7 +30,7 @@ public:
     void subscribeTS(const std::string& a_exName, t_mapExchange& a_Import, size_t a_npdtTot);
 
 protected:
-    std::string m_Comment;      
+    std::string m_Description;      
     double m_default;
     double m_min;
     double m_max;

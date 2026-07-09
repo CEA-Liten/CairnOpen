@@ -130,7 +130,7 @@
 				"nodeName": "Electricity",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"componentWidth": 40,
@@ -139,6 +139,10 @@
 				"paramListJson": [
 					{
 						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "Voltage",
 						"value": 230
 					}
 				],
@@ -285,7 +289,7 @@
 						"value": 10000
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					}
 				],

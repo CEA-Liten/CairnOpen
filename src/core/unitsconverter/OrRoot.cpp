@@ -70,7 +70,7 @@ void OrRoot::Add(const std::string& a_Name, OrObject* ap_Group)
 	OrObject::Add(ap_Group);
 	int vKey = ap_Group->get_Key();
 	size_t vIndex = size() - 1;
-	m_mapElem.insert(t_mapKey::value_type(a_Name, vIndex));
-	m_mapKeyElem.insert(t_mapKeyIndex::value_type(vKey, vIndex));
+	m_mapElem[a_Name] = vIndex;	
+	m_mapKeyElem[vKey] = vIndex;	
 	ap_Group->Init(a_Name, vKey);
 }

@@ -16,9 +16,11 @@ ModelParam::ModelParam(const std::string& a_Name, t_flag a_IsBlocking, t_flag a_
     m_min = std::nan("1");
     m_max = std::nan("1");
     m_ShowConfig = a_ShowConfig;
+    if (m_ShowConfig.empty())
+        m_ShowConfig = "Base";
 
     if (IsBlocking() && !IsUsed()) {
-        cWarning() << "Parameter " + a_Name + " is mandatory but marked as not used! It would be good to review the flags of this parameter!";
+        cInfo() << "Parameter " + a_Name + " is mandatory but marked as not used! It would be good to review the flags of this parameter!";
     }
 }
 
@@ -94,7 +96,7 @@ ModelParam::~ModelParam()
 
 /*****************************************************************************************************/
 
-bool ModelParam::readParameter(const std::map<std::string, std::string>& aSettings)
+bool ModelParam::readParameter(const t_mapParamData& aSettings)
 {
     if (isPValue()) {
         if (aSettings.find(m_Name) != aSettings.end()) {
@@ -246,6 +248,7 @@ bool ModelParam::getNumValue(double& a_Value)
     return vRet;
 }
 
+// TODO: create a util method that converts a t_value to std::string !!
 std::string ModelParam::toString()
 {
     // TODO: use std::optional<std::string> ?!
@@ -305,148 +308,217 @@ std::optional<std::string> ModelParam::getStrDefaultValue() const
         }, m_default);
 }
 
-void ModelParam::readParam(const std::string& aParamName, const std::map<std::string, std::string>& a_Settings)
+void ModelParam::readParam(const std::string& aParamName, const t_mapParamData& a_Settings)
 {
-    switch (m_Type) {
+    m_Comment = CairnUtils::getParamComment(a_Settings, aParamName);
+
+    const std::string raw = CairnUtils::getParamValue(a_Settings, aParamName);
+    switch (m_Type)
+    {
     case eDouble:
     {
-        double* pValue = (double*)std::get<eDouble>(p_Value);
-        try
-        {
-            *pValue = std::stod(a_Settings.at(aParamName));
+        double* pValue = std::get<eDouble>(p_Value);
+        try {
+            *pValue = std::stod(raw);
         }
-        catch (const std::exception&)
-        {
+        catch (...) {
             *pValue = 0.0;
         }
         break;
     }
+
     case eInt:
     {
-        int* pValue = (int*)std::get<eInt>(p_Value);
-        try
-        {
-            *pValue = std::stoi(a_Settings.at(aParamName));
+        int* pValue = std::get<eInt>(p_Value);
+        try {
+            *pValue = std::stoi(raw);
         }
-        catch (const std::exception&)
-        {
+        catch (...) {
             *pValue = 0;
         }
         break;
     }
+
     case eBool:
     {
-        bool* pValue = (bool*)std::get<eBool>(p_Value);
-        try
-        {
-            *pValue = (a_Settings.at(aParamName) == "0") ? false : true;
-        }
-        catch (const std::exception&)
-        {
+        bool* pValue = std::get<eBool>(p_Value);
+
+        const std::string s = CairnUtils::simplified(raw);
+        if (s == "0" || s == "false" || s == "False" || s == "FALSE")
             *pValue = false;
-        }
-        break;
-    }
-    case eString:
-    {
-        std::string* pValue = std::get<eString>(p_Value);
-        try
-        {
-            *pValue = a_Settings.at(aParamName);
-        }
-        catch (const std::exception&)
-        {
-            *pValue = "";
-        }
-        break;
-    }
-    case eStringList: {
-        std::vector<std::string>* pValue = std::get<eStringList>(p_Value);
-        *pValue = std::vector<std::string>({});
-        bool isImpactSelected = false; //at least one impact is selected
-        if (CairnUtils::simplified(a_Settings.at(aParamName)) != "")
-        {
-            std::vector<std::string> stringList = CairnUtils::split(a_Settings.at(aParamName), ',');
-            for (size_t i = 0; i < stringList.size(); i++) {
-                if (CairnUtils::simplified(stringList[i]) != "") {
-                    stringList[i] = CairnUtils::simplified(stringList[i]);
-                    isImpactSelected = true;
-                }
-            }
-            if (isImpactSelected) {
-                *pValue = stringList;
-            }
-        }
-        break;
-    }
-    default:
+        else if (s == "1" || s == "true" || s == "True" || s == "TRUE")
+            *pValue = true;
+        else
+            *pValue = false; // default
+
         break;
     }
 
+    case eString:
+    {
+        std::string* pValue = std::get<eString>(p_Value);
+        *pValue = raw;   // raw is already a normalized string
+        break;
+    }
+
+    case eStringList:
+    {
+        std::vector<std::string>* pValue = std::get<eStringList>(p_Value);
+        *pValue = CairnUtils::toStringVector(raw);
+        break;
+    }
+
+    default:
+        break;
+    }
 }
 
 bool ModelParam::setValue(const std::string& a_Value)
 {
     bool vRet = false;
+
     switch (m_Type) {
     case eDouble:
     {
-        double* pValue = (double*)std::get<eDouble>(p_Value);
-        try
-        {
-            *pValue = std::stod(a_Value);
-            vRet = true;
-        }
-        catch (const std::exception&)
-        {
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not Double";
-        }
-        break;
-    }
-    case eInt:
-    {
-        int* pValue = (int*)std::get<eInt>(p_Value);
-        try
-        {
-            *pValue = std::stoi(a_Value);
-            vRet = true;
-        }
-        catch (const std::exception&)
-        {
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not Integer";
-        }
-        break;
-    }
-    case eBool:
-    {
-        bool* pValue = (bool*)std::get<eBool>(p_Value);
-        *pValue = (a_Value == "0" || CairnUtils::toLower(a_Value) == "false") ? false : true;
-        vRet = true;
-        break;
-    }
-    case eString:
-    {
-        std::string* pValue = std::get<eString>(p_Value);
-        *pValue = a_Value;
-        vRet = true;
-        break;
-    }
-    case eStringList:
-    {   //assumes that a_Value is a string with list elements sperated with comma
-        auto* pValue = std::get<eStringList>(p_Value);
-        const std::string value = CairnUtils::simplified(a_Value);
-        if (!value.empty()) {
-            pValue->clear();
-            for (const auto& s : CairnUtils::split(value)) {
-                pValue->push_back(CairnUtils::trim(s));
+        if (double** ppValue = std::get_if<double*>(&p_Value)) {
+            double* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+            try {
+                *pValue = std::stod(a_Value);
+                vRet = true;
+            }
+            catch (const std::exception&) {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not Double";
             }
         }
         else {
-            pValue->clear();
+            cWarning() << "Parameter " << m_Name << " does not hold a double* in p_Value";
         }
-        vRet = true;
         break;
     }
+
+    case eInt:
+    {
+        if (int** ppValue = std::get_if<int*>(&p_Value)) {
+            int* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+            try {
+                const std::string lower = CairnUtils::toLower(a_Value);
+                if (lower == "false") {
+                    *pValue = 0;
+                }
+                else if (lower == "true") {
+                    *pValue = 1;
+                }
+                else {
+                    *pValue = std::stoi(a_Value);
+                }
+                vRet = true;
+            }
+            catch (const std::exception&) {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not Integer";
+            }
+        }
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold an int* in p_Value";
+        }
+        break;
+    }
+
+    case eBool:
+    {
+        if (bool** ppValue = std::get_if<bool*>(&p_Value)) {
+            bool* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+            std::string lower = CairnUtils::toLower(a_Value);
+            *pValue = (a_Value == "0" || lower == "false") ? false : true;
+            vRet = true;
+        }
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold a bool* in p_Value";
+        }
+        break;
+    }
+
+    case eString:
+    {
+        if (std::string** ppValue = std::get_if<std::string*>(&p_Value)) {
+            std::string* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+            *pValue = a_Value;
+            vRet = true;
+        }
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold a std::string* in p_Value";
+        }
+        break;
+    }
+
+    case eStringList:
+    {
+        if (std::vector<std::string>** ppValue = std::get_if<std::vector<std::string>*>(&p_Value)) {
+            std::vector<std::string>* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+            // parse comma-separated strings into vector<string>
+            *pValue = CairnUtils::toStringVector(a_Value);
+            vRet = true;
+        }
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold a std::vector<std::string>* in p_Value";
+        }
+        break;
+    }
+
+    case eVectorDouble:
+    {
+        if (std::vector<double>** ppValue = std::get_if<std::vector<double>*>(&p_Value)) {
+            std::vector<double>* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+            try {
+                // parse comma-separated numbers into vector<double>
+                std::vector<double> tmp;
+                std::string s = a_Value;
+                std::istringstream iss(s);
+                std::string token;
+                while (std::getline(iss, token, ',')) {
+                    // trim whitespace
+                    auto start = token.find_first_not_of(" \t\n\r");
+                    auto end = token.find_last_not_of(" \t\n\r");
+                    if (start == std::string::npos) continue;
+                    std::string piece = token.substr(start, end - start + 1);
+                    tmp.push_back(std::stod(piece));
+                }
+                *pValue = std::move(tmp);
+                vRet = true;
+            }
+            catch (const std::exception&) {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not VectorDouble";
+            }
+        }
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold a std::vector<double>* in p_Value";
+        }
+        break;
+    }
+
     default:
         break;
     }
@@ -460,84 +532,165 @@ bool ModelParam::setValue(const t_value& a_Value)
     switch (m_Type) {
     case eDouble:
     {
-        double* pValue = (double*)std::get<eDouble>(p_Value);
-        if (const double* pSrc = std::get_if<double>(&a_Value)) {
-            *pValue = *pSrc;
-            // in the bound ? clamp ? 
-            vRet = true;
-        }
-        else if (const int* pSrc = std::get_if<int>(&a_Value)) {
-            *pValue = (double)*pSrc;
-            // in the bound ? clamp ? 
-            vRet = true;
+        if (double** ppValue = std::get_if<double*>(&p_Value)) {
+            double* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+
+            if (const double* pSrc = std::get_if<double>(&a_Value)) {
+                *pValue = *pSrc;
+                vRet = true;
+            }
+            else if (const int* pSrc = std::get_if<int>(&a_Value)) {
+                *pValue = static_cast<double>(*pSrc);
+                vRet = true;
+            }
+            else {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not Double/Int";
+            }
         }
         else {
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not Double";
+            cWarning() << "Parameter " << m_Name << " does not hold a double* in p_Value";
         }
         break;
     }
+
     case eInt:
     {
-        int* pValue = (int*)std::get<eInt>(p_Value);
-        if (const int* pSrc = std::get_if<int>(&a_Value)) {
-            *pValue = *pSrc;
-            // in the bound ? clamp ? 
-            vRet = true;
+        if (int** ppValue = std::get_if<int*>(&p_Value)) {
+            int* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+
+            if (const int* pSrc = std::get_if<int>(&a_Value)) {
+                *pValue = *pSrc;
+                vRet = true;
+            }
+            else if (const double* pSrc = std::get_if<double>(&a_Value)) {
+                *pValue = static_cast<int>(*pSrc);
+                vRet = true;
+            }
+            else {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not Int/Double";
+            }
         }
         else {
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not Double";
+            cWarning() << "Parameter " << m_Name << " does not hold an int* in p_Value";
         }
         break;
     }
+
     case eBool:
     {
-        bool* pValue = (bool*)std::get<eBool>(p_Value);
-        if (const double* pSrc = std::get_if<double>(&a_Value)) {
-            *pValue = (*pSrc != 0);
-            vRet = true;
+        if (bool** ppValue = std::get_if<bool*>(&p_Value)) {
+            bool* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+
+            if (const double* pSrc = std::get_if<double>(&a_Value)) {
+                *pValue = (*pSrc != 0.0);
+                vRet = true;
+            }
+            else if (const int* pSrc = std::get_if<int>(&a_Value)) {
+                *pValue = (*pSrc != 0);
+                vRet = true;
+            }
+            else if (const std::string* pSrc = std::get_if<std::string>(&a_Value)) {
+                std::string s = CairnUtils::toLower(*pSrc);
+                *pValue = (s == "0" || s == "false") ? false : true;
+                vRet = true;
+            }
+            else {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not Bool-compatible";
+            }
         }
-        else if (const int* pSrc = std::get_if<int>(&a_Value)) {
-            *pValue = (*pSrc != 0);
-            vRet = true;
-        }
-        else if (const std::string* pSrc = std::get_if<std::string>(&a_Value)) {
-            *pValue = (*pSrc == "0") ? false : true;
-            vRet = true;
-        }
-        else
-        {
-            // TODO: conversion ?
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not Bool";
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold a bool* in p_Value";
         }
         break;
     }
+
     case eString:
     {
-        std::string* pValue = std::get<eString>(p_Value);
-        if (const std::string* pSrc = std::get_if<std::string>(&a_Value)) {
-            *pValue = std::string(pSrc->c_str());
-            vRet = true;
+        if (std::string** ppValue = std::get_if<std::string*>(&p_Value)) {
+            std::string* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+
+            if (const std::string* pSrc = std::get_if<std::string>(&a_Value)) {
+                *pValue = *pSrc;
+                vRet = true;
+            }
+            else {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not String";
+            }
         }
         else {
-            // TODO: conversion ?
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not Bool";
+            cWarning() << "Parameter " << m_Name << " does not hold a std::string* in p_Value";
         }
         break;
     }
+
+    case eStringList:
+    {
+        if (std::vector<std::string>** ppValue = std::get_if<std::vector<std::string>*>(&p_Value)) {
+            std::vector<std::string>* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+
+            if (const std::vector<std::string>* pSrc = std::get_if<std::vector<std::string>>(&a_Value)) {
+                *pValue = *pSrc;
+                vRet = true;
+            }
+            else if (const std::string* pSrc = std::get_if<std::string>(&a_Value)) {
+                *pValue = CairnUtils::toStringVector(*pSrc);
+                vRet = true;
+            }
+            else {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not a StringList";
+            }
+        }
+        else {
+            cWarning() << "Parameter " << m_Name << " does not hold a std::vector<std::string>* in p_Value";
+        }
+        break;
+    }
+
     case eVectorDouble:
     {
-        std::vector<double>* pValue = (std::vector<double>*)std::get<eVectorDouble>(p_Value);
-        if (const std::vector<double>* pSrc = std::get_if<std::vector<double>>(&a_Value)) {
-            *pValue = *pSrc;
-            vRet = true;
+        if (std::vector<double>** ppValue = std::get_if<std::vector<double>*>(&p_Value)) {
+            std::vector<double>* pValue = *ppValue;
+            if (!pValue) {
+                cWarning() << "No storage for parameter " << m_Name;
+                break;
+            }
+
+            if (const std::vector<double>* pSrc = std::get_if<std::vector<double>>(&a_Value)) {
+                *pValue = *pSrc;
+                vRet = true;
+            }
+            else {
+                cWarning() << "Conversion fails for " << m_Name << " : Value is not VectorDouble";
+            }
         }
         else {
-            // TODO: conversion ?
-            cWarning() << "Conversion fails for the" << m_Name << " Value is not VectorDouble";
+            cWarning() << "Parameter " << m_Name << " does not hold a std::vector<double>* in p_Value";
         }
         break;
     }
+
     default:
+        cWarning() << "Unsupported parameter type for " << m_Name;
         break;
     }
 

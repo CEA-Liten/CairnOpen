@@ -96,6 +96,41 @@ std::vector<InputParam*> CairnAPI::ObjectAPI::get_InputParams(ESettingsCategory 
 }
 
 
+t_list CairnAPI::ObjectAPI::get_PerfParamList() const
+{
+	if (!m_Object)
+		return {};
+
+	const InputParam* perfParam = m_Object->get_PerfParam();
+	if (!perfParam)
+		return {};
+
+	t_list result;
+	const auto& mapParams = perfParam->getMapParams();
+	result.reserve(mapParams.size());
+
+	std::transform(mapParams.cbegin(), mapParams.cend(), std::back_inserter(result),
+		[](const auto& pair) { return pair.first; });
+
+	return result;
+}
+
+t_list CairnAPI::ObjectAPI::get_VarList() const 
+{
+	if (!m_Object)
+		return {};
+
+	return m_Object->get_IOVarNames();
+}
+
+std::string CairnAPI::ObjectAPI::get_VarDescription(const std::string& varName) const
+{
+	if (!m_Object)
+		return {};
+
+	return m_Object->get_IOVarDescription(varName);
+}
+
 // Returns the list of parameter names 
 t_list CairnAPI::ObjectAPI::get_SettingsList()
 {
@@ -122,7 +157,7 @@ CairnAPI::ParamAPI CairnAPI::ObjectAPI::get_Setting(const std::string& a_Setting
 		if (vInput) {
 			ModelParam* vParam = vInput->getParameter(a_SettingName);
 			if (vParam) {
-				return ParamAPI(this, vParam);
+				return ParamAPI(shared_from_this(), vParam);
 				break;
 			}				
 		}
@@ -181,12 +216,13 @@ t_dictComment CairnAPI::ObjectAPI::get_SettingComments()
 }
 
 // Set the comment of a parameter
-void CairnAPI::ObjectAPI::set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment)
+void CairnAPI::ObjectAPI::set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, 
+	bool checkExistence)
 {
 	ECodeError vRet = noError;
 	if (m_Object) {
 		bool vOk = CairnAPIUtils::setParamComment(get_InputParams(), a_SettingName, a_SettingComment);
-		vRet = (vOk) ? noError : errParam;
+		vRet = (vOk || !checkExistence) ? noError : errParam;
 	}
 	CairnAPIUtils::setError(vRet);
 }
@@ -194,12 +230,9 @@ void CairnAPI::ObjectAPI::set_SettingComment(const std::string& a_SettingName, c
 // Set the comments of several parameters
 void CairnAPI::ObjectAPI::set_SettingComments(const t_dictComment& a_SettingComments)
 {
-	ECodeError vRet = noError;
-	if (m_Object) {
-		bool vOk = CairnAPIUtils::setParamComments(get_InputParams(), a_SettingComments);
-		vRet = (vOk) ? noError : errParam;
+	for (const auto& [name, comment] : a_SettingComments) {
+		set_SettingComment(name, comment, false);
 	}
-	CairnAPIUtils::setError(vRet);
 }
 
 bool CairnAPI::ObjectAPI::is_MandatorySetting(const std::string& a_SettingName)

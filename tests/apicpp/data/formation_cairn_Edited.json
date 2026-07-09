@@ -174,7 +174,7 @@
 				"nodeId": "301",
 				"nodeName": "ElectricityDistrib",
 				"nodeTechnoType": "Electrical",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#fabe0c",
 				"nodeComment": "",
 				"x": 330,
@@ -250,7 +250,7 @@
 						"value": 1
 					},
 					{
-						"key": "Potential",
+						"key": "Voltage",
 						"value": 220
 					},
 					{
@@ -279,7 +279,7 @@
 				"nodeId": "251",
 				"nodeName": "H2",
 				"nodeTechnoType": "FluidH2",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 254,
@@ -351,7 +351,11 @@
 						"value": 0.03332
 					},
 					{
-						"key": "Potential",
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
 						"value": 30
 					},
 					{
@@ -816,63 +820,63 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyContentCoefficient_A",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyContentOffset_B",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyReplacement",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyReplacementConstant",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Ozone depletion#Ozone Depletion Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1085,11 +1089,11 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1290,11 +1294,11 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1467,43 +1471,43 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 100
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 50
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1698,63 +1702,63 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 100
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 10
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyContentCoefficient_A",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyReplacement",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyContentOffset_B",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential EnvGreyReplacementConstant",
+						"key": "Ozone depletion#Ozone Depletion Potential EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Ozone depletion#Ozone Depletion Potential TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Ozone depletion#Ozone Depletion Potential TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -2019,11 +2023,11 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],

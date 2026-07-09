@@ -1,7 +1,7 @@
 from skbuild import setup
 
 setup(
-    name="cairn",
+    name="@WHEEL_NAME@",
     version="@PROJECT_VERSION@",
     description="Cairn is a simulation and optimization software for energy and environmental systems. It allows for the modeling of technical components and the simulation of their behavior in various scenarios. Cairn is designed to be used in research and engineering environments to evaluate the environmental and economic impacts of energy systems.",
     author="CEA",

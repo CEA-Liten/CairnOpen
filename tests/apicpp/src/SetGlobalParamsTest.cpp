@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -25,6 +25,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File Paths
@@ -50,47 +54,47 @@ int main()
 	)
 
 	//Modify SimulationControl parameters (FutureSize)
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
 	TESTAPI("create_simulationcontrol",
-		vSimulationControl.set_SettingValue("FutureSize", 48)
+		vSimulationControl->set_SettingValue("FutureSize", 48)
 	)
 
 	//Modify TecEcoAnalysis parameters
-	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
 	TESTAPI("set_TecEcoAnalysisSettings",
-		vTecEcoAnalysis.set_SettingValues({
+		vTecEcoAnalysis->set_SettingValues({
 			{"DiscountRate", 0.07},
 			{"ConsideredEnvironmentalImpacts", "Climate change#Global Warming Potential 100,Acidification#Accumulated Exceedance"}
 		})
 	)
 
 	//Check if ELY_PEM has GWP-related parameters after selection of GWP in TecEcoAnalysis
-	CairnAPI::MilpComponentAPI vELY_PEM = m_Problem.get_Component("ELY_PEM");
-	TESTAPI2("Check if ELY_PEM has GWP parameter after selection", 
-		TestUtils::contains(vELY_PEM.get_SettingsList(), "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A")
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
+	TESTAPIBOOL("Check if ELY_PEM has GWP parameter after selection",
+		TestUtils::contains(vELY_PEM->get_SettingsList(), "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A")
 	)
 
-	//Check if ELY_PEM has GWP-related IO vars after selection of GWP in TecEcoAnalysis
-	TESTAPI2("Check if ELY_PEM has GWP IO var after selection",
-		TestUtils::contains(vELY_PEM.get_VarList(), "Climate change#Global Warming Potential 100 Env impact mass")
+		//Check if ELY_PEM has GWP-related IO vars after selection of GWP in TecEcoAnalysis
+	TESTAPIBOOL("Check if ELY_PEM has GWP IO var after selection",
+		TestUtils::contains(vELY_PEM->get_VarList(), "Climate change#Global Warming Potential 100 Env impact mass")
 	)
 
 	//Check if the ODP-related parameters of ELY_PEM have been removed after unselection of ODP in TecEcoAnalysis
-	TESTAPI2FALSE("Check if ODP param is removed",
-		TestUtils::contains(vELY_PEM.get_SettingsList(), "Ozone depletion#Ozone Depletion Potential EnvContentCoefficient_A")
+	TESTAPIBOOLFALSE("Check if ODP param is removed",
+		TestUtils::contains(vELY_PEM->get_SettingsList(), "Ozone depletion#Ozone Depletion Potential EnvContentCoefficient_A")
 	)
 
 	//Check if the ODP-related IO vars of ELY_PEM have been removed after unselection of ODP in TecEcoAnalysis
-	TESTAPI2FALSE("Check if ODP IO var is removed",
-		TestUtils::contains(vELY_PEM.get_VarList(), "Ozone depletion#Ozone Depletion Potential Env impact mass")
+	TESTAPIBOOLFALSE("Check if ODP IO var is removed",
+		TestUtils::contains(vELY_PEM->get_VarList(), "Ozone depletion#Ozone Depletion Potential Env impact mass")
 	)
 
 	//Modify the parameters of Wind_farm
-	CairnAPI::MilpComponentAPI vWind_farm = m_Problem.get_Component("Wind_farm");
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vWind_farm = m_Problem.get_Component("Wind_farm");
 	TESTAPI("Modify the parameters of Wind_farm",
-		vWind_farm.set_SettingValues({
+		vWind_farm->set_SettingValues({
 			{"EnvironmentModel", true},  
-			{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 250}
+			{"Climate change#Global Warming Potential 100 EmbodiedCoefficient_A", 250}
 		})
 	)
 		
@@ -104,7 +108,7 @@ int main()
 		vSolution = m_Problem.run()
 	)
 
-	TESTAPI2("Compare results", 
+	TESTAPIBOOL("Compare results", 
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 	

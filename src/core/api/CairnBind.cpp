@@ -51,7 +51,8 @@ public:
         );
     }
 };
-   
+ 
+
 PYBIND11_MODULE(cairn, m) {
 
     m.doc() = R"X(Cairn is developped by CEA)X";
@@ -78,19 +79,23 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("solvers", &CairnAPI::get_Solvers)
         .def("close_study", &CairnAPI::close_Study, "close the current study");
 
-    py::class_<CairnAPI::OptimProblemAPI>(m, "OptimProblem")        
+    py::class_<CairnAPI::OptimProblemAPI>(m, "OptimProblem")
         .def("export_parameters", &CairnAPI::OptimProblemAPI::export_Parameters, py::arg("fileName") = "", py::arg("encoding") = "UTF-8",
             py::arg("optionsMap") = py::dict(), py::arg("extraData") = py::dict(), "exports the study parameters to a csv file")
+        .def("copy_component", &CairnAPI::OptimProblemAPI::copy_Component, "copy a MilpComponent", py::arg("name"), py::arg("newName"), py::arg("copyLinks") = true)
+        .def("import_group", &CairnAPI::OptimProblemAPI::import_Group, "import a group as json file; returns list of components and buses", py::arg("filename"))
         .def("export_plan", &CairnAPI::OptimProblemAPI::export_PLAN, "exports PLAN results to a csv file", py::arg("filename") = "", py::arg("solNb") = 0)
         .def("add_link", py::overload_cast<CairnAPI::MilpPortAPI&, CairnAPI::BusAPI&>(&CairnAPI::OptimProblemAPI::add),"adds a link between two given ports")
         .def("remove_link", py::overload_cast<CairnAPI::MilpPortAPI&, CairnAPI::BusAPI&>(&CairnAPI::OptimProblemAPI::remove), "removes a given link")
         .def("save_study", &CairnAPI::OptimProblemAPI::save_Study, py::arg("filename"), py::arg("mode") = "", "saves a study with a given name, relative or absolute path (it can also take a mode to position the components e.g. gradient)")
         .def("add_timeseries", py::overload_cast<const std::string&>(&CairnAPI::OptimProblemAPI::add_TimeSeries), "adds a given timeseries file")
+        .def("add_onetimeseries", py::overload_cast<const t_dict&>(&CairnAPI::OptimProblemAPI::add_TimeSeries), "adds one timeseries in dictionary format")
         .def("run", &CairnAPI::OptimProblemAPI::run, py::arg("resultsPath") = "", py::arg("coSim") = false, "runs the optim problem")
+        .def("run_sensitivity", &CairnAPI::OptimProblemAPI::runSensitivity, py::arg("sampling"), py::arg("max_time"), py::arg("indicators"), py::arg("on_iter") = py::none(), "runs sensitivity study")
         .def("create_bus", &CairnAPI::OptimProblemAPI::create_Bus, "creates and returns a new bus with a given name, model and energy carrier, e.g., create_bus('H2_Bus', 'NodeLaw', vH2)")
         .def("get_bus", &CairnAPI::OptimProblemAPI::get_Bus, "returns a given bus")
         .def("remove_bus", py::overload_cast<CairnAPI::BusAPI&>(&CairnAPI::OptimProblemAPI::remove_Bus), "removes a given bus")
-        .def("create_energy_carrier", &CairnAPI::OptimProblemAPI::create_EnergyCarrier, "creates and returns a new energy carrier with a given name and type, e.g., create_energy_carrier('H2', 'FluidH2')")
+        .def("create_energy_carrier", &CairnAPI::OptimProblemAPI::create_EnergyCarrier, py::arg("name"), py::arg("type") = "MaterialCarrier", py::arg("technoType") = "Material", "creates and returns a new energy carrier with a given name and type, e.g., create_energy_carrier('H2', 'MaterialCarrier', 'H2Vector')")
         .def("get_energy_carrier", &CairnAPI::OptimProblemAPI::get_EnergyCarrier, "returns a given energy carrier")
         .def("remove_energy_carrier", py::overload_cast<CairnAPI::EnergyVectorAPI&>(&CairnAPI::OptimProblemAPI::remove_EnergyCarrier), "removes a given energy carrier from the optim problem")
         .def("create_component", &CairnAPI::OptimProblemAPI::create_Component, "creates and returns a new component with a given name and model, e.g., create_component('Elec_Grid', 'GridFree')")
@@ -123,7 +128,7 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("description", &CairnAPI::ParamAPI::get_Description)
         .def_property_readonly("unit", &CairnAPI::ParamAPI::get_Unit)
         .def_property("value", &CairnAPI::ParamAPI::get_Value, &CairnAPI::ParamAPI::set_Value, "get/set value")
-        //.def_property("comment", &CairnAPI::ParamAPI::get_Comment, &CairnAPI::ParamAPI::set_Comment, "get/set comment")
+        .def_property("comment", &CairnAPI::ParamAPI::get_Comment, &CairnAPI::ParamAPI::set_Comment, "get/set comment")
         .def_property_readonly("defaultValue", &CairnAPI::ParamAPI::get_Default)
         .def_property_readonly("min", &CairnAPI::ParamAPI::get_Min)
         .def_property_readonly("max", &CairnAPI::ParamAPI::get_Max)
@@ -132,7 +137,7 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("show_config", &CairnAPI::ParamAPI::getShowConfig)
         .doc() = "Param class.";
 
-    py::class_<CairnAPI::ObjectAPI> (m, "CairnObject")
+    py::class_<CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::ObjectAPI>> (m, "CairnObject")
         .def(py::init())
         .def_property_readonly("name", &CairnAPI::ObjectAPI::get_Name)
         .def_property_readonly("objectType", &CairnAPI::ObjectAPI::get_ObjectType)
@@ -141,24 +146,26 @@ PYBIND11_MODULE(cairn, m) {
         .def("get_setting_value", &CairnAPI::ObjectAPI::get_SettingValue, "returns the value of a given parameter")
         .def("set_setting_value", &CairnAPI::ObjectAPI::set_SettingValue, py::arg("name"), py::arg("value"), py::arg("verify") = true, "sets the value of a given parameter")
         .def("get_settings", &CairnAPI::ObjectAPI::get_SettingsListByType, "returns a list of all (by default), used, optional or mandatory parameter names", py::arg("setLimited") = CairnAPI::ESettingsLimited::all)
-        //.def("get_setting_comment", &CairnAPI::ObjectAPI::get_SettingComment, "returns the comment of a given parameter")
-        //.def("set_setting_comment", &CairnAPI::ObjectAPI::set_SettingComment, py::arg("name"), py::arg("omment"), "sets the omment of a given parameter")
+        .def("get_setting_comment", &CairnAPI::ObjectAPI::get_SettingComment, "returns the comment of a given parameter")
+        .def("set_setting_comment", &CairnAPI::ObjectAPI::set_SettingComment, py::arg("name"), py::arg("comment"), py::arg("verify") = true, "sets the comment of a given parameter")
         .def_property("setting_values", &CairnAPI::ObjectAPI::get_SettingValues, &CairnAPI::ObjectAPI::set_SettingValues, "get/set all parameter values as a dictionary")
-        //.def_property("setting_comments", &CairnAPI::ObjectAPI::get_SettingComments, &CairnAPI::ObjectAPI::set_SettingComments, "get/set all parameter comments as a dictionary")
+        .def_property("setting_comments", &CairnAPI::ObjectAPI::get_SettingComments, &CairnAPI::ObjectAPI::set_SettingComments, "get/set all parameter comments as a dictionary")
         .def_property_readonly("show_config", &CairnAPI::ObjectAPI::get_SettingShowConfig, "returns ShowConfig of a given parameter. The parameter is displayed in the GUI when this ShowConfig is selected in the DataFilter")
         .def_property_readonly("show_configs", &CairnAPI::ObjectAPI::get_ShowConfigList, "returns a list of all ShowConfigs which is used in the GUI DataFilter")
         .def_property_readonly("settings", &CairnAPI::ObjectAPI::get_SettingsList, "returns a list of all parameter names")
+        .def_property_readonly("performance_map_params", &CairnAPI::ObjectAPI::get_PerfParamList, "returns a list of all performance parameters")
         .doc() = "Object class.";
 
-    py::class_<CairnAPI::EnergyVectorAPI, CairnAPI::ObjectAPI>(m, "EnergyVector")
-        .def(py::init <const CairnAPI::OptimProblemAPI&, const std::string&, const std::string&>())        
+    py::class_<CairnAPI::EnergyVectorAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::EnergyVectorAPI>>(m, "EnergyVector")
+        .def(py::init <const CairnAPI::OptimProblemAPI&, const std::string&, const std::string&, const std::string&>())
         .def_property_readonly("type", &CairnAPI::EnergyVectorAPI::get_Type)
+        .def_property_readonly("techno_type", &CairnAPI::EnergyVectorAPI::get_TechnoType)
         .doc() = "EnergyCarrier class. The constructor takes several arguments: \
         arg1: OptimProblemAPI aProblem, the study where the EnergyVector will be added  \
         arg2: string aName to give the name of the energy vector \
         arg3: string aType to give the type of the energy vector (list available thanks to property carrier_types of CairnAPI)";
 
-    py::class_<CairnAPI::MilpPortAPI, CairnAPI::ObjectAPI>(m, "Port")
+    py::class_<CairnAPI::MilpPortAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::MilpPortAPI>>(m, "Port")
         .def(py::init<CairnAPI::MilpComponentAPI&, const std::string&, const CairnAPI::EnergyVectorAPI&, const std::string&, const std::string&>(), 
             py::arg("component"), py::arg("name"), py::arg("carrier"), py::arg("direction") = "DATAEXCHANGE", py::arg("variable") = "")        
         .def("set_carrier", &CairnAPI::MilpPortAPI::set_EnergyCarrier, "sets the energy carrier of the port (takes componenet not name)")
@@ -170,7 +177,7 @@ PYBIND11_MODULE(cairn, m) {
         arg3 (optional): string aDirection (Input, Output or DataExchange) to set the direction of the port\
         arg3 (optional): string aVariable to set the variable of the port";
 
-    py::class_<CairnAPI::BusAPI, CairnAPI::ObjectAPI>(m, "Bus")
+    py::class_<CairnAPI::BusAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::BusAPI>>(m, "Bus")
         .def(py::init<const CairnAPI::OptimProblemAPI&, const std::string&, const std::string&, const CairnAPI::EnergyVectorAPI&>())   
         .def("get_port", &CairnAPI::BusAPI::get_Port, "returns a given port from the component")
         .def("add_port", &CairnAPI::BusAPI::add_Port, py::arg("name"), py::arg("carrier") = CairnAPI::EnergyVectorAPI(),
@@ -182,12 +189,13 @@ PYBIND11_MODULE(cairn, m) {
         .def("get_var_value", &CairnAPI::BusAPI::get_varValue, "returns the result of a given IO for the optimal solution")
         .def("get_var_values", &CairnAPI::BusAPI::get_varValues, "returns the result of all IOs for the optimal solution")
         .def("get_label_value", &CairnAPI::BusAPI::get_LabelValue, "return the value of a given label")
-        .def("set_label_value", &CairnAPI::BusAPI::set_LabelValue, "set the value of a given label")
+        .def("set_label_value", &CairnAPI::BusAPI::set_LabelValue, "sets the value of a given label")
         .def_property_readonly("type", &CairnAPI::BusAPI::get_Type)
         .def_property_readonly("model_class", &CairnAPI::BusAPI::get_ModelClass)   
-        .def_property_readonly("possible_model_classes", &CairnAPI::BusAPI::get_PossibleModelClasses, "a list of model classes possible for this component.")
-        .def_property_readonly("possible_control_types", &CairnAPI::BusAPI::get_PossibleControlValues, "a list of possible time control types for this component.")
-        .def_property_readonly("possible_objective_types", &CairnAPI::BusAPI::get_PossibleObjectiveTypes, "a list of possible time objective types. Only valid for ManualObjective.")
+        .def_property_readonly("carrier", &CairnAPI::BusAPI::get_CarrierName)
+        .def_property_readonly("possible_model_classes", &CairnAPI::BusAPI::get_PossibleModelClasses, "returns a list of model classes possible for this component.")
+        .def_property_readonly("possible_control_types", &CairnAPI::BusAPI::get_PossibleControlValues, "returns a list of possible time control types for this component.")
+        .def_property_readonly("possible_objective_types", &CairnAPI::BusAPI::get_PossibleObjectiveTypes, "returns a list of possible time objective types. Only valid for ManualObjective.")
         .def_property_readonly("ports", &CairnAPI::BusAPI::get_Ports, "returns the list of all port names")
         .def_property_readonly("default_ports", &CairnAPI::BusAPI::get_DefaultPorts, "returns the list of default port names")
         .def_property("label_values", &CairnAPI::BusAPI::get_LabelValues, &CairnAPI::BusAPI::set_LabelValues, "get/set all label values as a dictionary")
@@ -201,7 +209,7 @@ PYBIND11_MODULE(cairn, m) {
         arg3: string aModelName to give the model. Available Bus models are NodeLaw, NodeEquality and ManualObjective \
         arg4: string aEnergyVector to give the energy vector of the bus";
 
-    py::class_<CairnAPI::MilpComponentAPI, CairnAPI::ObjectAPI>(m, "Component")
+    py::class_<CairnAPI::MilpComponentAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::MilpComponentAPI>>(m, "Component")
         .def(py::init<const CairnAPI::OptimProblemAPI&, const std::string&, const std::string&>())        
         .def("get_port", &CairnAPI::MilpComponentAPI::get_Port, "returns a given port from the component")
         .def("add_port", &CairnAPI::MilpComponentAPI::add_Port, py::arg("name"), py::arg("carrier"), 
@@ -215,13 +223,13 @@ PYBIND11_MODULE(cairn, m) {
         .def("get_var_value", &CairnAPI::MilpComponentAPI::get_varValue, "returns the result of a given IO for the optimal solution")
         .def("get_var_values", &CairnAPI::MilpComponentAPI::get_varValues, "returns the result of all IOs for the optimal solution")
         .def("get_label_value", &CairnAPI::MilpComponentAPI::get_LabelValue, "return the value of a given label")
-        .def("set_label_value", &CairnAPI::MilpComponentAPI::set_LabelValue, "set the value of a given label")        
+        .def("set_label_value", &CairnAPI::MilpComponentAPI::set_LabelValue, "sets the value of a given label")        
         .def_property_readonly("type", &CairnAPI::MilpComponentAPI::get_Type)
-        .def_property_readonly("dim_param", &CairnAPI::MilpComponentAPI::get_dimParam,"return the parameter used for dimensionning")
+        .def_property_readonly("dim_param", &CairnAPI::MilpComponentAPI::get_dimParam,"returns the parameter used for dimensionning")
         .def_property_readonly("model_class", &CairnAPI::MilpComponentAPI::get_ModelClass)
-        .def_property_readonly("possible_model_classes", &CairnAPI::MilpComponentAPI::get_PossibleModelClasses, "a list of model classes possible for this component.")
-        .def_property_readonly("possible_control_types", &CairnAPI::MilpComponentAPI::get_PossibleControlValues, "a list of possible time control types for this component.")
-        .def_property_readonly("direction", &CairnAPI::MilpComponentAPI::get_Direction, "return the direction based on the default port. Valid only for components of types Grid and SourceLoad. ")
+        .def_property_readonly("possible_model_classes", &CairnAPI::MilpComponentAPI::get_PossibleModelClasses, "returns a list of model classes possible for this component.")
+        .def_property_readonly("possible_control_types", &CairnAPI::MilpComponentAPI::get_PossibleControlValues, "returns a list of possible time control types for this component.")
+        .def_property_readonly("direction", &CairnAPI::MilpComponentAPI::get_Direction, "returns the direction based on the default port. Valid only for components of types Grid and SourceLoad. ")
         .def_property_readonly("ports", &CairnAPI::MilpComponentAPI::get_Ports, "returns the list of all port names")
         .def_property_readonly("default_ports", &CairnAPI::MilpComponentAPI::get_DefaultPorts, "returns the list of default port names")                
         .def_property("label_values", &CairnAPI::MilpComponentAPI::get_LabelValues, &CairnAPI::MilpComponentAPI::set_LabelValues, "get/set all label values as a dictionary")
@@ -237,7 +245,7 @@ PYBIND11_MODULE(cairn, m) {
         arg3: string aModelName to give the model (list available thanks to property all_models of CairnAPI). \
               Note that, to create componenets NodeLaw, NodeEquality and ManualObjective use BusAPI";
 
-    py::class_<CairnAPI::TecEcoAnalysisAPI, CairnAPI::ObjectAPI>(m, "TecEcoAnalysis")   
+    py::class_<CairnAPI::TecEcoAnalysisAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::TecEcoAnalysisAPI>>(m, "TecEcoAnalysis")
         .def(py::init())
         .def("get_port", &CairnAPI::TecEcoAnalysisAPI::get_Port, "returns a given port from the component")
         .def("add_port", &CairnAPI::TecEcoAnalysisAPI::add_Port,
@@ -260,11 +268,13 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("indicators_units", &CairnAPI::TecEcoAnalysisAPI::get_IndicatorUnits)
         .doc() = "TecEcoAnalysis class.";
 
-    py::class_<CairnAPI::SimulationControlAPI, CairnAPI::ObjectAPI>(m, "SimulationControl")
+    py::class_<CairnAPI::SimulationControlAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::SimulationControlAPI>>(m, "SimulationControl")
         .def(py::init())       
+        .def_property_readonly("reading_modes", &CairnAPI::SimulationControlAPI::get_ReadingModes, "returns a list of possible timeseries reading mode.")
+        .def_property_readonly("rolling_modes", &CairnAPI::SimulationControlAPI::get_RollingModes, "returns a list of possible rolling modes.")
         .doc() = "SimulationControl class.";
 
-    py::class_<CairnAPI::SolverAPI, CairnAPI::ObjectAPI>(m, "Solver")
+    py::class_<CairnAPI::SolverAPI, CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::SolverAPI>>(m, "Solver")
         .def(py::init())        
         .doc() = "Solver class.";
 

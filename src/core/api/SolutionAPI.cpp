@@ -28,6 +28,8 @@ void CairnAPI::SolutionAPI::set_Results(int a_Step)
 			m_timeSeries[s_Time] = t_values(ts);
 			for (auto& iPublishedVariable : vListPublishedVariables) {
 				ZEVariables* var = iPublishedVariable.second;
+				if (!var->IsUsed())
+					continue;
 				m_timeSeries[var->Name()] = t_values(ts);	
 			}			
 		}
@@ -45,6 +47,8 @@ void CairnAPI::SolutionAPI::set_Results(int a_Step)
 			
 			for (auto& iPublishedVariable : vListPublishedVariables) {			
 				ZEVariables* var = iPublishedVariable.second;
+				if (!var->IsUsed())
+					continue;
 				std::string zeVarName = var->Name();
 				if (var->ptrVariable()->size() > 0)	{
 					m_timeSeries[var->Name()][j+previousSize] = var->ptrVariable()->at(j + npdtPast);					

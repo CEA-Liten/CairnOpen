@@ -3,7 +3,7 @@
 
 FlagParam::FlagParam()
 {
-    m_Value = false;
+    m_Value = true;
     p_Value = nullptr;
     m_Function.Type = eFTypeUndefined;
 }
@@ -28,7 +28,7 @@ void FlagParam::set_Value(t_flag a_Flag)
     }
 }
 
-bool FlagParam::get_Value()
+bool FlagParam::get_Value() const
 {
     if (m_ExtFunct.pModel && m_ExtFunct.pFunct) {
         return (*m_ExtFunct.pFunct)(m_ExtFunct.pModel);

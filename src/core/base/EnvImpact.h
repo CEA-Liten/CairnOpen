@@ -38,7 +38,7 @@ public:
         const MIPModeler::MIPExpression& aExpInstalled);
 
     void computeEnvImpactContributionCost();
-    void evaluateEnvGreyImpact(const double* optSol);
+    void evaluateEmbodiedImpact(const double* optSol);
 
     void setEnvImpactCost(double aEnvImpactCost) { mEnvImpactCost = aEnvImpactCost; }
     
@@ -115,13 +115,13 @@ public:
         }
     }
 
-    bool PiecewiseEnvGreyContentCoeff() const { return mPiecewiseEnvGreyContentCoeff; }
-    bool TryRelaxationEnvGreyContentCoeff() const { return mTryRelaxationEnvGreyContentCoeff; }
+    bool PiecewiseEnvGreyContentCoeff() const { return mPiecewiseEmbodiedCoeff; }
+    bool TryRelaxationEnvGreyContentCoeff() const { return mTryRelaxationEmbodiedCoeff; }
 
     MIPModeler::MIPData1D CapacitySetPoint() const { return mImpactCapacitySetPoint; }
     MIPModeler::MIPData1D SetPoint() const { return mImpactSetPoint; }
 
-    double EnvGreyContentOffset() const { return mEnvGreyContentOffset; }
+    double EnvGreyContentOffset() const { return mEmbodiedOffset; }
 
     bool isNewlySelected() const { return mNewlySelected; }
     void markAsOld() { mNewlySelected = false; }
@@ -135,15 +135,15 @@ protected:
 
     TechnicalSubModel* mParentModel;
 
-    bool mPiecewiseEnvGreyContentCoeff;
-    bool mTryRelaxationEnvGreyContentCoeff;
+    bool mPiecewiseEmbodiedCoeff;
+    bool mTryRelaxationEmbodiedCoeff;
     MIPModeler::MIPData1D mImpactCapacitySetPoint;
     MIPModeler::MIPData1D mImpactSetPoint;
 
-    double mEnvGreyContentCoefficient; /** multiplying coefficient **/
-    double mEnvGreyContentOffset;      /** offset coefficient **/
-    double mEnvGreyReplacement;
-    double mEnvGreyReplacementConstant;
+    double mEmbodiedCoefficient; /** multiplying coefficient **/
+    double mEmbodiedOffset;      /** offset coefficient **/
+    double mEmbodiedReplacement;
+    double mEmbodiedReplacementOffset;
 
     std::vector<double> mEnvContentCoefficients;           /** Environmental Emission in kg per input flow unit : vector as there can be several ports **/
     std::vector<double> mEnvContentOffsets;                /** Environmental Emission in kg per time **/

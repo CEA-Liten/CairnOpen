@@ -136,7 +136,7 @@
 				"nodeName": "Electricity",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"componentWidth": 40,
@@ -158,6 +158,10 @@
 					{
 						"key": "BuyPriceSeasonal",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"optionListJson": [
@@ -457,7 +461,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -596,7 +600,7 @@
 						"value": 0.1
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					}
 				],

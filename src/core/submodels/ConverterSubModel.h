@@ -46,6 +46,12 @@ public:
         // ----------- Indicators specific for Converters -----------
 
         mInputIndicators->addIndicator("Installed Size", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Size");
+        if (mWeight < 0) {
+            mInputIndicators->addIndicator("Optimal Weight", &mWeightResult, exp, "Component optimal weight", "-", "Weight");
+        }
+        else {
+            mInputIndicators->addIndicator("Weight", &mWeightResult, exp, "Component weight", "-", "Weight");
+        }
         mInputIndicators->addIndicator("Running time at power >0.", &mRunningTime, exp, "Running time", "h", "RunningTime");
         mInputIndicators->addIndicator("Running time availability", &mRunningTimeAvlblt, exp, "Maximum possible running time", "-", "RunningTimeAvailable");
         if (mUseAgeing) {
@@ -120,10 +126,15 @@ public:
     void computeDefaultIndicators(const double* optSol);
 
     //used in MultiConverter and Cogeneration
-    void cleanFluxIOs(std::string name); 
+    void cleanFluxIOs(const std::string& base);
     virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr);
     virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr);
     
+    inline std::string fluxName(const std::string& base, int index) const
+    {
+        return base + std::to_string(index + 1);
+    }
+
     inline double EfficiencyAgeing() const {
         if (mAgeingModel && mUseAgeing) {
             const double efficiencyAgeing = mAgeingModel->EfficiencyAgeing();

@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -14,6 +14,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	string const Study = "test_compressor";
@@ -52,7 +56,7 @@ int main()
 		vSolution = m_Problem.run()
 	)
 
-	TESTAPI2("Compare results",
+	TESTAPIBOOL("Compare results",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 	

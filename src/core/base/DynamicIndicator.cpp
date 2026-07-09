@@ -89,7 +89,7 @@ void DynamicIndicator::compile()
     if(!mParser.compile(mRenamedFormula, mExpression)){
         //mExpression.release();
         //mSymbolTable.clear();        
-        cWarning() << "Error while compiling the formula (" << mFormula << ") of dynamic indicator " << mName << ": \n" << mParser.error();
+        cError() << "Error while compiling the formula (" << mFormula << ") of dynamic indicator " << mName << ": \n" << mParser.error();
     }
 }
 

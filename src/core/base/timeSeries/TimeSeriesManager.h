@@ -2,9 +2,11 @@
 #define TIMESERIESMANAGER_H
 #include "MilpData.h"
 #include "ZEVariables.h"
-#include "TimeSeriesReader.h"
+#include "TimeSeriesValues.h"
 #include "OrUnitsConverter.h"
 #include "StudyPathManager.h"
+
+#include <unordered_set>
 
 class TimeSeriesManager {
 public:
@@ -13,17 +15,24 @@ public:
 
 	void importTS(const std::vector<std::wstring>& aTSfileList, const t_mapExchange& aListSubscribedVariables, 
 		bool isCoSim = false, const int& iShift = 0, bool isCheckTimeSeriesUnits = false);
-	void importTS(const t_mapExchange& aListSubscribedVariables);
-
+	void importTS(const t_mapExchange& aListSubscribedVariables,
+		bool isCoSim = false, const int& iShift = 0, bool isCheckTimeSeriesUnits = false);
+	
 	class OrCheckUnits CheckUnitConsistency(const std::string& a_FileUnit, const std::string& a_Unit, bool a_Check = true);
 	class OrCheckUnits CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check = true);
 
 	inline void setReaderKind(const std::string& a_Kind) { m_ReaderKind = a_Kind; };
 
+	void addTS(const std::wstring& a_fileName);
+	void addTS(const t_dict& a_TS);
+	bool checkTS(string &a_ErrMsg);
+	void clearTS();
+
 protected:
-	bool importTS(const std::wstring& aTSfile, const t_mapExchange& aListSubscribedVariables, 
-		const int& iShift, std::vector<std::string>& aListNotFoundNames, bool isCheckTimeSeriesUnits = false);
-	void readTimes(const std::wstring& aTSfile, const int& iShift, std::vector<double>& aTimes);
+	bool importTS(TimeSeriesReader& a_Reader, const std::wstring& aTSfile, const t_mapExchange& aListSubscribedVariables,
+		const int& iShift, std::unordered_set<std::string>& aNotFoundNames, bool isCheckTimeSeriesUnits = false);
+
+	void readTimes(TimeSeriesReader& a_Reader, const std::wstring& aTSfile, const int& iShift, std::vector<double>& aTimes);
 	
 	void extrapolation(const std::wstring& aTSfile, const int& iShift, const TimeSeriesReader::TimeSeriesDescrp &aHeader, const std::vector<double>& aTimes, std::vector<double>& aValues);
 	void conversion(const OrCheckUnits& checkUnits, std::vector<double>& aValues);
@@ -35,11 +44,13 @@ protected:
 
 	MilpData &r_MilpData;
 	TimeSeriesReader* p_Reader{ nullptr };
+	TimeSeriesValues m_TSValues;
 
 	int m_rowShift{ 0 };
 	int m_npdtFutur{ 0 };
 
 	std::string m_ReaderKind;
+	std::vector<std::wstring> m_TSfileList;	
 };
 
 #endif // ! TIMESERIESMANAGER_H

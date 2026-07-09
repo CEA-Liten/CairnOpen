@@ -18,6 +18,8 @@ public:
     virtual void computeInitialData();
     virtual void computeAllIndicators(const double* optSol);
 
+    void defineMainCarrier() override; 
+
     void declareDefaultModelConfigurationParameters() {
         TechnicalSubModel::declareDefaultModelConfigurationParameters();
 
@@ -29,29 +31,27 @@ public:
     void declareDefaultModelParameters() {
         TechnicalSubModel::declareDefaultModelParameters();
 
-        addParameter("MaxFlow", &mMaxFlux, 1.e4, true, true, "Maximum allowed extraction or injection", mMainCarrier->pFluxUnit());
-        addParameter("MinFlow", &mMinFlux, 0., false, true, "Minimum allowed extraction or injection", mMainCarrier->pFluxUnit());
+        addParameter("MaxFlow", &mMaxFlux, 1.e4, true, true, "Maximum allowed extraction or injection", mPortGridFlow->pFluxUnit());
+        addParameter("MinFlow", &mMinFlux, 0., false, true, "Minimum allowed extraction or injection", mPortGridFlow->pFluxUnit());
 
-        addTimeSeries("UseProfileSellPrice", &mSellPrice, SExtFunctionFlag({ &isInjection, this }), SExtFunctionFlag({ &isInjection, this }), "Grid specific profile sell price overwriting EnergyVector default value or profile", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }) );
-        addTimeSeries("UseProfileBuyPrice", &mBuyPrice, SExtFunctionFlag({ &isExtraction, this }), SExtFunctionFlag({ &isExtraction, this }), "Grid specific Profile buy price overwriting EnergyVector default value or profile", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
-        addTimeSeries("UseProfileBuyPriceSeasonal", &mBuyPriceSeasonal, SFunctionFlag({ eFTypeNotAnd, {}, { &mSeasonalPrevisions}, SExtFunctionFlag({ &isExtraction, this }) }), SExtFunctionFlag({ &isExtraction, this }), "Time Series of Purchase 'Extraction' price of energy - See energy vector", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }), "TimeSeriesForecast");
-        addTimeSeries("UseVariableMaximumGridFlow", &mGridVariableMaxFlow, false, true, "Time Series of grid maximum flow extraction or injection", mMainCarrier->pFluxUnit());
+        addTimeSeries("UseProfileSellPrice", &mSellPrice, SExtFunctionFlag({ &isInjection, this }), SExtFunctionFlag({ &isInjection, this }), "Grid specific profile sell price overwriting EnergyVector default value or profile", SFunctionUnit({ eFTypeDivision, { pCurrency(), mPortGridFlow->pStorageUnit()} }) );
+        addTimeSeries("UseProfileBuyPrice", &mBuyPrice, SExtFunctionFlag({ &isExtraction, this }), SExtFunctionFlag({ &isExtraction, this }), "Grid specific Profile buy price overwriting EnergyVector default value or profile", SFunctionUnit({ eFTypeDivision, { pCurrency(), mPortGridFlow->pStorageUnit()} }));
+        addTimeSeries("UseProfileBuyPriceSeasonal", &mBuyPriceSeasonal, SFunctionFlag({ eFTypeNotAnd, {}, { &mSeasonalPrevisions}, SExtFunctionFlag({ &isExtraction, this }) }), SExtFunctionFlag({ &isExtraction, this }), "Time Series of Purchase 'Extraction' price of energy - See energy vector", SFunctionUnit({ eFTypeDivision, { pCurrency(), mPortGridFlow->pStorageUnit()} }), "TimeSeriesForecast");
+        addTimeSeries("UseVariableMaximumGridFlow", &mGridVariableMaxFlow, false, true, "Time Series of grid maximum flow extraction or injection", mPortGridFlow->pFluxUnit());
     }
 
     void declareDefaultModelInterface() {
-        /*
-        * Grid is expected to have only one default port: the main carrier should be the EnergyVector of this port.
-        * If it is not the case, then re-visit MilpComponent::defineMainCarrier() or the Grid Model in question.
-        */
-        assert(mPortGridFlow != nullptr);
-        assert(mPortGridFlow->getCarrier() == mMainCarrier);
+
+        if (!mPortGridFlow) {
+            throw Cairn_Exception(Name() + ": the default Flow port of the Grid is not defined!", -1); 
+        }
 
         TechnicalSubModel::declareDefaultModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxFlow", &mExpSizeMax, true, mMainCarrier->pFluxUnit()); /** Sizing Grid flow - Name must be that used for mInputParam MaxFlow imposed value !*/
-        addIO("GridFlow", &mExpFlux, true, mMainCarrier->pFluxUnit());       /** Grid flow injected or extracted - Positive value means extraction (injection) if ExtractFromGrid (InjectToGrid) field is used */
-        addIO("GridPrice", &mExpGridPrice, true, SFunctionUnit({ eFTypeDivision, {mMainCarrier->pFluxUnit(), pCurrency()} }));
+        addSizeMaxIO("MaxFlow", &mExpSizeMax, true, mPortGridFlow->pFluxUnit()); /** Sizing Grid flow - Name must be that used for mInputParam MaxFlow imposed value !*/
+        addIO("GridFlow", &mExpFlux, true, mPortGridFlow->pFluxUnit());       /** Grid flow injected or extracted - Positive value means extraction (injection) if ExtractFromGrid (InjectToGrid) field is used */
+        addIO("GridPrice", &mExpGridPrice, true, SFunctionUnit({ eFTypeDivision, { mPortGridFlow->pFluxUnit(), pCurrency()} }));
     }
 
     void declareDefaultModelIndicators(bool* exp) {

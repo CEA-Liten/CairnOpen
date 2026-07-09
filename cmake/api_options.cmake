@@ -11,6 +11,7 @@ set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 option(WITH_TESTING "Build tests. Default = ON" OFF)
 option(WITH_PYBIND "Cairn python binding" ON)
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" OFF)
+option(WITH_PROFILING "Enable runtime profiling instrumentation" ON)
 
 # TODO!!
 set(WARNINGS_LEVEL 0 CACHE INTERNAL "Set compiler diagnostics level. 0: no warnings, 1: developer's minimal warnings, 2: strict level, warnings to errors and so on. Default =0")

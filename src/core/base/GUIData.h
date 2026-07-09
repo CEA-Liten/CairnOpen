@@ -18,8 +18,8 @@ public:
     GUIData(CairnObject *aParent);
     ~GUIData();
 
-    void doInit(const std::string aNodeType, const std::string aNodeTechnoType, 
-        const std::string aComponentType, const std::map<std::string, std::string> paramMap = {}) ;
+    void doInit(const std::string& aNodeType, const std::string& aNodeTechnoType,
+        const std::string& aComponentType, const t_mapParamData& paramMap = {});
 
     int getXpos() const {return mXpos ;}
     int getYpos() const {return mYpos ;}
@@ -43,7 +43,9 @@ public:
  	InputParam* getGuiInputParam() { return mGuiInputParam; }
 
     void declareGuiInputParam();
-    void setGuiInputParam(const std::map<std::string, std::string> paramMap);protected:
+    void setGuiInputParam(const t_mapParamData& paramMap);
+
+protected:
 
     uint mId ;
 

@@ -1,44 +1,26 @@
 #include "CairnAPIUtils.h"
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "UtilsJson.h"
-#include "Utils.h"
+
+#include "StudyCTest.h"
 #include <iomanip>
 
 int main()
 {
-	string const StudyName = "createStudy";
-	string const StudyRoot = TEST_RESULTS + (std::string)"/createStudy/";
+	CairnAPI m_Cairn;	
+	StudyCTest vTest("formation_cairn", "createStudy");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	string const ScenarioName = "scenario1";	
+	string const vFileName_saved = vTest.get_ResPrefixFile() + "_saved.json";
+	
 
-	string const vFileName = StudyRoot + StudyName + ".json";
-	string const TimeseriesFileName = StudyRoot + (std::string)"/formation_cairn_dataseries.csv";
-	string const ScenarioName = "scenario1";
-	string const ResultFileName = StudyRoot + ScenarioName + "/" + StudyName + "_results_Results.csv";
-
-	string const vFileName_saved = StudyRoot + StudyName + "_saved.json";
-	string const ResultFileName_saved = StudyRoot + StudyName + "_saved_results_Results.csv";
-
-	if (fs::exists(StudyRoot)) {
-		fs::remove_all(StudyRoot);
-	}
-	if (!fs::exists(TEST_RESULTS)) {
-		fs::create_directory(TEST_RESULTS);
-	}
-	fs::create_directory(StudyRoot);
-	fs::copy_file(TEST_DATA + (std::string)"/formation_cairn_dataseries.csv", TimeseriesFileName);
-
-	string const ReferenceResultFileName = TEST_DATA + (std::string)"/formation_cairn_Results_Reference.csv";
-
-	int liRet = 0;
-
-	CairnAPI m_Cairn;
 	cout << "Creation of a new study" << endl;
-	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.create_Study(StudyRoot + StudyName);
+	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.create_Study(vTest.get_StudyPath().string() + "/" + vTest.get_Study());
 
 	// Creation of TechEcoAnalysis	
-	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
 	TESTAPI("set_TecEcoAnalysisSettings",
-		vTecEcoAnalysis.set_SettingValues(
+		vTecEcoAnalysis->set_SettingValues(
 			{
 				{"DiscountRate", 0.07},
 				{"NbYear", 20},
@@ -49,9 +31,9 @@ int main()
 	)
 
 	// Creation of SimulationControl
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
 	TESTAPI("create_simulationcontrol",
-		vSimulationControl.set_SettingValues(
+		vSimulationControl->set_SettingValues(
 			{
 				{"ExportJson", 1},
 				{"ExportResults", 1},
@@ -62,11 +44,12 @@ int main()
 	)
 
 	// Creation of Solver
-	CairnAPI::SolverAPI vSolver = m_Problem.get_Solver();
+	std::shared_ptr < CairnAPI::SolverAPI> vSolver = m_Problem.get_Solver();
+
 	TESTAPI("create_MIPSolver",
-		vSolver.set_SettingValues(
+		vSolver->set_SettingValues(
 			{
-				{"Solver", "Cplex"},
+				{"Solver", vSolverType},
 				{"WriteLp", "YES"},
 				{"Gap", 0.001},
 				{"TimeLimit", 0}
@@ -75,53 +58,51 @@ int main()
 
 	//Create EnergyVectors
 	CairnAPI::EnergyVectorAPI vElec(m_Problem, "ElectricityDistrib", "Electrical");
-	TESTAPI("reset Potential ElectricityDistrib", vElec.set_SettingValue("Potential", 220))
+	TESTAPI("reset Potential ElectricityDistrib", vElec.set_SettingValue("Voltage", 221))
 	TESTAPI("set UseProfileBuyPrice of ElectricityDistrib",
 			vElec.set_SettingValue("UseProfileBuyPrice", "Elec_Grid.ElectricityPrice"))
 
-	CairnAPI::EnergyVectorAPI vH2;
-	TESTAPI("create EnergyVector H2", vH2 = m_Problem.create_EnergyCarrier("H2", "FluidH2"))
+	std::shared_ptr < CairnAPI::EnergyVectorAPI> vH2;
+	TESTAPI("create EnergyVector H2", vH2 = m_Problem.create_EnergyCarrier("H2", "Material", "H2Vector"))
 	TESTAPI("set parameters of EnergyVector H2",
-		vH2.set_SettingValues(
+		vH2->set_SettingValues(
 			{
-				{"Potential", 30},
+				{"Pressure", 30},
 				{"LHV", 0.03332},
-				{"RHO", 0.0899},
-				{"IsMassCarrier", true},
-				{"IsFuelCarrier", true}
+				{"RHO", 0.0899}			
 			})
 	)
 
 	t_list vEVs = m_Problem.get_EnergyCarriers();
 	t_list vRef = { "H2","ElectricityDistrib" };
-	TESTAPI2("check list Energy Vector", TestUtils::compare_lists(vRef, vEVs))
+	TESTAPIBOOL("check list Energy Vector", TestUtils::compare_lists(vRef, vEVs))
 
 	// Adding a component
 	// -------------------------------------------------------------------
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { }))
+	TESTAPIBOOL("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { }))
 
 	CairnAPI::MilpComponentAPI vELY_PEM(m_Problem, "ELY_PEM", "Electrolyzer");
 
 	t_list vELY_PEM_Ports = vELY_PEM.get_Ports();
 	t_list vELY_PEM_DefaultPorts = vELY_PEM.get_DefaultPorts();
 
-	TESTAPI2("Default ports", TestUtils::compare_lists(vELY_PEM_Ports, vELY_PEM_DefaultPorts));
+	TESTAPIBOOL("Default ports", TestUtils::compare_lists(vELY_PEM_Ports, vELY_PEM_DefaultPorts));
 
-	CairnAPI::MilpPortAPI vELY_PEM_R0;
+	std::shared_ptr < CairnAPI::MilpPortAPI> vELY_PEM_R0;
 	TESTAPI("get default port PortR0 of ELY_PEM", vELY_PEM_R0 = vELY_PEM.get_Port("PortR0"))
-	TESTAPI("set the EnergyCarrier of the port", vELY_PEM_R0.set_EnergyCarrier(vH2))
-	vELY_PEM_R0.set_SettingValues({
+	TESTAPI("set the EnergyCarrier of the port", vELY_PEM_R0->set_EnergyCarrier(*vH2))
+	vELY_PEM_R0->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "H2MassFlowRate"}
 		});
 
-	TESTAPI2("Check if it is possible to delete default port",
-		TestUtils::compare_scalar(vELY_PEM.remove_Port(vELY_PEM_R0), false, eBool)
+	TESTAPIBOOL("Check if it is possible to delete default port",
+		TestUtils::compare_scalar(vELY_PEM.remove_Port(*vELY_PEM_R0), false, eBool)
 	)
 
-	CairnAPI::MilpPortAPI vELY_PEM_L0 = vELY_PEM.get_Port("PortL0");
-	vELY_PEM_L0.set_EnergyCarrier(vH2); // To be changed below
-	vELY_PEM_L0.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vELY_PEM_L0 = vELY_PEM.get_Port("PortL0");
+	vELY_PEM_L0->set_EnergyCarrier(*vH2); // To be changed below
+	vELY_PEM_L0->set_SettingValues({
 		{"Direction", "INPUT"},
 		{"Variable", "UsedPower"}
 		});
@@ -133,14 +114,14 @@ int main()
 		{ "MaxPower", "-30" },
 		{ "MinPower", "0" },
 		{"EnvironmentModel", true},  
-		{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 100},
-		{"Climate change#Global Warming Potential 100 EnvGreyContentOffset_B", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacement", 10}, 
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacementConstant", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentOffset_B", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacement", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacementConstant", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedCoefficient_A", 100},
+		{"Climate change#Global Warming Potential 100 EmbodiedOffset_B", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedReplacement", 10}, 
+		{"Climate change#Global Warming Potential 100 EmbodiedReplacementOffset", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedCoefficient_A", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedOffset_B", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedReplacement", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedReplacementOffset", 0},
 		{"PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 0},  
 		{"PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
 	    {"PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0},        
@@ -152,10 +133,10 @@ int main()
 		}
 	);
 
-	TESTAPI("Change EnergyVector of vELY_PEM", vELY_PEM_L0.set_EnergyCarrier(vElec))
+	TESTAPI("Change EnergyVector of vELY_PEM", vELY_PEM_L0->set_EnergyCarrier(vElec))
 
 	//Verify Get and Set methods
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
@@ -163,30 +144,30 @@ int main()
 		vELY_PEM.set_SettingValue("Capex", 100000.0);
 	)
 
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 100000.0, eDouble)
 	)
 
 	vELY_PEM.set_SettingValue("Capex", 480000.0);
 
-	vELY_PEM_R0.set_SettingValue("Coeff", 2.0);
+	vELY_PEM_R0->set_SettingValue("Coeff", 2.0);
 
-	TESTAPI2("Verify the value of ELY_PEM.PortR0.Coeff",
-		TestUtils::compare_scalar(vELY_PEM_R0.get_SettingValue("Coeff"), 2.0, eDouble)
+	TESTAPIBOOL("Verify the value of ELY_PEM.PortR0.Coeff",
+		TestUtils::compare_scalar(vELY_PEM_R0->get_SettingValue("Coeff"), 2.0, eDouble)
 	)
 
-	vELY_PEM_R0.set_SettingValue("Coeff", 1.0);
+	vELY_PEM_R0->set_SettingValue("Coeff", 1.0);
 
 	//Verify componenet list and port list
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { "ELY_PEM" }))
+	TESTAPIBOOL("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { "ELY_PEM" }))
 
 	// Adding a component
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vElecGrid(m_Problem, "Elec_Grid", "GridFree");
 
-	CairnAPI::MilpPortAPI vElecGrid_R0 = vElecGrid.get_Port("PortR0");
-	vElecGrid_R0.set_EnergyCarrier(vElec);
-	vElecGrid_R0.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vElecGrid_R0 = vElecGrid.get_Port("PortR0");
+	vElecGrid_R0->set_EnergyCarrier(vElec);
+	vElecGrid_R0->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "GridFlow"}
 		});
@@ -195,14 +176,14 @@ int main()
 		{"MaxFlow","400"},
 		{"Direction", "ExtractFromGrid"},
 		{"EnvironmentModel", true},  
-		{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyContentOffset_B", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacement", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacementConstant", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentOffset_B", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacement", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacementConstant", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedCoefficient_A", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedOffset_B", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedReplacement", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedReplacementOffset", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedCoefficient_A", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedOffset_B", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedReplacement", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedReplacementOffset", 0},
 		{"PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 20},
 		{"PortR0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
 		{"PortR0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0.5},
@@ -212,16 +193,16 @@ int main()
 
 	// Adding a component
 	// -------------------------------------------------------------------
-	CairnAPI::MilpComponentAPI vElecGridInject = m_Problem.create_Component("Elec_Grid_Inject", "GridFree");
+	std::shared_ptr < CairnAPI::MilpComponentAPI> vElecGridInject = m_Problem.create_Component("Elec_Grid_Inject", "GridFree");
 
-	CairnAPI::MilpPortAPI vElecGridInject_R0 = vElecGridInject.get_Port("PortR0");
-	vElecGridInject_R0.set_EnergyCarrier(vElec);
-	vElecGridInject_R0.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vElecGridInject_R0 = vElecGridInject->get_Port("PortR0");
+	vElecGridInject_R0->set_EnergyCarrier(vElec);
+	vElecGridInject_R0->set_SettingValues({
 		{"Direction", "INPUT"},
 		{"Variable", "GridFlow"}
 	});
 
-	vElecGridInject.set_SettingValues({
+	vElecGridInject->set_SettingValues({
 		{"Direction", "InjectToGrid"} ,
 		  {"MaxFlow", "1500000"}
 		}
@@ -229,16 +210,16 @@ int main()
 
 	// Adding a component
 	// -------------------------------------------------------------------
-	CairnAPI::MilpComponentAPI vH2_Load = m_Problem.create_Component("H2_Load", "SourceLoad");
+	std::shared_ptr < CairnAPI::MilpComponentAPI> vH2_Load = m_Problem.create_Component("H2_Load", "SourceLoad");
 
-	CairnAPI::MilpPortAPI vH2_Load_L0 = vH2_Load.get_Port("PortL0");
-	vH2_Load_L0.set_EnergyCarrier(vH2);
-	vH2_Load_L0.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vH2_Load_L0 = vH2_Load->get_Port("PortL0");
+	vH2_Load_L0->set_EnergyCarrier(*vH2);
+	vH2_Load_L0->set_SettingValues({
 		{"Direction", "INPUT"},
 		{"Variable", "SourceLoadFlow"}
 	});
 
-	vH2_Load.set_SettingValues({
+	vH2_Load->set_SettingValues({
 		{"Direction", "Sink" },
 		{"LPModelONLY", false},
 		{"Weight", "1"},
@@ -255,9 +236,9 @@ int main()
 	CairnAPI::MilpComponentAPI vWind_farm(m_Problem, "Wind_farm", "SourceLoad");
 
 
-	CairnAPI::MilpPortAPI vWind_farm_L0 = vWind_farm.get_Port("PortL0");
-	vWind_farm_L0.set_EnergyCarrier(vElec);
-	vWind_farm_L0.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vWind_farm_L0 = vWind_farm.get_Port("PortL0");
+	vWind_farm_L0->set_EnergyCarrier(vElec);
+	vWind_farm_L0->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "SourceLoadFlow"}
 	});
@@ -270,14 +251,14 @@ int main()
 		{"Weight", "-1"},
 		{"UseProfileLoadFlux","WindFarmProduction"},
 		{"EnvironmentModel", true},
-		{"Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A", 250},
-		{"Climate change#Global Warming Potential 100 EnvGreyContentOffset_B", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacement", 0},
-		{"Climate change#Global Warming Potential 100 EnvGreyReplacementConstant", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A", 50},
-		{"Acidification#Accumulated Exceedance EnvGreyContentOffset_B", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacement", 0},
-		{"Acidification#Accumulated Exceedance EnvGreyReplacementConstant", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedCoefficient_A", 250},
+		{"Climate change#Global Warming Potential 100 EmbodiedOffset_B", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedReplacement", 0},
+		{"Climate change#Global Warming Potential 100 EmbodiedReplacementOffset", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedCoefficient_A", 50},
+		{"Acidification#Accumulated Exceedance EmbodiedOffset_B", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedReplacement", 0},
+		{"Acidification#Accumulated Exceedance EmbodiedReplacementOffset", 0},
 		{"PortL0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A", 0},
 		{"PortL0.Climate change#Global Warming Potential 100 EnvContentOffset_B", 0},
 		{"PortL0.Acidification#Accumulated Exceedance EnvContentCoefficient_A", 0},
@@ -288,9 +269,9 @@ int main()
 	// -------------------------------------------------------------------
 	CairnAPI::MilpComponentAPI vH2_Tank(m_Problem, "H2_Tank", "StorageGen");
 
-	CairnAPI::MilpPortAPI vH2_Tank_L0 = vH2_Tank.get_Port("PortL0");
-	vH2_Tank_L0.set_EnergyCarrier(vH2);
-	vH2_Tank_L0.set_SettingValues({
+	std::shared_ptr < CairnAPI::MilpPortAPI> vH2_Tank_L0 = vH2_Tank.get_Port("PortL0");
+	vH2_Tank_L0->set_EnergyCarrier(*vH2);
+	vH2_Tank_L0->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "Flow"}
 	});
@@ -317,20 +298,20 @@ int main()
 	CairnAPI::BusAPI vElec_Bus(m_Problem, "Elec_Bus", "NodeLaw", vElec);
 
 	CairnAPI::BusAPI vH2_Bus;
-	TESTAPI("add H2_Bus", m_Problem.create_Bus("H2_Bus", "NodeLaw", vH2))
+	TESTAPI("add H2_Bus", m_Problem.create_Bus("H2_Bus", "NodeLaw", *vH2))
 
 	// création link
-	vElec_Bus = m_Problem.get_Bus("Elec_Bus");
-	vH2_Bus = m_Problem.get_Bus("H2_Bus");
+	vElec_Bus = *m_Problem.get_Bus("Elec_Bus");
+	vH2_Bus = *m_Problem.get_Bus("H2_Bus");
 
-	m_Problem.add(vELY_PEM_L0, vElec_Bus);	
-	m_Problem.add(vElecGrid_R0, vElec_Bus);
-	m_Problem.add(vWind_farm_L0, vElec_Bus);
-	m_Problem.add(vElecGridInject_R0, vElec_Bus);
+	m_Problem.add(*vELY_PEM_L0, vElec_Bus);	
+	m_Problem.add(*vElecGrid_R0, vElec_Bus);
+	m_Problem.add(*vWind_farm_L0, vElec_Bus);
+	m_Problem.add(*vElecGridInject_R0, vElec_Bus);
 
-	m_Problem.add(vELY_PEM_R0, vH2_Bus);
-	m_Problem.add(vH2_Tank_L0, vH2_Bus);
-	m_Problem.add(vH2_Load_L0, vH2_Bus);
+	m_Problem.add(*vELY_PEM_R0, vH2_Bus);
+	m_Problem.add(*vH2_Tank_L0, vH2_Bus);
+	m_Problem.add(*vH2_Load_L0, vH2_Bus);
 	
 	t_list vComps = m_Problem.get_Components();
 	t_list vBuses = m_Problem.get_Buses();
@@ -350,20 +331,21 @@ int main()
 
 	vEVs = m_Problem.get_EnergyCarriers();
 
-	TESTAPI("Write Model File in the file path : " + vFileName,
+	TESTAPI("Write Model File in the file path : " + vFileName_saved,
 		m_Problem.save_Study(vFileName_saved)
 	)
 
-	TESTAPI("Read the Timeseries from the file path : " + TimeseriesFileName,
-		m_Problem.add_TimeSeries(TimeseriesFileName)
+	TESTAPI("Read the Timeseries from the file path: " + vTest.get_TimeseriesFileName(),
+		m_Problem.add_TimeSeries(vTest.get_TimeseriesFileName())
 	)
 
 	CairnAPI::SolutionAPI vSolution;
 	TESTAPI("Run",
 		vSolution = m_Problem.run(ScenarioName)
 	)
-
-	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
+	TESTAPIBOOL("Check Run",
+		vTest.checkResults("Reference", true, true, false, false, ScenarioName)
+	)	
 
 	m_Cairn.close_Study();
 	//Re-load the created study (after saving it) and then test again
@@ -374,19 +356,19 @@ int main()
 		m_Problem2 = m_Cairn2.read_Study(vFileName_saved)
 	)
 
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem2.get_Components(), vComps))
-	TESTAPI2("check list bus", TestUtils::compare_lists(m_Problem2.get_Buses(), vBuses))
+	TESTAPIBOOL("check list components", TestUtils::compare_lists(m_Problem2.get_Components(), vComps))
+	TESTAPIBOOL("check list bus", TestUtils::compare_lists(m_Problem2.get_Buses(), vBuses))
 
-	TESTAPI("Read the Timeseries from the file path : " + TimeseriesFileName,
-		m_Problem2.add_TimeSeries(TimeseriesFileName)
+	TESTAPI("Read the Timeseries from the file path: " + vTest.get_TimeseriesFileName(),
+		m_Problem2.add_TimeSeries(vTest.get_TimeseriesFileName())
 	)
 
 	TESTAPI("Run", vSolution = m_Problem2.run())
 	vSolution.exportTimeSeries();
 
-	TESTAPI2("Compare results 2",
-		TestUtils::ComparaisonCsvFile(ResultFileName_saved, ReferenceResultFileName)
+	TESTAPIBOOL("Check Run",
+		vTest.checkResults("Reference", true, true, false, false, "", "formation_cairn_saved")
 	)
-
+	
 	return noError;
 }

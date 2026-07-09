@@ -16,6 +16,7 @@ grid
 operationconstraint
 sourceload
 storage
+template
 )
 
 include(ComponentSetup)

@@ -3,56 +3,78 @@
 
 ZEVariables::ZEVariables(
     const std::string& a_Name,
-    const t_unit& a_Unit,
+    const std::string& a_Unit,
+    const std::string& a_Desc,
+    const std::string& a_Coeff,
+    const std::string& a_Offset,
+    const bool& aIsMPC
+) 
+    : mName(a_Name)
+    , mUnit(a_Unit)
+    , mDesc(a_Desc)
+    , m_IsMPC(aIsMPC)
+    , minitValue(std::numeric_limits<float>::quiet_NaN()) /* Never set! but used in ModuleCairn! */
+{
+    resolveCoeff(a_Coeff);
+    resolveOffset(a_Offset);
+}
+
+ZEVariables::ZEVariables(
+    const std::string& a_Name,
+    const FlagParam* const a_IsUsed,
+    const UnitParam* const a_Unit,
     const std::string& a_Desc,
     const std::string& a_Coeff,
     const std::string& a_Offset,
     const bool& aIsMPC
 )
+    : mName(a_Name)
+    , pIsUsed(a_IsUsed)
+    , pUnit(a_Unit)
+    , mDesc(a_Desc)
+    , m_IsMPC(aIsMPC)
+    , minitValue(std::numeric_limits<float>::quiet_NaN())
 {
-    // export
-    mName = a_Name;
-    mUnit.set_Value(a_Unit);
-    mDesc = a_Desc;
-    m_IsMPC = aIsMPC;
+    resolveCoeff(a_Coeff);
+    resolveOffset(a_Offset);
+}
+
+void ZEVariables::resolveCoeff(const std::string& coeff)
+{
     try
     {
-        mCoeffExport = std::stod(a_Coeff);
+        mCoeffExport = std::stod(coeff);
         if (mCoeffExport != 1.0)
-            mDesc += " x " + a_Coeff;
+            mDesc += " x " + coeff;
     }
     catch (const std::exception&)
     {
         mCoeffExport = 1.0;
     }
+}
+
+void ZEVariables::resolveOffset(const std::string& offset)
+{
     try
     {
-        mCoeffOffset = std::stod(a_Offset);
+        mCoeffOffset = std::stod(offset);
         if (mCoeffOffset)
-            mDesc += " + " + a_Offset;
+            mDesc += " + " + offset;
     }
     catch (const std::exception&)
     {
         mCoeffOffset = 0.0;
-    }    
-}
-
-ZEVariables::ZEVariables(
-    const std::string& a_Name,
-    const UnitParam* a_Unit,
-    const std::string& a_Desc,
-    const std::string& a_Coeff,
-    const std::string& a_Offset,
-    const bool& aIsMPC
-)
-    : ZEVariables::ZEVariables(a_Name, t_unit(std::string("-")), a_Desc, a_Coeff, a_Offset, aIsMPC)
-{
-    if (a_Unit) mUnit = *a_Unit;
+    }
 }
 
 std::string ZEVariables::Unit() const
 {
-    return mUnit.get_Value();
+    return pUnit ? (*pUnit).get_Value() : mUnit;
+}
+
+bool ZEVariables::IsUsed() const
+{
+    return pIsUsed ? (*pIsUsed).get_Value() : true;
 }
 
 std::vector<double>* ZEVariables::ptrVariable()
@@ -79,7 +101,8 @@ bool ZEVariables::set_Values(ModelParam* a_Param, double aTimeStepOut, const std
                 m_Values.resize(lptr->size());
             }
             if (m_Values.size() > 0) {
-                GS::uExpandVecxf2QVector(&m_Values, m_Values.size(), *lptr, aTimeStepOut, aTimeStepsIn, aNpdtPast, mCoeffExport);
+                GS::uExpandVecxf2QVector(&m_Values, m_Values.size(), *lptr, aTimeStepOut, 
+                    aTimeStepsIn, aNpdtPast, mCoeffExport, mCoeffOffset);
                 vRet = true;
             }
         }

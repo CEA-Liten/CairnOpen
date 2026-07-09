@@ -158,7 +158,7 @@
 				"nodeId": "92159",
 				"nodeName": "Electricity#1",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"x": 470,
@@ -220,6 +220,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"timeSeriesListJson": [],
@@ -233,7 +237,7 @@
 				"nodeId": "98324",
 				"nodeName": "H2OVector#1",
 				"nodeTechnoType": "H2OVector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "blue",
 				"nodeComment": "",
 				"x": 750,
@@ -311,6 +315,14 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 0
+					},
+					{
+						"key": "Temperature",
+						"value": 0
 					}
 				],
 				"timeSeriesListJson": [],
@@ -321,7 +333,7 @@
 				"nodeId": "94506",
 				"nodeName": "H2Vector#1",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 610,
@@ -395,6 +407,14 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 0
+					},
+					{
+						"key": "Temperature",
+						"value": 0
 					}
 				],
 				"timeSeriesListJson": [],
@@ -405,7 +425,7 @@
 				"nodeId": "08838",
 				"nodeName": "Heat#1",
 				"nodeTechnoType": "Heat",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "red",
 				"nodeComment": "",
 				"x": 1030,
@@ -467,6 +487,18 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 50
+					},
+					{
+						"key": "Temperature",
+						"value": 50
+					},
+					{
+						"key": "FluxType",
+						"value": "Energy"
 					}
 				],
 				"timeSeriesListJson": [],
@@ -477,7 +509,7 @@
 				"nodeId": "37856",
 				"nodeName": "Heat#2",
 				"nodeTechnoType": "Heat",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "#b77b30",
 				"nodeComment": "",
 				"x": 1170,
@@ -539,6 +571,18 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 50
+					},
+					{
+						"key": "Temperature",
+						"value": 50
+					},
+					{
+						"key": "FluxType",
+						"value": "Energy"
 					}
 				],
 				"timeSeriesListJson": [],
@@ -549,7 +593,7 @@
 				"nodeId": "00903",
 				"nodeName": "O2Vector#1",
 				"nodeTechnoType": "O2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "pink",
 				"nodeComment": "",
 				"x": 890,
@@ -622,6 +666,14 @@
 					},
 					{
 						"key": "SellPrice",
+						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 0
+					},
+					{
+						"key": "Temperature",
 						"value": 0
 					}
 				],

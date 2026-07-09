@@ -17,8 +17,8 @@ GUIData::~GUIData()
     if (mGuiInputParam) delete mGuiInputParam;
 } 
 
-void GUIData::doInit(const std::string aNodeType, const std::string aNodeTechnoType, 
-    const std::string aComponentType, const std::map<std::string, std::string> paramMap)
+void GUIData::doInit(const std::string& aNodeType, const std::string& aNodeTechnoType, 
+    const std::string& aComponentType, const t_mapParamData& paramMap)
 {
     if (aNodeType == "ElectrolyzerDetailed") {
         mGuiNodeModelType = "Electrolyzer";
@@ -69,7 +69,7 @@ void GUIData::declareGuiInputParam()
     mGuiInputParam->addParameter("Ypos", &mYpos, 0, false, true, "Y position on planteditor", "", "DONOTSHOW");
 }
 
-void GUIData::setGuiInputParam(const std::map<std::string, std::string> paramMap)
+void GUIData::setGuiInputParam(const t_mapParamData& paramMap)
 {
     int ierr = mGuiInputParam->readParameters(paramMap);
     if (ierr < 0) {
@@ -81,13 +81,14 @@ void GUIData::setGuiInputParam(const std::map<std::string, std::string> paramMap
         if (mGuiComponentType == "SimulationControl") setXpos(50);
         else if (mGuiComponentType == "TecEcoAnalysis") setXpos(150);
         else if (mGuiComponentType == "Solver") setXpos(250);
-        else if (mGuiComponentType == "EnergyVector") setXpos(0.5 * mId);
+        else if (mGuiComponentType == "Electrical" || mGuiComponentType == "Material") setXpos(0.5 * mId);
     }
     if (mYpos == 0) {
         if (mGuiComponentType == "SimulationControl"
             || mGuiComponentType == "TecEcoAnalysis"
             || mGuiComponentType == "Solver"
-            || mGuiComponentType == "EnergyVector")
+            || mGuiComponentType == "Electrical"
+            || mGuiComponentType == "Material")
             setXpos(10);
     }
 }
@@ -99,7 +100,7 @@ void GUIData::jsonSaveGUILine(ojson& componentObject, const std::string& compone
     componentObject = ojson{
         {"nodeId", nodeID},
         {"nodeName", Name()},
-        {"componentPERSEEType", mGuiComponentType},
+        {"componentType", mGuiComponentType},
         {"nodeType", mGuiNodeModelType},
         {"nodeTechnoType", mGuiNodeTechnoType},
         {"x", mXpos},

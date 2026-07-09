@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -15,6 +15,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError;
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File Paths
@@ -37,15 +41,15 @@ int main()
 
 	TESTAPI("Read study file: " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
-	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
-	TESTAPI("Change Optim Model", vTecEcoAnalysis.set_SettingValues( { {"Model", "OptimEnvImpact-GWP"} } ))
+	std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	TESTAPI("Change Optim Model", vTecEcoAnalysis->set_SettingValues( { {"Model", "OptimEnvImpact-GWP"} } ))
 
 	TESTAPI("Read the Timeseries: " + TimeseriesFileName, m_Problem.add_TimeSeries(TimeseriesFileName))
 
 	CairnAPI::SolutionAPI vSolution;
 	TESTAPI("Run simulation", vSolution = m_Problem.run())
 
-	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
+	TESTAPIBOOL("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
 	
 	return noError;
 }

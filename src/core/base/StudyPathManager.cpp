@@ -103,7 +103,7 @@ void StudyPathManager::copyFileToScenarioDir(const std::string& aFilePath)
             std::error_code ec;
             if (!fs::remove(vResultsPath, ec)) {
                 std::string vErrMsg = "Error while deleting already existing file " + vResultsPath.string() + ", " + ec.message();
-                cCritical() << vErrMsg;
+                cError() << vErrMsg;
             }
         }
 

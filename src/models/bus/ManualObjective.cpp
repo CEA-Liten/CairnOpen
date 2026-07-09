@@ -25,44 +25,26 @@ ManualObjective::~ManualObjective()
 
 }
 
-void ManualObjective::setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue){
-	mMinConstraintBusValue = aMinConstraintBusValue;
-	mMaxConstraintBusValue = aMaxConstraintBusValue;
-	mStrictConstraintBusValue = aStrictConstraintBusValue;
-}
-
 void ManualObjective::setTimeData()
 {
     SubModel::setTimeData();
     mObjectiveCoeffTS.resize(mHorizon);
 }
 
-void ManualObjective::closeExpressions()
+void ManualObjective::computeInitialData()
 {
-    SubModel::closeExpressions();
+    /* When UseExtrapolationFactor is true, then *BusValue is assumed to be over one year */
 
-    closeExpression(mBusBalance);
-    closeExpression(mSubObjective);
-    closeExpression(mExpCommonMinVariable);
-    closeExpression(mExpCommonMaxVariable);
+    const double factor = mParentCompo->ExtrapolationFactor();
+    const double scale = mUseExtrapolationFactor ? (1.0 / factor) : 1.0;
 
-    closeExpression1D(mBusBalance0D);
-    closeExpression1D(mBusBalance1D);
+    mMinConstraintBusValue *= scale;
+    mMaxConstraintBusValue *= scale;
+    mStrictConstraintBusValue *= scale;
 }
 
-void ManualObjective::buildModel()
+void ManualObjective::computeModelContribution()
 {
-    // le bus est une contrainte systeme sous forme d'une expression a laquelle chaque composant contribue directement
-    if (mAllocate)
-    {
-        mBusBalance1D = MIPModeler::MIPExpression1D(mHorizon);
-        mBusBalance0D = MIPModeler::MIPExpression1D(mHorizon);
-    }
-    else
-    {
-        closeExpressions();
-    }
-
 	/** Build balance constraint once component constraints have created their own expressions */
     addVariable(mCommonMinVariable, "CommonMin");
     addVariable(mCommonMaxVariable, "CommonMax");
@@ -147,21 +129,8 @@ void ManualObjective::buildModel()
 	if (mMinConstraint) addMinConstraint() ;
 	if (mMaxConstraint) addMaxConstraint() ;
 
-    /** Compute all expressions */
-    computeAllContribution() ;
     addLexicographicObjective();
-    mAllocate = false ;
 }
-//------------------------------------------------------------------------------
-void ManualObjective::finalizeModelData() {
-    double extrapolationFactor = mParentCompo->ExtrapolationFactor();
-    //Divide by UseExtrapolationFactor; assuming that the *BusValue are over one year
-    if (mUseExtrapolationFactor) {
-        setParameters(mMinConstraintBusValue / extrapolationFactor, mMaxConstraintBusValue / extrapolationFactor, mStrictConstraintBusValue / extrapolationFactor);
-    }
-}
-//------------------------------------------------------------------------------
-
 
 void ManualObjective::computeSubObjectiveContribution()
 {

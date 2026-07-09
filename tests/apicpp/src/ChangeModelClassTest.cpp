@@ -1,7 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
 
 using namespace std;
 
@@ -17,6 +16,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError;
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File Paths
@@ -39,16 +42,15 @@ int main()
 
 	TESTAPI("Read study file: " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
-	CairnAPI::MilpComponentAPI vELY_PEM = m_Problem.get_Component("ELY_PEM");
-
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
 	t_list refList = { "Electrolyzer", "ElectrolyzerDetailed" };
-	t_list classList = vELY_PEM.get_PossibleModelClasses();
-	TESTAPI2("Check list of model classes", TestUtils::compare_lists(refList, classList))
+	t_list classList = vELY_PEM->get_PossibleModelClasses();
+	TESTAPIBOOL("Check list of model classes", TestUtils::compare_lists(refList, classList))
 
-	TESTAPIFALSE("Try using non-supported model class Converter", vELY_PEM.set_SettingValue("ModelClass", "Converter"))
+	TESTAPIFALSE("Try using non-supported model class Converter", vELY_PEM->set_SettingValue("ModelClass", "Converter"))
 
-	TESTAPI("Change ModelClass of ELY_PEM", vELY_PEM.set_SettingValue("ModelClass", "Electrolyzer"))
-	vELY_PEM.set_SettingValues({
+	TESTAPI("Change ModelClass of ELY_PEM", vELY_PEM->set_SettingValue("ModelClass", "Electrolyzer"))
+	vELY_PEM->set_SettingValues({
 		{ "Capex", 480000 },
 		{ "Opex", "0.04" },
 		{ "Efficiency", "0.6667" },
@@ -64,7 +66,7 @@ int main()
 	CairnAPI::SolutionAPI vSolution;
 	TESTAPI("Run simulation", vSolution = m_Problem.run())
 
-	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
+	TESTAPIBOOL("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
 	
 	return noError;
 }

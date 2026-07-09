@@ -6,7 +6,10 @@ Created on Sun Dec 22 15:33:30 2024
 """
 
 import pytest
-from cairn import *
+try:
+    from cairn import *
+except:
+    from cairnopen import *
 import os
 import shutil
 from os import path
@@ -129,6 +132,16 @@ def write_energy_carrier(problem):
 def load_timeseries(problem, file):
     problem.add_timeseries(file)
 
+def load_df_timeseries(problem, file):
+     df = pd.read_csv(file, header=None, sep=";")
+     sizeValues = df.index.stop          
+     for col in df.columns:
+         values = []
+         for row in range(4,sizeValues):
+             values.append(df.values[row][col])
+         ts = {"Name": df.values[0][col], "Unit": df.values[2][col], "Description": df.values[1][col], "Values": values}
+         problem.add_onetimeseries(ts)
+     
 
 def save(problem, folder, new_name):
     if not os.path.exists(folder):
@@ -281,10 +294,28 @@ def test_modify_port(problem):
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
 @pytest.mark.xdist_group("PythonAPI")
+def test_small_values(problem):
+    storage = problem.get_component("H2_Tank")
+    storage.set_setting_value("KLoss", 0.000001)
+    assert (storage.get_setting_value("KLoss") == 0.000001)
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_import_group(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath = path.join(app_home, 'data')
+    json_group = path.join(dataPath, "test_group.json")
+    res_import = problem.import_group(json_group)
+    assert 'Compressor'  in res_import and 'H2_Bus_Out'  in res_import and 'Purifier' in res_import
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
 def test_get_energy_carrier(problem):
     # Add a new energy carrier
     energy_carrier_name = "ElectricityDistrib2"
-    energy_carrier_type = "Electrical"
+    energy_carrier_type = "ElectricalCarrier"
     problem.create_energy_carrier(energy_carrier_name, energy_carrier_type)
 
     # Get the energy vector
@@ -297,14 +328,14 @@ def test_get_energy_carrier(problem):
     # Check the settings
     ev_settings = energy_carrier.settings
     assert isinstance(ev_settings, list)
-    assert "Potential" in ev_settings
+    assert "Voltage" in ev_settings
 
     # Check values
-    setting_value = energy_carrier.get_setting_value("Potential")
+    setting_value = energy_carrier.get_setting_value("Voltage")
     assert setting_value is not None
     new_value = 440
-    energy_carrier.set_setting_value("Potential", new_value)
-    updated_value = energy_carrier.get_setting_value("Potential")
+    energy_carrier.set_setting_value("Voltage", new_value)
+    updated_value = energy_carrier.get_setting_value("Voltage")
     assert updated_value == new_value
 
 @pytest.mark.Cairn
@@ -420,6 +451,49 @@ def test_sequence_run_compare(problem):
     get_plan_results(problem)
     get_ts_results(problem)
 
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_df_timeseries(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath =  path.join(app_home, 'data')
+    load_df_timeseries(problem, path.join(dataPath,  "cairn_training_dataseries.csv"))
+    solution = run(problem, "")
+    get_plan_results(problem)
+    get_ts_results(problem) 
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_df_timeseries2(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath =  path.join(app_home, 'data')
+    add_df_timeseries(problem, pd.read_csv(path.join(dataPath,  "cairn_training_dataseries.csv"), header=None, sep=";"))
+    solution = run(problem, "")
+    get_plan_results(problem)
+    get_ts_results(problem)        
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_add_comment(problem):
+    ely_pem = problem.get_component("ELY_PEM")
+    ely_pem.set_setting_comment("Capex", "source = xxxxx")
+    comment = ely_pem.get_setting_comment("Capex")
+    assert comment == "source = xxxxx"
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_get_object(problem):
+    cairn = problem.get_object("Cairn")
+    cairn.set_setting_value("FutureSize", 24)
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath = path.join(app_home, 'data')
+    load_timeseries(problem, path.join(dataPath, "cairn_training_dataseries.csv"))
+    run(problem, "")
+    tececo = problem.get_object("TecEco")
+    assert tececo.get_indicator_value("Extrapolation Factor") == 365
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
@@ -505,6 +579,9 @@ if __name__ == '__main__':
     ely_pem = problem.get_component("ELY_PEM")
     default_ports = ely_pem.default_ports
     print(default_ports)
+    storage = problem.get_component("H2_Tank")
+    storage.set_setting_value("KLoss", "0.000001")
+    print(storage.get_setting_value("KLoss"))
 
     test_plan_results(problem)
 

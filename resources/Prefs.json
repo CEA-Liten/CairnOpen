@@ -1,7 +1,7 @@
 {
     "logs": {
-        "level": "debug",
-        "flushlevel":  "debug",
+        "level": "info",
+        "flushlevel":  "info",
         "console": true,
         "file": true,
         "auxfile": false,

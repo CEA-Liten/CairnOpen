@@ -1,132 +1,166 @@
 #include "GridCompo.h"
-#include <math.h>       /* fabs, log, pow */
-#include <iostream>
 #include "GlobalSettings.h"
 
-using namespace GS ;
+#include <iostream>
 
-using Eigen::Map;
+using namespace GS;
 
-GridCompo::GridCompo (CairnObject *aParent,
-    const std::map<std::string, std::string>& aComponent,
-    const std::map < std::string, std::map<std::string, std::string> >& aPorts,
-    MilpData* aMilpData,
-    TecEcoAnalysis* aTecEcoAnalysis,
-    ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
-{      
+// =============================================================================
+// Construction / destruction
+// =============================================================================
+
+GridCompo::GridCompo(CairnObject* aParent,
+              const std::string& aName,
+              const t_mapParamData& aComponent,
+              const std::map<std::string, t_mapParamData>& aPorts,
+              MilpData* aMilpData,
+              TecEcoAnalysis* aTecEcoAnalysis,
+              ModelFactory* aModelFactory)
+    : MilpComponent(aParent, aName, aMilpData, aTecEcoAnalysis,
+                    aComponent, aPorts, aModelFactory)
+{}
+
+GridCompo::~GridCompo() = default;
+
+// =============================================================================
+// Public overrides
+// =============================================================================
+
+void GridCompo::readTSVariablesFromModel()
+{
+    MilpComponent::readTSVariablesFromModel();
+
+    EnergyVector* carrier = getMainCarrier();
+
+    if (mCompoModel->Sens() > 0)  
+        resolveBuyPriceProfiles(carrier);  // extraction 
+    else 
+        resolveSellPriceProfile(carrier);  // injection 
 }
 
-//------------------------------------------------------------------------------
-GridCompo::~GridCompo()
-{
-} 
+// -----------------------------------------------------------------------------
 
-void GridCompo::declareCompoInputParam()
+int GridCompo::setTimeSeriesValues()
 {
-    MilpComponent::declareCompoInputParam();
+    EnergyVector* carrier = mCompoModel->getMainCarrier();
+
+    const int rc = (mCompoModel->Sens() > 0)
+                       ? initBuyPriceDefaults(carrier)        // extraction  
+                       : (initSellPriceDefaults(carrier), 0); // injection 
+
+    if (rc != 0)
+        return rc;
+
+    MilpComponent::setTimeSeriesValues();
+
+    return 0;
 }
 
-void GridCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent) {
-    MilpComponent::setCompoInputParam(aComponent);
+// -----------------------------------------------------------------------------
+
+void GridCompo::createImportListVars(t_mapExchange& a_Import)
+{
+    MilpComponent::createImportListVars(a_Import);
+
+    if (mCompoModel->Sens() > 0)
+    {
+        m_timeSeries["UseProfileBuyPrice"].set_Values(npdt(), 0.);
+        m_timeSeries["UseProfileBuyPriceSeasonal"].set_Values(npdt(), 0.);
+    }
+    else
+    {
+        m_timeSeries["UseProfileSellPrice"].set_Values(npdt(), 0.);
+    }
 }
 
-int GridCompo::setParameters()
-{
-    EnergyVector* lvect = mCompoModel->getMainCarrier();
+// =============================================================================
+// Private helpers
+// =============================================================================
 
-    if (mCompoModel->Sens() > 0) {
-        //sens = " extracted " ;
-        if (mEnergyPriceProfileName != "" )
+int GridCompo::initBuyPriceDefaults(EnergyVector* aCarrier)
+{
+    // -- Buy price -------------------------------------------------------
+    if (!mEnergyPriceProfileName.empty())
+    {
+        if (aCarrier->BuyPrice() != 0.)
+            cInfo() << "Grid flat buy price ignored because UseProfileBuyPrice"
+                          " was specified for carrier" << aCarrier->Name();
+    }
+    else
+    {
+        m_timeSeries["UseProfileBuyPrice"].setDefault(aCarrier->BuyPrice());
+        cInfo() << "Grid extraction: using constant BuyPrice from carrier '"
+                << aCarrier->Name() << "' = " << aCarrier->BuyPrice();
+    }
+
+    // -- Seasonal buy price ---------------------------------------------------
+    if (!mEnergyPriceProfileNameSeasonal.empty())
+    {
+        if (aCarrier->BuyPriceSeasonal() != 0.)
         {
-            if (lvect->BuyPrice() != 0.)
-            {
-                cWarning()  << "Grid flat buy price ignored as UseProfileBuyPrice was specified " << lvect->Name() ;
-            }
-        }
-        else
-        {
-            m_timeSeries["UseProfileBuyPrice"].setDefault(lvect->BuyPrice());
-            cInfo() << "INFO : Grid Injection / extraction : use of constant BuyPrice " << lvect->Name() << lvect->BuyPrice() ;
-        }
-        if (mEnergyPriceProfileNameSeasonal != "" )
-        {
-            if (lvect->BuyPriceSeasonal() != 0.)
-            {
-                cCritical() << "ERROR : Grid flat buy price should be 0 as UseProfileBuyPriceSeasonal was specified " << lvect->Name();
-                return -1 ;
-            }
-        }
-        else
-        {
-            m_timeSeries["UseProfileBuyPriceSeasonal"].setDefault(lvect->BuyPriceSeasonal());
-            cInfo() << "INFO : Grid Injection / extraction : use of constant BuyPriceSeasonal " << lvect->Name() << lvect->BuyPriceSeasonal() ;
+            cCritical() << "ERROR: Grid flat BuyPriceSeasonal must be 0 when"
+                           " UseProfileBuyPriceSeasonal is specified for carrier"
+                        << aCarrier->Name();
+            return -1;
         }
     }
     else
     {
-        //sens = " injected " ;
-        if (mEnergyPriceProfileName != "")
-        {
-            if (lvect->SellPrice() != 0.)
-            {
-                cWarning() << "Grid flat sell price ignored as UseProfileSellPrice was specified " << lvect->Name();
-            }
-        }
-        else
-        {
-            m_timeSeries["UseProfileSellPrice"].setDefault(lvect->SellPrice());
-            cInfo() << "INFO : Grid Injection / extraction : use of constant SellPrice " << lvect->Name() << lvect->SellPrice() ;
-        }
+        m_timeSeries["UseProfileBuyPriceSeasonal"].setDefault(aCarrier->BuyPriceSeasonal());
+        cInfo() << "Grid extraction: using constant BuyPriceSeasonal from carrier '"
+                << aCarrier->Name() << "' = " << aCarrier->BuyPriceSeasonal();
     }
 
-    createHistFXLists();
-
-    return 0 ;
+    return 0;
 }
 
-void GridCompo::readTSVariablesFromModel()
+// -----------------------------------------------------------------------------
+
+void GridCompo::initSellPriceDefaults(EnergyVector* aCarrier)
 {
-    //Read time series
-    MilpComponent::readTSVariablesFromModel();
-
-    //MilpPort* lptrport = PortList().at(0);
-    //EnergyVector* pCarrier = lptrport->getCarrier();
-
-    EnergyVector* pCarrier = getMainCarrier();
-   
-    if (mCompoModel->Sens() > 0) {
-        //sens = " extracted " ;
-        mEnergyPriceProfileName = m_timeSeries["UseProfileBuyPrice"].getName();
-        mEnergyPriceProfileNameSeasonal = m_timeSeries["UseProfileBuyPriceSeasonal"].getName();
-        if (mEnergyPriceProfileName == "") {
-            mEnergyPriceProfileName = pCarrier->UseProfileBuyPrice() ;
-            m_timeSeries["UseProfileBuyPrice"].setName(pCarrier->UseProfileBuyPrice());
-        }
-	    if (mEnergyPriceProfileNameSeasonal == "") {
-                mEnergyPriceProfileNameSeasonal = pCarrier->UseProfileBuyPriceSeasonal() ;
-                m_timeSeries["UseProfileBuyPriceSeasonal"].setName(pCarrier->UseProfileBuyPriceSeasonal());
-        }		 
+    if (!mEnergyPriceProfileName.empty())
+    {
+        if (aCarrier->SellPrice() != 0.)
+            cInfo() << "Grid flat sell price ignored because UseProfileSellPrice"
+                          " was specified for carrier" << aCarrier->Name();
     }
-    else  {
-        //sens = " injected " ;
-        mEnergyPriceProfileName = m_timeSeries["UseProfileSellPrice"].getName();
-        if (mEnergyPriceProfileName == "") {
-            mEnergyPriceProfileName = pCarrier->UseProfileSellPrice() ;
-            m_timeSeries["UseProfileSellPrice"].setName(pCarrier->UseProfileSellPrice());
-        }
+    else
+    {
+        m_timeSeries["UseProfileSellPrice"].setDefault(aCarrier->SellPrice());
+        cInfo() << "Grid injection: using constant SellPrice from carrier '"
+                << aCarrier->Name() << "' = " << aCarrier->SellPrice();
     }
 }
 
-void GridCompo::setDefaultsResults()
+// -----------------------------------------------------------------------------
+
+void GridCompo::resolveBuyPriceProfiles(EnergyVector* aCarrier)
 {
-    if (mCompoModel->Sens() > 0) {
-        m_timeSeries["UseProfileBuyPrice"].set_Values(npdt(), 0.);
-        m_timeSeries["UseProfileBuyPriceSeasonal"].set_Values(npdt(), 0.);
+    // Regular buy price
+    mEnergyPriceProfileName = m_timeSeries["UseProfileBuyPrice"].getName();
+    if (mEnergyPriceProfileName.empty())
+    {
+        mEnergyPriceProfileName = aCarrier->UseProfileBuyPrice();
+        m_timeSeries["UseProfileBuyPrice"].setName(mEnergyPriceProfileName);
     }
-    else {
-        m_timeSeries["UseProfileSellPrice"].set_Values(npdt(), 0.);
+
+    // Seasonal buy price
+    mEnergyPriceProfileNameSeasonal = m_timeSeries["UseProfileBuyPriceSeasonal"].getName();
+    if (mEnergyPriceProfileNameSeasonal.empty())
+    {
+        mEnergyPriceProfileNameSeasonal = aCarrier->UseProfileBuyPriceSeasonal();
+        m_timeSeries["UseProfileBuyPriceSeasonal"].setName(mEnergyPriceProfileNameSeasonal);
     }
 }
-//------------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
+
+void GridCompo::resolveSellPriceProfile(EnergyVector* aCarrier)
+{
+    mEnergyPriceProfileName = m_timeSeries["UseProfileSellPrice"].getName();
+    if (mEnergyPriceProfileName.empty())
+    {
+        mEnergyPriceProfileName = aCarrier->UseProfileSellPrice();
+        m_timeSeries["UseProfileSellPrice"].setName(mEnergyPriceProfileName);
+    }
+}

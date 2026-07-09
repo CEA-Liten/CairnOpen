@@ -1,5 +1,5 @@
 {
-	"Saved with Cairn version": "4.5.9",
+	"Saved with Cairn version": "5.4.12",
 	"numberPages": 1,
 	"studyComment": "",
 	"mapParameters": {
@@ -7,6 +7,7 @@
 		"longitude": 6.0108203,
 		"zoomlevel": 13.5
 	},
+	"DynamicIndicators": [],
 	"Page1": {
 		"PageId": "Page1",
 		"Components": [
@@ -16,11 +17,11 @@
 				"nodeType": "TecEcoAnalysis",
 				"nodeTechnoType": "TecEcoAnalysis",
 				"componentPERSEEType": "TecEcoAnalysis",
-				"componentCarrier": "NO_CARRIER",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 50,
 				"y": 2,
+				"componentCarrier": "NO_CARRIER",
 				"paramListJson": [
 					{
 						"key": "EcoInvestModel",
@@ -45,6 +46,7 @@
 						"value": 0.07
 					}
 				],
+				"labelList": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -136,12 +138,12 @@
 				"nodeName": "Cold",
 				"nodeType": "Cold",
 				"nodeTechnoType": "Cold",
-				"componentPERSEEType": "EnergyVector",
-				"energyTypeColor": "blue",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 750,
 				"y": 2,
+				"energyTypeColor": "blue",
 				"paramListJson": [
 					{
 						"key": "Potential",
@@ -154,6 +156,18 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 5
+					},
+					{
+						"key": "Temperature",
+						"value": 5
+					},
+					{
+						"key": "FluxType",
+						"value": "Energy"
 					}
 				],
 				"optionListJson": [
@@ -200,12 +214,12 @@
 				"nodeName": "Electricity",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
-				"energyTypeColor": "#E8A317",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 610,
 				"y": 2,
+				"energyTypeColor": "#E8A317",
 				"paramListJson": [
 					{
 						"key": "Potential",
@@ -218,6 +232,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"optionListJson": [
@@ -256,16 +274,16 @@
 				"nodeName": "H2OVector",
 				"nodeType": "H2OVector",
 				"nodeTechnoType": "H2OVector",
-				"componentPERSEEType": "EnergyVector",
-				"energyTypeColor": "#699ed1",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 890,
 				"y": 2,
+				"energyTypeColor": "#699ed1",
 				"paramListJson": [
 					{
 						"key": "LHV",
-						"value": 1.0
+						"value": 1
 					},
 					{
 						"key": "RHO",
@@ -289,6 +307,14 @@
 					},
 					{
 						"key": "SellPrice",
+						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 0
+					},
+					{
+						"key": "Temperature",
 						"value": 0
 					}
 				],
@@ -340,12 +366,12 @@
 				"nodeName": "Heat",
 				"nodeType": "Heat",
 				"nodeTechnoType": "Heat",
-				"componentPERSEEType": "EnergyVector",
-				"energyTypeColor": "red",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
 				"y": 2,
+				"energyTypeColor": "red",
 				"paramListJson": [
 					{
 						"key": "Potential",
@@ -358,6 +384,18 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 50
+					},
+					{
+						"key": "Temperature",
+						"value": 50
+					},
+					{
+						"key": "FluxType",
+						"value": "Energy"
 					}
 				],
 				"optionListJson": [
@@ -397,11 +435,11 @@
 				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
-				"componentCarrier": "Cold",
 				"nodeComment": "",
 				"componentWidth": 20,
 				"x": 512,
 				"y": 300,
+				"componentCarrier": "Cold",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -429,7 +467,7 @@
 								"carrier": "Cold",
 								"carrierType": "ANY_TYPE",
 								"direction": "INPUT",
-								"variable": "PowerOut",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -448,7 +486,7 @@
 								"carrier": "Cold",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
-								"variable": "SourceLoadFlow",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -457,7 +495,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2124290497",
@@ -465,11 +504,11 @@
 				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
-				"componentCarrier": "Electricity",
 				"nodeComment": "",
 				"componentWidth": 20,
 				"x": 548,
 				"y": 188,
+				"componentCarrier": "Electricity",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -497,7 +536,7 @@
 								"carrier": "Electricity",
 								"carrierType": "ANY_TYPE",
 								"direction": "INPUT",
-								"variable": "PowerOut",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -516,7 +555,7 @@
 								"carrier": "Electricity",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
-								"variable": "SourceLoadFlow",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -525,7 +564,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2173955064",
@@ -533,11 +573,11 @@
 				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
-				"componentCarrier": "Electricity",
 				"nodeComment": "",
 				"componentWidth": 20,
 				"x": 284,
 				"y": 326,
+				"componentCarrier": "Electricity",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -565,7 +605,7 @@
 								"carrier": "Electricity",
 								"carrierType": "ANY_TYPE",
 								"direction": "INPUT",
-								"variable": "GridFlow",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -584,7 +624,7 @@
 								"carrier": "Electricity",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
-								"variable": "PowerIn",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -593,7 +633,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2124278858",
@@ -601,11 +642,11 @@
 				"nodeType": "NodeLaw",
 				"nodeTechnoType": "NodeLaw",
 				"componentPERSEEType": "BusFlowBalance",
-				"componentCarrier": "Heat",
 				"nodeComment": "",
 				"componentWidth": 20,
 				"x": 286,
 				"y": 188,
+				"componentCarrier": "Heat",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -633,7 +674,7 @@
 								"carrier": "Heat",
 								"carrierType": "ANY_TYPE",
 								"direction": "INPUT",
-								"variable": "GridFlow",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -652,7 +693,7 @@
 								"carrier": "Heat",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
-								"variable": "PowerIn",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -661,7 +702,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2174589209",
@@ -669,11 +711,11 @@
 				"nodeType": "NodeEquality",
 				"nodeTechnoType": "NodeEquality",
 				"componentPERSEEType": "BusSameValue",
-				"componentCarrier": "H2OVector",
 				"nodeComment": "",
 				"componentWidth": 20,
 				"x": 508,
 				"y": 406,
+				"componentCarrier": "H2OVector",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -705,7 +747,7 @@
 								"carrier": "H2OVector",
 								"carrierType": "ANY_TYPE",
 								"direction": "OUTPUT",
-								"variable": "PowerIn",
+								"variable": "",
 								"checkunit": "No",
 								"coeff": 0.02,
 								"offset": 0,
@@ -724,7 +766,7 @@
 								"carrier": "H2OVector",
 								"carrierType": "ANY_TYPE",
 								"direction": "INPUT",
-								"variable": "GridFlow",
+								"variable": "",
 								"checkunit": "Yes",
 								"coeff": 1,
 								"offset": 0,
@@ -733,7 +775,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2173752264",
@@ -741,11 +784,11 @@
 				"nodeType": "GridFree",
 				"nodeTechnoType": "GridFree",
 				"componentPERSEEType": "Grid",
-				"componentCarrier": "Electricity",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 144,
 				"y": 314,
+				"componentCarrier": "Electricity",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -823,7 +866,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2124282169",
@@ -831,11 +875,11 @@
 				"nodeType": "GridFree",
 				"nodeTechnoType": "GridFree",
 				"componentPERSEEType": "Grid",
-				"componentCarrier": "Heat",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 142,
 				"y": 178,
+				"componentCarrier": "Heat",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -913,7 +957,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2174561097",
@@ -921,11 +966,11 @@
 				"nodeType": "GridFree",
 				"nodeTechnoType": "GridFree",
 				"componentPERSEEType": "Grid",
-				"componentCarrier": "H2OVector",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 642,
 				"y": 394,
+				"componentCarrier": "H2OVector",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -1003,7 +1048,8 @@
 							}
 						]
 					}
-				]
+				],
+				"labelListJson": []
 			},
 			{
 				"nodeId": "2174621329",
@@ -1011,11 +1057,11 @@
 				"nodeType": "SourceLoad",
 				"nodeTechnoType": "SourceLoad",
 				"componentPERSEEType": "SourceLoad",
-				"componentCarrier": "Cold",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 638,
 				"y": 290,
+				"componentCarrier": "Cold",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -1065,7 +1111,7 @@
 					},
 					{
 						"key": "Direction",
-						"value": "Sink"
+						"value": "Load"
 					}
 				],
 				"timeSeriesListJson": [
@@ -1098,6 +1144,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -1110,11 +1157,11 @@
 				"nodeType": "SourceLoad",
 				"nodeTechnoType": "SourceLoad",
 				"componentPERSEEType": "SourceLoad",
-				"componentCarrier": "Electricity",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 716,
 				"y": 178,
+				"componentCarrier": "Electricity",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -1164,7 +1211,7 @@
 					},
 					{
 						"key": "Direction",
-						"value": "Sink"
+						"value": "Load"
 					}
 				],
 				"timeSeriesListJson": [
@@ -1197,6 +1244,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -1209,11 +1257,11 @@
 				"nodeType": "Converter",
 				"nodeTechnoType": "Converter",
 				"componentPERSEEType": "Converter",
-				"componentCarrier": "Electricity",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 386,
 				"y": 314,
+				"componentCarrier": "Electricity",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -1268,7 +1316,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					}
 				],
@@ -1336,6 +1384,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -1354,11 +1403,11 @@
 				"nodeType": "Converter",
 				"nodeTechnoType": "Converter",
 				"componentPERSEEType": "Converter",
-				"componentCarrier": "Heat",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 390,
 				"y": 178,
+				"componentCarrier": "Heat",
 				"paramListJson": [
 					{
 						"key": "ControlType",
@@ -1410,7 +1459,7 @@
 					},
 					{
 						"key": "MinPower",
-						"value": 0.2
+						"value": 0
 					}
 				],
 				"optionListJson": [
@@ -1463,6 +1512,7 @@
 						]
 					}
 				],
+				"labelListJson": [],
 				"filterConfigListJson": [
 					"Base",
 					"EcoInvestModel",
@@ -1650,6 +1700,5 @@
 			}
 		],
 		"Groups": []
-	},
-	"DynamicIndicators": []
+	}
 }

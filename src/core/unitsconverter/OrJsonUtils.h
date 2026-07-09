@@ -90,15 +90,23 @@ namespace orjson {
     {
         bool vRet = false;
         if (j.contains(a_key)) {
-            try
-            {
-                j.at(a_key).get_to(a_value); // essai dans le type attendu
+            const json& jValue = j.at(a_key);
+
+            // Explicitly handle null value
+            if (jValue.is_null()) {
+                if (a_mandatory)
+                    throw std::range_error("Mandatory parameter " + a_key + " is null");
+
+                // Leave a_value unchanged, return false
+                return false;
+            }
+
+            try {
+                jValue.get_to(a_value); // essai dans le type attendu
                 vRet = true;
             }
-            catch (const json::exception&)
-            {
-                try
-                {
+            catch (const json::exception&) {
+                try {
                     // essai de conversion
                     if (std::is_same_v<std::string, T>) {
                         vRet = json2str(j, a_key, a_value);
@@ -113,8 +121,7 @@ namespace orjson {
                         vRet = json2bool(j, a_key, a_value);
                     }
                 }
-                catch (const json::exception&)
-                {
+                catch (const json::exception&) {
                     vRet = false;
                 }
             }

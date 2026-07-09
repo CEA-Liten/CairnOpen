@@ -70,6 +70,8 @@ public:
         addParameter("UseVariableTIn", &mUseVariableTIn, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","", "VariableTin");
         addParameter("UseSteamMap", &mUseSteamMap, false, false, true, "If true: add a map of performance SteamMap which uses steam, pressure out to compute the power used - works in the case of a constant volume in the compressor - see bouin_7_cont for an example of use","", "SteamInput");
         addParameter("AddLosses", &mAddLosses, false, false, true, "If true: consider losses during compression");
+
+        addParameter("SetManualPowerConsumption", &mSetManualPowerConsumption, false, false, true, "If true: the user must provide the power consumption. If false: it is computed automatically.", "", "PowerConsumption");
     }
 
 //----------------------------------------------------------------------------------------------------
@@ -90,16 +92,16 @@ public:
         //double
         addParameter("POutletFixe", &mPOutletFixe, 0., false, true, "Allow the user to give a constant pressure out", "");
 
-
-        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow", mMainCarrier->pFlowrateUnit()) ; // todo: give a percentage instead of abs. value
-        addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor", mMainCarrier->pFlowrateUnit()) ;
+        addParameter("MinFlow", &mMinFlow, 0., false, true, "Optional Minimal flow", pQuantity("FlowrateUnit")) ;
+        addParameter("MaxFlow", &mMaxFlow, INFINITY_VAL, true, true, "Maximal flow - Carefull: Capex is per unit of Power of Compressor", pQuantity("FlowrateUnit")) ;
         addParameter("MotorEfficiency", &mMotorEfficiency, 0., true, true, "Electrical Motor Efficiency", "-");
         addParameter("NbStages", &mNbStages, 0., true, true, "Number of compression stages", "");
         addParameter("TInlet", &mTInlet, 20., true, true, "Inlet Temperature", "degC");
-		addParameter("PowerConsumption", &mPowerConsumption, 0., false, true, "Electrical consumption of the compressor");
+		addParameter("PowerConsumption", &mPowerConsumption, 0., &mSetManualPowerConsumption, &mSetManualPowerConsumption, "Electrical consumption of the compressor", 
+            SFunctionUnit({ eFTypeDivision, {mPortUsedPower->pFluxUnit(), mPortInMassFlowRate->pFluxUnit() }}), "PowerConsumption");
         addParameter("PolytropicEfficiency",&mPolytropicEfficiency, 1., &mUsePolytropicModel, &mUsePolytropicModel, "PolytropicEfficiency efficiency","", "PolytropicModel");
         addParameter("PolytropicCoefficient",&mPolytropicCoefficient, 0., &mUsePolytropicModel, &mUsePolytropicModel, "PolytropicCoefficient","", "PolytropicModel");   
-        addParameter("IsentropicEfficiency", &mIsentropicEfficiency, 1., SFunctionFlag({ eFTypeNotAnd, { &mUsePolytropicModel } }), SFunctionFlag({ eFTypeOrNot, {&mUsePolytropicModel} }), "Isentropic efficiency");   /**  */
+        addParameter("IsentropicEfficiency", &mIsentropicEfficiency, 1., &mUsePolytropicModel, &mUsePolytropicModel, "Isentropic efficiency");   /**  */
         addParameter("Losses", &mLosses, 0., &mAddLosses, &mAddLosses, "Percentage of inlet flow lost during compression", "-");
         
         //vector
@@ -119,7 +121,7 @@ public:
         addIO("UsedPower", &mExpUsedPower, true, mPortUsedPower->pFluxUnit());       /** Computed power used by the compressor */
         addIO("InMassFlowRate", &mExpInMassFlow, true, mPortInMassFlowRate->pFluxUnit());         /** input flow compressed by the compressor */
         addIO("OutMassFlowRate", &mExpOutMassFlow, true, mPortOutMassFlowRate->pFluxUnit());         /** output flow compressed by the compressor, can be different from input flow if losses are considered */
-        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pPotentialUnit());        /** Pressure at the exit of the compressor */
+        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pQuantity("PressureUnit"));        /** Pressure at the exit of the compressor */
 
         addIO("Steam", &mExpSteam, &mUseSteamMap, mPortInMassFlowRate->pFluxUnit());    /** quantity of steam input in the compressor*/
         addIO("TemperatureIn", &mExpTIn, &mUseVariableTIn, "degC"); /** Temperature before compression */
@@ -133,7 +135,7 @@ public:
 
     void declareModelIndicators() {
         ConverterSubModel::declareDefaultModelIndicators(&mExportIndicators);
-        mInputIndicators->addIndicator("Max MassFlowRate", &mMaxMFR, &mExportIndicators, "Maximal mass flow rate", SFunctionUnit({ eFTypeDivision, { mPortUsedPower->pMassUnit() }, "h"}), "MaxMFR");
+        mInputIndicators->addIndicator("Max MassFlowRate", &mMaxMFR, &mExportIndicators, "Maximal mass flow rate", SFunctionUnit({ eFTypeDivision, { mPortOutMassFlowRate->pQuantity("MassUnit")}, "h"}), "MaxMFR");
     }
 
     double getInletPressure();
@@ -229,6 +231,7 @@ protected:
     bool mUseLOG = true;
     bool mUseSteamMap = false;
     bool mAddLosses;
+    bool mSetManualPowerConsumption;
 
     int mPrecisionPressure;
     int mPrecisionMassFlow;

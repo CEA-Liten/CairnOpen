@@ -13,7 +13,7 @@ class CAIRNCORESHARED_EXPORT ZEVariables
 public:
     ZEVariables(
         const std::string& aName = "",
-        const t_unit& aUnit = "",
+        const std::string& aUnit = "",
         const std::string& aDesc = "",        
         const std::string& asCoeffExport = "1",
         const std::string& asOffsetExport = "0",
@@ -21,7 +21,8 @@ public:
   
     ZEVariables(
         const std::string& aName,
-        const UnitParam* aUnit,
+        const FlagParam* const aIsUsed,
+        const UnitParam* const a_IsUsed,
         const std::string& aDesc = "",
         const std::string& asCoeffExport = "1",
         const std::string& asOffsetExport = "0",
@@ -31,6 +32,7 @@ public:
     std::vector<double>* ptrOutVariable();
     std::string Name() {return mName;}             /** Access to Associated name of variable */
     std::string Unit() const;                      /** Access to Associated unit of variable */
+    bool IsUsed() const;                           /** Access to Associated unit of variable */
     std::string Desc() {return mDesc;}             /** Access to Associated description of variable */
     float initValue() {return minitValue;}         /** Access to Associated initial value of variable */
     float CoeffExport() {return mCoeffExport;}     /** Associated multiplicative factor for export */
@@ -48,17 +50,22 @@ public:
 
     void IsExt(bool a_IsExt) { m_IsExt = a_IsExt; };
 private:
-    std::string mName ;             /** Associated name of variable */
-    UnitParam mUnit ;             /** Associated unit of variable */
-    std::string mDesc ;             /** Associated description of variable */
-    float minitValue ;              /** Associated initial value of variable */
-    float mCoeffExport ;             /** Associated multiplicative factor for export */
-    float mCoeffOffset ;             /** Associated offset factor for export */
+    std::string mName;                        /** Associated name of variable */
+    std::string mUnit = "";                   /** static unit */
+    const UnitParam* const pUnit = nullptr;   /** Associated unit: read-only AND non-reassignable */
+    const FlagParam* const pIsUsed = nullptr; /** Associated isUsed: read-only AND non-reassignable */
+    std::string mDesc;                        /** Associated description of variable */
+    float minitValue;                         /** Associated initial value of variable */
+    float mCoeffExport ;                      /** Associated multiplicative factor for export */
+    float mCoeffOffset ;                      /** Associated offset factor for export */
 
     std::vector<double> m_Values;
     std::vector<double> m_OutValues;
     bool m_IsMPC{ false };
     bool m_IsExt{ false };
+
+    void resolveCoeff(const std::string& coeff);
+    void resolveOffset(const std::string& offset);
 };
 
 typedef std::map<std::string, ZEVariables*> t_mapExchange;

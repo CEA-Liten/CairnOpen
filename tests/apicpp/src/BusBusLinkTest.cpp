@@ -1,6 +1,6 @@
 #include "CairnAPIUtils.h"
 #include "TEST_CairnCore.h"
-#include "Utils.h"
+#include "StudyCTest.h"
 
 using namespace std;
 
@@ -33,26 +33,26 @@ int main()
 	CairnAPI::BusAPI vBus2(m_Problem, "Bus2", "NodeLaw", vElec);
 
 	// Add port to Bus1
-	CairnAPI::MilpPortAPI vPortBus;
+	std::shared_ptr < CairnAPI::MilpPortAPI> vPortBus;
 	TESTAPI("Add port: ", vPortBus = vBus1.add_Port("PortBus", vElec))
 
 	t_list vBus1_Ports = vBus1.get_Ports();
 	t_list vPorts_Ref = { "PortBus" };
-	TESTAPI2("Bus1 ports", TestUtils::compare_lists(vBus1_Ports, vPorts_Ref));
+	TESTAPIBOOL("Bus1 ports", TestUtils::compare_lists(vBus1_Ports, vPorts_Ref));
 
-	vPortBus.set_SettingValues({
+	vPortBus->set_SettingValues({
 		{"Direction", "OUTPUT"},
 		{"Variable", "BusBalance"}
 	});
 
 	// Add link
-	TESTAPI("Add link: ", m_Problem.add(vPortBus, vBus2))
+	TESTAPI("Add link: ", m_Problem.add(*vPortBus, vBus2))
 
 	// Remove link
-	TESTAPI("Remove link: ", m_Problem.remove(vPortBus, vBus2))
+	TESTAPI("Remove link: ", m_Problem.remove(*vPortBus, vBus2))
 
 	// Remove port
-	TESTAPI("Remove port: ",  vBus1.remove_Port(vPortBus))
+	TESTAPI("Remove port: ",  vBus1.remove_Port(*vPortBus))
 
 	return noError;
 }

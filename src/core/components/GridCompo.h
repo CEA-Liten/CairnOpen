@@ -1,57 +1,76 @@
-#ifndef GridCompo_H
-#define GridCompo_H
+#ifndef GRIDCOMPO_H
+#define GRIDCOMPO_H
 
-class GridCompo ;
+#include <string>
 
-#include <Eigen/SparseCore>
-#include <Eigen/Dense>
 #include "MilpComponent.h"
-
 #include "GridSubModel.h"
 #include "CairnCore_global.h"
 #include "ModelFactory.h"
 
 /**
- * \brief The Grid class provides functionnalities for FREE injection of energy flux to grid (sens =1) or FREE extraction of energy flux from grid (sens=-1).\\
- * Energy fluxes may either be Fluid fluxes (in kg/h) or Electrical / Thermal fluxes (powers, in MW).\\
- * This class implements Milp model description for free injection or extraction:\\
- * \indent MILP Optimization on the weight of this component makes no sense and yield non linearity !\\
- * \indent Weight parameter can still be set by outside optimization of the design
+ * @brief Models a grid connection for free energy injection or extraction.
+ *
+ * - Sens > 0 : energy is extracted from the grid (buy price applies).
+ * - Sens < 0 : energy is injected into the grid  (sell price applies).
+ *
+ * Energy fluxes can be fluid (kg/h) or electrical/thermal (MW).
+ *
+ * @note MILP weight optimisation on this component is non-linear and should
+ *       not be used; the weight parameter may still be set externally.
+ *
  */
-/** Use specific setParameters                 for interface with User Data                    */
-/** Use specific prepareOptim                  for variable initialization from PEGASE coupling*/
-/** Use generic MilpComponent::buildProblem()  for optimal problem building                    */
-/** - Build Model component behaviour : refer to model/buildModel()                            */
-/** - define behaviour model and associated Variables                                          */
-/** - make IO expression available to Component                                                */
-/** - Build Objective contribution                                                             */
-/** - send flux expressions to FlowBalanceBus                                                  */
-/** - publish expression to SameValueBus                                                       */
-/** Use specific exportResults                for PEGASE GUI interface filling                 */
-/** Use specific setDefaultsResults           for PEGASE GUI interface filling                 */
-/** Use specific computeTecEcoEnvAnalysis     for TecEco analysis computation                  */
-
 class CAIRNCORESHARED_EXPORT GridCompo : public MilpComponent
 {
 public:
-    GridCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent, 
-        const std::map<std::string, std::map<std::string, std::string>>& aPorts,
-        MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory);
+    GridCompo(CairnObject* aParent,
+              const std::string& aName,
+              const t_mapParamData& aComponent,
+              const std::map<std::string, t_mapParamData>& aPorts,
+              MilpData* aMilpData,
+              TecEcoAnalysis* aTecEcoAnalysis,
+              ModelFactory* aModelFactory);
 
-    virtual ~GridCompo();
-    
-    void setDefaultsResults();
-    void readTSVariablesFromModel();
+    ~GridCompo();
 
-    void declareCompoInputParam();
-    void setCompoInputParam(const std::map<std::string, std::string> aComponent);
+    // MilpComponent overrides
+    void readTSVariablesFromModel() override;
+    void createImportListVars(t_mapExchange& a_Import) override;
+    int  setTimeSeriesValues() override;
+    virtual void setDefaultsResults() {};
+    virtual void exportRHVariableInModel() {};
 
-    int setParameters();
-    
 protected:
-    // Model interface
-    std::string mEnergyPriceProfileName ;  /** Grid energy price profile name */
-    std::string mEnergyPriceProfileNameSeasonal ;  /** Grid energy price profile name */
+    std::string mEnergyPriceProfileName;          /* Grid energy price profile name */
+    std::string mEnergyPriceProfileNameSeasonal;  /* Grid energy seasonal price profile name */
+
+private:
+    // ---------- helpers to reduce duplication between the two public methods --
+
+    /**
+     * @brief Initialise buy-price time-series defaults (extraction mode, Sens > 0).
+     * @param aCarrier: Main energy carrier of this component.
+     * @return 0 on success, -1 on configuration error.
+     */
+    int  initBuyPriceDefaults(EnergyVector* aCarrier);
+
+    /**
+     * @brief Initialise sell-price time-series defaults (injection mode, Sens < 0).
+     * @param aCarrier: Main energy carrier of this component.
+     */
+    void initSellPriceDefaults(EnergyVector* aCarrier);
+
+    /**
+     * @brief Resolve buy-price profile names from model / carrier (extraction mode).
+     * @param aCarrier: Main energy carrier of this component.
+     */
+    void resolveBuyPriceProfiles(EnergyVector* aCarrier);
+
+    /**
+     * @brief Resolve sell-price profile name from model / carrier (injection mode).
+     * @param aCarrier:Main energy carrier of this component.
+     */
+    void resolveSellPriceProfile(EnergyVector* aCarrier);
 };
 
-#endif // GridCompo_H
+#endif // GRIDCOMPO_H

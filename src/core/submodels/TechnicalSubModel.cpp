@@ -2,9 +2,10 @@
 
 TechnicalSubModel::TechnicalSubModel(CairnObject* aParent) :
 SubModel(aParent),
-mHistPureOpexContributionDiscounted(0.),
+mHistFixedOpexContributionDiscounted(0.),
 mHistReplacementPartDiscounted(0.),
 mOptimalSize(2, 0.),
+mWeightResult(2, 0.),
 mTotalCostFunction(2, 0.),
 mCapexContribution(2, 0.),
 mExistence(2,0.),
@@ -13,7 +14,7 @@ mFixedOpexContribution(2, 0.),
 mVariableOpexContribution(2, 0.),
 mReplacementPart(2, 0.),
 mEnvImpactPart(2, 0.),
-mEnvGreyImpactCost(2, 0.),
+mEmbodiedCost(2, 0.),
 mSumUp(2, 0.),
 mRunningTime(2, 0.),
 mMaxRunningTime(2, 0.),
@@ -100,9 +101,9 @@ void TechnicalSubModel::setTimeData()
     mComponentAvailabilityTS.resize(mHorizon);
 }
 
-void TechnicalSubModel::resetHistStoredVaues()
+void TechnicalSubModel::resetHistStoredValues()
 {
-    mHistPureOpexContributionDiscounted = 0.;
+    mHistFixedOpexContributionDiscounted = 0.;
     mHistReplacementPartDiscounted = 0.;
     mHistVariableCostsDiscounted = 0.;
 
@@ -133,14 +134,16 @@ void TechnicalSubModel::setExpInstalled()
     * Optimize size on the basis of weighting factor multiplying constant production or storage capacity
     * Variable to multiply by the capex offset to model the "construction" work
     */
-    addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_INT);
+    if (mLPModelOnly) {
+        addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_FLOAT);
+    }
+    else {
+        addVariable(mVarInstalled, "Installed", 0.f, 1, MIPModeler::MIP_INT);
+    }
 
-    if (mUseWeightOptimization)
+    if (mWeight<0)
     {
         mExpInstalled = mVarInstalled;
-        if (mWeight >= 0.) {
-            addConstraint(mVarInstalled == 1, "sInstalled");
-        }
     }
     else
     {
@@ -188,22 +191,30 @@ void TechnicalSubModel::addMinimumCapacity(double& aMaxSize)
 
 int TechnicalSubModel::checkConsistency()
 {
+    int ierr = SubModel::checkConsistency();
+
     // note that this function is not used for SourceLoad where the only dimensionning variable is the weight
-    if (mPiecewiseCapex && mUseWeightOptimization)
+    if (mPiecewiseCapex && mWeight<0)
     {
-        cCritical() << "ERROR : options PiecewiseCapex and UseWeightOptimization cannot be used together  " << mPiecewiseCapex << mUseWeightOptimization;
+        cCritical() << "ERROR : options PiecewiseCapex and Weight<0 cannot be used together  " << mPiecewiseCapex << (mWeight<0);
         return -1;
     }
 
     for (int i = 0; i < mEnvImpacts.size(); i++)
     {
-        if (mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() && mUseWeightOptimization) {
-            cCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and UseWeightOptimization cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << mUseWeightOptimization;
+        if (mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() && (mWeight<0)) {
+            cCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and (mWeight<0) cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << (mWeight < 0);
             return -1;
         }
     }
 
-    return 0;
+    if (mMaxValue < 0. && mWeight < 0.)
+    {
+        cCritical() << "ERROR : size of one component and weight cannot be optimized together maxvalue : " << mMaxValue << ", Weight : " << (mWeight);
+        return -1;
+    }
+
+    return ierr;
 }
 
 void TechnicalSubModel::computeAllContribution()
@@ -223,7 +234,7 @@ void TechnicalSubModel::computeAllContribution()
     /* Compute economical expressions and add corresponding constraints, if EncoInvestModel=true */
     computeEconomicalContribution();
 
-    /* Next Opex(PureOpex + Replacement + VarCost + EnvImpactCost) should be computet at the end because it is a sum of other expressions */
+    /* Next Opex should be computet at the end because it is a sum of other expressions */
     computeNetOpexContribution();
 }
 
@@ -328,58 +339,130 @@ void TechnicalSubModel::computePiecewiseContribution(const MIPModeler::MIPData1D
     aExp += aOffset;
 }
 
-
 void TechnicalSubModel::computeEconomicalContribution()
 {
+    // -----------------------------------------
+    // Allocation: initialize expressions
+    // -----------------------------------------
     if (mAllocate)
     {
+        const std::size_t n = mTimeSteps.size();
+
         if (mEcoInvestModel)
         {
-            mExpOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-            mExpFixedOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-            mExpReplacement = MIPModeler::MIPExpression1D(mTimeSteps.size());
+            mExpOpex = MIPModeler::MIPExpression1D(n);
+            mExpFixedOpex = MIPModeler::MIPExpression1D(n);
+            mExpReplacement = MIPModeler::MIPExpression1D(n);
         }
-        mExpVariableOpex = MIPModeler::MIPExpression1D(mTimeSteps.size());
-        mExpVariableCosts = MIPModeler::MIPExpression1D(mTimeSteps.size());
+
+        mExpVariableOpex = MIPModeler::MIPExpression1D(n);
+        mExpVariableCosts = MIPModeler::MIPExpression1D(n);
     }
 
-    if (mEcoInvestModel)
+    // -----------------------------------------
+    // Validation & Configuration
+    // -----------------------------------------
+    if (!mEcoInvestModel)
+        return;
+
+    constexpr double EPSILON = 1e-6;
+    constexpr double HOURS_PER_YEAR = 8760.0;
+
+    // Validate LifeTime
+    if (std::fabs(mLifeTime) < EPSILON) {
+        throw Cairn_Exception(
+            "An error occurred while computing the replacement cost of " + Name() +
+            ". The value of the parameter LifeTime cannot be 0.",
+            -1
+        );
+    }
+
+    // Normalize near-zero Capex
+    if (std::fabs(mCapex) < EPSILON)
+        mCapex = 0.0;
+
+    // -----------------------------------------
+    // Capex contribution
+    // -----------------------------------------
+    if (mPiecewiseCapex)
     {
-        const double EPSILON = 1.e-6;
-        const double HOURS_PER_YEAR = 8760.0;
+        cInfo() << "Add Piecewise Capex. Try Relaxation: " << mTryRelaxationCapex;
+        computePiecewiseContribution(
+            mCapexCapacitySetPoint,
+            mCapexSetPoint,
+            mTryRelaxationCapex,
+            0,
+            mExpCapex
+        );
+    }
+    else
+    {
+        mExpCapex = mTotalCapexCoefficient * mCapex * mExpSizeMax +
+            mTotalCapexOffset * mExpInstalled;
+    }
 
-        // Validate LifeTime before computing costs
-        if (std::fabs(mLifeTime) < EPSILON) {
-            throw Cairn_Exception( "An error occurred while computing the replacement cost of " + Name() +
-                ". The value of the parameter LifeTime cannot be 0.", -1);
+    // -----------------------------------------
+    // Fixed Opex and Replacement contributions
+    // -----------------------------------------
+    const std::size_t T = mTimeSteps.size();
+
+    for (std::size_t t = 0; t < T; ++t)
+    {
+        const double dt = TimeStep(t);
+
+        // Fixed Opex
+        mExpFixedOpex[t] += dt * (mCapex * mFixedOpex * mExpSizeMax +
+            mFixedOpexOffset * mExpInstalled) / HOURS_PER_YEAR; 
+
+        // Replacement
+        mExpReplacement[t] += dt * (mCapex * mReplacement * mExpSizeMax +
+            mReplacementOffset * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
+    }
+
+    // -----------------------------------------
+    // Variable Opex contribution
+    // -----------------------------------------
+    computeVariableOpexContribution();
+}
+
+void TechnicalSubModel::computeVariableOpexContribution()
+{
+    const std::size_t T = mTimeSteps.size();
+
+    for (MilpPort* port : mListPort)
+    {
+        if (!port) {
+            throw Cairn_Exception("Null port encountered while computing variable Opex in " + Name(), -1);
         }
 
-        // Normalize near-zero capex values
-        if (std::fabs(mCapex) < EPSILON) {
-            mCapex = 0.0;
-        }
+        const double  opex = port->VariableOpex();
+        const std::string variable = port->Variable();
 
-        // Compute Capex contribution
-        if (mPiecewiseCapex) {
-            cInfo() << "Add Piecewise Capex. Try Relaxation: " << mTryRelaxationCapex;
-            computePiecewiseContribution(mCapexCapacitySetPoint, mCapexSetPoint, mTryRelaxationCapex, 0, mExpCapex);
+        MIPModeler::MIPExpression*   exp0D = getMIPExpression(variable);
+        MIPModeler::MIPExpression1D* exp1D = getMIPExpression1D(variable);
+
+        if (exp0D) {
+            for (std::size_t t = 0; t < T; ++t) {
+                const double dt = TimeStep(t);
+                mExpVariableOpex[t] += dt * opex * (*exp0D);
+            }
+        }
+        else if (exp1D) {
+            for (std::size_t t = 0; t < T; ++t) {
+                const double dt = TimeStep(t);
+                mExpVariableOpex[t] += dt * opex * (*exp1D)[t];
+            }
         }
         else {
-            mExpCapex = mTotalCapexCoefficient * mCapex * mExpSizeMax + mTotalCapexOffset * mExpInstalled;
-        }
-
-        // Compute Opex and replacement contributions
-        for (uint64_t t = 0; t < mTimeSteps.size(); ++t)
-        {
-            mExpFixedOpex[t] += TimeStep(t) * (mCapex * mFixedOpex * mExpSizeMax + mFixedOpexConstant * mExpInstalled) / HOURS_PER_YEAR;
-            mExpReplacement[t] += TimeStep(t) * (mCapex * mReplacement * mExpSizeMax + mReplacementConstant * mExpInstalled) / (mLifeTime * HOURS_PER_YEAR);
+            throw Cairn_Exception("Missing expression for port '" + variable +
+                "' in component '" + Name() + "'", -1);
         }
     }
 }
 
-void TechnicalSubModel::computeNetOpexContribution() {
+void TechnicalSubModel::computeNetOpexContribution() 
+{
     //Next Opex should be computet at the end because it is a sum of other expressions
-    //NetOpex = PureOpex + Replacement + VarCost + EnvImpactCost 
     if (mEcoInvestModel) {
         for (uint64_t t = 0; t < mTimeSteps.size(); ++t) {
             mExpOpex[t] = mExpFixedOpex[t] + mExpVariableOpex[t] + mExpReplacement[t] + mExpVariableCosts[t];
@@ -395,6 +478,8 @@ void TechnicalSubModel::computeNetOpexContribution() {
 void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
 {
     mOptimalSize.at(0) = 0.;
+    mWeightResult.at(0) = 1;
+    mWeightResult.at(1) = 1;
     mTotalCostFunction.at(0) = 0.;
     mCapexContribution.at(0) = 0.;
     mOpexContribution.at(0) = 0.;
@@ -402,7 +487,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     mVariableCosts.at(0) = 0.;
     mReplacementPart.at(0) = 0.;
     mEnvImpactPart.at(0) = 0.;
-    mEnvGreyImpactCost.at(0) = 0.;
+    mEmbodiedCost.at(0) = 0.;
 
     mOptimalSize.at(0) = mExpSizeMax.evaluate(optSol);
     double sauv = mOptimalSize.at(1);
@@ -419,6 +504,13 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         for (uint64_t t = 0; t < *mptrTimeshift; ++t) mReplacementPart.at(1) += mExpReplacement.at(t).evaluate(optSol); // HIST
     }
     mExistence.at(0) = mExistence.at(1) = mExpInstalled.evaluate(optSol);
+    if (mOptimalSize.at(0) == 0.) {
+        mExistence.at(0) = mExistence.at(1) = 0.;
+    }
+    if (mWeight > 1 || mWeight < 0) {
+        mWeightResult.at(0) = mOptimalSize.at(0) / mMaxValue;
+        mWeightResult.at(1) = mOptimalSize.at(1) / mMaxValue;
+    }
     double xxx = mExpSizeMax.evaluate(optSol);
     for (uint64_t t = 0; t < mHorizon; ++t) mVariableCosts.at(0) += mExpVariableCosts.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // PLAN
     for (uint64_t t = 0; t < *mptrTimeshift; ++t) mVariableCosts.at(1) += mExpVariableCosts.at(t).evaluate(optSol); // HIST
@@ -441,7 +533,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
             computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassPLAN());
             computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassHIST());
             //Grey impact
-            impact->evaluateEnvGreyImpact(optSol);
+            impact->evaluateEmbodiedImpact(optSol);
             computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvReplacement(), optSol, 1., 0., *impact->getEnvImpactReplacementPLAN());
             computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvReplacement(), optSol, 1., 0., *impact->getEnvImpactReplacementHIST());
         }
@@ -472,7 +564,7 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         + envEmissionPartDiscounted + envImpactPartDiscounted + variableCostsDiscounted; 
 
     if (mEcoInvestModel) {
-        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpFixedOpex, optSol, mHistPureOpexContributionDiscounted);
+        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpFixedOpex, optSol, mHistFixedOpexContributionDiscounted);
         computeDiscounted(*mptrTimeshift, mNpdtPast, mExpReplacement, optSol, mHistReplacementPartDiscounted);
     }
 
@@ -483,6 +575,6 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
         envHistImpactPartDiscounted += *impact->getEnvImpactPartDiscountedHIST();
     }
     computeDiscounted(*mptrTimeshift, mNpdtPast, mExpVariableCosts, optSol, mHistVariableCostsDiscounted);
-    mTotalCostFunction.at(1) = mCapexContribution.at(1) + (mHistPureOpexContributionDiscounted + mHistReplacementPartDiscounted + envHistImpactPartDiscounted + mHistVariableCostsDiscounted) / mParentCompo->ExtrapolationFactor();
+    mTotalCostFunction.at(1) = mCapexContribution.at(1) + (mHistFixedOpexContributionDiscounted + mHistReplacementPartDiscounted + envHistImpactPartDiscounted + mHistVariableCostsDiscounted) / mParentCompo->ExtrapolationFactor();
 }
 

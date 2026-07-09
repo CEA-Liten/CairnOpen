@@ -15,11 +15,6 @@ void ResourceStock::setTimeData() {
     SubModel::setTimeData();
 }
 
-int ResourceStock::checkConsistency()
-{
-    return 0;
-}
-
 void ResourceStock::computeInitialData()
 {
     setMinValue(mMinSize);

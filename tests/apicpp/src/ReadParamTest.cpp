@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -12,6 +12,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	string const Study = "formation_cairn";
@@ -40,9 +44,9 @@ int main()
 		m_Problem = m_Cairn.read_Study(vFileName)
 	)
 
-	CairnAPI::MilpComponentAPI vELY_PEM = m_Problem.get_Component("ELY_PEM");
-	CairnAPI::ParamAPI vELY_PEM_P1 = vELY_PEM.get_Setting("Capex");
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
+	CairnAPI::ParamAPI vELY_PEM_P1 = vELY_PEM->get_Setting("Capex");
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM_P1.get_Value(), 480000.0, eDouble)
 	)
 
@@ -57,20 +61,20 @@ int main()
 		vSolution = m_Problem.run()
 	)
 
-	TESTAPI2("Compare results",
+	TESTAPIBOOL("Compare results",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 		TESTAPI("Export time series", vSolution.exportTimeSeries())
 
 
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
-	CairnAPI::ParamAPI vSimulationControl_P1 = vSimulationControl.get_Setting("FutureSize");
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
+	CairnAPI::ParamAPI vSimulationControl_P1 = vSimulationControl->get_Setting("FutureSize");
 	
 	vSimulationControl_P1.set_Value(156);
-	TESTAPI2("Verify the value of SimulationControl",
-		TestUtils::compare_scalar(vSimulationControl.get_SettingValue("FutureSize"), 156, eInt)
+	TESTAPIBOOL("Verify the value of SimulationControl",
+		TestUtils::compare_scalar(vSimulationControl->get_SettingValue("FutureSize"), 156, eInt)
 	)
-	TESTAPI2("Verify the value of SimulationControl",
+	TESTAPIBOOL("Verify the value of SimulationControl",
 		TestUtils::compare_scalar(vSimulationControl_P1.get_Value(), 156, eInt)
 	)
 	
@@ -78,7 +82,7 @@ int main()
 		m_Problem.run()
 	)
 
-	TESTAPI2("Compare results for run 2",
+	TESTAPIBOOL("Compare results for run 2",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName_2)
 	)
 	return noError;

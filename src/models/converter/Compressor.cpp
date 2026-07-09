@@ -8,6 +8,7 @@
 #include "Compressor.h"
 #include "CarrierTypes.h"
 #include "OrUnitsConverter.h"
+#include "MaterialCarrier.h"
 
 extern "C" MODELS_DECLSPEC CairnObject * createModel(CairnObject * aParent)
 {
@@ -38,15 +39,44 @@ Compressor::Compressor(CairnObject* aParent)
 
 Compressor::~Compressor() {}
 
-int Compressor::checkConsistency ()
+int Compressor::checkConsistency()
 {
-    int ier = TechnicalSubModel::checkConsistency();
-    if (mUseVariablePOut && mUseVariableTIn){
-        cCritical() << "ERROR (compressor): it is not possible to optimize TIn and POut as the same time. Please put UseVariableTIn or UseVariablePOut on false" ;
-        return -1 ;
+    if (TechnicalSubModel::checkConsistency() < 0)
+        return -1;
+
+    // TIn and POut cannot both be optimized
+    if (mUseVariableTIn && mUseVariablePOut) {
+        cCritical() << "ERROR (Compressor " << Name()
+            << "): TIn and POut cannot be optimized simultaneously. "
+            << "Set either UseVariableTIn or UseVariablePOut to false.";
+        return -1;
     }
-    return ier ;
+
+    // NbStages must be strictly positive
+    if (mNbStages <= 0.0) {
+        cCritical() << "ERROR (Compressor " << Name()
+            << "): NbStages must be strictly positive.";
+        return -1;
+    }
+
+    // MotorEfficiency must be strictly positive
+    if (mMotorEfficiency <= 0.0) {
+        cCritical() << "ERROR (Compressor " << Name()
+            << "): MotorEfficiency must be strictly positive.";
+        return -1;
+    }
+
+    // Manual power consumption requires a non-zero value
+    if (mSetManualPowerConsumption && mPowerConsumption <= 0.0) {
+        cCritical() << "ERROR (Compressor " << Name()
+            << "): PowerConsumption must be strictly positive "
+            << "when SetManualPowerConsumption is true.";
+        return -1;
+    }
+
+    return 0;
 }
+
 
 void Compressor::ComputeElecPowerMapPOut(double aCp_Gas, double ak, double aEta, const bool aRelaxedFormSOE, const MIPModeler::MIPLinearType& methode){
     uint64_t nRows = mPrecisionPressure + 1;
@@ -161,68 +191,67 @@ void Compressor::computeUsedPower_Steam_PressureOut(const bool aRelaxedFormSOE){
 
 double Compressor::getInletPressure() 
 {
+    bool vOk = false;
     //Check default port first
-    if (mPortInMassFlowRate->PotentialName() == "Pressure" && mPortInMassFlowRate->getCarrier() != nullptr)
-    {
-        return mPortInMassFlowRate->getCarrier()->Potential();
-    }
-    //Look for any Input port with PotentialName == "Pressure" ! (should not be the case if the Compressor ports are correctly used).
-    for(MilpPort * lptrport: mListPort)
-    {
-        if (lptrport->Direction() == KCONS() && lptrport->PotentialName() == "Pressure" && lptrport->getCarrier() != nullptr)
+    double vRet = mPortInMassFlowRate->getCarrierPressure(&vOk);
+    if (!vOk) {
+        //Look for any Input port with PotentialName == "Pressure" ! (should not be the case if the Compressor ports are correctly used).
+        for(MilpPort * lptrport: mListPort)
         {
-            return lptrport->getCarrier()->Potential();
+            if (lptrport->Direction() == KCONS()) {
+                vRet = lptrport->getCarrierPressure(&vOk);
+                if (vOk) break;
+            }            
         }
-    }
-    return 0.;
+    }        
+    return vRet;
 }
 
 double Compressor::getOutletPressure()
 {
+    bool vOk = false;
     //Check default port first
-    if (mPortOutMassFlowRate->PotentialName() == "Pressure" && mPortOutMassFlowRate->getCarrier() != nullptr)
-    {
-        return mPortOutMassFlowRate->getCarrier()->Potential();
-    }
-
-    //Look for any Output port with PotentialName == "Pressure" ! (should not be the case if the Compressor ports are correctly used).
-    for(MilpPort * lptrport: mListPort)
-    {
-        if (lptrport->Direction() == KPROD() && lptrport->PotentialName() == "Pressure" && lptrport->getCarrier() != nullptr)
+    double vRet = mPortOutMassFlowRate->getCarrierPressure(&vOk);
+    if (!vOk) {
+        //Look for any Input port with PotentialName == "Pressure" ! (should not be the case if the Compressor ports are correctly used).
+        for (MilpPort* lptrport : mListPort)
         {
-            return lptrport->getCarrier()->Potential();
+            if (lptrport->Direction() == KPROD()) {
+                vRet = lptrport->getCarrierPressure(&vOk);
+                if (vOk) break;
+            }
         }
     }
-    return 0.;
+    return vRet;
 }
 
 
 void Compressor::computeInitialData()
 {
+    EnergyVector* vCarrier = mPortInMassFlowRate->getCarrier();
+    MaterialCarrier* pCarrier = (MaterialCarrier*)vCarrier;
+
+    if (!vCarrier) {
+        throw Cairn_Exception("Error in Compressor " + Name() + ": no port InMassFlowRate", -1);
+    }
+
+    if (!pCarrier) {
+        throw Cairn_Exception("Error in Compressor " + Name() + ": the port InMassFlowRate must be a MaterialCarrier", -1);
+    }
+
     mPInlet = getInletPressure();
     mPOutlet = getOutletPressure();
 
     if (fabs(mPInlet) < 1.e-6) { 
-        throw Cairn_Exception("Error in Compressor " + Name() + ": the potential of the carrier " + mPortInMassFlowRate->CarrierName()
+        throw Cairn_Exception("Error in Compressor " + Name() + ": the pressure of the carrier " + mPortInMassFlowRate->CarrierName()
             + " used by the default port " + mPortInMassFlowRate->Name() + " cannot be 0.", -1);
     }
 
-    if (fabs(mNbStages) < 1.e-6) {
-        throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter NbStages cannot be 0.", -1);
-    }
-
-    EnergyVector* vCarrier = mPortInMassFlowRate->getCarrier();
-    if (vCarrier) {        
-        std::string vectorType = vCarrier->Type();
-        mSpecificHeatRatio = CarrierTypes::getCarrierProp(vectorType, "Specific_Heat_Ratio");
-        mPowerUnit = vCarrier->PowerUnit();
-        mMassUnit = vCarrier->MassUnit();
-    }
-	if (fabs(mMotorEfficiency) < 1.e-6) {
-        throw Cairn_Exception("Error in Compressor " + Name() + ": the parameter MotorEfficiency cannot be 0.", -1);
-    }
+    mPowerUnit = *pCarrier->pQuantity("PowerUnit");
+    mMassUnit = *pCarrier->pQuantity("MassUnit");
     
-    mCp_Gas = CarrierTypes::computeCp(mMainCarrier->Type(), mTInlet);   // Cp in J/DegC/kg
+    mSpecificHeatRatio = pCarrier->SpecificHeatRatio();
+    mCp_Gas = pCarrier->computeCp(mTInlet);   // Cp in J/DegC/kg
 
     // mK cannot be 0 due to a division
     if (mUsePolytropicModel) {
@@ -241,14 +270,18 @@ void Compressor::computeInitialData()
         mEta = mIsentropicEfficiency;
     }
 
-    mPowerConsumption = mNbStages
-        * 1.e-6 / UnitsConverter::Convert(1, mPowerUnit, "MW") //MW default unit !
-        * 1. / 3600 // kg/s
-        * mCp_Gas
-        * UnitsConverter::Convert(mTInlet, "DegC", "K")
-        / mEta
-        * (pow(mPOutlet / mPInlet, (mK - 1) / (mNbStages * mK)) - 1)
-        / mMotorEfficiency * UnitsConverter::Convert(1, mMassUnit, "kg"); 
+    if (!mSetManualPowerConsumption) {
+        mPowerConsumption = mNbStages
+            * 1.e-6 / UnitsConverter::Convert(1, mPowerUnit, "MW") //MW default unit !
+            * 1. / 3600 // kg/s
+            * mCp_Gas
+            * UnitsConverter::Convert(mTInlet, "DegC", "K")
+            / mEta
+            * (pow(mPOutlet / mPInlet, (mK - 1) / (mNbStages * mK)) - 1)
+            / mMotorEfficiency * UnitsConverter::Convert(1, mMassUnit, "kg");
+    }
+
+    cInfo() << Name() + ": power consumption = " << mPowerConsumption;
 
     if (mUseSteamMap) {
         mMaxPower = *max_element(mUsedElecPowerSetPoint.begin(), mUsedElecPowerSetPoint.end());
@@ -352,13 +385,7 @@ void Compressor::computeModelContribution()
 void Compressor::computeEconomicalContribution()
 {
     TechnicalSubModel::computeEconomicalContribution();
-
-    //Variable OPEX
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpVariableOpex[t] += mExpOutMassFlow[t] * mVariableOpex * TimeStep(t);
-    }
 }
-
 
 void Compressor::computeAllIndicators(const double* optSol)
 {

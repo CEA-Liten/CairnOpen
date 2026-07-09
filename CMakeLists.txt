@@ -62,10 +62,12 @@ if (BUILD_CAIRN)
 else()
     project(${PROJECT_NAME} LANGUAGES NONE VERSION ${${PROJECT_NAME}_VERSION}) 
 endif()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE PATH "")
 
 # ========= Tests setup =========
 if(WITH_TESTING)  
   include(CTest)
+  list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
   enable_testing()  
 endif()
 
@@ -121,6 +123,11 @@ endif()
     include(buildWheel)
 endif()
 
+# ============= Development Doc configuration =============
+if (BUILD_DEVDOC)
+     add_subdirectory(${CAIRNDEVDOC_HOME})
+endif()
+
 
 # ============= Summary =============
 message(STATUS "============================================ Summary ============================================")
@@ -137,6 +144,7 @@ message(STATUS "Build wheel is : ${BUILD_WHEEL}")
 message(STATUS "Privatemodels is : ${WITH_PRIVATEMODELS}")
 message(STATUS "Build GUI : ${BUILD_CAIRNGUI}")
 message(STATUS "Licence is : ${WITH_LICENCE}")
+message(STATUS "Profiling is : ${WITH_PROFILING}")
 if (${INSTALL_WHEEL})
     message(STATUS "Install wheel in the virtual env: ${INSTALL_WHEEL_VENV}")
 endif()

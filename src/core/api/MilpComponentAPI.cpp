@@ -2,6 +2,7 @@
 #include "CairnCore.h"
 #include "Cairn_Exception.h"
 #include "CairnAPI.h"
+#include "ReentranceGuard.h"
 
 using namespace CairnAPIUtils;
 
@@ -13,7 +14,7 @@ CairnAPI::MilpComponentAPI::MilpComponentAPI(MilpComponent* ap_Component)
 CairnAPI::MilpComponentAPI::MilpComponentAPI(const OptimProblemAPI& a_Problem, const std::string& a_Name, const std::string& a_ModelName)
 	: CairnAPI::ObjectAPI()
 {
-	*this = a_Problem.create_Component(a_Name, a_ModelName);
+	*this = *a_Problem.create_Component(a_Name, a_ModelName);
 }
 
 MilpComponent* CairnAPI::MilpComponentAPI::get_MilpComponent() const
@@ -266,95 +267,169 @@ void CairnAPI::MilpComponentAPI::modify_ModelClass(const std::string& a_prevMode
 {
 	checkDefaultPortCarriers();
 
-	t_list possibleClasses = get_PossibleModelClasses();
-	if (std::find(possibleClasses.cbegin(), possibleClasses.cend(), a_newModelClass) == possibleClasses.cend())
-	{
+	// Validate new class
+	const t_list possible = get_PossibleModelClasses();
+	if (std::find(possible.begin(), possible.end(), a_newModelClass) == possible.end()) {
 		CairnAPIUtils::setError(errDefault, a_newModelClass + " is not a valid ModelClass!");
+		return;
 	}
 
-	if (a_prevModelClass != a_newModelClass) {
-		/* Changing ModelClass requires deleting then creating a new mCompoModel */
-		try {
-			//Save a copy of the ports
-			std::map<std::string, t_dict> vPortsData = {};
-			std::map<std::string, CairnAPI::EnergyVectorAPI> vPortCarriers = {};
-			for (auto& vPortName : get_Ports()) {
-				MilpPortAPI vPort = get_Port(vPortName);
-				vPortsData[vPortName] = vPort.get_SettingValues();
-				vPortCarriers[vPortName] = vPort.get_EnergyCarrier();
-			}
+	if (a_prevModelClass == a_newModelClass)
+		return;
 
-			//Save a copy of the links
-			t_dict vLinks;
-			get_Links(vLinks);
+	try {
+		// --- Update ModelClass parameter ----------------------------------------
+		bool ok = CairnAPIUtils::setParameter(get_InputParams(), "ModelClass", a_newModelClass);
+		if (!ok)
+			CairnAPIUtils::setError(errParam);
 
-			//Set ModelClass
-			MilpComponent* pComponent = get_MilpComponent();
-			bool vOk = CairnAPIUtils::setParameter({
-				pComponent->compoModel()->getInputParam(), // params	
-				pComponent->getCompoInputParam(), // options
-				pComponent->compoModel()->getInputEnvImpactsParam(),
-				pComponent->compoModel()->getInputPortImpactsParam(),
-				pComponent->getGUIData()->getGuiInputParam() }, "ModelClass", a_newModelClass);
-			pComponent->updateCompoParamMap("ModelClass", a_newModelClass);
-			if (!vOk) CairnAPIUtils::setError(errParam);
+		// --- Update compo dict -----------------------------------------
+		MilpComponent* comp = get_MilpComponent();
+		if (!comp)
+			CairnAPIUtils::setError(errNotFound, "component "  + get_Name() + " is null!");
 
-			//Save a copy of param values 
-			t_dict paramMap = get_SettingValues();
-			t_dict labelMap = get_LabelValues();
+		comp->updateCompoParamMap("ModelClass", "value", a_newModelClass);
 
-			//Delete then create a new compoModel (new ModelClass)
-			pComponent->deleteCompoModel();
-			pComponent->createCompoModel();
+		rebuildModel();
+	}
+	catch (...) {
+		CairnAPIUtils::setError(
+			errDefault,
+			"Error while trying to change ModelClass from " + a_prevModelClass + " to " + a_newModelClass
+		);
+	}
+}
 
-			//Re-create and re-configure the ports
-			OptimProblem* vOptimProblem = (OptimProblem*)pComponent->parent();
-			CairnAPI::OptimProblemAPI vOptimProblemAPI;
-			vOptimProblemAPI.set_Problem(vOptimProblem);
+void CairnAPI::MilpComponentAPI::rebuildModel()
+{
+	MilpComponent* comp = get_MilpComponent();
 
-			t_list vDefaultPortNames = get_DefaultPorts();
-			for (auto& [vPortName, vParams] : vPortsData) {
-				auto it = find(vDefaultPortNames.begin(), vDefaultPortNames.end(), vPortName);
-				if (it != vDefaultPortNames.end()) {
-					//A default port
-					CairnAPI::MilpPortAPI vDefaultPort = get_Port(vPortName);
-					vDefaultPort.set_EnergyCarrier(vPortCarriers[vPortName]);
-					vDefaultPort.set_SettingValues(vPortsData[vPortName]);
-					//Re-construct link, if applicable
-					for (auto& [vID, vBusName] : vLinks) {
-						if (vID == get_Name() + "." + vPortName) {/* should be coherent with the ID used in MilpComponentAPI::get_Links */
-							CairnAPI::BusAPI vBus = vOptimProblemAPI.get_Bus(CairnAPIUtils::getParamValue(vBusName));
-							vOptimProblemAPI.add(vDefaultPort, vBus);
-							break;
-						}
-					}
-				}
-				else {
-					//A non-default port
-					CairnAPI::MilpPortAPI vPort = add_Port(vPortName, vPortCarriers[vPortName], "", "", "", false); //direction, variable, id
-					vPort.set_SettingValues(vPortsData[vPortName]);
-					//Re-construct link, if applicable
-					for (auto& [vID, vBusName] : vLinks) {
-						if (vID == get_Name() + "." + vPortName) {/* should be coherent with the ID used in MilpComponentAPI::get_Links */
-							CairnAPI::BusAPI vBus = vOptimProblemAPI.get_Bus(CairnAPIUtils::getParamValue(vBusName));
-							vOptimProblemAPI.add(vPort, vBus);
-							break;
-						}
-					}
-				}
-			}
+	if (comp->BeingInitialized())
+		return;
 
-			//Re-initialize the component
-			pComponent->initProblem(false);
+	const ReentranceGuard guard(comp->BeingInitialized());
 
-			//set param values after re-initialization
-			set_SettingValues(paramMap);
-			set_LabelValues(labelMap);
+	// --- Save full component state -----------------------------------------
+	CairnAPI::MilpComponentAPI::ComponentState state = saveComponentState();
+
+	// --- Rebuild model (delete + recreate) ---------------------------------
+	rebuildComponentModel(state.portCarriers);
+
+	// --- Restore ports, links, parameters, labels ---------------------------
+	restoreComponentState(state);
+}
+
+CairnAPI::MilpComponentAPI::ComponentState CairnAPI::MilpComponentAPI::saveComponentState()
+{
+	CairnAPI::MilpComponentAPI::ComponentState st;
+
+	// Save ports + carriers
+	for (const auto& name : get_Ports()) {
+		auto port = get_Port(name);
+		st.portSettings[name] = port->get_SettingValues();
+		st.portCarriers[name] = *port->get_EnergyCarrier();
+	}
+
+	// Save links
+	get_Links(st.links);
+
+	// Save parameters, labels, comments
+	st.paramValues = get_SettingValues();
+	st.paramComments = get_SettingComments();
+	st.labelValues = get_LabelValues();
+
+	return st;
+}
+
+void CairnAPI::MilpComponentAPI::reconfigureModel()
+{
+	MilpComponent* comp = get_MilpComponent();
+
+	if (comp->BeingInitialized())
+		return;
+
+	const ReentranceGuard guard(comp->BeingInitialized());
+
+	// --- Save full component state -----------------------------------------
+	CairnAPI::MilpComponentAPI::ComponentState state = saveComponentState();
+
+	// --- Reconfigure model -------------------------------------------------
+	comp->initSubModelConfiguration(false);
+
+	// Restore parameters, labels, comments
+	set_SettingValues(state.paramValues);
+	set_SettingComments(state.paramComments);
+	set_LabelValues(state.labelValues);
+}
+
+void CairnAPI::MilpComponentAPI::rebuildComponentModel(const std::map<std::string, CairnAPI::EnergyVectorAPI>& portCarriers)
+{
+	MilpComponent* comp = get_MilpComponent();
+	comp->deleteCompoModel();
+	comp->createCompoModel();
+
+	// Configure default port carriers
+	const auto defaultPorts = get_DefaultPorts();
+	for (const auto& [portName, carrier] : portCarriers) {
+
+		const bool isDefault = std::find(defaultPorts.begin(), defaultPorts.end(), portName)
+			!= defaultPorts.end();
+
+		if (!isDefault)
+			continue;
+
+		std::shared_ptr<CairnAPI::MilpPortAPI> port = get_Port(portName);
+		//port->set_EnergyCarrier(carrier);
+
+		MilpPort* milpPort = port->get_MilpPort();
+		milpPort->setCarrier(carrier.get_EnergyVector());
+	}
+
+	comp->initProblem(false);
+}
+
+void CairnAPI::MilpComponentAPI::restoreComponentState(const CairnAPI::MilpComponentAPI::ComponentState& st)
+{
+	checkDefaultPortCarriers();
+
+	OptimProblem* problem = static_cast<OptimProblem*>(get_MilpComponent()->parent());
+	CairnAPI::OptimProblemAPI problemAPI;
+	problemAPI.set_Problem(problem);
+
+	const auto defaultPorts = get_DefaultPorts();
+
+	// Restore ports + links
+	for (const auto& [name, settings] : st.portSettings) {
+
+		const bool isDefault = std::find(defaultPorts.begin(), defaultPorts.end(), name)
+			!= defaultPorts.end();
+
+		std::shared_ptr<CairnAPI::MilpPortAPI> port =
+			isDefault ? get_Port(name)
+			: add_Port(name, st.portCarriers.at(name), "", "", "", false);
+
+		if (!isDefault) {
+			//port->set_EnergyCarrier(st.portCarriers.at(name));
+
+			MilpPort* milpPort = port->get_MilpPort();
+			milpPort->setCarrier(st.portCarriers.at(name).get_EnergyVector());
 		}
-		catch (...) {
-			CairnAPIUtils::setError(errDefault, "Error while trying to change the ModelClass to " + a_prevModelClass + " to " + a_newModelClass);
+		
+		port->set_SettingValues(settings);
+
+		// Restore link if exists
+		const std::string id = get_Name() + "." + name;
+		auto it = st.links.find(id);
+		if (it != st.links.end()) {
+			auto bus = problemAPI.get_Bus(CairnAPIUtils::getParamValue(it->second));
+			problemAPI.add(*port, *bus);
 		}
 	}
+
+	// Restore parameters, labels, comments
+	set_SettingValues(st.paramValues);
+	set_SettingComments(st.paramComments);
+	set_LabelValues(st.labelValues);
 }
 
 void CairnAPI::MilpComponentAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance)
@@ -395,12 +470,16 @@ void CairnAPI::MilpComponentAPI::set_SettingValue(const std::string& a_SettingNa
 		*
 		*/
 
-		if (a_SettingName == "NbInputFlux" || a_SettingName == "NbOutputFlux") {
+		if (a_SettingName == "NbInputFlux" 
+			|| a_SettingName == "NbOutputFlux" 
+			|| a_SettingName == "MaxDelay") 
+		{
 			pComponent->declareIOVariables();
 		}
 
-		/* Update MilpComponent::mComponent as it is used to re - initialize the component parameters */
-		pComponent->updateCompoParamMap(a_SettingName, a_SettingValue);
+		/* Update MilpComponent::mComponent as it is used to re-initialize the component parameters on run() */
+		const std::string value = CairnAPIUtils::getParamValue(a_SettingValue);
+		pComponent->updateCompoParamMap(a_SettingName, "value", value);
 
 		vRet = (vOk || !checkExistance) ? noError : errParam;
 	}
@@ -412,33 +491,55 @@ void CairnAPI::MilpComponentAPI::set_SettingValues(const t_dict& a_SettingValues
 	checkDefaultPortCarriers();
 	MilpComponent* pComponent = get_MilpComponent();
 	/* Changing ModelClass requires deleting then creating a new mCompoModel */
-	t_dict::const_iterator paramModelClass = a_SettingValues.find("ModelClass");
-	if (paramModelClass != a_SettingValues.end()) {
-		set_SettingValue(paramModelClass->first, paramModelClass->second, false);
-	}
+	// Helper: apply a_SettingValues[key] if it exists
+	auto applyIfPresent = [&](const std::string& key)
+		{
+			auto it = a_SettingValues.find(key);
+			if (it != a_SettingValues.end()) {
+				set_SettingValue(it->first, it->second, false);
+			}
+		};
+
+	applyIfPresent("ModelClass");
 
 	/* NbInputFlux and NbOutputFlux should be set before the other parameters because 
 	*  they are essential configuration parameters. Some parameters are (re-)declared 
 	*  when the value of NbInputFlux or NbOutputFlux is changed. Those potential new  
 	*  parameters cannot be set at the same time, otherwise.
 	*/
-	t_dict::const_iterator paramNbInputFlux = a_SettingValues.find("NbInputFlux");
-	if (paramNbInputFlux != a_SettingValues.end()) {
-		set_SettingValue(paramNbInputFlux->first, paramNbInputFlux->second, false);
-	}
-	t_dict::const_iterator paramNbOutputFlux = a_SettingValues.find("NbOutputFlux");
-	if (paramNbOutputFlux != a_SettingValues.end()) {
-		set_SettingValue(paramNbOutputFlux->first, paramNbOutputFlux->second, false);
-	}
+	applyIfPresent("NbInputFlux");
+	applyIfPresent("NbOutputFlux");
+	applyIfPresent("MaxDelay");
 
 	for (auto& vParam : a_SettingValues) {
-		if (vParam.first ==  "ModelClass" || vParam.first == "NbInputFlux" || vParam.first == "NbOutputFlux")
+		if (vParam.first ==  "ModelClass" 
+			|| vParam.first == "NbInputFlux" 
+			|| vParam.first == "NbOutputFlux"
+			|| vParam.first == "MaxDelay")
 		{
 			//already set
 			continue;
 		}
 		set_SettingValue(vParam.first, vParam.second, false);
 	}
+}
+
+// Set the comment of a comment
+void CairnAPI::MilpComponentAPI::set_SettingComment(const std::string& a_SettingName, const std::string& a_SettingComment, 
+	bool checkExistence)
+{
+	ECodeError vRet = noError;
+	if (m_Object) {
+		try {
+			CairnAPI::ObjectAPI::set_SettingComment(a_SettingName, a_SettingComment, checkExistence);
+			MilpComponent* pComponent = (MilpComponent*)m_Object;
+			pComponent->updateCompoParamMap(a_SettingName, "comment", a_SettingComment);
+		}
+		catch (const std::exception&) {
+			vRet = errParam;
+		}
+	}
+	CairnAPIUtils::setError(vRet);
 }
 
 void CairnAPI::MilpComponentAPI::set_TimeSeriesVector(const std::string& a_TimeSeriesName, const std::vector<double> a_TimeSeriesValue)
@@ -467,25 +568,44 @@ void CairnAPI::MilpComponentAPI::set_TimeSeriesVector(const std::string& a_TimeS
 	}
 }
 
+t_list CairnAPI::MilpComponentAPI::get_ShowConfigList() 
+{
+	MilpComponent* pComponent = get_MilpComponent();
+	if (!pComponent)
+		return {};
+
+	std::vector<InputParam*> inputParams = get_InputParams();
+
+	// Add InputParams from the first port — ports may contain distinct ShowConfigs
+	if (!pComponent->PortList().empty()) {
+		const std::vector<InputParam*> portParams = pComponent->PortList().front()->get_ParamInputParams();
+		inputParams.insert(inputParams.end(), portParams.cbegin(), portParams.cend());
+	}
+
+	return CairnAPIUtils::getShowConfigList(inputParams);
+}
+
 // -- IOs --
-t_list CairnAPI::MilpComponentAPI::get_VarList()
+t_list CairnAPI::MilpComponentAPI::get_VarList() const
 {
 	checkDefaultPortCarriers();
-	MilpComponent* pComponent = get_MilpComponent();
-	t_list vRet = {};
-	if (pComponent) {
-		// le composant existe, retourne une liste des variables (model expressions)		
-		const SubModel::t_mapIOs& vIOMap = pComponent->compoModel()->getMapIOExpression();
-		for (auto& [vName, vIO] : vIOMap) {
-			if (vIO->IsUsed()) {
-				vRet.push_back(vName);
-			}
-		}
-	}
-	else {
-		CairnAPIUtils::setError(noCairn);
-	}
-	return vRet;
+	return CairnAPI::ObjectAPI::get_VarList();
+
+	//MilpComponent* pComponent = get_MilpComponent();
+	//t_list vRet = {};
+	//if (pComponent) {
+	//	// le composant existe, retourne une liste des variables (model expressions)		
+	//	const SubModel::t_mapIOs& vIOMap = pComponent->compoModel()->getMapIOExpression();
+	//	for (auto& [vName, vIO] : vIOMap) {
+	//		if (vIO->IsUsed()) {
+	//			vRet.push_back(vName);
+	//		}
+	//	}
+	//}
+	//else {
+	//	CairnAPIUtils::setError(noCairn);
+	//}
+	//return vRet;
 }
 
 t_value CairnAPI::MilpComponentAPI::get_varValue(const std::string& a_VarName)
@@ -585,9 +705,9 @@ t_list CairnAPI::MilpComponentAPI::get_Ports() const
 	return vRet;
 }
 
-CairnAPI::MilpPortAPI CairnAPI::MilpComponentAPI::get_Port(const std::string& a_Name)
+std::shared_ptr < CairnAPI::MilpPortAPI> CairnAPI::MilpComponentAPI::get_Port(const std::string& a_Name)
 {
-	MilpPortAPI vRet;
+	std::shared_ptr < MilpPortAPI> vRet;
 	MilpComponent* pComponent = get_MilpComponent();
 	std::string vPortName = std::string(a_Name.c_str());
 	if (pComponent) {
@@ -600,7 +720,7 @@ CairnAPI::MilpPortAPI CairnAPI::MilpComponentAPI::get_Port(const std::string& a_
 		}
 
 		if (vPort) {
-			vRet.set_MilpPort(vPort);
+			vRet = std::make_shared<MilpPortAPI>(vPort);			
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "port " + a_Name);
@@ -609,10 +729,10 @@ CairnAPI::MilpPortAPI CairnAPI::MilpComponentAPI::get_Port(const std::string& a_
 	return vRet;
 }
 
-CairnAPI::MilpPortAPI CairnAPI::MilpComponentAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
+std::shared_ptr <CairnAPI::MilpPortAPI> CairnAPI::MilpComponentAPI::add_Port(const std::string& a_PortName, const EnergyVectorAPI& a_EnergyVector,
 	const std::string& a_Direction, const std::string& a_Variable, const std::string& a_PortId, const bool& reinitializeCompo)
 {
-	MilpPortAPI vPort;
+	std::shared_ptr < MilpPortAPI> vPort;
 	MilpComponent* pComponent = get_MilpComponent();
 	ECodeError vErr = noError;
 	std::string vErrMsg = "";
@@ -626,20 +746,23 @@ CairnAPI::MilpPortAPI CairnAPI::MilpComponentAPI::add_Port(const std::string& a_
 		else {
 			std::string vComponentName(get_Name());
 			std::string vPortId = a_PortId;
+
 			if(vPortId.empty()) vPortId = pComponent->getUniquePortID();
-			std::map<std::string, std::string> vPortParams;
-			vPortParams["CompoName"] = vComponentName;
-			vPortParams["Name"] = a_PortName;
-			vPortParams["Carrier"] = a_EnergyVector.get_Name();
-			vPortParams["Direction"] = CairnUtils::toUpper(a_Direction);
-			vPortParams["Variable"] = a_Variable;
+
+			t_mapParamData vPortParams = CairnUtils::buildParamMap({
+				{"CompoName", vComponentName},
+				{"Name",      a_PortName},
+				{"Carrier",   a_EnergyVector.get_Name()},
+				{"Direction", CairnUtils::toUpper(a_Direction)},
+				{"Variable",  a_Variable}
+			});
 
 			//create port
-			pComponent->createOnePort(vPortId, vPortParams);
+			pComponent->createOnePort(vPortId, vPortParams, a_EnergyVector.get_EnergyVector());
 			vMilpPort = pComponent->getPort(vPortId);  
 			if (vMilpPort) {
-				vPort.set_MilpPort(vMilpPort);
-				vPort.set_EnergyCarrier(a_EnergyVector.get_EnergyVector());
+				vPort = std::make_shared<MilpPortAPI>(vMilpPort);
+				//vPort->set_EnergyCarrier(a_EnergyVector.get_EnergyVector());
 				if (reinitializeCompo) {
 					redeclarePortImpactParameters();
 					if (auto* pModel = pComponent->compoModel()) {
@@ -761,7 +884,7 @@ bool CairnAPI::MilpComponentAPI::useEnergyVector(const std::string& a_EnergyCarr
 	bool vRet = false;
 	t_list vPorts = get_Ports();
 	for (auto& vPort : vPorts) {
-		if (get_Port(vPort).get_CarrierName() == a_EnergyCarrierName) {
+		if (get_Port(vPort)->get_CarrierName() == a_EnergyCarrierName) {
 			vRet = true;
 			break;
 		}
@@ -773,7 +896,7 @@ void CairnAPI::MilpComponentAPI::get_Links(t_dict& a_Links)
 {
 	t_list vPorts = get_Ports();
 	for (auto& vPortName : vPorts) {
-		MilpPort* vPort = get_Port(vPortName).get_MilpPort();
+		MilpPort* vPort = get_Port(vPortName)->get_MilpPort();
 		if (vPort) {
 			BusCompo* vBus = vPort->getLinkedBus();
 			if (vBus) {

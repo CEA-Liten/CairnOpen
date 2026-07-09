@@ -13,11 +13,10 @@
 #include "ConverterSubModel.h"
 #include <Eigen/Dense>
 
-
 /**
-* \details
+ * \details
 
-This component models conversion between different fluxes. 
+This component models conversion between different fluxes.
 
  .. figure:: ../images/MultiConverter.svg
    :alt: IO MultiConverter
@@ -27,27 +26,106 @@ This component models conversion between different fluxes.
 
    I/O MultiConverter
 
-The number or INPUTFlux and OUTPUTFlux are parameters model. 
-
-Be careful to set the number of ports consistency with NbInputFlux and NbOutputFlux.
+The number of input fluxes :rc:`NbInputFlux` and output fluxes :rc:`NbOutputFlux` 
+are model parameters. Be careful to set the number of ports consistently 
+with :rc:`NbInputFlux` and :rc:`NbOutputFlux`.
 
 Flows are of two types:
 
--  Input flux : unit system = [:rc:`Power` or Flowrate, Energy or Mass], with
-   type "Electrical", "Thermal" or "Fluid", named INPUTFluxI where I is a number between 1 and NbInputFlux
+- Input flux : unit system = [Power or Flowrate, Energy or Mass],   
+  with type Electrical, Thermal or Fluid, named :rc:`INPUTFluxI`
+  where :rc:`I` is between :rc:`1` and :rc:`NbInputFlux`.
 
--  Output flux : input efficiency (unit system = [Power or Flowrate,
-   Energy or Mass], with type "Electrical", "Thermal" or "Fluid", named OUTPUTFluxJ where J is a number between 1 and NbOutputFlux
+- Output flux : unit system = [Power or Flowrate, Energy or Mass],
+  with type Electrical, Thermal or Fluid, named :rc:`OUTPUTFluxJ`
+  where :rc:`J` is between :rc:`1` and :rc:`NbOutputFlux`.
 
-INPUTFluxI and OUTPUTFluxJ are linked by the matrices :math:`A` and :math:`B`, defined as :math:`A [X Y]^T = B`
+:rc:`INPUTFluxI` and :rc:`OUTPUTFluxJ` are linked by the matrices :math:`A` and :math:`B`,
+defined as :math:`A [X\ Y]^T = B`, where:
 
-Where :math:`A` is a block matrix : :math:`[A1 A2, A3 A4]`, :math:`X` the vector of INPUTFlux (size NbInputFlux) and Y the vector of OUTPUTFlux (size NbOutputFlux), and :math:`B` 
-a vector :math:`[B1 B2]^T` that can be seen as an offset.
-:math:`A` and :math:`B` defines the set of equations : :math:`A1 X + A2 Y = B1` (NbInput equations) and `A3 X + A4 Y = B2`.
+- :math:`X` is the vector of input fluxes (size :rc:`NbInputFlux`)
+- :math:`Y` is the vector of output fluxes (size :rc:`NbOutputFlux`)
+- :math:`A` is a block matrix :math:`[A_1\ A_2;\ A_3\ A_4]`
+- :math:`B = [B_1\ B_2]^T` is an offset vector
 
-The option :rc:`Inequality Constraint` is available to define also the set of equations :math:`C [X Y]^T \leq D` in the same principle.
+This defines the system:
+
+.. math::
+    A_1 X + A_2 Y = B_1 \qquad (\text{NbInputFlux equations})
+
+.. math::
+    A_3 X + A_4 Y = B_2 \qquad (\text{NbOutputFlux equations})
+
+The option :rc:`Inequality Constraint` allows defining the additional system
+:math:`C [X\ Y]^T \le D` using the same structure.
 
 Sizing is done relative to the first output :rc:`OUTPUTFlux1` for :rc:`MaxPower` and :rc:`Capex`.
+
+-------------------------------------------
+Upper Bounds on Inputs and Outputs
+-------------------------------------------
+
+Upper limits for inputs and outputs can be specified using the parameter :rc:`UpperBoundsFile` (CSV format). 
+
+The File must contain a single column with exactly :rc:`NbInputFlux + NbOutputFlux` values and no header,
+following the same structure as the Matrix-B CSV File (see below: points 1 and 2).
+
+If all bounds are identical, a single value may be provided. This value is then expanded to a vector of size 
+:rc:`NbInputFlux + NbOutputFlux`.
+
+Each bound is interpreted as a relative limit and the actual upper bound is: 
+:math:`\text{MaxPower} \times \text{givenLimit}` for every input and output flux.
+
+If no CSV File is provided, an upper limit :math:`\text{MaxPower} \times \text{weight}` is applied only on the first output. 
+No upper limits are applied to the other outputs or to any input.
+
+-------------------------------------------
+Format and Size of Matrix A (and Matrix C) 
+-------------------------------------------
+
+The conversion matrix :math:`A` (or :math:`C` when inequality constraints are used)
+must be a **square matrix** of size:
+
+.. math::
+    (\text{NbInputFlux + NbOutputFlux}) \times (\text{NbInputFlux + NbOutputFlux})
+
+The CSV File must therefore contain exactly:
+
+- :rc:`NbInputFlux + NbOutputFlux` rows
+- :rc:`NbInputFlux + NbOutputFlux` columns
+- numeric values separated by :rc:`;`
+
+Additional validity rule:
+
+- The column corresponding to :rc:`OUTPUTFlux1`
+  (i.e. column index :rc:`NbInputFlux`) must contain **at least one non-zero value**,
+  ensuring that the first output flux participates in the conversion.
+
+------------------------------------------
+Format and Size of Vector B (and Vector D) 
+------------------------------------------ 
+
+The vector :math:`B` (or :math:`D` for inequality constraints) is a column vector of size:
+
+.. math::
+    \text{NbInputFlux + NbOutputFlux}
+
+Accepted CSV formats:
+
+1. **Full vector:** 
+   a single column with exactly :rc:`NbInputFlux + NbOutputFlux` numeric values.
+
+2. **Single-value shortcut:** 
+   if the File contains only one cell :rc:`[k]`, it is expanded to a vector:
+
+   .. math::
+       [k,\ k,\ \dots,\ k]^T \quad \text{(size NbInputFlux + NbOutputFlux)}
+
+3. **Missing File:** 
+   if the File does not exist, a warning is issued and a **zero vector** of the correct size is used.
+
+Any other dimension (e.g., multiple columns or an incorrect number of rows)
+results in an exception.
 */
 
 
@@ -66,8 +144,9 @@ public:
     void setTimeData();
     int checkConsistency();
 
-    void readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC);
-    void readAndVerifyVectorB(const std::string& filename, std::vector<double>& vector, const bool& isVectorD);
+    int readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC);
+    int readAndVerifyVectorB(const std::string& filename, std::vector<double>& aVector, const bool& isVectorD);
+    void readUpperBounds();
 
     Eigen::MatrixXd convertToEigen(const std::vector<std::vector<double>>& matrix) {
         if (matrix.empty()) {
@@ -87,24 +166,11 @@ public:
         return matriceEigen;
     }
 
-    double norm1(const Eigen::MatrixXd& matrix) {
-        return matrix.cwiseAbs().sum();
-    }
+    //double norm1(const Eigen::MatrixXd& matrix) {
+    //    return matrix.cwiseAbs().sum();
+    //}
 
-    double smallestNonZeroCoefficient(const Eigen::MatrixXd& matrix) {
-        double minCoeff = 1e9;
-
-        for (int i = 0; i < matrix.rows(); ++i) {
-            for (int j = 0; j < matrix.cols(); ++j) {
-                double value = matrix(i, j);
-                if (value != 0 && std::abs(value) < minCoeff) {
-                    minCoeff = std::abs(value);
-                }
-            }
-        }
-
-        return minCoeff;
-    }
+    //double smallestNonZeroCoefficient(const Eigen::MatrixXd& matrix);
 
 //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
@@ -165,6 +231,8 @@ public:
 
         addParameter("MatrixC", &mMatrixC, "", mIsIneqCstr, mIsIneqCstr, "CSV file of the matrix C in the formula : C * [Input Output] <= D", "string");
         addParameter("MatrixD", &mMatrixD, "", mIsIneqCstr, mIsIneqCstr, "CSV file of the matrix D in the formula : C * [Input Output] <= D", "string");
+    
+        addParameter("UpperBoundsFile", &mUpperBoundsFile, "", false, true, "CSV file of upper bounds on inputs and outpts. The size of the vector must be NbInputFlux + NbOutputFlux", "string");
     }
 
     void declareModelIndicators() {
@@ -232,6 +300,9 @@ protected:
 
     std::vector<std::vector<double>> mCoefficient_C;
     std::vector<double> mCoefficient_D;
+
+    std::string mUpperBoundsFile;
+    std::vector<double> mUpperBounds;
 };
 
 

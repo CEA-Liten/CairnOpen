@@ -341,7 +341,7 @@
 				"nodeName": "ElectricityDistrib",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 330,
@@ -375,6 +375,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 220
 					}
 				],
 				"optionListJson": [
@@ -483,7 +487,7 @@
 				"nodeName": "H2",
 				"nodeType": "H2Vector",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 254,
@@ -517,6 +521,14 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 30
+					},
+					{
+						"key": "Temperature",
+						"value": 30
 					}
 				],
 				"optionListJson": [
@@ -1145,7 +1157,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -1173,7 +1185,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -1311,51 +1323,51 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1500,7 +1512,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -1528,7 +1540,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -1666,51 +1678,51 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -1887,7 +1899,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -1911,7 +1923,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -2057,51 +2069,51 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -2278,7 +2290,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -2302,7 +2314,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -2448,51 +2460,51 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 50
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 250
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -2661,7 +2673,7 @@
 						"value": 0.04
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -2685,7 +2697,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -2819,51 +2831,51 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 100
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 10
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],
@@ -3104,7 +3116,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -3128,7 +3140,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -3258,51 +3270,51 @@
 				],
 				"envImpactsListJson": [
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentCoefficient_A",
+						"key": "Acidification#Accumulated Exceedance EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyContentOffset_B",
+						"key": "Acidification#Accumulated Exceedance EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacement",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance EnvGreyReplacementConstant",
+						"key": "Acidification#Accumulated Exceedance EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance PiecewiseEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Acidification#Accumulated Exceedance TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Acidification#Accumulated Exceedance TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentCoefficient_A",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyContentOffset_B",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedOffset_B",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacement",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacement",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 EnvGreyReplacementConstant",
+						"key": "Climate change#Global Warming Potential 100 EmbodiedReplacementOffset",
 						"value": 0
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 PiecewiseEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 PiecewiseEmbodiedCoeff_A",
 						"value": false
 					},
 					{
-						"key": "Climate change#Global Warming Potential 100 TryRelaxationEnvGreyContentCoeff_A",
+						"key": "Climate change#Global Warming Potential 100 TryRelaxationEmbodiedCoeff_A",
 						"value": true
 					}
 				],

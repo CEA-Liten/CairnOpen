@@ -73,12 +73,12 @@
     :caption: Components description
     
     models/models
-    models/grids
+    models/grid
     models/bus
-    models/converters
-    models/sourceloads
-    models/storages
-    models/operationconstraints
+    models/converter
+    models/sourceload
+    models/storage
+    models/operationconstraint
     models/physicalequation
 
 .. toctree::

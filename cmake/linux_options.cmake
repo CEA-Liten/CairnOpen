@@ -9,7 +9,7 @@ set(CPLEX_ROOT /home/share/570-Energie/570.15-TRILOGY/tools/CPLEX/CPLEX_Studio20
 
 # Python, to force Python (if not defined, use find_package Python3)
 set(PYTHON_HOME /home/prog/python-u24/Python-3.13.12/ CACHE INTERNAL "Python installation path")
-set(PYTHON_VENV ${CMAKE_SOURCE_DIR}/venvs/buildCairn CACHE INTERNAL "Python virtual environment")
+set(PYTHON_VENV /home/share/570-Energie/570.15-TRILOGY/tools/python-u24/venvs/buildCairn CACHE INTERNAL "Python virtual environment")
 set(PYTHON_PACKAGES lib/python3.13/site-packages CACHE INTERNAL "Python packages path")
 
 set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11)
@@ -19,8 +19,12 @@ set(Python_ROOT_DIR ${PYTHON_HOME} CACHE INTERNAL "Python installation path")
 # --------- User-defined options ---------
 # Use cmake -DOPTION_NAME=some-value ... to modify default value.
 # --- Build/compiling options ---
-option(WITH_TESTING "Build tests. Default = OFF" OFF)
+option(WITH_TESTING "Build tests. Default = OFF" ON)
+option(TEST_WITH_CTESTS "Build C unit tests. Default = OFF" ON)
+option(TEST_WITH_GENERICTESTS "Build C unit tests. Default = OFF" ON)
+
 option(WITH_GENERICAPPENV "Generate file GenericAppEnv" ON)
+option(WITH_PROFILING "Enable runtime profiling instrumentation" OFF)
 option(BUILD_WHEEL "build python wheel of cairn" ON)
 
 # TODO!!

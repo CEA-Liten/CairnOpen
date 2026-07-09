@@ -31,7 +31,8 @@ using namespace GS;
 class CAIRNCORESHARED_EXPORT EnergyVector : public CairnObject
 {    
 public:
-    EnergyVector(CairnObject* aParent, const std::string& aName, const std::string& aType, const std::map<std::string, std::string> aComponent);
+    EnergyVector(CairnObject* aParent, const std::string& aName, const std::string& aType, 
+        const std::string& aTechnoType, const t_mapParamData aComponent);
     virtual ~EnergyVector();
 
     GUIData* getGUIData() { return mGUIData; }
@@ -41,142 +42,126 @@ public:
     void setName(const std::string& name) { this->setObjectName(name); }
 
     std::string Type() const { return mCarrierType; }
-
-    bool isMassCarrier() const { return mIsMassCarrier; }
-    bool isHeatCarrier() const { return mIsHeatCarrier; }
-    bool isFuelCarrier() const { return mIsFuelCarrier; }
+    std::string TechnoType() const { return mCarrierTechnoType; }
 
     bool convertStrToBool(const std::string& aCase) const { return (CairnUtils::toUpper(aCase) == "TRUE" || aCase == "1") ? true : false; }
-
+     
     std::string FluxName() const { return mFluxName; }
     std::string StorageName() const { return mStorageName; }
-    std::string PotentialName() const { return mPotentialName; }
-    std::string EnergyName() const { return mEnergyName; }
-    std::string PowerName() const { return mPowerName; }
 
     std::string FluxUnit() const { return mFluxUnit; }
     std::string StorageUnit() const { return mStorageUnit; }
-    std::string MassUnit() const { return mMassUnit; }
-    std::string FlowrateUnit()const { return mFlowrateUnit; }
-    std::string PotentialUnit() const { return mPotentialUnit; }
-    std::string EnergyUnit() const { return mEnergyUnit; }
-    std::string PowerUnit() const { return mPowerUnit; }
 
     const std::string* pFluxUnit() const { return &mFluxUnit; }
     const std::string* pStorageUnit() const { return &mStorageUnit; }
-    const std::string* pMassUnit() const { return &mMassUnit; }
-    const std::string* pFlowrateUnit() const { return &mFlowrateUnit; }
-    const std::string* pPotentialUnit() const { return &mPotentialUnit; }
-    const std::string* pEnergyUnit() const { return &mEnergyUnit; }
     const std::string* pPowerUnit() const { return &mPowerUnit; }
+    const std::string* pQuantity(const std::string& a_Quantity) const;
+   
+    bool isParamExist(const std::string& aName) const;
+    bool useProfileParam(const std::string& aName) const;
+    const double getParamCstValue(const std::string& aName) const;
+    virtual const double getParamValue(const std::string& aName, const uint64_t t, 
+        const MilpComponent* apComponent = nullptr) const;
+    const double getMinParamValue(const std::string& aName, const MilpComponent* apComponent) const;
+        
+    virtual double MolarMass() const {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    virtual double MolarMass(uint64_t t, const class MilpComponent* apComponent = nullptr) const {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
 
-    void setFluxUnit(std::string& aUnit) { if (aUnit != "") mFluxUnit = aUnit; }
-    void setMassUnit(std::string& aUnit) { if (aUnit != "") mMassUnit = aUnit; }
-    void setFlowrateUnit(std::string& aUnit) { if (aUnit != "") mFlowrateUnit = aUnit; }
-    void setEnergyUnit(std::string& aUnit) { if (aUnit != "") mEnergyUnit = aUnit; }
-    void setPowerUnit(std::string& aUnit) { if (aUnit != "") mPowerUnit = aUnit; }    
-    void setEnergyName(std::string& aUnit) { if (aUnit != "") mEnergyName = aUnit; }
-    void setPowerName(std::string& aUnit) { if (aUnit != "") mPowerName = aUnit; }
-    
-    double CP() { return mCP; }
-    double LHV() { return mLHV; }
-    double GHV() { return mGHV; }
-    double RHO() { return mRHO; }
-    double Potential()      const { return mPotential; }
-    double* pPotential() { return &mPotential; }
-
-    bool useProfileLHV() const { return mUseProfileLHV; }
-    bool useProfileGHV() const { return mUseProfileGHV; }
-
-    std::string LHVProfileName() const { return mProfileLHV; };
-    std::string GHVProfileName() const { return mProfileGHV; };
-    
     std::string tsProfileID(const std::string& tsParamName) const {
         return Name() + "." + tsParamName;
     }
 
-    std::string LHVProfileID() const { return tsProfileID(ProfileLHV()); };
-    std::string GHVProfileID() const { return tsProfileID(ProfileGHV()); };
+    int initProblem();
+    bool updateCompoParamMap(const std::string& a_SettingName, 
+        const std::string& a_AttributeName, const std::string& a_AttributeValue);
 
-    double SellPrice() { return mSellPrice; }
-    double BuyPrice() { return mBuyPrice; }
-    double BuyPriceSeasonal() { return mBuyPriceSeasonal; }
-    std::string UseProfileSellPrice() const { return mUseProfileSellPrice; }
-    std::string UseProfileBuyPrice()  const { return mUseProfileBuyPrice; }
-    std::string UseProfileBuyPriceSeasonal()  const { return mUseProfileBuyPriceSeasonal; }
-
-    void declareConfigurationParameters();
-    void setConfigurationParameters(const std::map<std::string, std::string>& aComponent);
-
-    void declareCompoInputParam(); //add parameters
-    void setCompoInputParam(const std::map<std::string, std::string> &aComponent); 
-    bool InitEnergyVectorParam(const std::map<std::string, std::string>& aComponent = {});
-
-    InputParam* getConfigParam() { return mConfigParam;  }
-    InputParam* getCompoInputParam() { return mCompoInputParam; }  /** Get access to Model Parameters */
-    InputParam* getCompoInputSettings() { return mCompoInputSettings; }  /** Get access to Model Parameters */
     InputParam* getTimeSeriesParam() { return mTimeSeriesParam; }  /** Get access to Model Parameters */
-    InputParam* getGridTimeSeries() { return mGridTimeSeries; }
-
-    std::string getDefaultEnergyVectorColor();
-    std::string getDefaultEnergyVectorType();
 
     std::vector<InputParam*> get_InputParams() override;
-
     std::vector<InputParam*> get_ParamInputParams() override;
     std::vector<InputParam*> get_OptionInputParams() override;
     std::vector<InputParam*> get_TimeSeriesInputParams() override;
-    
-private:
+
+    // Uses by GridCompo
+    double SellPrice() const { return mParamGridTS.at("SellPrice").Value; }
+    double BuyPrice() const { return mParamGridTS.at("BuyPrice").Value; }
+    double BuyPriceSeasonal() const { return mParamGridTS.at("BuyPriceSeasonal").Value; }
+    std::string UseProfileSellPrice() const { return mParamGridTS.at("SellPrice").Profile; }
+    std::string UseProfileBuyPrice()  const { return mParamGridTS.at("BuyPrice").Profile; }
+    std::string UseProfileBuyPriceSeasonal()  const { return mParamGridTS.at("BuyPriceSeasonal").Profile; }
+
+    virtual void initEnergyVector() { };
+    void initGuiData(const t_mapParamData& paramMap = {});
+
+protected:
+    void configTechnoType();
+
+    virtual void declareConfigurationParameters();
+    void setCustomConfigParams();
+    int setConfigurationParameters(const t_mapParamData& aComponent);
+
+    virtual void declareCompoInputParam();  
+    void setCustomParams();
+    int setCompoInputParam(const t_mapParamData& aComponent);
+
+    virtual std::string getDefaultColor() { return "black"; };
+
+    class ParamCarrier {
+    public:
+        double Value{ 0. };
+        bool UseProfile{ false };
+        std::string Profile;
+
+        ParamCarrier() {};
+        ParamCarrier(const std::string& aDescription, const t_unit& aUnit, 
+            double aDefault = 0, bool aIsUsed = true, const std::string& aShowConfig = "Base");
+        void addConfig(InputParam *aConfigParam, const std::string& aName);
+        void addParameter(InputParam* aInputParam, InputParam* aTimeSeriesParam, const std::string& aName);
+
+    protected:
+        std::string mDescription;
+        t_unit mUnit;
+        double mDefault{ 0.0 };
+        bool mUseProfileDefault{ false };
+        bool mIsUsed{ false };  
+        std::string mShowConfig{"Base"};
+
+        bool mUseConfig{ false };
+    };
+   
+    typedef std::map<std::string, ParamCarrier> t_mapParamCarrier;
+    t_mapParamCarrier mParamTS;
+    t_mapParamCarrier mParamGridTS;
 
     GUIData* mGUIData{ nullptr }; /** Pointer to GUI Data */
     std::string mModel; //The Model name appears on the GUI: Electricity, H2Vector, ..
 
-    std::string mCarrierType;                          /** Energy Vector Type - FluidH2, FluidCH4... / Electrical / Thermal */
-    std::string mEnergyColour ;                 /** Energy Vector associated Colour */
-    bool mIsHeatCarrier ;                  /** Energy vector is Heat carrier - Use for Fluid or materials having thermal capacity - Example hot water, cold water, wood, biomass etc ... */
-    bool mIsMassCarrier ;                  /** Energy vector is Mass carrier - Use for Fluid or materials having mass transport capacity - Example water, H2, CH4, wood, biomass etc ... */
-    bool mIsFuelCarrier ;                  /** Energy vector is Fuel carrier - Use for fluid or matierials having Heat Value capacities - Example H2, Methane CH4, Oil & Gas, wood, biomass etc ... */
+    std::string mCarrierType;          /** Energy Vector Type - Electrical / Material */
+    std::string mCarrierTechnoType;    /** EnergyVector TechnoType - H2Vector, H2OVector... / Heat */
+
+    std::string mEnergyColour ;       /** Energy Vector associated Colour */
 
     std::string mCurrency = "EUR"; //TODO: get currency from TecEcoAnalysis
 
-    std::string mFluxUnit;                        /** Flux Unit : kg/h or MW by default */
-    std::string mFluxName;                        /** Flux Name : Flowrate or Power */
-    std::string mStorageUnit;                        /** kg or MWh by default */
     std::string mStorageName;                        /** Mass or Energy */
-    std::string mPotentialUnit;                   /** Potential Unit : degC, Bar, V */
-    std::string mPotentialName;                   /** Potential Name : Temperature, Pression, Voltage */
+    std::string mFluxName;                        /** Flux Name : Flowrate or Power */
 
-    std::string mEnergyUnit;                        /** MWh by default */
+    std::string mStorageUnit;                        /** kg or MWh by default */
+    std::string mFluxUnit;                        /** Flux Unit : kg/h or MW by default */
     std::string mPowerUnit;                        /** MW by default */
-    std::string mEnergyName;                        /** energy by default */
-    std::string mPowerName;                        /** power by default */
-    std::string mMassUnit;                        /** kg by default */
-    std::string mFlowrateUnit;               /** kg/h by default */
-
-    bool mUseProfileLHV;
-    bool mUseProfileGHV;
-
-    std::string mProfileLHV;
-    std::string mProfileGHV;
-
-    double mPotential ;                         /** Energy Vector Potential Value carried : Temperature, Pression, Voltage */
-    double mLHV ;                               /** EnergyContent : Low Heat Value (PCI) in MWh/kg */
-    double mGHV ;                               /** EnergyContent : Gross Heat Value (PCS) in MWh/kg */
-    double mRHO ;                               /** Density in kg/m3 */
-    double mCP ;                               /** Heat capacity in J/kg/m3 */
-
-    std::string mUseProfileSellPrice;  /** string indicating the sell price profile to import from PEGASE Exchange Zone 'ZE' <UseProfileBuyPrice>Elec_Grid.ElectricityPrice</UseProfileBuyPrice> */
-    std::string mUseProfileBuyPrice ;  /** string indicating the buy price profile to import from PEGASE Exchange Zone 'ZE' <UseProfileSellPrice>Elec_Grid.ElectricityPrice</UseProfileSellPrice> */
-    std::string mUseProfileBuyPriceSeasonal ;  /** string indicating the buy price profile to import from PEGASE Exchange Zone 'ZE' <UseProfileSellPriceSeasonal>Elec_Grid.ElectricityPrice</UseProfileSellPriceSeasonal> */
-    double mSellPrice ;       /** Energy Vector selling price, per unit of storage (mass in kg, energy in MWh or MWhTh) */
-    double mBuyPrice ;        /** Energy Vector buying price : Pressure, Voltage, Temperature */
-    double mBuyPriceSeasonal ;/** Energy Vector buying price : Pressure, Voltage, Temperature */
-
-    InputParam* mConfigParam;          /** Config parameters should be read first */
-    InputParam* mCompoInputParam ;   /** COMPONENT Input parameter List from XML file -> Options */
-    InputParam* mCompoInputSettings ;   /** COMPONENT Input parameter List from Settings File -> Params */
-    InputParam* mGridTimeSeries;   /** Holders for Time Series names related to Grids */
+    std::string mEnergyUnit;                        /** MWh by default */
+     
+    std::map<std::string, const std::string*> mQuantities;
+    t_mapParamData mComponent;         /** Map of Topological data from .json */
+  
+    InputParam* mConfigParam;           /** Config parameters should be read first */
+    InputParam* mCompoOptions;          /** COMPONENT Input parameter List from XML file -> Options */
+    InputParam* mCompoParams;   /** COMPONENT Input parameter List from Settings File -> Params */
+    InputParam* mGridTimeSeries;        /** Holders for Time Series names related to Grids */
     InputParam* mTimeSeriesParam;
 };
 

@@ -8,14 +8,11 @@
 #include <sys/timeb.h>
 
 #include <algorithm>
-#include <chrono>
 #include <ctime>
 #include <iostream>
 
-
 template<typename T1, typename T2>
 using mul = std::ratio_multiply<T1, T2>;
-using namespace std::chrono_literals;
 
 static inline double CoinCpuTime()
 {
@@ -35,8 +32,8 @@ const std::vector<std::string> Solver::mPossibleModelTypes = {
 };
 
 //Default Solver (used for API)
-Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const std::map<std::string, std::string>& aComponent):
-    CairnObject(ap_Parent),
+Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const t_mapParamData& aComponent):
+    CairnObject(ap_Parent, aName),
     mException(Cairn_Exception()),
     mSolvers(MIPSolverFactory()),
     mExternalModeler(nullptr),
@@ -44,10 +41,9 @@ Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const std::map<
     mGUIData(nullptr),
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
-    mTerminateSignal(nullptr),
-    mSolverRunningTime(0.)
+    mTerminateSignal(nullptr)
 {
-    this->setObjectName(aName);
+    //this->setObjectName(aName);
     this->setObjectType("Solver");
     doInit(aComponent);
 }
@@ -59,12 +55,13 @@ Solver::~Solver()
     if (mCompoInputSettings) delete mCompoInputSettings;
 }
 
-void Solver::doInit(const std::map<std::string, std::string>& aComponent) 
+void Solver::doInit(const t_mapParamData& aComponent)
 {
-    if (mGUIData) delete mGUIData;
+    delete mGUIData;
+
     mGUIData = new GUIData(this);
-    mGUIData->doInit("Solver", "Solver", "Solver",
-        { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
+    t_mapParamData extractedParams = CairnUtils::extractGuiParams(aComponent);
+    mGUIData->doInit("Solver", "Solver", "Solver", extractedParams);
 
     declareCompoInputParam();
     setCompoInputParam(aComponent);
@@ -88,7 +85,7 @@ void Solver::declareCompoInputParam()
     //std::string
     mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used: MIPModeler, GAMS, etc.");
     mCompoInputParam->addParameter("Solver", &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc, Cplex, Highs, etc.");
-    mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Problem type: MIP, LP, etc. Note, this parameter is not important for Cplex, and Highs");
+    mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Problem type: MIP, LP, etc. Swich to LP with Cplex to get faster optimization if the problem has no integer values.");
     mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default NO");
     mCompoInputParam->addParameter("ReadParamFile", &mReadParamFile, "NO", false, true, "Read a study_cplexParam.prm file to parameter cplex solving");
     mCompoInputParam->addParameter("WriteMipStart", &mWriteMipStart, "NO", false, true, "Write mst cplex file");
@@ -104,7 +101,7 @@ void Solver::declareCompoInputParam()
     mCompoInputSettings->addParameter("Gap", &mGap, 1e-4, false, true, "Gap to optimal solution", "-");
 }
 
-bool Solver::setCompoInputParam(const std::map<std::string, std::string>& aComponent)
+bool Solver::setCompoInputParam(const t_mapParamData& aComponent)
 {
     bool vRet = true;
 
@@ -166,6 +163,8 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
 {
     mModel = aModel;
 
+    cInfo() << "Setting solver properties...";
+
     if (mThreads == 0) mThreads = 8;
     mThreads = std::min(mThreads, (int)std::thread::hardware_concurrency());
     cInfo() << "Using " << mThreads << " / max logical Threads " << std::thread::hardware_concurrency();
@@ -176,15 +175,15 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
         {            
             if (mTimeLimit > 0.) {
                 vParams.addParam("TimeLimit", mTimeLimit);                
-                cInfo() << "Setting solver properties TimeLimit" << mTimeLimit ;
+                cInfo() << "Setting TimeLimit to " << mTimeLimit ;
             }
             if (mGap > 0.) {
                 vParams.addParam("Gap", mGap);                
-                cInfo() << "Setting solver properties Gap" << mGap ;
+                cInfo() << "Setting Gap to " << mGap ;
             }
             if (mThreads > 0 ) {
                 vParams.addParam("Threads", mThreads);                
-                cInfo() << "Setting solver properties Threads" << mThreads ;
+                cInfo() << "Setting Threads to " << mThreads ;
             }
             vParams.addParam("TerminateSignal", mTerminateSignal);
 
@@ -192,11 +191,11 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
       
             if (mTreeMemoryLimit > 0) {
                 vParams.addParam("TreeMemoryLimit", mTreeMemoryLimit);
-                cInfo() << "Setting TreeMemoryLimit" << mTreeMemoryLimit;
+                cInfo() << "Setting TreeMemoryLimit to " << mTreeMemoryLimit;
             }
             if (mNbSolToKeep > 0) {
                 vParams.addParam("NbSolToKeep", mNbSolToKeep);
-                cInfo() << "maxnumberof solutions" << mNbSolToKeep;
+                cInfo() << "Setting max number of solutions to " << mNbSolToKeep;
             }            
             vParams.addParam("SolverPrint", 1);
                         
@@ -204,6 +203,7 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
             vParams.addParam("WriteLpCycle", cycle);
             if(mReadParamFile=="YES") vParams.addParam("ReadParamFile", 1); 
             if (mWriteMipStart == "YES") vParams.addParam("WriteMipStart", 1); 
+            if (mProblemType == "LP") vParams.addParam("LpModel", true);
 
             if (mFileMipStart != "") {
                 vParams.addParam("FileMipStart", mFileMipStart);
@@ -219,15 +219,15 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
         {
             if (mTimeLimit > 0.) {
                 vParams.addParam("TimeLimit", mTimeLimit);
-                cInfo() << "Setting solver properties TimeLimit" << mTimeLimit;
+                cInfo() << "Setting TimeLimit to " << mTimeLimit;
             }
             if (mGap > 0.) {
                 vParams.addParam("Gap", mGap);
-                cInfo() << "Setting solver properties Gap" << mGap;
+                cInfo() << "Setting Gap to " << mGap;
             }
             if (mThreads > 0) {
                 vParams.addParam("Threads", mThreads);
-                cInfo() << "Setting solver properties Threads" << mThreads;
+                cInfo() << "Setting Threads to " << mThreads;
             }
             if (mWriteLp == "YES") vParams.addParam("WriteLp", 1);
 			vParams.addParam("WriteLpCycle", cycle);
@@ -247,22 +247,19 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
             vParams.addParam("TerminateSignal", mTerminateSignal);
         }
 
-        cInfo() << "- Begin problem solving with " << mSolverName;
-
-        std::chrono::time_point<std::chrono::steady_clock> start, end;
-        start = std::chrono::steady_clock::now();
+        cInfo() << "  ";
+        cInfo() << "Begin problem solving with " << mSolverName;
+        //cInfo() << "  ";
 
         int ierr = mSolvers.solve(mSolverName, mModel, vParams, mSolverResults);
 
-        end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        //cInfo() << "Elapsed time" << elapsed_seconds.count();
-        mSolverRunningTime = elapsed_seconds.count();
-
         if(ierr < 0)
             cCritical() << "An error has found while building the optimal problem: NAN value " << mSolverName;
-        else 
-            cInfo() << "- End problem solving with " << mSolverName;
+        else {
+            //cInfo() << "  ";
+            cInfo() << "End problem solving with " << mSolverName;
+            cInfo() << "See local file cplex_optim.log for optimization details";
+        }
     }
     else if (mExternalModeler!=nullptr) {
         ModelerParams vParams;
@@ -284,9 +281,17 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
         vParams.addParam("ProblemType", mProblemType);
         vParams.addParam("location", location);
         
-        cInfo() << "- Begin problem solving with ExternalModeler " << mSolverName;
+        cInfo() << "  ";
+        cInfo() << "Begin problem solving with ExternalModeler " << mSolverName;
+        //cInfo() << "  ";
+
         mExternalModeler->solve(vParams, mExternalResults);
-        cInfo() << "- End problem solving with ExternalModeler " << mSolverName;
+
+        //cInfo() << "  ";
+        cInfo() << "End problem solving with ExternalModeler " << mSolverName;
+        cInfo() << "See local file \".lst\" for optimization details";
+        cInfo() << "ModelState: " << mExternalResults.getModelStatus();
+        cInfo() << "SolveState: " << mExternalResults.getSolverStatus();
 
         //ToDo: copy .lp and _optim.log
     }
@@ -301,15 +306,10 @@ bool Solver::getIsCheckConflicts() {
 std::string Solver::getOptimisationStatus()
 {
    if (mModelType == GS::MIPMODELER ()) {
-       if (mSolverName == "Cplex")
-           cInfo() << " - See local file cplex_optim.log for optimization details - ";
        return (mSolverResults.getOptimisationStatus());
 
    }
    else if (mExternalModeler != nullptr) {
-       cInfo() << " - See local file \".lst\" for optimization details - ";
-       cInfo() << "ModelState: " << mExternalResults.getModelStatus();
-       cInfo() << "SolveState: " << mExternalResults.getSolverStatus();
        return (mExternalResults.getModelStatus());
    }
 
@@ -332,10 +332,6 @@ int Solver::getNumberOfSolutions(){
         return mSolverResults.getNumberOfSolutions();
      }
     return 1;
-}
-
-double Solver::getSolverRunningTime() { 
-    return mSolverRunningTime; 
 }
 
 void Solver::jsonSaveGuiComponent(ojson &componentsArray)

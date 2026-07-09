@@ -6,6 +6,14 @@
 #include "UnitParam.h"
 #include <optional>
 
+/* Param Raw Data: value, comment */
+struct ParamData {
+    std::string value;
+    std::string comment;
+};
+
+typedef std::map<std::string, ParamData> t_mapParamData;
+
 enum TriState {
     False = 0,
     True = 1,
@@ -72,9 +80,10 @@ public:
     bool copyValues(const std::vector<double>& aSrc, size_t aOffset = 0);
     bool setValues(const double& aValue, size_t aSize);
 
-    bool readParameter(const std::map<std::string, std::string>& aSettings);
+    bool readParameter(const t_mapParamData& aSettings);
     bool IsBlocking();
     bool IsUsed();
+    const FlagParam* pIsUsed() const { return &m_IsUsed; }; /* dynamically pass isUsede.g. from a timeseries ModelParam to the corresponding ModelTS */
     bool isDependent(); /* whether m_IsBlocking is a scalr or depends on other parameetrs */
     TriState isModified();
 
@@ -83,7 +92,7 @@ public:
     const std::string& getShowConfig() const { return m_ShowConfig; };
     const EParamType& getType() const { return m_Type; };
     std::string getUnit() const;
-    const UnitParam* pUnitParam() const { return &m_Unit; }; /* Used to dynamically pass the unit e.g. from a timeseries ModelParam to the corresponding ModelTS */
+    const UnitParam* pUnitParam() const { return &m_Unit; }; /* dynamically pass the unit e.g. from a timeseries ModelParam to the corresponding ModelTS */
 
     const std::string& getComment() const { return m_Comment; };
     void setComment(const std::string& a_Comment)  { m_Comment = a_Comment; };
@@ -117,7 +126,7 @@ protected:
     FlagParam m_IsBlocking;
     FlagParam m_IsUsed;
 
-    virtual void readParam(const std::string& aParamName, const std::map<std::string, std::string>& a_Settings);
+    virtual void readParam(const std::string& aParamName, const t_mapParamData& a_Settings);
 };
 
 

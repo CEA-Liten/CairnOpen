@@ -5,16 +5,19 @@ using namespace GS ;
 using Eigen::Map;
 
 TecEcoCompo::TecEcoCompo(CairnObject *aParent,
-    const std::map<std::string, std::string>& aComponent,
-    const std::map < std::string, std::map<std::string, std::string> >& aPorts,
+    const std::string& aName,
+    const t_mapParamData& aComponent,
+    const std::map < std::string, t_mapParamData >& aPorts,
     MilpData* aMilpData,
     ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, nullptr, aComponent, aPorts, aModelFactory)
+    MilpComponent(aParent, aName, aMilpData, nullptr, aComponent, aPorts, aModelFactory)
 {
     setObjectType("TecEcoCompo");
-    if (CairnUtils::getParam(aComponent, "id").empty()) {
+
+    if (objectName().empty()) {
         setObjectName("TecEco");
     }
+
     mType = "TecEcoAnalysis";
     mCompoModelName = "TecEcoAnalysis";
     mCompoTechnoType = "TecEcoAnalysis";
@@ -35,7 +38,7 @@ void TecEcoCompo::declareCompoInputParam()
 {
 }
 
-void TecEcoCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent)
+void TecEcoCompo::setCompoInputParam(const t_mapParamData& aComponent)
 {
 }
 

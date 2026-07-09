@@ -2,321 +2,196 @@
 #include "MilpComponent.h"
 #include "CarrierTypes.h"
 #include "OrUnitsConverter.h"
+#include "CairnAPIUtils.h"
 
 EnergyVector::EnergyVector(CairnObject* aParent, const std::string& aName, const std::string& aType, 
-    const std::map<std::string, std::string> aComponent)
+    const std::string& aTechnoType, const t_mapParamData aComponent)
     : CairnObject(aParent, aName),
     mCarrierType(aType),
-    mEnergyColour(""),
-    mIsHeatCarrier(false),
-    mIsMassCarrier(false),
-    mIsFuelCarrier(false)
+    mCarrierTechnoType(aTechnoType), 
+    mComponent(aComponent),
+    mEnergyColour("")
 {
     setObjectType("EnergyVector");
-    declareConfigurationParameters();
-    setConfigurationParameters(aComponent);
-    declareCompoInputParam();
-    setCompoInputParam(aComponent);
-    if (aComponent.find("Type") == aComponent.end()) {
-        mCarrierType = aType;
-    }
-    InitEnergyVectorParam(aComponent);
+    configTechnoType();
 
-    cInfo() << " Energy Vector " <<objectName() << " of type " << mCarrierType;
-    cInfo() << " Energy Vector " << objectName() << " use MassCarrier property " << isMassCarrier() << " RHO " << mRHO ;
-    cInfo() << " Energy Vector " << objectName() << " use HeatCarrier property " << isHeatCarrier() << " CP  " << mCP  ;
-    cInfo() << " Energy Vector " << objectName() << " use FuelCarrier property " << isFuelCarrier() << " LHV " << mLHV ;
+    mConfigParam = new InputParam(this, "ConfigParam" + Name());
+    mCompoOptions = new InputParam(this, "CompoInputParam" + Name());
+    mCompoParams = new InputParam(this, "CompoInputSettings" + Name());
+    mTimeSeriesParam = new InputParam(this, "TimeSeriesSettings" + Name());    
+    mGridTimeSeries = new InputParam(this, "GridTimeSeries" + Name());
 }
 
 EnergyVector::~EnergyVector()
 {
-    if (mGUIData) delete mGUIData;
-    if (mConfigParam) delete mConfigParam;
-    if (mCompoInputParam) delete mCompoInputParam;
-    if (mCompoInputSettings) delete mCompoInputSettings;
-    if (mTimeSeriesParam) delete mTimeSeriesParam;
-    if (mGridTimeSeries) delete mGridTimeSeries;
+    delete mGUIData;
+    delete mConfigParam;
+    delete mCompoOptions;
+    delete mCompoParams;
+    delete mTimeSeriesParam;
+    delete mGridTimeSeries;
+}
+
+void EnergyVector::configTechnoType()
+{
+    const std::vector<std::string> supportedTechnoTypes = CarrierTypes::getCarrierTypes();
+    auto it = std::find(supportedTechnoTypes.begin(), supportedTechnoTypes.end(), mCarrierTechnoType);
+    if (it == supportedTechnoTypes.end() || mCarrierTechnoType.empty()) {
+        if (mCarrierType == "ElectricalCarrier") /** componentType */
+            mCarrierTechnoType = "Electricity";  /** for the GUI : matches both nodeType and nodeTechnoType */
+        else if (mCarrierType == "MaterialCarrier")
+            mCarrierTechnoType = "Material";
+        else
+            cWarning() << "The Type (" + mCarrierType + ") of EnergyVector " + Name() + " is not supported!";
+    }
+}
+
+const std::string* EnergyVector::pQuantity(const std::string& a_Quantity)  const {
+    if (mQuantities.find(a_Quantity) != mQuantities.end())
+        return mQuantities.at(a_Quantity);
+    else
+        return nullptr;
 }
 
 void EnergyVector::declareConfigurationParameters()
-{
-    mConfigParam = new InputParam(this, "ConfigParam" + Name());
-    //bool
-    /** isMandatory is false because UseProfileLHV and UseProfileGHV are missing in old studies */
-    mConfigParam->addParameter("UseProfileLHV", &mUseProfileLHV, false, false, true, "If true use timeseries LHV, otherwise use scalar value.", "bool");
-    mConfigParam->addParameter("UseProfileGHV", &mUseProfileGHV, false, false, true, "If true use timeseries LHV, otherwise use scalar value.", "bool");
+{    
+    for (auto& [key, param] : mParamTS) {
+        param.addConfig(mConfigParam, key);
+    }    
+
+    setCustomConfigParams();
 }
 
-void EnergyVector::setConfigurationParameters(const std::map<std::string, std::string>& aComponent)
+int EnergyVector::setConfigurationParameters(const t_mapParamData& aComponent)
 {
-    if (aComponent.empty()) {
-        return; // component creation
-    }
-
-    CairnUtils::checkRead(mConfigParam->readParameters(aComponent), Name());
+    return mConfigParam->readParameters(aComponent); 
 }
 
 void EnergyVector::declareCompoInputParam()
-{
-    //------------------------------ options ------------------------------
-    mCompoInputParam = new InputParam (this,"CompoInputParam"+ Name()) ;
-    //std::string
-    mCompoInputParam->addParameter("Type", &mCarrierType, "Electrical", false, true,"Energy vector type specifying the energy form among: Electrical - Thermal - Fluid - Material");
-    mCompoInputParam->addParameter("MassUnit", &mMassUnit, "kg", false, true,"Unit to be used for mass - default is kg","-");
-    mCompoInputParam->addParameter("EnergyUnit", &mEnergyUnit, "MWh", false, true,"Unit to be used for energy - default is MWh","-");
-    mCompoInputParam->addParameter("PowerUnit", &mPowerUnit, "MW", false, true,"Unit to be used for power - default is MW","-");
-    mCompoInputParam->addParameter("FlowrateUnit", &mFlowrateUnit, "kg/h", false, true,"Unit to be used for mass flow - default is kg/h","-");
-    mCompoInputParam->addParameter("FluxUnit", &mFluxUnit, "", false, true,"Unit to be used for Flow","", "DONOTSHOW");
-    mCompoInputParam->addParameter("FluxName", &mFluxName, "", false, true, "Name to be used for Flow", "", "UnitNames");
-    mCompoInputParam->addParameter("StorageName", &mStorageName, "", false, true, "Name to be used for storage capacity", "", "UnitNames");
-    mCompoInputParam->addParameter("StorageUnit", &mStorageUnit, "", false, true, "Unit to be used for storage capacity", "", "DONOTSHOW");
-    mCompoInputParam->addParameter("PotentialName", &mPotentialName, "", false, true,"Name to be used for potential eg Pressure - Temperature...");
-    mCompoInputParam->addParameter("PotentialUnit", &mPotentialUnit, "", false, true,"Unit to be used for constant potential","Bar");
-    mCompoInputParam->addParameter("EnergyName", &mEnergyName, "Energy", false, true,"Name to be used for Energy","", "UnitNames");
-    mCompoInputParam->addParameter("PowerName", &mPowerName, "Power", false, true,"Name to be used for Power","", "UnitNames");
-    
-    //bool: should be moved to declareConfigurationParameters but this breaks TNR due to missing parameters
-    mCompoInputParam->addParameter("IsMassCarrier",&mIsMassCarrier, false, false, true,"Option meaning mass is carried by energy vector - Default to false for Electrical and Thermal types - true for Fluids and Material");
-    mCompoInputParam->addParameter("IsHeatCarrier",&mIsHeatCarrier, false, false, true,"Option giving heat capacity ability to energy vector - Default to true for Electrical and Thermal types - false for Fluids and Material");
-    mCompoInputParam->addParameter("IsFuelCarrier",&mIsFuelCarrier, false, false, true,"Option giving heating vaue ability to energy vector - Default to false for Electrical and Thermal types or non fuel Fluids - true for Fluid and Material fuels");
+{  
+    //------------------------------ parameters + timeseries Names -----------------------
+    for (auto& [key, param] : mParamTS) {
+        param.addParameter(mCompoParams, mTimeSeriesParam, key);
+    }
    
-    //------------------------------ ! timeseries Names ! ------------------------------
-    mTimeSeriesParam = new InputParam(this, "TimeSeriesSettings" + Name());
-    //std::string
-    mTimeSeriesParam->addParameter(ProfileLHV(), &mProfileLHV, "", SFunctionFlag({ eFTypeNotAnd, {}, {&mUseProfileLHV, &mIsFuelCarrier} }),
-        SFunctionFlag({ eFTypeNotAnd, {}, {&mUseProfileLHV , &mIsFuelCarrier} }), "Profile of heat value of fuel type carriers - Use 1. for pure energy model",
-        SFunctionUnit({ eFTypeDivision, { &mEnergyUnit, &mMassUnit } }));
-    mTimeSeriesParam->addParameter(ProfileGHV(), &mProfileGHV, "", SFunctionFlag({ eFTypeNotAnd, {}, {&mUseProfileGHV, &mIsFuelCarrier} }),
-        SFunctionFlag({ eFTypeNotAnd, {}, {&mUseProfileGHV , &mIsFuelCarrier} }), "Profile of gross Heat Value - Use 1. for pure energy model ",
-        SFunctionUnit({ eFTypeDivision, { &mEnergyUnit, &mMassUnit } }));
-   
-    mGridTimeSeries = new InputParam(this, "GridTimeSeries" + Name());
-    mGridTimeSeries->addParameter("UseProfileBuyPrice", &mUseProfileBuyPrice, "", false, true,"Optional buy price time profile", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
-    mGridTimeSeries->addParameter("UseProfileSellPrice", &mUseProfileSellPrice, "", false, true,"Optional sell price time profile", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
-    mGridTimeSeries->addParameter("UseProfileBuyPriceSeasonal", &mUseProfileBuyPriceSeasonal, "", false, true, "Optional buy price seasonal time profile", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
-    //------------------------------ parameters ------------------------------
-    mCompoInputSettings = new InputParam (this,"CompoInputSettings"+ Name()) ;
-    //double
-    mCompoInputSettings->addParameter("Potential", &mPotential, 0., false, true, "Voltage- Pressure- Temperature", "V-Bar-degC");
-    mCompoInputSettings->addParameter("LHV", &mLHV, 1., SFunctionFlag({ eFTypeNotAnd, {&mUseProfileLHV}, {&mIsFuelCarrier} }),
-        SFunctionFlag({ eFTypeNotAnd, {&mUseProfileLHV}, {&mIsFuelCarrier} }), "Heat Value of fuel type carriers - Use 1. for pure energy model",
-        SFunctionUnit({ eFTypeDivision, { &mEnergyUnit, &mMassUnit } }));
-    mCompoInputSettings->addParameter("GHV", &mGHV, 0., SFunctionFlag({ eFTypeNotAnd, {&mUseProfileGHV}, {&mIsFuelCarrier} }),
-        SFunctionFlag({ eFTypeNotAnd, {&mUseProfileGHV}, {&mIsFuelCarrier} }), "Gross Heat Value - Use 1. for pure energy model ",
-        SFunctionUnit({ eFTypeDivision, { &mEnergyUnit, &mMassUnit } }));
-    mCompoInputSettings->addParameter("CP", &mCP, 0., &mIsHeatCarrier, true, "Heat Capacity of heat carriers ", "J/K/kg");
-    mCompoInputSettings->addParameter("RHO", &mRHO, 0., &mIsMassCarrier, true, "Density of fluid type carriers", "kg/m3");
-    mCompoInputSettings->addParameter("BuyPrice", &mBuyPrice, 0., false, true, "Constant BuyPrice per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
-    mCompoInputSettings->addParameter("BuyPriceSeasonal", &mBuyPriceSeasonal, 0., false, true, "Constant BuyPriceSeasonal per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
-    mCompoInputSettings->addParameter("SellPrice", &mSellPrice, 0., false, true, "Constant SellPrice per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    mParamGridTS["BuyPrice"] = ParamCarrier("BuyPrice per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } })) ;
+    mParamGridTS["BuyPriceSeasonal"] = ParamCarrier("BuyPriceSeasonal per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    mParamGridTS["SellPrice"] = ParamCarrier("SellPrice per mass or energy units", SFunctionUnit({ eFTypeDivision, { &mCurrency, &mStorageUnit } }));
+    for (auto& [key, param] : mParamGridTS) {
+        param.addParameter(mCompoParams, mGridTimeSeries, key);
+    }     
+
+    mQuantities["PowerUnit"]   = &mPowerUnit;
+    mQuantities["EnergyUnit"]  = &mEnergyUnit;
+    mQuantities["StorageUnit"] = &mStorageUnit;
+    mQuantities["FluxUnit"]    = &mFluxUnit; 
+
+    setCustomParams();
+    initEnergyVector();
+    initGuiData();
 }
 
-void EnergyVector::setCompoInputParam(const std::map<std::string, std::string>& aComponent)
+int EnergyVector::setCompoInputParam(const t_mapParamData& aComponent)
 {
-    if (aComponent.empty()) {
-        return; // component creation
+    if (mCompoOptions->readParameters(aComponent)      < 0
+       || mCompoParams->readParameters(aComponent) < 0
+       || mTimeSeriesParam->readParameters(aComponent)    < 0
+       || mGridTimeSeries->readParameters(aComponent)     < 0)
+    {
+        return -1;
     }
 
-    CairnUtils::checkRead(mCompoInputParam->readParameters(aComponent), Name());
-    CairnUtils::checkRead(mCompoInputSettings->readParameters(aComponent), Name());
-    CairnUtils::checkRead(mTimeSeriesParam->readParameters(aComponent), Name());
-    CairnUtils::checkRead(mGridTimeSeries->readParameters(aComponent), Name());
+    initEnergyVector();
+    initGuiData(aComponent);
 
-    mEnergyColour = CairnUtils::getParam(aComponent, "EnergyColor");
-    mModel = CairnUtils::getParam(aComponent, "Model");
+    return 0;
 }
 
-bool EnergyVector::InitEnergyVectorParam(const std::map<std::string, std::string> &aComponent)
+void EnergyVector::setCustomConfigParams() {
+    const std::map<std::string, double> propMap =
+        CarrierTypes::getCarrierProperties(mCarrierTechnoType);
+
+    if (propMap.empty())
+        return;
+
+    t_dict settingDict;
+    for (const auto& [key, value] : propMap) {
+        settingDict.emplace(key, t_value{ value });
+    }
+
+    CairnAPIUtils::setParameters({ mConfigParam }, settingDict);
+}
+
+void EnergyVector::setCustomParams() 
 {
-    if (mGUIData) delete mGUIData;
-    mGUIData = new GUIData(this);
-    if (mModel == "") {
-        mModel = getDefaultEnergyVectorType();
-    }
-    mGUIData->doInit(mModel, mModel, "EnergyVector", { {"Xpos", CairnUtils::getParam(aComponent,"Xpos")}, {"Ypos", CairnUtils::getParam(aComponent,"Ypos")} });
+    const std::map<std::string, double> propMap =
+        CarrierTypes::getCarrierProperties(mCarrierTechnoType);
 
-    if (mCarrierType == "")
-    {
-        cCritical() << "<Type> attribute is void !! A Type among Fluid, Material, Thermal or Electrical should be given for EnergyVector " << (objectName());
-        Cairn_Exception erreur("void <Type> attribute is not allowed, Type among Fluid, Material, Thermal or Electrical should be given for EnergyVector " + objectName(), -1);
-        throw erreur;
-    }
-    if (!CairnUtils::contains(mCarrierType, { "Fluid",
-        "Material",
-        "Wood",
-        "BioMass",
-        "Electrical",
-        "Thermal" }))
-    {
-        cCritical() << "<Type> attribute error " << (objectName());
-        Cairn_Exception erreur("<Type> attribute must be one among Fluid*, BioMass, Wood, Material, Thermal or Electrical for EnergyVector " + objectName(), -1);
-        throw erreur;
+    if (propMap.empty())
+        return;
+
+    cDebug() << "CustomParams: " + Name() + " " + mCarrierTechnoType;
+
+    t_dict settingDict;
+    for (const auto& [key, value] : propMap) {
+        settingDict.emplace(key, t_value{ value });
     }
 
-    assert(mCarrierType != "");
+    std::vector<InputParam*> inputParams = {
+        mCompoOptions,
+        mCompoParams,
+        mTimeSeriesParam,
+        mGridTimeSeries
+    };
 
-    if (mFluxUnit == "")
-    {
-        if (CairnUtils::contains(mCarrierType, { "Fluid",
-            "Material",
-            "Wood",
-            "BioMass" }))    mFluxUnit = mFlowrateUnit;
-        if (CairnUtils::contains(mCarrierType, "Electrical"))    mFluxUnit = mPowerUnit;
-        if (CairnUtils::contains(mCarrierType, "Thermal"))    mFluxUnit = mPowerUnit;
-    }
-    else
-    {
-        if (CairnUtils::contains(mCarrierType, { "Fluid",
-            "Material",
-            "Wood",
-            "BioMass" }))    mFlowrateUnit = mFluxUnit;
-        if (CairnUtils::contains(mCarrierType, "Electrical"))    mPowerUnit = mFluxUnit;
-        if (CairnUtils::contains(mCarrierType, "Thermal"))    mPowerUnit = mFluxUnit;
-    }
+    CairnAPIUtils::setParameters(inputParams, settingDict);
+}
 
-    if (mStorageUnit == "")
-    {
-        if (CairnUtils::contains(mCarrierType, { "Fluid",
-            "Material",
-            "Wood",
-            "BioMass" }))    mStorageUnit = mMassUnit;
-        if (CairnUtils::contains(mCarrierType, "Electrical"))    mStorageUnit = mEnergyUnit;
-        if (CairnUtils::contains(mCarrierType, "Thermal"))       mStorageUnit = mEnergyUnit;
-    }
-    else
-    {
-        if (CairnUtils::contains(mCarrierType, { "Fluid",
-            "Material",
-            "Wood",
-            "BioMass" }))      mMassUnit = mStorageUnit;
-        if (CairnUtils::contains(mCarrierType, "Electrical"))   mEnergyUnit = mStorageUnit;
-        if (CairnUtils::contains(mCarrierType, "Thermal"))      mEnergyUnit = mStorageUnit;
-    }
-    if (mFluxName == "")
-    {
-        if (CairnUtils::contains(mCarrierType, { "Fluid",
-            "Material",
-            "Wood",
-            "BioMass" }))      mFluxName = mCarrierType + "Flowrate";
-        if (CairnUtils::contains(mCarrierType, "Electrical"))   mFluxName = mCarrierType + "Power";
-        if (CairnUtils::contains(mCarrierType, "Thermal"))      mFluxName = mCarrierType + "Power";
-    }
-    if (mStorageName == "")
-    {
-        if (CairnUtils::contains(mCarrierType, { "Fluid",
-            "Material",
-            "Wood",
-            "BioMass" }))      mStorageName = mCarrierType + "Mass";
-        if (CairnUtils::contains(mCarrierType, "Electrical"))   mStorageName = mCarrierType + "Energy";
-        if (CairnUtils::contains(mCarrierType, "Thermal"))      mStorageName = mCarrierType + "Energy";
-    }
-    if (mPotentialName == "")
-    {
-        if (CairnUtils::contains(mCarrierType, "Fluid"))      mPotentialName = "Pressure";
-        if (CairnUtils::contains(mCarrierType, { "Wood",
-            "BioMass",
-            "Material" }))   mPotentialName = "Xmassfract";
-        if (CairnUtils::contains(mCarrierType, "Electrical")) mPotentialName = "Voltage";
-        if (CairnUtils::contains(mCarrierType, "Thermal"))    mPotentialName = "Temperature"; // and Pressure ?? classes derivees a prevoir entre Thermal et Fluid
-    }
-    if (mPotentialUnit == "")
-    {
-        if (CairnUtils::contains(mCarrierType, "Fluid"))       mPotentialUnit = "bar";
-        if (CairnUtils::contains(mCarrierType, { "Wood",
-            "BioMass",
-            "Material" }))    mPotentialUnit = "percent";
-        if (CairnUtils::contains(mCarrierType, "Electrical"))  mPotentialUnit = "V";
-        if (CairnUtils::contains(mCarrierType, "Thermal"))     mPotentialUnit = "degC";  // and Pressure ?? classes derivees a prevoir entre Thermal et Fluid
-    }
-    
-    if (mPotentialUnit == "" || mFluxUnit == "" || mStorageUnit == "" || mPotentialUnit == "" || mFluxName == "" || mStorageName == "")
-    {
-        cCritical() << "Void unit/name detected for EnergyVector " << objectName();
-        Cairn_Exception erreur("Void unit/name is not allowed - Please check/correct EnergyVector " + objectName(), -1);
-        throw erreur;
-    }
+int EnergyVector::initProblem()
+{   
+    if (setConfigurationParameters(mComponent) < 0)
+        return -1;
 
-    if (CairnUtils::contains(mCarrierType, { "Fluid", "Material", "BioMass", "Wood" }))
-    {
-        mIsMassCarrier = true;
-    }
+    if (setCompoInputParam(mComponent) < 0)
+        return -1;
 
-    if (mIsMassCarrier && (CairnUtils::contains(mCarrierType, "Electrical") || CairnUtils::contains(mCarrierType, "Thermal")) )
-    {
-        cCritical() << "IsMassCarrier attribute error detected for EnergyVector " << (objectName());
-        Cairn_Exception erreur("IsMassCarrier is not allowed for Electrical / Thermal energy types - Please check/correct EnergyVector " + objectName(), -1);
-        throw erreur;
-    }
+    return 0;
+}
 
-    if (CairnUtils::contains(mCarrierType, "FluidH2O"))
-    {
-        mIsHeatCarrier = true;
-    }
-
-    if (mIsHeatCarrier && CairnUtils::contains(mCarrierType, "Electrical"))
-    {
-        cCritical() << "mIsHeatCarrier attribute error detected for EnergyVector " << (objectName());
-        Cairn_Exception erreur("mIsHeatCarrier is not allowed for Electrical energy types - Please check/correct EnergyVector " + objectName(), -1);
-        throw erreur;
-    }
-    
-    if ((CairnUtils::contains(mCarrierType, "Fluid") && !CairnUtils::contains(mCarrierType, "FluidH2O") && !CairnUtils::contains(mCarrierType, "FluidCO2")) 
-        || CairnUtils::contains(mCarrierType, "Wood") || CairnUtils::contains(mCarrierType, "BioMass"))
-    {
-        mIsFuelCarrier = true;
-    }
-
-    if (mIsFuelCarrier && CairnUtils::contains(mCarrierType, "Electrical"))
-    {
-        cCritical() << "IsFuelCarrier attribute error detected for EnergyVector " << (objectName());
-        Cairn_Exception erreur("IsFuelCarrier is not allowed for Electrical energy types - Please check/correct EnergyVector " + objectName(), -1);
-        throw erreur;
-    }
-    
-    if (mIsFuelCarrier) {
-        if (mLHV <=0.)  
-        {
-            double vConversion = UnitsConverter::Convert(1.0, mMassUnit, "kg") / UnitsConverter::Convert(1.0, mEnergyUnit, "MWh");
-            mLHV = CarrierTypes::getCarrierProp(mCarrierType, "LHV"); // MWh/kg           
+bool EnergyVector::updateCompoParamMap(const std::string& a_SettingName, 
+    const std::string& a_AttributeName, const std::string& a_AttributeValue) 
+{
+    if (a_AttributeName == "value") {
+        CairnUtils::setParamValue(mComponent, a_SettingName, a_AttributeValue);
+        if (a_SettingName == "FluxType")  /** To be relaxed when needed */
+        { 
+            initEnergyVector();
         }
-        cInfo() << " Low Heat Value = " << mLHV;
-    }
-    else if (CairnUtils::contains(mCarrierType, "Thermal")) mLHV = 1.;
-    else if (CairnUtils::contains(mCarrierType, "Electrical"))  mLHV = 1.;
-
-    if (mLHV <= 0.)
-    {
-        cCritical() << "Negative or Zero LHV value detected for energy vector " << (objectName()) << mLHV;
-        Cairn_Exception erreur("Negative LHV value is not allowed for energy carrier - Use 1. for pure energy carriers - Please check/correct EnergyVector " + objectName(), -1);
-        throw erreur;
-    }
-
-    if (isHeatCarrier())
-    {        
-        if (mCP <= 0.)
-        {
-            mCP = CarrierTypes::getCarrierProp(mCarrierType, "CP"); // J/kg/K at 300K
-        }
-        cInfo() << objectName() << ".CP=" << mCP;
-    }
-
-    if (isMassCarrier())
-    {
-        if (mRHO <= 0.)
-        {
-            mRHO = CarrierTypes::getCarrierProp(mCarrierType, "RHO"); // MWh/kg
+        if (a_SettingName == "Xpos" || a_SettingName == "Ypos") { /** To be relaxed when needed */
+            initGuiData(mComponent);
         }
     }
-
+    else if (a_AttributeName == "comment") {
+        CairnUtils::setParamComment(mComponent, a_SettingName, a_AttributeValue);
+    }
     return true;
 }
 
+void EnergyVector::initGuiData(const t_mapParamData& paramMap)
+{
+    if (!mGUIData) {
+        mGUIData = new GUIData(this);
+    }
+
+    t_mapParamData extractedParams = CairnUtils::extractGuiParams(paramMap);
+    mGUIData->doInit(mCarrierTechnoType, mCarrierTechnoType, mCarrierType, extractedParams);
+}
 
 void EnergyVector::jsonSaveGuiComponent(ojson &componentsArray)
 {
     ojson compoObject;
-    if (mEnergyColour == "") {
-        mEnergyColour = getDefaultEnergyVectorColor();
+    if (mEnergyColour.empty()) {
+        mEnergyColour = getDefaultColor();
     }    
     mGUIData->jsonSaveGUILine(compoObject);
     compoObject["energyTypeColor"] = mEnergyColour;
@@ -326,9 +201,9 @@ void EnergyVector::jsonSaveGuiComponent(ojson &componentsArray)
    
     ojson& paramArray = compoObject["paramListJson"];
     mConfigParam->jsonSaveGUIInputParam(paramArray);
-    mCompoInputSettings->jsonSaveGUIInputParam(paramArray);
+    mCompoParams->jsonSaveGUIInputParam(paramArray);
 
-    mCompoInputParam->jsonSaveGUIInputParam(compoObject["optionListJson"]);
+    mCompoOptions->jsonSaveGUIInputParam(compoObject["optionListJson"]);
 
     ojson& timeSeriesArray = compoObject["timeSeriesListJson"];
     mTimeSeriesParam->jsonSaveGUIInputParam(timeSeriesArray);
@@ -337,95 +212,14 @@ void EnergyVector::jsonSaveGuiComponent(ojson &componentsArray)
     componentsArray.push_back(compoObject);
 }
 
-std::string EnergyVector::getDefaultEnergyVectorType() {
-    std::string defaultType = "EnergyVector";
-    if (CairnUtils::contains(mCarrierType, "THERM", true) || CairnUtils::contains(mCarrierType, "HEAT", true))
-    {
-        defaultType = "Heat";
-    }
-    else if (CairnUtils::contains(mCarrierType, "H2", true))
-    {
-        defaultType = "H2Vector";
-    }
-    else if (CairnUtils::contains(mCarrierType, "CH4", true))
-    {
-        defaultType = "CH4Vector";
-    }
-    else if (CairnUtils::contains(mCarrierType, "ELEC", true))
-    {
-        defaultType = "Electricity";
-    }
-    else if (CairnUtils::contains(mCarrierType, { "BIOMASS", "MATERIAL", "WOOD" }, true))
-    {
-        defaultType = "Biomass";
-    }
-    else {
-        defaultType = "EnergyVector";
-    }
-    return defaultType;
-}
-
-std::string EnergyVector::getDefaultEnergyVectorColor()
-{
-    std::string defaultColor = "";
-    if (CairnUtils::contains(mCarrierType, "THERM", true) || CairnUtils::contains(mCarrierType, "HEAT", true))
-    {
-        if (CairnUtils::contains(objectName(), "HOT", true)) defaultColor = "red";
-        if (CairnUtils::contains(objectName(), "CHAUD", true)) defaultColor = "red";
-        if (CairnUtils::contains(objectName(), "HEAT", true)) defaultColor = "red";
-        if (CairnUtils::contains(objectName(), "COLD", true)) defaultColor = "blue";
-        if (CairnUtils::contains(objectName(), "FROID", true)) defaultColor = "blue";
-    }
-    else if (CairnUtils::contains(mCarrierType, "H2", true))
-    {
-        defaultColor = "green";
-    }
-    else if (CairnUtils::contains(mCarrierType, "CH4", true))
-    {
-        defaultColor = "brown";
-    }
-    else if (CairnUtils::contains(mCarrierType, "CO2", true))
-    {
-        defaultColor = "grey";
-    }
-    else if (CairnUtils::contains(mCarrierType, "H2O", true))
-    {
-        defaultColor = "blue";
-    }
-    else if (CairnUtils::contains(mCarrierType, "ELEC", true))
-    {
-        defaultColor = "yellow";
-    }
-    else if (CairnUtils::contains(mCarrierType, "BIOMASS", true))
-    {
-        defaultColor = "darkgreen";
-    }
-    else if (CairnUtils::contains(mCarrierType, "WOOD", true))
-    {
-        defaultColor = "darkgreen";
-    }
-    else if (CairnUtils::contains(mCarrierType, "MATERIAL", true))
-    {
-        defaultColor = "maroon";
-    }
-    else if (CairnUtils::contains(mCarrierType, "FLUID", true))
-    {
-        defaultColor = "darkblue";
-    }
-    else {
-        defaultColor = "black";
-    }
-    return defaultColor;
-}
-
 std::vector<InputParam*> EnergyVector::get_InputParams()
 {
     std::vector<InputParam*> res = {  
-        getConfigParam(), 
-        getCompoInputParam(),
-        getCompoInputSettings(),
-        getTimeSeriesParam(),
-        getGridTimeSeries()
+        mConfigParam, 
+        mCompoOptions,
+        mCompoParams,
+        mTimeSeriesParam,
+        mGridTimeSeries
     };
     // GUI data (optional)
     if (auto* gui = getGUIData()) {
@@ -437,22 +231,161 @@ std::vector<InputParam*> EnergyVector::get_InputParams()
 std::vector<InputParam*> EnergyVector::get_ParamInputParams()
 {
     std::vector<InputParam*> result;
-    result.push_back(getConfigParam());
-    result.push_back(getCompoInputSettings());
+    result.push_back(mConfigParam);
+    result.push_back(mCompoParams);
     return result;
 }
 
 std::vector<InputParam*> EnergyVector::get_OptionInputParams()
 {
     std::vector<InputParam*> result;
-    result.push_back(getCompoInputParam());
+    result.push_back(mCompoOptions);
     return result;
 }
 
 std::vector<InputParam*> EnergyVector::get_TimeSeriesInputParams()
 {
     std::vector<InputParam*> result;
-    result.push_back(getTimeSeriesParam());
-    result.push_back(getGridTimeSeries());
+    result.push_back(mTimeSeriesParam);
+    result.push_back(mGridTimeSeries);
     return result;
+}
+
+//------------------------------------------------------------
+EnergyVector::ParamCarrier::ParamCarrier(const std::string& aDescription,
+    const t_unit& aUnit, double aDefault, bool aIsUsed, const std::string& aShowConfig)
+{    
+    mDescription = aDescription;
+    mUnit = aUnit;
+    mDefault = aDefault;
+    mIsUsed = aIsUsed;
+    mShowConfig = aShowConfig;
+
+    mUseConfig = false;
+}
+
+void EnergyVector::ParamCarrier::addConfig(InputParam* aConfigParam, const std::string& aName)
+{
+    if (aConfigParam) {
+        /** isMandatory is false because UseProfile are missing in old studies */
+        aConfigParam->addParameter("UseProfile" + aName, &UseProfile, false, false, mIsUsed, "If true use timeseries, otherwise use scalar value.", "bool", mShowConfig);
+        mUseConfig = true;
+    }
+}
+
+void EnergyVector::ParamCarrier::addParameter(InputParam* aInputParam, InputParam* aTimeSeriesParam, const std::string& aName)
+{
+    if (aInputParam && aTimeSeriesParam) {
+        if (mUseConfig) {
+            // mParamTS;
+            
+            //TODO : aInputParam->addParameter(aName, &Value, mDefault, SFunctionFlag({ eFTypeNotAnd, {&UseProfile}, {&mIsUsed} }), SFunctionFlag({ eFTypeNotAnd, {&UseProfile}, {&mIsUsed} }), mDescription, mUnit);
+           
+            aInputParam->addParameter(aName, &Value, mDefault, false, SFunctionFlag({ eFTypeNotAnd, {&UseProfile}, {&mIsUsed} }), mDescription, mUnit, mShowConfig);
+            aTimeSeriesParam->addParameter("Profile" + aName, &Profile, "", SFunctionFlag({ eFTypeNotAnd, {}, {&UseProfile, &mIsUsed} }), SFunctionFlag({ eFTypeNotAnd, {}, {&UseProfile, &mIsUsed} }), mDescription + " time profile", mUnit, mShowConfig);
+        }
+        else {
+            // mParamGridTS
+            aInputParam->addParameter(aName, &Value, mDefault, false, true, mDescription, mUnit);
+            aTimeSeriesParam->addParameter("UseProfile" + aName, &Profile, "", false, true, mDescription + " time profile", mUnit);
+        }        
+    }
+}
+
+//------------------------------------------------------------
+bool EnergyVector::isParamExist(const std::string& aName) const
+{
+    t_mapParamCarrier::const_iterator vIter = mParamTS.find(aName);
+    return (vIter != mParamTS.end());
+}
+
+bool EnergyVector::useProfileParam(const std::string& aName) const
+{
+    t_mapParamCarrier::const_iterator vIter = mParamTS.find(aName);
+    if (vIter != mParamTS.end()) {
+        return vIter->second.UseProfile;
+    }
+    else
+        cError() << "Parameter " + aName + " does not exist in carrier " + Name();
+    return false;
+}
+
+const double EnergyVector::getParamCstValue(const std::string& aName) const
+{
+    t_mapParamCarrier::const_iterator vIter = mParamTS.find(aName);
+    if (vIter != mParamTS.end()) {
+        return (vIter->second.Value);
+    }
+    else
+        cError() << "Parameter " + aName + " does not exist in carrier " + Name();
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
+const double EnergyVector::getParamValue(const std::string& aName, uint64_t t, 
+    const MilpComponent* apComponent) const
+{
+    auto it = mParamTS.find(aName);
+    if (it == mParamTS.end()) {
+        cError() << "Parameter \"" << aName
+            << "\" does not exist in carrier " << Name();
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    const ParamCarrier& param = it->second;
+
+    // Constant parameter (no profile)
+    if (!param.UseProfile)
+        return param.Value;
+
+    // Profile parameter but no component
+    if (!apComponent) {
+        cError() << "No component provided for time-series parameter \""
+            << aName << "\" in carrier " << Name();
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // TODO: let EnergyVector reads its timeseries instead of using MilpComponent
+
+    // Retrieve time series
+    const std::string tsName = tsProfileID("Profile" + aName);
+    const std::vector<double>* ts = apComponent->getTimeSeries(tsName);
+    if (!ts) {
+        cError() << "Time-series \"" << tsName
+            << "\" does not exist in carrier " << Name();
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // Bounds check 
+    if (t >= ts->size()) {
+        cError() << "Time index " << t << " out of range for time-series \""
+            << tsName << "\" in carrier " << Name()
+            << " (size = " << ts->size() << ")";
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    return (*ts)[t];
+}
+
+const double EnergyVector::getMinParamValue(const std::string& aName, const MilpComponent* apComponent) const
+{
+    t_mapParamCarrier::const_iterator vIter = mParamTS.find(aName);
+    if (vIter != mParamTS.end()) {
+        if (vIter->second.UseProfile) {
+            if (apComponent) {
+                std::string vTSname = tsProfileID("Profile" + vIter->first);
+                const std::vector<double>* vTS = apComponent->getTimeSeries(vTSname);
+                if (vTS) 
+                    return *std::min_element(vTS->begin(), vTS->end());
+                else
+                    cError() << "Time series " + vTSname + " does not exist in carrier " + Name();
+            }
+            else
+                cError() << "No component for the time series parameter " + aName + " in carrier " + Name();
+        }
+        else
+            return (vIter->second.Value);
+    }
+    else
+        cError() << "Parameter " + aName + " does not exist in carrier " + Name();
+    return std::numeric_limits<double>::quiet_NaN();
 }

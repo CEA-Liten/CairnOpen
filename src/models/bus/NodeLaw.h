@@ -61,7 +61,7 @@ public:
         mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", mMainCarrier->pStorageUnit(),"BusBalance");
     }
 
-    void finalizeModelData();
+    void computeInitialData() override;
 
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance;}
     void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression);

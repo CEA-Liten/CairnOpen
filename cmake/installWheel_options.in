@@ -1,3 +1,4 @@
+set(PROJECT_NAME @WHEEL_NAME@  CACHE INTERNAL "cairn project name")
 set(PROJECT_VERSION @PROJECT_VERSION@  CACHE INTERNAL "cairn project version")
 set(Python_ROOT_DIR @PYTHON_HOME@ CACHE INTERNAL "Python installation path")
 set(Python_EXECUTABLE @Python_EXECUTABLE@ CACHE INTERNAL "Python executable")

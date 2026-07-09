@@ -20,6 +20,10 @@ void GridSubModel::setTimeData()
     mGridVariableMaxFlow.resize(mHorizon);
 }
 
+void GridSubModel::defineMainCarrier()  {
+    mMainCarrier = mPortGridFlow ? mPortGridFlow->getCarrier() : nullptr; 
+};
+
 void GridSubModel::computeInitialData() {
     setMaxValue(mMaxFlux);
     setMinValue(mMinSize); 

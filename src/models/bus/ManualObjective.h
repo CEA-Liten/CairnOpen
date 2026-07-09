@@ -32,8 +32,9 @@ public:
     ManualObjective(CairnObject* aParent);
     ~ManualObjective();
 //----------------------------------------------------------------------------------------------------
-    void closeExpressions() override;
-    void setTimeData();
+    void setTimeData() override;
+    void computeInitialData() override;
+
     //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
@@ -73,7 +74,8 @@ public:
 //----------------------------------------------------------------------------------------------------
     void declareModelInterface()
     {
-        declareDefaultModelInterface();
+        BusSubModel::declareDefaultModelInterface();
+
         addIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit()) ; //FluxUnit of First Port
         addIO("BusBalance0D", &mBusBalance0D, true, mMainCarrier->pFluxUnit()) ;
         addIO("BusBalance1D", &mBusBalance1D, true, mMainCarrier->pFluxUnit()) ;
@@ -91,9 +93,7 @@ public:
 //----------------------------------------------------------------------------------------------------
     void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue) ;
 //----------------------------------------------------------------------------------------------------
-    void buildModel();                                                              // build minimum formulation
-    void finalizeModelData();
-    void computeEconomicalContribution();
+    void computeModelContribution() override; 
     void computeSubObjectiveContribution();
 //----------------------------------------------------------------------------------------------------
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance1D;}
@@ -128,18 +128,19 @@ protected:
     double mAbsTol;
     double mRelTol;
 
-    MIPModeler::MIPExpression1D mBusBalance1D ;
-    MIPModeler::MIPExpression1D mBusBalance0D ;
+    std::vector<double> mObjectiveCoeffTS;
+
+    MIPModeler::MIPVariable0D mCommonMinVariable;
+    MIPModeler::MIPVariable0D mCommonMaxVariable;
+
     MIPModeler::MIPExpression mBusBalance;
     MIPModeler::MIPExpression mSubObjective;
-
-    std::vector<double> mObjectiveCoeffTS;
-    MIPModeler::MIPVariable0D mCommonMinVariable;
     MIPModeler::MIPExpression mExpCommonMinVariable;
-    MIPModeler::MIPVariable0D mCommonMaxVariable;
     MIPModeler::MIPExpression mExpCommonMaxVariable;
 
-    
+    MIPModeler::MIPExpression1D mBusBalance1D;
+    MIPModeler::MIPExpression1D mBusBalance0D;
+
     //Indicateurs
     std::vector<double> mBusEnergyBalance;
 };

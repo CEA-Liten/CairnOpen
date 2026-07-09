@@ -87,7 +87,7 @@
 		},
 		{
 			"componentCarrier": "Electricity#1",
-			"componentPERSEEType": "EnergyVector",
+			"componentPERSEEType": "ElectricalCarrier",
 			"energyTypeColor": "#6052b9",
 			"nodeId": "10701",
 			"nodeName": "Electricity#1",
@@ -207,6 +207,10 @@
 				{
 					"key": "SellPrice",
 					"value": 0
+				},
+				{
+					"key": "Voltage",
+					"value": 230
 				}
 			],
 			"timeSeriesListJson": [
@@ -228,7 +232,7 @@
 		},
 		{
 			"componentCarrier": "H2Vector#1",
-			"componentPERSEEType": "EnergyVector",
+			"componentPERSEEType": "MaterialCarrier",
 			"energyTypeColor": "green",
 			"nodeId": "10801",
 			"nodeName": "H2Vector#1",
@@ -347,6 +351,14 @@
 				},
 				{
 					"key": "SellPrice",
+					"value": 0
+				},
+				{
+					"key": "Pressure",
+					"value": 0
+				},
+				{
+					"key": "Temperature",
 					"value": 0
 				}
 			],
@@ -733,7 +745,7 @@
 					"value": 0.01
 				},
 				{
-					"key": "FixedOpexConstant",
+					"key": "FixedOpexOffset",
 					"value": 0
 				},
 				{
@@ -757,7 +769,7 @@
 					"value": 0
 				},
 				{
-					"key": "ReplacementConstant",
+					"key": "ReplacementOffset",
 					"value": 0
 				},
 				{
@@ -985,7 +997,7 @@
 					"value": 0
 				},
 				{
-					"key": "FixedOpexConstant",
+					"key": "FixedOpexOffset",
 					"value": 0
 				},
 				{
@@ -1013,7 +1025,7 @@
 					"value": 0
 				},
 				{
-					"key": "ReplacementConstant",
+					"key": "ReplacementOffset",
 					"value": 0
 				},
 				{
@@ -1265,7 +1277,7 @@
 					"value": 0
 				},
 				{
-					"key": "FixedOpexConstant",
+					"key": "FixedOpexOffset",
 					"value": 0
 				},
 				{
@@ -1293,7 +1305,7 @@
 					"value": 0
 				},
 				{
-					"key": "ReplacementConstant",
+					"key": "ReplacementOffset",
 					"value": 0
 				},
 				{
@@ -1978,7 +1990,7 @@
 					"value": 0
 				},
 				{
-					"key": "FixedOpexConstant",
+					"key": "FixedOpexOffset",
 					"value": 0
 				},
 				{
@@ -2002,7 +2014,7 @@
 					"value": 0
 				},
 				{
-					"key": "ReplacementConstant",
+					"key": "ReplacementOffset",
 					"value": 0
 				},
 				{
@@ -2310,7 +2322,7 @@
 					"value": 0.01
 				},
 				{
-					"key": "FixedOpexConstant",
+					"key": "FixedOpexOffset",
 					"value": 0
 				},
 				{
@@ -2334,7 +2346,7 @@
 					"value": 0
 				},
 				{
-					"key": "ReplacementConstant",
+					"key": "ReplacementOffset",
 					"value": 0
 				},
 				{
@@ -2614,7 +2626,7 @@
 					"value": 0.1
 				},
 				{
-					"key": "FixedOpexConstant",
+					"key": "FixedOpexOffset",
 					"value": 0
 				},
 				{
@@ -2638,7 +2650,7 @@
 					"value": 0
 				},
 				{
-					"key": "ReplacementConstant",
+					"key": "ReplacementOffset",
 					"value": 0
 				},
 				{

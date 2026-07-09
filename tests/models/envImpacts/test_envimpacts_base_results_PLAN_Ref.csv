@@ -49,12 +49,12 @@ Converter;Opex part (including energy cost);0;EUR;OPEX
 Converter;Pure Opex part;0;EUR;PureOPEX
 Converter;Replacement part;0;EUR;Replacement
 Converter;Climate change#Global Warming Potential 100 Env impact penalty part;0;EUR;GWPDirectCost
-Converter;Climate change#Global Warming Potential 100 Env impact mass;0;kg CO2 eq;GWPDirectMass
+Converter;Climate change#Global Warming Potential 100 Operational impact mass;0;kg CO2 eq;GWPDirectMass
 Converter;Climate change#Global Warming Potential 100 EnvGrey impact cost;100250;EUR;GWPGreyCost
 Converter;Climate change#Global Warming Potential 100 EnvGrey impact mass;100250;kg CO2 eq;GWPGreyMass
 Converter;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Converter;Water use#User Deprivation Potential Env impact penalty part;0;EUR;WUDirectCost
-Converter;Water use#User Deprivation Potential Env impact mass;0;kg world eq deprived;WUDirectMass
+Converter;Water use#User Deprivation Potential Operational impact mass;0;kg world eq deprived;WUDirectMass
 Converter;Water use#User Deprivation Potential EnvGrey impact cost;5000;EUR;WUGreyCost
 Converter;Water use#User Deprivation Potential EnvGrey impact mass;10000;kg world eq deprived;WUGreyMass
 Converter;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement
@@ -74,12 +74,12 @@ Elec_Grid;Total Cost Function;4.9932e+08;EUR;TotCosts
 Elec_Grid;is installed;1;-;IsInstalled
 Elec_Grid;Opex part (including energy cost);2.4966e+07;EUR;OPEX
 Elec_Grid;Climate change#Global Warming Potential 100 Env impact penalty part;2.628e+06;EUR;GWPDirectCost
-Elec_Grid;Climate change#Global Warming Potential 100 Env impact mass;2.628e+06;kg CO2 eq;GWPDirectMass
+Elec_Grid;Climate change#Global Warming Potential 100 Operational impact mass;2.628e+06;kg CO2 eq;GWPDirectMass
 Elec_Grid;Climate change#Global Warming Potential 100 EnvGrey impact cost;0;EUR;GWPGreyCost
 Elec_Grid;Climate change#Global Warming Potential 100 EnvGrey impact mass;0;kg CO2 eq;GWPGreyMass
 Elec_Grid;Climate change#Global Warming Potential 100 Env impact replacement;0;kg CO2 eq;GWPReplacement
 Elec_Grid;Water use#User Deprivation Potential Env impact penalty part;438009;EUR;WUDirectCost
-Elec_Grid;Water use#User Deprivation Potential Env impact mass;876018;kg world eq deprived;WUDirectMass
+Elec_Grid;Water use#User Deprivation Potential Operational impact mass;876018;kg world eq deprived;WUDirectMass
 Elec_Grid;Water use#User Deprivation Potential EnvGrey impact cost;0;EUR;WUGreyCost
 Elec_Grid;Water use#User Deprivation Potential EnvGrey impact mass;0;kg world eq deprived;WUGreyMass
 Elec_Grid;Water use#User Deprivation Potential Env impact replacement;0;kg world eq deprived;WUReplacement

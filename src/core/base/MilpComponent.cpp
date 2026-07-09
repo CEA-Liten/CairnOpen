@@ -22,26 +22,26 @@ using namespace GS ;
 using Eigen::Map;
 
 MilpComponent::MilpComponent(CairnObject *aParent,
-                             std::string aName,
+                             const std::string& aName,
                              MilpData *aMilpData, TecEcoAnalysis* aTecEcoAnalysis,
-                             const std::map<std::string, std::string> &aComponent,
-                             const std::map < std::string, std::map<std::string, std::string> > &aPorts,
+                             const t_mapParamData& aComponent,
+                             const std::map < std::string, t_mapParamData > &aPorts,
                              ModelFactory* aModelFactory) 
 :  
-  CairnObject(aParent),
+  CairnObject(aParent, aName),
   mTecEcoAnalysis(aTecEcoAnalysis),
   mException(Cairn_Exception()),
   mComponent(aComponent),
   mPorts(aPorts),
   mMilpData(aMilpData),
-  mType(CairnUtils::getParam(aComponent,"type")),
-  mCompoModelName(CairnUtils::getParam(aComponent,"Model")), //for GUI
-  mCompoTechnoType(CairnUtils::getParam(aComponent,"ModelTechnoType")), //for GUI
-  mCompoModelClassName(CairnUtils::getParam(aComponent,"ModelClass")),
+  mType(CairnUtils::getParamValue(aComponent,"type")),
+  mCompoModelName(CairnUtils::getParamValue(aComponent,"ModelType")),        // node type used in the GUI, e.g. Electrolyzer
+  mCompoTechnoType(CairnUtils::getParamValue(aComponent,"ModelTechnoType")), // node image used in the GUI
+  mCompoModelClassName(CairnUtils::getParamValue(aComponent,"ModelClass")), // e.g. ElectrolyzerDetailed
    mHistNbHours(0),
    mOptimalSize(0)
   {
-    this->setObjectName(aName);
+    //this->setObjectName(aName);
     setObjectType("MilpComponent");
     mModelFactory = aModelFactory;
     mCompoModel = nullptr;
@@ -66,14 +66,15 @@ void MilpComponent::initMilpComponent()
     declareCompoInputParam();
     setCompoInputParam(mComponent);
 
-    auto getOr = [&](const std::string& key, const std::string& defaultValue)-> std::string {
-        if (auto it = mComponent.find(key); it != mComponent.end())
-            return it->second;
-        return defaultValue;
-    };
+    //auto getOr = [&](const std::string& key, const std::string& defaultValue)-> std::string {
+    //    if (auto it = mComponent.find(key); it != mComponent.end())
+    //        return it->second;
+    //    return defaultValue;
+    //};
 
     // should not be called before setCompoInputParam
-    initGuiData({ {"Xpos", getOr("Xpos", "0")}, {"Ypos", getOr("Ypos", "0")} }); //To be generalized for GUI data param
+    t_mapParamData extractedParams = CairnUtils::extractGuiParams(mComponent);
+    initGuiData(extractedParams); //To be generalized for GUI data param
 }
 
 MilpComponent::~MilpComponent()
@@ -191,36 +192,54 @@ MilpPort* MilpComponent::getPortByName(const std::string& aPortName)
 
 void MilpComponent::defineMainCarrier() {
     /**
-    * Point the main carrier of non-Bus component to the EnergyVector of the first default Input port. 
-    * Note, BusCompo has only one EnergyVector, and it is set in OptimProblem::createLinksToBus 
+    * Point the main carrier of non-Bus component to the EnergyVector of the first default Input port.
+    * Note, BusCompo has only one EnergyVector, and it is set in OptimProblem::createLinksToBus
     */
 
-    if (!allDefaultPortsHaveCarriers()) return;
+    if(!mCompoModel) {
+        cDebug() << Name() << ": the component model is not defined";
+        return;
+    }
 
-    bool found = false;
-    int numDefaultPorts = mCompoModel->DefaultPorts().size();
-    for(MilpPort * lptrport: PortList())
-    {
-        if (lptrport->IsDefaultPort() && lptrport->getCarrier() != nullptr)
-        {
-            if (numDefaultPorts == 1 || lptrport->Direction() == KCONS()) {
-                setMainCarrier(lptrport->getCarrier());
-                found = true;
-                break;
-            }
+    if (!allDefaultPortsHaveCarriers()) {
+        cDebug() << Name() << ": not all default ports have carriers defined";
+        return;
+    }
+
+    // Case 1: main carrier is defined inside the model 
+    mCompoModel->defineMainCarrier();
+
+    if (mCompoModel->getMainCarrier())
+        return;
+
+    // Case 2: First default consumption port or single default port
+    const int numDefaultPorts = mCompoModel->DefaultPorts().size();
+    const bool hasSingleDefaultPort = (numDefaultPorts == 1);
+
+    for (MilpPort* port : PortList()) {
+        if (!port || !port->IsDefaultPort() || !port->getCarrier()) {
+            continue;
+        }
+
+        if (hasSingleDefaultPort || port->Direction() == KCONS()) {
+            setMainCarrier(port->getCarrier());
+            cDebug() << "Main carrier set from"
+                << (hasSingleDefaultPort ? " single default port" : " consumption port");
+            return;
         }
     }
 
-    if (!found) {
-        //Take the first port! (at least case of TecEcoAnalysis!)
-        for(MilpPort * lptrport: PortList())
-        {
-            if (lptrport->getCarrier() != nullptr)
-            {
-                setMainCarrier(lptrport->getCarrier());
-                break;
-            }
+    // Fallback: First available carrier (for components that don't have default ports)
+    for (MilpPort* port : PortList()) {
+        if (port && port->getCarrier()) {
+            setMainCarrier(port->getCarrier());
+            cDebug() << "Main carrier set from first available port as fallback";
+            return;
         }
+    }
+
+    if (numDefaultPorts != 0) {
+        cWarning() << "No suitable carrier found for component: " << Name();
     }
 }
 
@@ -232,84 +251,78 @@ EnergyVector* MilpComponent::getMainCarrier() const {
     return mCompoModel->getMainCarrier();
 }   
 
-int MilpComponent::defineDefaultVarNames() {
-    return mCompoModel->defineDefaultVarNames();
-}
-
-void MilpComponent::createOnePort(const std::string& portId, const std::map<std::string, std::string>& portParams)
+void MilpComponent::createOnePort(const std::string& portId, 
+    const t_mapParamData & portParams, EnergyVector* carrier)
 {
-    std::string portName = portParams.at("Name");
+    const std::string portName = CairnUtils::getParamValue(portParams, "Name");
+
     for(MilpPort* lptrport : PortList())
     {
+        const std::string compoName = CairnUtils::getParamValue(portParams, "CompoName");
+
         if (lptrport->ID() == portId) {
-            Cairn_Exception error("Error: componenet " + portParams.at("CompoName") + " already has a port with same ID " + portId + " (names " + portName + " and " + lptrport->Name() + ")", -1);
+            Cairn_Exception error("Error: componenet " + compoName + " already has a port with same ID " + portId + " (names " + portName + " and " + lptrport->Name() + ")", -1);
             throw error;
         }
         if (lptrport->Name() == portName) {
-            Cairn_Exception error("Error: componenet " + portParams.at("CompoName") + " already has a port with same name " + portName + " (IDs " + portId + " and " + lptrport->ID() + ")", -1);
+            Cairn_Exception error("Error: componenet " + compoName + " already has a port with same name " + portName + " (IDs " + portId + " and " + lptrport->ID() + ")", -1);
             throw error;
         }
     }
 
-    MilpPort* lptrport = new MilpPort(this, portId, portName, portParams);
+    MilpPort* lptrport = new MilpPort(this, portId, portName, portParams, carrier);
     addPort(lptrport);
 
-    if (CairnUtils::getParam(portParams, "IsDefaultPort") == Yes()) {
-        const std::string linkedPort = CairnUtils::getParam(portParams, portName);
-        cInfo() << (linkedPort.empty() ? "Created default port " : "Created port ")
+    if (CairnUtils::getParamValue(portParams, "IsDefaultPort") == Yes()) {
+        const std::string linkedPort = CairnUtils::getParamValue(portParams, portName);
+        cDebug() << (linkedPort.empty() ? "Created default port " : "Created port ")
             << Name() << "." << portName
             << (linkedPort.empty() ? "" : " linked to " + linkedPort);
     }
-
-    std::string vVar = lptrport->Variable();
-    if (CairnUtils::contains(vVar, "INPUTFlux") || CairnUtils::contains(vVar, "OUTPUTFlux"))
-    {
-        if (lptrport->Variable() != "INPUTFlux1" && lptrport->Variable() != "OUTPUTFlux1" 
-            && (mCompoModelClassName == "MultiConverter" || mCompoModelClassName == "Cogeneration"))
-        {
-            ModelIO* vIO = mCompoModel->getIOExpression(lptrport->Variable());
-            if (vIO) {
-                vIO->setUnit(lptrport->pFluxUnit()); 
-            }
-        }
-    }
 }
 
-MilpPort* MilpComponent::mapDefaultPort(const std::string& portId, const std::map<std::string, std::string>& portParams)
+MilpPort* MilpComponent::mapDefaultPort(const std::string& portId,
+    const std::map<std::string, std::string>& portParams)
 {
-    std::string portName = portParams.at("Name");
-    MilpPort* defaultPort = getPort(portId);
-    if (defaultPort != nullptr) {
-        return defaultPort;
+    // --- Lookup by ID ------------------------------------------------
+    if (MilpPort* port = getPort(portId))
+        return port;
+
+    // --- Lookup by Name ----------------------------
+    auto itName = portParams.find("Name");
+    if (itName != portParams.end()) {
+        if (MilpPort* port = getPortByName(itName->second))
+            return port;
     }
-    else {
-        /* A mapping error may happen when two default ports are switched in the GUI. Shall also verify the port variable?! */
-        defaultPort = getPortByName(portName);
-        if (defaultPort != nullptr) {
-            return defaultPort;
-        }
-        else if (mPorts.size() == 1 && mCompoModel->DefaultPorts().size() == 1) {
-            defaultPort = PortList()[0];
-            return defaultPort;
-        }
-    }
+
+    // --- Fallback: single-port component with single default port -----------
+    if (mPorts.size() == 1 && mCompoModel->DefaultPorts().size() == 1)
+        return PortList()[0];
+
+    // --- No match -----------------------------------------------------------
     return nullptr;
 }
 
-std::map<std::string, std::string> MilpComponent::portDataFromInputFile(const std::string& portId, const std::string& portName)
+
+t_mapParamData MilpComponent::portData(const std::string& portId, const std::string& portName) const
 {
-    if (mPorts.find(portId) != mPorts.end()) {
-        return mPorts[portId];
+    // Lookup by portId
+    const auto it = mPorts.find(portId);
+    if (it != mPorts.end()) {
+        return it->second;
     }
-    else{
-        for (auto& [key, value] : mPorts) {                  
-            if (portName == value["Name"]) {
-                return value;
-            }
+
+    // Lookup by portName (backward compatibility) 
+    for (const auto& [key, value] : mPorts)
+    {
+        if (CairnUtils::getParamValue(value, "Name") == portName) {
+            return value;
         }
     }
+
     return {};
 }
+
 
 void MilpComponent::createPorts()
 {
@@ -317,32 +330,64 @@ void MilpComponent::createPorts()
     for (auto [portId, portParams] : mCompoModel->DefaultPorts()) {
         portParams["CompoName"] = Name();
         portParams["IsDefaultPort"] = Yes();
-        createOnePort(portId, portParams);
+        createOnePort(portId, CairnUtils::convertToParamDataMap(portParams));
     }
 
     //Create other ports
-    for (auto [portId, portParams] : mPorts) {            
-        MilpPort* defaultPort = mapDefaultPort(portId, portParams);
-        if (defaultPort != nullptr) {
-            //At this point there is no problem if the carrier (EnergyVector) is not set yet (in particular for the default ports)
+    for (auto [portId, portParams] : mPorts) {  
 
-            defaultPort->completePortInfo(portParams);
+        /**
+         * JSON loading case:
+         * The definition of TecEcoAnalysis port carriers must be postponed until
+         * OptimProblem::createLinksToBus, because TecEcoAnalysis is created before
+         * the EnergyVectors.
+         *
+         * Does TecEcoAnalysis really need to be created before the EnergyVectors?
+         * Do EnergyVectors rely on TecEco information (e.g., Currency)?
+         *
+         * API creation case:
+         * When creating ports through the API, an EnergyVector is provided at
+         * creation time, so there is no issue.
+         */
+
+        // Get carrier
+        EnergyVector* carrier = nullptr;
+        const std::string carrierName = CairnUtils::getParamValue(portParams, "Carrier");
+        if (!carrierName.empty()) {
+            carrier = getCarrier(carrierName);
+        }
+
+        // Map or create port
+        MilpPort* defaultPort = mapDefaultPort(portId, CairnUtils::convertFromParamDataMap(portParams));
+        if (defaultPort) {
+            defaultPort->completePortInfo(portParams, carrier);
 
             const std::string linkedBus = defaultPort->LinkedBusName();
-            cInfo() << "Created default port " << Name() << "." << defaultPort->ID()
+            cDebug() << "Created default port " << Name() << "." << defaultPort->ID()
                 << (linkedBus.empty() ? "" : " linked to " + linkedBus);
         }
         else {
-            portParams["CompoName"] = Name();
-            portParams["IsDefaultPort"] = No();
-            createOnePort(portId, portParams);
+            CairnUtils::setParamValue(portParams, "CompoName", Name());
+            CairnUtils::setParamValue(portParams, "IsDefaultPort", No());
+            createOnePort(portId, portParams, carrier);
         }
     }
 }
 
+EnergyVector* MilpComponent::getCarrier(const std::string& carrierName) 
+{
+    OptimProblem* optimProblem = dynamic_cast<OptimProblem*>(parent());
+    if (!optimProblem) {
+        cError() << "Parent is not a defined OptimProblem: " + Name();
+        return nullptr;
+    }
+
+    EnergyVector* carrier = dynamic_cast<EnergyVector*>(optimProblem->findChild(carrierName));
+    return carrier;
+}
+
 void MilpComponent::declareCompoInputParam()
 {    
-    //std::string
     mCompoInputParam->addParameter("ModelClass", &mCompoModelClassName, "", true, true, "ModelClass used", "");
     mCompoInputParam->addParameter("Control", &mControl, "", false, true, "Type of time control rolling horizon or MPC");
     mCompoInputParam->addParameter("DataFile", &mDataFile, "", false, true, "Path to .csv data file for 1D or 2D map definitions. Use semicolon to provide several files","file");
@@ -350,32 +395,26 @@ void MilpComponent::declareCompoInputParam()
     mCompoInputParam->addParameter("submodelfile", &mSubmodelFile, "", false, true, "If model uses user dll path to this dll");
 }
 
-void MilpComponent::setCompoInputParam(const std::map<std::string, std::string> aComponent) 
+void MilpComponent::setCompoInputParam(const t_mapParamData& aComponent)
 {
     int ierr = mCompoInputParam->readParameters(aComponent);
     if (ierr < 0) {
-        Cairn_Exception error("ERROR readParameters: missing value for parameter " + Name(), -1);
-        throw error;
+        throw Cairn_Exception("ERROR: while reading parameters of component " + Name(), -1);
     }
-    if (Name() == "") {
-        cCritical() << "MilpComponent ERROR : No void name should be given by field id = ";
-        assert(Name() != "");
+    if (Name().empty()) {
+        throw Cairn_Exception("ERROR: a MilpComponent has an empty name: " + mCompoModelName, -1);
     }
 
-    if (aComponent.find("Model")!=aComponent.end()) {
-        mCompoModelName = aComponent.at("Model");
-    }
-    else {
-        mCompoModelName = mCompoModelClassName;
+    if (mCompoModelClassName.empty()) {
+        mCompoModelClassName = mCompoModelName; /** backward compatibility */
     }
 
-    if (mCompoModelClassName == "")  mCompoModelClassName = mCompoModelName;
-    
-    if (aComponent.find("ModelTechnoType") != aComponent.end()) {
-        mCompoTechnoType = aComponent.at("ModelTechnoType");
+    if (mCompoModelName.empty()) {
+        mCompoModelName = mCompoModelClassName;  
     }
-    else {
-        mCompoTechnoType = mCompoModelClassName;
+
+    if (mCompoTechnoType.empty()) {
+        mCompoTechnoType = mCompoModelName; /** image used in the GUI */
     }
 
     if (mCompoModel) {
@@ -383,7 +422,7 @@ void MilpComponent::setCompoInputParam(const std::map<std::string, std::string> 
     }
 }
 
-void MilpComponent::initGuiData(const std::map<std::string, std::string>& paramMap)
+void MilpComponent::initGuiData(const t_mapParamData& paramMap)
 {
     if (mGUIData) delete mGUIData;
     mGUIData = new GUIData(this);
@@ -454,6 +493,36 @@ void MilpComponent::declareIOVariables()
     }
 }
 
+std::vector<std::string> MilpComponent::get_IOVarNames() const
+{
+    std::vector<std::string> vRet = {};
+
+    if(mCompoModel) {
+	    const SubModel::t_mapIOs& vIOMap = mCompoModel->getMapIOExpression();
+	    for (auto& [vName, vIO] : vIOMap) {
+		    if (vIO && vIO->IsUsed()) {
+			    vRet.push_back(vName);
+		    }
+	    }
+    }
+
+    return vRet;
+}
+
+std::string MilpComponent::get_IOVarDescription(const std::string& varName) const
+{
+    if (mCompoModel) {
+        const SubModel::t_mapIOs& vIOMap = mCompoModel->getMapIOExpression();
+        for (auto& [vName, vIO] : vIOMap) {
+            if (vName == varName && vIO) {
+                return vIO->getDescription();
+            }
+        }
+    }
+
+    return {};
+}
+
 void MilpComponent::setXpos(const int& aXpos)
 {
     if (mGUIData) mGUIData->setXpos(aXpos);
@@ -487,21 +556,15 @@ void MilpComponent::createExportListVars(t_mapExchange& a_Exchange)
 {    
     if (mCompoModel) {
         for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D)) {
-            /* 
-            * Note that, if the isUsed of an IO variables is modified after this point, then it will not be published 
-            * The ideal place to publish the IO vars is in OptimProblem::buildProblem() after initSubModelInput(..) -- after computeInitialData(). 
-            * For example, mAddStateVariable and mAddStartUpShutDownVariable are being updated in computeInitialData()
-            * 
-            * However, this will cause a problem for Pegase because the variables are exported in ModuleCairn::doInit()
-            * 
-            * Currently, createExportListVars(...) is called in OptimProblem::doInit(...)
-            * This doesn't cause a problem for the API thanks to the re-initialization before run() !
-            */
-            if (ivar1D->isPExpr() && ivar1D->IsUsed()) {
+            /*
+             * Publish all IO variables. And, filter only for those that are used on demand/export
+             */
+            if (ivar1D->isPExpr()) { //&& ivar1D->IsUsed()
                 std::string varName = ivar1D->getName();
                 std::string exName = Name() + "." + varName;
                 a_Exchange[exName] = new ZEVariables(
                     exName,
+                    mCompoModel->pExpIsUsed(varName),
                     mCompoModel->pExpUnitParam(varName),
                     varName);                
             }
@@ -515,9 +578,9 @@ void MilpComponent::createExportListVars(t_mapExchange& a_Exchange)
     * createPortsExportListVars(a_Exchange);
     */
 
-    if (mPublishUserVariable != "")  /** define file for additionnal variables publication to output */
-    {
-        createZEUserVariablesList(mPublishUserVariable, a_Exchange) ;
+     /** Define PublishUserVariable file for additionnal variables publication to output */
+    if (!mPublishUserVariable.empty()) {
+        createZEUserVariablesList(mPublishUserVariable, a_Exchange);
     }
 }
 
@@ -527,13 +590,14 @@ void MilpComponent::createPortsExportListVars(t_mapExchange& a_Exchange)
         const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(port->Variable());
         if (ptrExp1D) {
             std::string varName = port->Variable();
-            double aPort = port->VarCoeff();
-            double bPort = port->VarOffset();
+            double aPort = port->Direction() == KCONS() ? -1.0 * port->VarCoeff() : port->VarCoeff();
+            double bPort = port->Direction() == KCONS() ? -1.0 * port->VarOffset() : port->VarOffset(); 
             std::string exName = Name() + "." + port->Name() + "." + varName;
 
             a_Exchange[exName] =
                 new ZEVariables(
                     exName,
+                    mCompoModel->pExpIsUsed(varName),
                     mCompoModel->pExpUnitParam(varName),
                     varName,
                     std::to_string(aPort),
@@ -576,7 +640,7 @@ std::string MilpComponent::getTimeSeriesName(const std::string& ts_paramName)
     else {
         //This is needed for the API to get the name before run! Before run, m_timeSeries is empty! 
         if (mComponent.find(ts_paramName)!=mComponent.end()) { 
-            return mComponent[ts_paramName];
+            return CairnUtils::getParamValue(mComponent, ts_paramName); 
         }
     }
 
@@ -605,7 +669,7 @@ void MilpComponent::setTimeSeriesName(const std::string& ts_paramName, const std
     */
 
     //update map! This is needed for the API before run!
-    mComponent[ts_paramName] = ts_name;
+    CairnUtils::setParamValue(mComponent, ts_paramName, ts_name);
 
     //update the name of the corresponding ModelTS (if already created)
     for (auto& [varName, var] : m_timeSeries) {
@@ -615,40 +679,47 @@ void MilpComponent::setTimeSeriesName(const std::string& ts_paramName, const std
     }
 }
 
-bool MilpComponent::createModelTS(const std::string& varName, const std::string& tsName, ModelParam* aParamTS)
+bool MilpComponent::createModelTS(const std::string& varName,
+    const std::string& tsName, ModelParam* aParamTS)
 {
-    /** 
-    * varName : TS param name
-    * tsName : TS name inside input file
-    */
+    // varName : TS param name
+    // tsName  : TS name inside input file
 
     if (!aParamTS) {
         return false;
     }
 
-    // overwrite ?!
-    if (m_timeSeries.count(varName))
-    {
+    // Already exists: overwrite ?!
+    if (m_timeSeries.count(varName) > 0) {
         cDebug() << " -- " << varName << " already added.";
         return false;
     }
 
     cDebug() << " -- Adding " << varName << " to the time series list";
-    m_timeSeries[varName] = ModelTS(tsName, aParamTS->pUnitParam(), aParamTS);
 
-    // Exception for Converter SetPoints
-    const bool isConverter = mCompoModelName == "Converter"
-        || CairnUtils::contains(mCompoModelClassName, ".Converter#");
-    const bool isSetPoint = CairnUtils::contains(varName, ".InputSetPoint#")
-        || CairnUtils::contains(varName, ".OutputSetPoint#");
+    // Insert the new ModelTS
+    m_timeSeries.emplace(
+        varName,
+        ModelTS(tsName, aParamTS)
+    );
+
+    // Special case for Converter SetPoints
+    const bool isConverter =
+        mCompoModelName == "Converter" ||
+        CairnUtils::contains(mCompoModelClassName, ".Converter#");
+
+    const bool isSetPoint =
+        CairnUtils::contains(varName, ".InputSetPoint#") ||
+        CairnUtils::contains(varName, ".OutputSetPoint#");
 
     if (isConverter && isSetPoint) {
-        ModelTS& ts = m_timeSeries[varName];
+        ModelTS& ts = m_timeSeries.at(varName);
         ts.setName(varName);
     }
 
     return true;
 }
+
 
 void MilpComponent::readTSVariables(InputParam* aMapParamTS)
 {
@@ -656,7 +727,7 @@ void MilpComponent::readTSVariables(InputParam* aMapParamTS)
         if (param->getType() != eVectorDouble) {
             continue;
         }
-        createModelTS(varName, mComponent[varName], param);
+        createModelTS(varName, CairnUtils::getParamValue(mComponent, varName), param);
     }
 }
 
@@ -671,16 +742,16 @@ void MilpComponent::readEnergyVectorTS(const EnergyVector* carrier, const InputP
 }
 
 
-int MilpComponent::createHistFXLists()
+int MilpComponent::setTimeSeriesValues()
 {
     int vRet = 0;
     for (auto& [varName, var] : m_timeSeries) {
-        if (var.getName() != "") {
+        if (!var.getName().empty()) {
             cDebug() << " -- fill in vector FX " << mCompoModelName << varName << var.getName();
             var.set_Values(npdtPast());
         }
         else {
-            cInfo() << "INFO : no " << varName << " series specified, use of default: " << var.getDefault();
+            cInfo() << "No timeseries name specified for " << varName << ", use default value: " << var.getDefault();
             var.set_Values(npdtTot(), var.getDefault());
         }
         if (!var.checkProfile()) {
@@ -704,35 +775,59 @@ void MilpComponent::exportRHVariableInModel()
     }
 }
 
-void MilpComponent::createZEUserVariablesList(std::string Full_File_Name, t_mapExchange& a_Exchange)
+void MilpComponent::createZEUserVariablesList(const std::string& Full_File_Name, t_mapExchange& a_Exchange)
 {
-//    std::string Full_File_Name="PublishUserVariable.csv" ;
-    char Separator=';' ;    
-    fs::path vFile(Full_File_Name);
-    if (!fs::exists(vFile))
-    {
-         cInfo() << "no user configurationfile for published variable - keep default list" ;
-         return ;
+    const char Separator = ';';
+
+    if (!fs::exists(Full_File_Name)) {
+        cError() << "User variable configuration file not found: " << Full_File_Name;
+        return;
     }
+
     std::fstream File(Full_File_Name, std::ios_base::in);
+    if (!File.is_open()) {
+        cError() << "Could not open user variable configuration file: " << Full_File_Name;
+        return;
+    }
+
     std::string line;
+    int lineNumber = 0;
     while (std::getline(File, line))
     {
-// read header line        
-        std::vector<std::string> fields = split(line, Separator);
-        if (contains(fields, "Error\n") || fields.size()<4)
-        {
-          cInfo() << "Error reading line " << line;
+        ++lineNumber;
+        const std::vector<std::string> fields = split(line, Separator);
+
+        // Check if stream went bad mid-read
+        if (File.bad()) {
+            cError() << "Read error in file:" << Full_File_Name
+                << "at line:" << lineNumber;
+            break;
         }
-        std::string compoName = fields[0] ;
-        std::string varName  = fields[1] ;
-        std::string acomment  = fields[2] ;
-        std::string aunit = fields[3] ;
-        std::string exName = Name() + "." + varName;
-        a_Exchange[std::string(exName.c_str())] = new ZEVariables(
-            std::string(exName.c_str()),
-            std::string(aunit.c_str()),
-            std::string(acomment.c_str()));
+
+        if (fields.size() < 4) {
+            cError() << "Invalid line " << lineNumber << " in " << Full_File_Name
+                << " - expected at least 4 fields (component, variable, comment, unit)"
+                << " - got " << fields.size() << " fields"
+                << " - line: " << line;
+            continue; 
+        }
+
+        const std::string varName = fields[1];
+        const std::string exName = Name() + "." + varName;
+
+        a_Exchange[exName] = new ZEVariables(
+            exName,
+            fields[3], // unit
+            fields[2]  // comment
+        );
+    }
+
+    // After loop - distinguish EOF from error
+    if (File.fail() && !File.eof()) {
+        cError() << "Unexpected read failure in:" << Full_File_Name;
+    }
+    else {
+        cDebug() << "File read successfully:" << Full_File_Name;
     }
 }
 
@@ -783,18 +878,10 @@ void MilpComponent::redeclareEnvImpactParameters()
         declareIOVariables(); //TODO: filter only for Env Impact IOs?!
         TechnicalCompoModel->declareEnvImpactParameters();
         declareIndicators(); //TODO: filter only for Env Impact indicators?!
-
-        /*
-        * Publish all IO variables. Then, in exportSubmodelIO(..), export only the IO variables that have isUsed == True
-        * Note, the value of isUsed may change later on, e.g., in buildModel()
-        */
-        for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
-        {
-            std::string varName = ivar1D->getName();
-            cDebug() << " - AUTO_PlugSubmodelIO vector : " << objectName() + "." + varName << npdtTot() << TimeSteps().size();
-            mPlugSubmodelIO->publishData(varName, npdtTot(), NAN);
-        }
     }
+
+    //Publish IO variables 
+    initializeSubmodelIO();
 }
 
 int MilpComponent::initSubModelConfiguration(const bool& readParams)
@@ -880,113 +967,88 @@ int MilpComponent::initSubModelConfiguration(const bool& readParams)
         if (ierr < 0) { cCritical() << " Error reading PortImpact of SubModel " << (objectName()); return -1; }
     }
 
-    /*
-    * Publish all IO variables. Then, in exportSubmodelIO(..), export only the IO variables that have isUsed == True
-    * Note, the value of isUsed may change later on, e.g., in buildModel()
-    */
-    for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
-    {        
-        std::string varName = ivar1D->getName() ;
-        cDebug() << " - AUTO_PlugSubmodelIO vector : " <<  objectName() +"."+varName << npdtTot() << TimeSteps().size();
-        mPlugSubmodelIO->publishData(varName, npdtTot(), NAN) ;
-    }
+    //Publish IO variables 
+    initializeSubmodelIO();
+
+    // Read performance-map files, if needed
+    mModelPerfParam = mCompoModel->getInputPerfParam();
+    if (readPerfMapFiles() < 0)
+        return -1;
+
+
+    mCompoModel->computeInitialData();
 
     return 0 ;
+}
+
+int MilpComponent::readPerfMapFiles()
+{
+    if (CairnUtils::simplified(mDataFile).empty())
+        return 0; // nothing to do
+
+    // Collect parameter names
+    std::vector<std::string> perfParamNames;
+    mModelPerfParam->getParameters(perfParamNames, EParamType::eVectorDouble);
+
+    // Split file list
+    std::vector<std::string> dataFiles =
+        CairnUtils::contains(mDataFile, ";")
+        ? CairnUtils::split(mDataFile, ';')
+        : CairnUtils::split(mDataFile, ',');
+
+    // Read each file
+    for (const auto& file : dataFiles) {
+        fs::path p(file);
+        p = p.relative_path();
+        mModelPerfParam->readVectorParameters(
+            Name(),
+            getAbsoluteFileName(p.string()),
+            perfParamNames
+        );
+    }
+
+    // Validate
+    const auto& params = mModelPerfParam->getMapParams();
+    bool missing = false;
+
+    for (const auto& name : perfParamNames) {
+        auto it = params.find(name);
+        if (it == params.end())
+            continue;
+
+        if (it->second->IsBlocking()) {
+            cError() << "ERROR readVectorParameters: No data found in DataFile "
+                << mDataFile << " for variable " << Name() + "." + name;
+            missing = true;
+        }
+        else if (GS::iVerbose > 0) {
+            cWarning() << "Initialization not performed in readVectorParameters: No data found in "
+                << mDataFile << " for expected variable " << Name() + "." + name;
+        }
+    }
+
+    return missing ? -1 : 0;
 }
 
 int MilpComponent::initSubModelInput()
 {
-    /** initSubModelInput :
-     * init SubModel timestep and horizon data
-     * init list of SubModel parameters (scalar, double) and data (time series, secundary parameters...)
-     * direct reading of SubModel parameters (scalar, double) from aSettings file
-     * if DataFile specified in Description.xml:
-     * direct reading of SubModel array parameters (perf maps : vector, double) from file
-     * file must be csv formatted (one head line, one column per variable)
-     * indirect reading of SubModel time series (vector, double) from PEGASE subscribed vectors ()
-     * fill SubModel vector Double timeseries from VectorXf values
-     * indirect reading of SubModel data (scalar, double) from Cairn ()
-     * fill SubModel scalar double from Component scalar double values **/
+    if (setTimeSeriesValues() < 0)
+        return -1;
 
-    // read dynamic input parameters at Submodel level
-    int ierr = 0;
-
-    mModelPerfParam = mCompoModel->getInputPerfParam();
-
-    // if DataFile specified: direct reading of SubModel array parameters (perf maps : vector, double) from file
-    if (CairnUtils::simplified(mDataFile) != "")
-    {
-        std::vector<std::string> perfParamNames;
-        mModelPerfParam->getParameters(perfParamNames, EParamType::eVectorDouble);
-        std::vector<std::string> dataFiles = {};
-        if (CairnUtils::contains(mDataFile, ";")) {
-            dataFiles = CairnUtils::split(mDataFile, ';');
-        }
-        else {
-            dataFiles = CairnUtils::split(mDataFile, ',');
-        }
-        //Read
-        for (int i = 0; i < dataFiles.size(); i++) {
-            fs::path dataFile_i(dataFiles[i]);
-            dataFile_i = dataFile_i.relative_path();
-            mModelPerfParam->readVectorParameters(Name(), getAbsoluteFileName(dataFile_i.string()), perfParamNames);
-        }
-        //Verification
-        bool NotFound = false;
-        const InputParam::t_mapParams vParams = mModelPerfParam->getMapParams();
-        for (int i = 0; i < perfParamNames.size(); i++) {
-            InputParam::t_mapParams::const_iterator vIter = vParams.find(perfParamNames[i]);
-            if (vIter != vParams.end()) {
-                if (vIter->second->IsBlocking()) {
-                    cCritical() << "ERROR readVectorParameters: No data found in DataFile " << mDataFile << " for variable name " << (Name() + "." + perfParamNames[i]);
-                    NotFound = true;
-                }
-                else if (GS::iVerbose > 0) {
-                    cWarning() << "Initialization not performed in readVectorParameters: No data found in " << mDataFile << " for expected variable name " << (Name() + "." + perfParamNames[i]);
-                }
-            }            
-        }
-        //
-        if (NotFound) {
-            return -1;
-        }
+    if (mCompoModel->checkConsistency() < 0) {
+        cCritical() << "Error in component " << Name() << ": model data is not consistent";
+        return -1;
     }
 
-    /*
-    * computeInitialData should stay before setParameters
-    * because the intial state data (which set in computeInitialData) for ControlVar 
-    * is used in exportRHVariableInModel() and createHistFXLists()
-    */
-    mCompoModel->computeInitialData();
-
-    // set dynamic secondary parameters at Component level
-    ierr = setParameters() ;
-    if (ierr <0) return ierr ;
-
-    // possible finalization step
-    mCompoModel->finalizeModelData() ;
-
-    //Check Consistency
-    ierr = mCompoModel->checkConsistency() ;
-    if (ierr <0 ) { cCritical() << " Error Model Data are not consistent "<< (objectName())  ; return -1 ; }
-
-    ierr = checkPorts();
-    if (ierr < 0)
-    {
-        Cairn_Exception error(" ERROR in component " + Name() + " for model " + mCompoModelName, -1);
-        this->setException(error);
-        return ierr;
+    if (mCompoModel->checkPorts() < 0) {
+        cCritical() << "Error in component " << Name() << ": ports are not well-defined";
+        return -1;
     }
 
-    return 0 ;
+    return 0;
 }
 
-int MilpComponent::setParameters()
-{
-    MilpComponent::exportRHVariableInModel();
-    return MilpComponent::createHistFXLists();
-}
-
+// TODO: move initProblem to CairnObject
 int MilpComponent::initProblem(const bool& readParams)
 {
     int ierr = initPorts();
@@ -1007,49 +1069,13 @@ int MilpComponent::initProblem(const bool& readParams)
 
 int MilpComponent::initPorts()
 {
-    int ierr = 0;
-
-    // define default variable names at ports
-    ierr = defineDefaultVarNames();
-
-    if (ierr < 0) {
-        cCritical() << "ERROR in defining the port VarNames of component " + objectName();
-        return ierr;
-    }
-    
     for (MilpPort* port : PortList()) 
     {
-       ierr = port->initProblem(npdt()) ;
-       if (ierr < 0) return ierr ;      
-       
-        const std::string portDirection = port->Direction() ;
-        if (portDirection != KCONS() && portDirection != KPROD() && portDirection != KDATA()) {
-            cCritical() << "Error: unknown direction at " << (Name() + "." + port->Name()) << " - " << portDirection;
-            return -1 ;
-        }
+       if(port->initProblem(npdt()) < 0) 
+           return -1;
     }
-    return ierr ;
-}
 
-int MilpComponent::checkPorts()
-{
-    // 1- Check that Variable exists as SubModel expression (0D or 1D)
-    // 2- Warning if Use type has not been defined
-    // 3- Check that units are consistent between Port (inherited from Bus) and SubModel expression
-    int ierr = 0 ;
-    for (MilpPort* port : PortList()) {
-       ierr = mCompoModel->checkUnit(port) ;
-       if (ierr < 0) {
-           cCritical() << ("Error checkUnit at port "+Name()+"."+port->Name());
-           return ierr;
-       }
-
-       if (ierr > 0) {
-           cWarning() << ("Warning checkUnit at port "+Name()+"."+port->Name());
-           ierr = 0 ;
-       }
-    }
-    return ierr ;
+    return 0;
 }
 
 void MilpComponent::deleteCompoModel()
@@ -1057,6 +1083,7 @@ void MilpComponent::deleteCompoModel()
     if (mModelFactory) {
         mModelFactory->deleteModel(mCompoModelClassName, Name());
     }
+    mPorts.clear();
     mCompoModel = nullptr;
 }
 
@@ -1073,7 +1100,7 @@ void MilpComponent::createCompoModel()
                         Cairn_Exception error("ERROR while loading model " + mCompoModelClassName, -1);
                         throw error;
                     }
-                    cInfo() << "model " + mCompoModelClassName + " has been successfully loaded!";
+                    cDebug() << "model " + mCompoModelClassName + " has been successfully loaded!";
                 }
             }
         }
@@ -1111,111 +1138,89 @@ void MilpComponent::buildProblem()
 
 void MilpComponent::setBusFluxPortExpression()
 {
-    // Caution : port.VarName should always be non void from InitProblem.
-    // whatever the port, use the same coefficient applied to Flow for balancing
-    // coefficient differ from one model to the other, depending on whether Weight exists or not...
     for (MilpPort* port : PortList()) {
 
-       // flux has to integrate the sign : Positive if generated by the component, negative else.
-       if (port->PortType()=="BusFlowBalance" || port->PortType()=="MultiObjCompo")
-       {
-           if (port->Direction() == KCONS()) {
-               setBusFluxPortExpression(port, -1.0);
-           }
-           else {
-               setBusFluxPortExpression(port, 1.0);
-           }
-       }
+        const bool isFluxPort =
+            port->PortType() == "BusFlowBalance" ||
+            port->PortType() == "MultiObjCompo";
+
+        if (!isFluxPort)
+            continue;
+
+        const double sign = (port->Direction() == KCONS()) ? -1.0 : 1.0;
+        assignFluxToPort(port, sign);
     }
 }
-void MilpComponent::setBusFluxPortExpression(MilpPort* port, const double &aSignedCoefficient)
+
+void MilpComponent::assignFluxToPort(MilpPort* port, double sign)
 {
-    // Caution : port.VarName should always be non void from InitProblem.
-    MIPModeler::MIPExpression1D* ptrExp1D ;
-    MIPModeler::MIPExpression* ptrExp0D = nullptr ;
-    std::string varName = port->Variable() ;
-    //check expression has been provided by component Model, if checking missed in initProblem !
+    const std::string var = port->Variable();
 
-    if (mCompoModel) {
-      ptrExp1D = mCompoModel->getMIPExpression1D(varName);
-      if (ptrExp1D != nullptr) {
-          if ((*ptrExp1D).size() == npdt()) {
-              for (unsigned int t = 0; t < npdt(); ++t)
-              {
-                  port->setFlux(t, aSignedCoefficient, (*ptrExp1D)[t]);   // contribution to Electrical_Bus
-              }
-          }
-          else {
-              ptrExp1D = nullptr;
-          }
-      }
-      else if (port->PortType()=="MultiObjCompo"){
-          ptrExp0D = mCompoModel->getMIPExpression(varName);
-          if (ptrExp0D != nullptr) {
-              port->setFlux0D(aSignedCoefficient, *ptrExp0D);
-          }
-      }
-      else{
-          ptrExp0D = mCompoModel->getMIPExpression(varName);
-          if (ptrExp0D != nullptr) {
-              for (unsigned int t = 0; t < npdt() ; ++t)
-              {
-                 port->setFlux(t, aSignedCoefficient, *ptrExp0D);   // contribution to Electrical_Bus
-              }
-          }
-      }
-    }
-    else{
-        ptrExp1D = nullptr;
-        ptrExp0D = nullptr;
+    // Case 1: 1D expression exists and matches time dimension
+    MIPModeler::MIPExpression1D* exp1D = mCompoModel ? mCompoModel->getMIPExpression1D(var) : nullptr;
+
+    if (exp1D && exp1D->size() == npdt()) {
+        for (unsigned int t = 0; t < npdt(); ++t)
+            port->setFlux(t, sign, (*exp1D)[t]); 
+        return;
     }
 
-    if (ptrExp1D == nullptr && ptrExp0D == nullptr) {
-        throw Cairn_Exception("ERROR at port "+Name()+"."+port->Name()+" MilpExpression "+ varName +" does not exist in component model "+mCompoModelName ,-1) ;
+    // Case 2: 0D expression
+    MIPModeler::MIPExpression*  exp0D = mCompoModel ? mCompoModel->getMIPExpression(var) : nullptr;
+
+    if (exp0D) {
+        if (port->PortType() == "MultiObjCompo") {
+            port->setFlux0D(sign, *exp0D);
+        }
+        else {
+            for (unsigned int t = 0; t < npdt(); ++t)
+                port->setFlux(t, sign, *exp0D);
+        }
+        return;
     }
 
+    // Case 3: no expression found -> error
+    throw Cairn_Exception("Component '" + Name() + "', port '" + port->Name() +
+        "': expression '" + var + "' not found in model '" + mCompoModelName + "'", -1);
 }
+
 void MilpComponent::setBusSameValuePortExpression()
 {
-    MilpPort* port ;
-    for (MilpPort* port : PortList()) {
-       std::string varName = port->Variable() ;
+    if (!mCompoModel)
+        return;
 
-       if (mCompoModel != nullptr)
-       {
-           if (port->PortType()=="BusSameValue")
-           {
-                MIPModeler::MIPExpression* ptrExp = mCompoModel->getMIPExpression(varName);
-                MIPModeler::MIPExpression1D* ptrExp1D = mCompoModel->getMIPExpression1D(varName);
-                if (ptrExp != nullptr)
-                {
-                    for (unsigned int t = 0; t < npdt() ; ++t)
-                    {
-                         port->setPotential(t, *ptrExp );   // Give access to Scalar value to BusSameValue
-                    }
-                }
-                else if (ptrExp1D != nullptr)
-                {
-                    if ((*ptrExp1D).size() == npdt()) {
-                        for (unsigned int t = 0; t < npdt(); ++t)
-                        {
-                            port->setPotential(t, (*ptrExp1D)[t]);   // Give access to Vector of values to BusSameValue
-                        }
-                    }
-                    else {
-                        ptrExp1D = nullptr;
-                    }
-                }
-            
-                if (ptrExp1D == nullptr && ptrExp == nullptr)
-                {
-                    Cairn_Exception error (" ERROR at port "+Name()+"."+port->Name()+" MilpExpression "+ varName +" does not exist in component model "+mCompoModelName ,-1) ;
-                    this->setException(error) ;
-                    return ;
-                }
-           }
-       }
+    for (MilpPort* port : PortList()) {
+        if (port->PortType() == "BusSameValue") {
+            assignPotentialToPort(port);
+        }
     }
+}
+
+void MilpComponent::assignPotentialToPort(MilpPort* port)
+{
+    const std::string var = port->Variable();
+
+    // Case 1: 1D expression with correct time dimension
+    MIPModeler::MIPExpression1D* exp1D = mCompoModel ? mCompoModel->getMIPExpression1D(var) : nullptr;
+
+    if (exp1D && exp1D->size() == npdt()) {
+        for (unsigned int t = 0; t < npdt(); ++t)
+            port->setPotential(t, (*exp1D)[t]);
+        return;
+    }
+
+    // Case 2: 0D expression
+    MIPModeler::MIPExpression* exp0D = mCompoModel ? mCompoModel->getMIPExpression(var) : nullptr;
+
+    if (exp0D) {
+        for (unsigned int t = 0; t < npdt(); ++t)
+            port->setPotential(t, *exp0D);
+        return;
+    }
+
+    // Case 3: no expression found -> error
+    throw Cairn_Exception("Component '" + Name() + "', port '" + port->Name() +
+        "': expression '" + var + "' not found in model '" + mCompoModelName + "'", -1);
 }
 
 bool MilpComponent::findFirstCoeff(std::string aVarName, t_mapExchange aList , float &coeff, float &offset)
@@ -1300,21 +1305,48 @@ void MilpComponent::populatePublishedPortVars(t_mapExchange& a_Export, uint modi
     if (modinitTS == 1) mFirstInitTS = 1;
 }
 
+void MilpComponent::initializeSubmodelIO()
+{
+    /*
+     * Publish all IO variables. Then, in exportSubmodelIO(..), export only 
+     * the IO variables that are isUsed == true.
+     */
+    for (auto& ivar1D : mCompoModel->getIOExpressions(EIOModelType::eMIPExpression1D))
+    {
+        const std::string varName = ivar1D->getName();
+
+        cDebug() << " - AUTO_PlugSubmodelIO vector : " << objectName() << "." << varName
+            << " size=" << npdtTot() << " timeSteps=" << TimeSteps().size();
+
+        mPlugSubmodelIO->publishData(varName, npdtTot(), NAN);
+    }
+
+    setDefaultsResults();
+}
+
 void MilpComponent::setDefaultsResults()
 {
-    // Write default value
-    std::vector<ModelParam*> vList;
-    mPlugSubmodelIO->getParameters(vList, EParamType::eVectorEigen);
-    for (auto& vParam : vList) {
-        VectorXf* lptr = std::get< Eigen::VectorXf*>(vParam->getPtr());            
-        if (lptr->size() == 0)
+    /*
+ * Initialize default values for all vector-type IO parameters.
+ * These vectors must have been allocated by the ModelParam constructor.
+ */
+    std::vector<ModelParam*> paramList;
+    mPlugSubmodelIO->getParameters(paramList, EParamType::eVectorEigen);
+
+    for (auto* param : paramList)
+    {
+        auto* vec = std::get<Eigen::VectorXf*>(param->getPtr());
+
+        if (!vec || vec->size() == 0)
         {
-            cCritical () << "MilpComponen::setDefaultsResults " << vParam->getName() << " should have been allocated by component constructor ! "  ;
+            cInfo() << "MilpComponent::initializeSubmodelIO: parameter '"
+                << param->getName()
+                << "' should have been allocated by the component constructor! Skiped!";
+            continue;
         }
-        else
-        {
-            lptr->tail(npdt()).setConstant(0.);
-        }
+
+        // Initialize only the tail (npdt() time steps)
+        vec->tail(npdt()).setConstant(0.f);
     }
 }
 
@@ -1398,11 +1430,11 @@ void MilpComponent::exportSubmodelIO(Solver* aSolver, int aNsol)
                         }
                     }
                     else {
-                        cWarning() << " - Solution1D for " << objectName() << "." << ivar1D->getName() << " of model " << mCompoModelName << " cannot be saved : missing corresponding VectorXf in MilpComponent ! ";
+                        cWarning() << " - Solution1D for " << Name() << "." << ivar1D->getName() << " of model " << mCompoModelName << " cannot be saved : missing corresponding VectorXf in MilpComponent!";
                     }
                 }
                 else {
-                    cWarning() << " - Vector Expression1D " << objectName() << "." << ivar1D->getName() << " of model " << mCompoModelName << " has not been allocated in submodel ! ";
+                    cWarning() << " - Vector Expression1D " << Name() << "." << ivar1D->getName() << " of model " << mCompoModelName << " has not been allocated in submodel!";
                 }
             }
         }
@@ -1531,7 +1563,7 @@ void MilpComponent::jsonSaveGUINodePortsData(ojson &nodePortsArray, const std::s
             nodePortsArray = ojson::array();
         }
         else {
-            cWarning() << "nodePortsArray must be an array; got type=" << nodePortsArray.type_name()
+            cDebug() << "nodePortsArray must be an array; got type=" << nodePortsArray.type_name()
                 << ". Re-initializing to array.";
             nodePortsArray = ojson::array();
         }
@@ -1567,13 +1599,43 @@ std::map<std::string, ModelParam*> MilpComponent::getParameters(bool includePort
     return paramMap;
 }
 
-void MilpComponent::updateCompoParamMap(const std::string& a_SettingName, const t_value& a_SettingValue) {
-    mComponent[(a_SettingName)] = std::string(CairnAPIUtils::getParamValue(a_SettingValue).c_str());
+void MilpComponent::updateCompoParamMap(const std::string& a_SettingName, 
+    const std::string& a_AttributeName, const std::string& a_AttributeValue)
+{
+    if (a_AttributeName == "value")
+        CairnUtils::setParamValue(mComponent, a_SettingName, a_AttributeValue);
+    else if (a_AttributeName == "comment")
+        CairnUtils::setParamComment(mComponent, a_SettingName, a_AttributeValue);
 }
 
-void MilpComponent::updateCompoParamMap(const t_dict& a_SettingValues) {
-    for (auto& vParam : a_SettingValues) {
-        updateCompoParamMap(vParam.first, vParam.second);
+void MilpComponent::updatePortParamMap(const std::string& portId, const std::string& portName,
+    const std::string& a_SettingName, const std::string& a_AttributeName, const std::string& a_AttributeValue)
+{
+    // Try to find by portId first
+    auto it = mPorts.find(portId);
+
+    // If not found, try by portName (backward compatibility) 
+    if (it == mPorts.end()) {
+        it = std::find_if(mPorts.begin(), mPorts.end(),
+            [&portName](const auto& pair) {
+                const std::string name  = CairnUtils::getParamValue(pair.second, "Name");
+                return name == portName;
+            });
+    }
+
+    if (it != mPorts.end()) {
+        // Update existing entry
+        if (a_AttributeName == "value")
+            CairnUtils::setParamValue(it->second, a_SettingName, a_AttributeValue);
+        else if (a_AttributeName == "comment")
+            CairnUtils::setParamComment(it->second, a_SettingName, a_AttributeValue);
+    }
+    else  {
+        // Port not found, inserting new entry 
+        if (a_AttributeName == "value")
+            CairnUtils::setParamValue(mPorts[portId], a_SettingName, a_AttributeValue);
+        else if (a_AttributeName == "comment")
+            CairnUtils::setParamComment(mPorts[portId], a_SettingName, a_AttributeValue);
     }
 }
 
@@ -1639,11 +1701,7 @@ bool MilpComponent::newCompoModel()
 
 bool MilpComponent::isBus() 
 {
-    if (mType == "BusFlowBalance" || mType == "BusSameValue" || mType == "MultiObjCompo") 
-    {
-        return true;
-    }
-    return false;
+    return CairnUtils::isBus(mType);
 }
 
 std::string MilpComponent::getAbsoluteFileName(const std::string& filename)
@@ -1769,6 +1827,20 @@ std::vector<InputParam*> MilpComponent::get_PortEnvImpactInputParams()
     return result;
 }
 
+InputParam* MilpComponent::get_PerfParam()
+{
+    if (!allDefaultPortsHaveCarriers()) {
+        throw Cairn_Exception("Please, configure the carriers of all default ports of component "
+            + objectName() + " first.", -1);
+    }
+
+    InputParam* result = nullptr;
+    if (auto* model = compoModel()) {
+        result = model->getInputPerfParam();
+    }
+    return result;
+}
+
 std::optional<double> MilpComponent::getIndicatorValue(const std::string& indicatorName, 
     const std::string& range) const 
 {
@@ -1801,7 +1873,7 @@ const std::vector<double>* MilpComponent::getTimeSeries(const std::string& varNa
     const auto it = m_timeSeries.find(varName);
     if (it == m_timeSeries.end())
     {
-        cWarning() << "Time series not found:" << varName;
+        cWarning() << "Time series " << varName << " of component " << Name() << " not found!";
         return nullptr;
     }
     return it->second.get_Values(npdtPast());

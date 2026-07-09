@@ -66,7 +66,7 @@ SourceLoad#1;ImposedProfile FluidH2Mass SourceLoadFlow;-166569;kg;TotImposedProf
 SourceLoad#1;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-1.88816e+06;kg;LvlzdTotImposedProfileSourceLoadFlow
 SourceLoad#1;Mean FluidH2Flowrate SourceLoadFlow;-74.5675;kg/h;MeanImposedProfileSourceLoadFlow
 SourceLoad#2;CAPEX;0;EUR;CAPEX
-SourceLoad#2;is installed;1;-;IsInstalled
+SourceLoad#2;is installed;0;-;IsInstalled
 SourceLoad#2;Annual operation cost;0;EUR;OPEX
 SourceLoad#2;Annual fixed OPEX;0;EUR;PureOPEX
 SourceLoad#2;Annual variable OPEX;0;EUR;VariableOPEX
@@ -81,7 +81,7 @@ SourceLoad#2;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;0;MWh;Lvlz
 SourceLoad#2;Mean ElectricalPower SourceLoadFlow;0;MW;MeanImposedProfileSourceLoadFlow
 SourceLoad#2;Data Port published SourceLoadFlow - data computed;0;MWh;DataPortSourceLoadFlow
 StorageGen#1;CAPEX;0;EUR;CAPEX
-StorageGen#1;is installed;1;-;IsInstalled
+StorageGen#1;is installed;0;-;IsInstalled
 StorageGen#1;Annual operation cost;0;EUR;OPEX
 StorageGen#1;Annual fixed OPEX;0;EUR;PureOPEX
 StorageGen#1;Annual variable OPEX;0;EUR;VariableOPEX

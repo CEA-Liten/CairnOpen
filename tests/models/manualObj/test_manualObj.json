@@ -142,7 +142,7 @@
 				"nodeName": "Electricity#1",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
@@ -160,6 +160,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"optionListJson": [
@@ -234,7 +238,7 @@
 						"value": false
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -863,7 +867,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					}
 				],
@@ -918,7 +922,7 @@
 								"carrierType": "ANY_TYPE",
 								"direction": "DATAEXCHANGE",
 								"variable": "Weight",
-								"checkunit": "Yes",
+								"checkunit": "No",
 								"coeff": 1,
 								"offset": 0,
 								"defaultport": "No",

@@ -12,7 +12,7 @@ class CAIRNCORESHARED_EXPORT TecEcoAnalysis : public TechnicalSubModel
 {
     
 public:
-    TecEcoAnalysis(CairnObject* aParent, const std::map<std::string, std::string> &aComponent={});
+    TecEcoAnalysis(CairnObject* aParent, const t_mapParamData& aComponent = {});
     virtual ~TecEcoAnalysis();
 
     void declareEnvImpactParam();
@@ -60,11 +60,6 @@ public:
     std::string EnvImpactLongName(const std::string& name);
     int getImpactIndex(const std::string& impactName); 
 
-    // ******************************************* CompoModel ************************************************ //
-
-    void buildModel();
-    void computeAllIndicators(const double* optSol);
-    void setTimeData();
     //----------------------------------------------------------------------------------------------------
     void declareModelConfigurationParameters()
     {
@@ -100,7 +95,7 @@ public:
             const auto& impact = mSelectedEnvImpacts[i];
             const auto unit = EnvImpactUnit(impact);
             addIO("Total Undiscounted " + impact + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env impact  mass" */
-            addIO("Total Undiscounted " + impact + " Grey EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env grey impact mass" */
+            addIO("Total Undiscounted " + impact + " Embodied EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env grey impact mass" */
         }
     }
 
@@ -141,14 +136,14 @@ public:
         mInputIndicators->addIndicator("Total CAPEX", &mCapexContribution, &mExportIndicators, "Total CAPEX", &mCurrency, "CAPEX");
         mInputIndicators->addIndicator("Total PenaltyConstraintContribution", &mPenaltyConstraintContribution, &mExportIndicators, "Total PenaltyConstraintContribution", "-", "PenaltyPart");
         mInputIndicators->addIndicator("Total project discounted operation cost", &mOpexContributionDiscounted, &mExportIndicators, "Total project discounted operation cost (OPEX + replacement + buying cost + other cost - income)", &mCurrency, "DiscountedNetOPEX");
-        mInputIndicators->addIndicator("Total project discounted OPEX", &mPureOpexContributionDiscounted, &mExportIndicators, "Total project discounted OPEX", &mCurrency, "DiscountedPureOPEX");
+        mInputIndicators->addIndicator("Total project discounted OPEX", &mFixedOpexContributionDiscounted, &mExportIndicators, "Total project discounted OPEX", &mCurrency, "DiscountedPureOPEX");
         mInputIndicators->addIndicator("Total project replacement costs", &mReplacementContributionDiscounted, &mExportIndicators, "Total project replacement costs", &mCurrency, "DiscountedReplacement");
         mInputIndicators->addIndicator("Total project income", &mSellVariableCostsContributionDiscounted, &mExportIndicators, "Total project income", &mCurrency, "DiscountedSellPart");
         mInputIndicators->addIndicator("Total project buying costs", &mBuyVariableCostsContributionDiscounted, &mExportIndicators, "Total project buying cost", &mCurrency, "DiscountedBuyPart");
 
         mVDEnvImpactsTotalCostDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsTotalMassDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
-        mVDEnvGreyImpactsMassContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
+        mVDEmbodiedMassContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsCostContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsMassContributionDiscounted.resize(mSelectedEnvImpacts.size(), { 0., 0. });
         mVDEnvImpactsCostContribution.resize(mSelectedEnvImpacts.size(), { 0., 0. });
@@ -162,7 +157,7 @@ public:
 
         for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
             const std::string& impact = mSelectedEnvImpacts[i];
-            mInputIndicators->addIndicator( "Total Project Embodied env impact of " + impact, &mVDEnvGreyImpactsMassContribution[i], &mExportIndicators, "Total Project Embodied env impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "GreyEnvImpactMass");
+            mInputIndicators->addIndicator( "Total Project Embodied env impact of " + impact, &mVDEmbodiedMassContribution[i], &mExportIndicators, "Total Project Embodied env impact of " + impact, EnvImpactUnit(impact), EnvImpactShortName(impact) + "GreyEnvImpactMass");
         }
 
         for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) {
@@ -172,7 +167,7 @@ public:
         }
 
         mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "Total annual operation cost (OPEX + replacement + buying cost + other cost - income)", &mCurrency, "NetOPEX");
-        mInputIndicators->addIndicator("Annual OPEX", &mPureOpexContribution, &mExportIndicators, "Total Undiscounted Pure OPEX", &mCurrency, "PureOPEX");
+        mInputIndicators->addIndicator("Annual OPEX", &mFixedOpexContribution, &mExportIndicators, "Total Undiscounted Pure OPEX", &mCurrency, "PureOPEX");
         mInputIndicators->addIndicator("Annual replacement costs", &mReplacementContribution, &mExportIndicators, "Total Undiscounted Replacement Part", &mCurrency, "ReplacementPart");
         mInputIndicators->addIndicator("Annual income", &mSellVariableCostsContribution, &mExportIndicators, "Annual income", &mCurrency, "SellPart");
         mInputIndicators->addIndicator("Annual buying costs", &mBuyVariableCostsContribution, &mExportIndicators, "Annual buying costs", &mCurrency, "BuyPart");
@@ -184,12 +179,17 @@ public:
         }
     }
     //----------------------------------------------------------------------------------------------------
+    void setTimeData();
+
     void allocateExpressions();
     void closeExpressions();
 
-    void computeAllContribution();   /** MILP Model description : all expressions */
     void computeEconomicalContribution(); /** MILP Model description : objective contribution */
     void computeEnvContribution();       /** MILP Model description : environment constraints */
+    void computeTecEcoContribution();   /** MILP Model description : all expressions */
+    void buildTecEcoModel(); /* !!! Don't use buildModel() for TecEcoAnalysis */
+
+    void computeAllIndicators(const double* optSol);
 
     double objective(const int& i) { return mObjectiveContribution.at(i); } // i in {1, 2}
     MIPModeler::MIPExpression objectiveExpression() { return mExpObjective; }
@@ -212,12 +212,14 @@ public:
     std::vector<double>& ImpactLevelizationTable() { return mImpactLevelizationTable; }
     std::vector<double>& TableYearsHours() { return mTableYearsHours; }
 
+    int checkPortCount() override { return 0; }
+
 private :
-    void doInit(const std::map<std::string, std::string>& aComponent);
+    void doInit(const t_mapParamData& aComponent);
     void declareCompoInputParam();
     void declareConfigurationParameters();
-    void setConfigurationParameters(const std::map<std::string, std::string>& aComponent);
-    void setCompoInputParam(const std::map<std::string, std::string>& aComponent);
+    void setConfigurationParameters(const t_mapParamData& aComponent);
+    void setCompoInputParam(const t_mapParamData& aComponent);
     std::map<std::string, MilpComponent*> MilpComponents();
     std::vector<MilpComponent*> NonBusMilpComponents();
     std::vector<BusCompo*> BusComponents();
@@ -349,22 +351,22 @@ private :
     // undiscounted 
     std::vector<double> mCapexContribution = { 0., 0. };              /** Resulting Capex contribution */
     std::vector<double> mOpexContribution = { 0., 0. };               /** Resulting Opex contribution including VariableCosts due to energy costs*/
-    std::vector<double> mPureOpexContribution = { 0., 0. };           /** Resulting Pure Opex contribution */
+    std::vector<double> mFixedOpexContribution = { 0., 0. };           /** Resulting Pure Opex contribution */
     std::vector<double> mReplacementContribution = { 0., 0. };        /** Resulting Replacement contribution */
     std::vector<double> mBuyVariableCostsContribution = { 0., 0. };   /** Resulting Variable Cost expenses contribution part*/
     std::vector<double> mSellVariableCostsContribution = { 0., 0. };  /** Resulting Variable Cost revenue contribution part*/
 
     // discounted 
     std::vector<double> mOpexContributionDiscounted = { 0., 0. };                  /** Resulting Opex contribution including VariableCosts due to energy costs*/
-    std::vector<double> mPureOpexContributionDiscounted = { 0., 0. };             /** Resulting Pure Opex contribution*/
+    std::vector<double> mFixedOpexContributionDiscounted = { 0., 0. };             /** Resulting Pure Opex contribution*/
     std::vector<double> mReplacementContributionDiscounted = { 0., 0. };         /** Resulting Replacement contribution part*/
     std::vector<double> mBuyVariableCostsContributionDiscounted = { 0., 0. };   /** Resulting Variable Cost expenses contribution part*/
     std::vector<double> mSellVariableCostsContributionDiscounted = { 0., 0. };  /** Resulting Variable Cost revenue contribution part*/
 
     // ----------- Env Impacts ------------- 
     // grey
-    std::vector<std::vector<double>> mVDEnvGreyImpactsCostContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
-    std::vector<std::vector<double>> mVDEnvGreyImpactsMassContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEmbodiedCostContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
+    std::vector<std::vector<double>> mVDEmbodiedMassContribution; /** Resulting cost of all the embodied environmental impacts the user wants to consider*/
 
     // undiscounted
     std::vector<std::vector<double>> mVDEnvImpactsCostContribution; /** Resulting cost of all the Direct environmental impacts the user wants to consider*/

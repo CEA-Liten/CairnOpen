@@ -19,7 +19,6 @@ public:
     ResourceStock(CairnObject* aParent);
     ~ResourceStock();
     //----------------------------------------------------------------------------------------------------
-    int checkConsistency();
     void setTimeData();
     //----------------------------------------------------------------------------------------------------
     void computeInitialData() override;

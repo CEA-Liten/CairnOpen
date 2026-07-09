@@ -13,10 +13,12 @@ using namespace CairnUtils;
 
 using Eigen::Map;
 
-BusCompo::BusCompo(CairnObject* aParent, const std::map<std::string, std::string>& aComponent,
-    const std::map < std::string, std::map<std::string, std::string> >& aPorts, 
-    MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory) :
-    MilpComponent(aParent, CairnUtils::getParam(aComponent,"id"), aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
+BusCompo::BusCompo(CairnObject* aParent, 
+    const std::string& aName,
+    const t_mapParamData& aComponent,
+    const std::map < std::string, t_mapParamData>& aPorts,
+    MilpData* aMilpData, TecEcoAnalysis* aTecEcoAnalysis, ModelFactory* aModelFactory) 
+    : MilpComponent(aParent, aName, aMilpData, aTecEcoAnalysis, aComponent, aPorts, aModelFactory)
 {    
     setObjectType("BusCompo");
 }
@@ -30,7 +32,7 @@ void BusCompo::declareCompoInputParam()
     MilpComponent::declareCompoInputParam(); //Common component input param
 }
 
-void BusCompo::setCompoInputParam(const std::map<std::string, std::string> aComponent)
+void BusCompo::setCompoInputParam(const t_mapParamData& aComponent)
 {
     MilpComponent::setCompoInputParam(aComponent);
 }
@@ -42,76 +44,13 @@ std::string BusCompo::CarrierName() const {
     return "";
 }
 
-int BusCompo::checkConnections()
-{
-    const std::vector<MilpPort*>& linkedPorts = LinkedPorts();
-    if (linkedPorts.empty())
-        return 0;
-
-    int iIn = 0, iOut = 0, iData = 0;
-    const std::string& busUnit = (mType != "BusSameValue") ? linkedPorts.front()->FluxUnit() : "";
-
-    for (const MilpPort* port : linkedPorts)
-    {
-        // Verify all connected ports share the same Flux unit
-        if (mType != "BusSameValue")
-        {
-            const std::string& portUnit = port->FluxUnit();
-            if (portUnit != busUnit)
-            {
-                cCritical() << "Unit mismatch on Bus" << Name()
-                    << "- port" << port->Name()
-                    << "has Flux unit" << portUnit
-                    << "but expected" << busUnit;
-                return -1;
-            }
-        }
-
-        // Count port directions
-        const std::string& dir = port->Direction();
-        if (dir == KDATA()) iData++;
-        else if (dir == KCONS()) iIn++;
-        else if (dir == KPROD()) iOut++;
-    }
-
-    if (mCompoModelName == "BusFlowBalance" && iData == 0 && (iIn == 0 || iOut == 0))
-    {
-        cCritical() << "ERROR on component" << Name()
-            << "- input ports:" << iIn
-            << ", output ports:" << iOut
-            << ", data exchange ports:" << iData
-            << ". Expected at least one input and one output port, or a data exchange port!";
-        return -1;
-    }
-
-    return 0;
-}
-
-int BusCompo::checkPorts()
-{
-    if (!getMainCarrier()) {
-        Cairn_Exception error("Critical ERROR : Missing carrier for Bus " + Name(), -1);
-        throw error;
-    }
-
-    // Check Bus own ports
-    int ierr = MilpComponent::checkPorts();
-    if (ierr < 0) return ierr;
-
-    // Check conncetions
-    ierr = checkConnections();
-    if (ierr < 0) return ierr;
-
-    return 0;
-}
-
 void BusCompo::createPortsExportListVars(t_mapExchange& a_Exchange) 
 {
     /* Bus port variables should not be published because they are a copy of linked component variables */
 }
 
 std::string BusCompo::ObjectiveType() const {
-    return mCompoModel->ObjectiveType(); // TODO: move ObjectiveType() from SubModel to BusSubModel
+    return busModel()->ObjectiveType(); 
 }
 
 std::vector<std::string> BusCompo::getPossibleObjectiveTypes() const
@@ -184,14 +123,30 @@ void BusCompo::addLink(MilpComponent* linkedComponent, MilpPort* linkedPort)
 
 void BusCompo::removeLink(MilpComponent* linkedComponent, MilpPort* linkedPort)
 {
-    if (linkedComponent) {
-        std::vector<MilpComponent*>::iterator vIter = find(mListComponent.begin(), mListComponent.end(), linkedComponent);
-        if (vIter != mListComponent.end()) {
-            mListComponent.erase(vIter);
-        }
+    // Defensive: linkedPort must not be null 
+    if (!linkedPort) {
+        cError() << "BusCompo::removeLink called with null linkedPort.";
+        return;
     }
 
-    busModel()->removeLink(linkedPort);
+    // Remove component from the list 
+    if (!linkedComponent)
+        return;
+
+    auto it = std::find(mListComponent.begin(), mListComponent.end(), linkedComponent);
+    if (it != mListComponent.end()) {
+        mListComponent.erase(it);
+    }
+
+    // Defensive: busModel() must be valid 
+    auto* model = busModel();
+    if (!model) {
+        cError() << "BusCompo::removeLink: busModel() is null.";
+        return;
+    }
+
+    // Remove port link in the bus model 
+    model->removeLink(linkedPort);
 }
 
 int BusCompo::NbPorts(const std::string& aDirection)

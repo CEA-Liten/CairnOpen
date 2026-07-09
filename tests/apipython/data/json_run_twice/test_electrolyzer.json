@@ -246,7 +246,7 @@
 				"nodeId": "801",
 				"nodeName": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"energyTypeColor": "#E8A317",
 				"nodeComment": "",
 				"x": 470,
@@ -356,6 +356,10 @@
 					{
 						"key": "SellPrice",
 						"value": 0
+					},
+					{
+						"key": "Voltage",
+						"value": 230
 					}
 				],
 				"timeSeriesListJson": [
@@ -379,7 +383,7 @@
 				"nodeId": "901",
 				"nodeName": "H2Vector",
 				"nodeTechnoType": "H2Vector",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "MaterialCarrier",
 				"energyTypeColor": "green",
 				"nodeComment": "",
 				"x": 610,
@@ -488,6 +492,14 @@
 					},
 					{
 						"key": "SellPrice",
+						"value": 0
+					},
+					{
+						"key": "Pressure",
+						"value": 0
+					},
+					{
+						"key": "Temperature",
 						"value": 0
 					}
 				],
@@ -996,7 +1008,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -1024,7 +1036,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -1283,7 +1295,7 @@
 						"value": 0
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -1307,7 +1319,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{
@@ -1576,7 +1588,7 @@
 						"value": 0.025
 					},
 					{
-						"key": "FixedOpexConstant",
+						"key": "FixedOpexOffset",
 						"value": 0
 					},
 					{
@@ -1600,7 +1612,7 @@
 						"value": 0
 					},
 					{
-						"key": "ReplacementConstant",
+						"key": "ReplacementOffset",
 						"value": 0
 					},
 					{

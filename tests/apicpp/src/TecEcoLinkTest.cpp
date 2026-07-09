@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -14,6 +14,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File PathsPersee
@@ -52,27 +56,27 @@ int main()
 	TESTAPI("Run 1", vSolution = m_Problem.run())
 
 	// Check status
-	TESTAPI2("Check status of run 1", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
+	TESTAPIBOOL("Check status of run 1", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
 
 	// Compare results
-	TESTAPI2("Compare results 1",
+	TESTAPIBOOL("Compare results 1",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 
 	// -------------- Run 2 with FutureSize = 10 --------------
 
 	// Change FutureSize to 10
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
-	TESTAPI("Change FutureSize to 10", vSimulationControl.set_SettingValue("FutureSize", 10))
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
+	TESTAPI("Change FutureSize to 10", vSimulationControl->set_SettingValue("FutureSize", 10))
 
 	// Run 2
 	TESTAPI("Run 2", vSolution = m_Problem.run(run2Dir))
 
 	// Check status
-	TESTAPI2("Check status of run 2", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
+	TESTAPIBOOL("Check status of run 2", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
 
 	// Compare results
-	TESTAPI2("Compare results 2",
+	TESTAPIBOOL("Compare results 2",
 		TestUtils::ComparaisonCsvFile(ResultSize10FileName, ReferenceResultSize10FileName)
 	)
 

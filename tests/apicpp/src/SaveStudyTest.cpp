@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -17,6 +17,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File Paths
@@ -44,17 +48,17 @@ int main()
 	)
 
 	//Test setting port attribute
-	CairnAPI::MilpComponentAPI ely_pem = m_Problem.get_Component("ELY_PEM");
-	CairnAPI::MilpPortAPI ely_pem_PortL0 = ely_pem.get_Port("PortL0");
+	std::shared_ptr<CairnAPI::MilpComponentAPI> ely_pem = m_Problem.get_Component("ELY_PEM");
+	std::shared_ptr < CairnAPI::MilpPortAPI> ely_pem_PortL0 = ely_pem->get_Port("PortL0");
 
-	ely_pem_PortL0.set_SettingValue("Coeff", 2.0);
+	ely_pem_PortL0->set_SettingValue("Coeff", 2.0);
 
-	TESTAPI2("Verify the value of ELY_PEM.PortL0.coeff",
-		TestUtils::compare_scalar(ely_pem_PortL0.get_SettingValue("Coeff"), 2.0, eDouble)
+	TESTAPIBOOL("Verify the value of ELY_PEM.PortL0.coeff",
+		TestUtils::compare_scalar(ely_pem_PortL0->get_SettingValue("Coeff"), 2.0, eDouble)
 	)
 
 	//Re-set the coeff value to 1.0
-	ely_pem_PortL0.set_SettingValue("Coeff", 1.0);
+	ely_pem_PortL0->set_SettingValue("Coeff", 1.0);
 
 	t_list ReferenceListOfComponent = m_Problem.get_Components();
 
@@ -86,12 +90,12 @@ int main()
 	)
 	vSolution.exportTimeSeries();
 
-	CairnAPI::MilpComponentAPI ely_pem_2 = m_Problem2.get_Component("ELY_PEM");
+	std::shared_ptr<CairnAPI::MilpComponentAPI> ely_pem_2 = m_Problem2.get_Component("ELY_PEM");
 
-	ely_pem_2.get_IndicatorNames();
-	ely_pem_2.get_IndicatorValues("PLAN");
+	ely_pem_2->get_IndicatorNames();
+	ely_pem_2->get_IndicatorValues("PLAN");
 
-	TESTAPI2("Compare results", 
+	TESTAPIBOOL("Compare results", 
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 	

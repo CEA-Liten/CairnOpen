@@ -59,7 +59,7 @@
                     "rsyncCommandArgs": [ "-t", "--delete" ],
                     "copySourcesOptions": {
                         "method": "rsync",
-                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h" ]
+                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "doc", "gui", "scripts", "deps", "_skbuild", "virtualPy", "lib/PegaseInstall", "lib/ModuleCairn", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h", "tests/privateTests/Tests_Base_National", "tests/privateTests/pegase", "tests/toolbox", "lib/MIPModeler/core/MIPModelerVersion.h", "src/core/CairnDefine.h", "src/core/CairnVersion.h" ]
                     },
                     "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
                 }
@@ -71,7 +71,7 @@
             "displayName": "Linux Debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "TEST_WITH_COVERAGE": "ON"
+                "TEST_WITH_COVERAGE": "OFF"
             }
         },
         {
@@ -88,7 +88,7 @@
             "inherits": "windows-base",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/src"
+                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/bin"
             }
         },
         {
@@ -146,7 +146,6 @@
             "inherits": "release",
             "installDir": "${sourceDir}/bin/release",
             "cacheVariables": {
-                "PYTHON_VENVDOC": "${sourceDir}/envs/docCairn",
                 "BUILD_DOC": "ON",
                 "BUILD_WHEEL": "OFF",
                 "INSTALL_WHEEL": "OFF",
@@ -154,7 +153,24 @@
                 "BUILD_MODULECAIRN": "OFF",
                 "BUILD_CAIRNGUI": "OFF",
                 "BUILD_CAIRN": "OFF",
-				"WITH_TESTING": "OFF"
+                "WITH_TESTING": "OFF"
+            }
+        },
+        {
+            "name": "buildDevDoc",
+            "displayName": "DevDoc",
+            "inherits": "release",
+            "installDir": "${sourceDir}/bin/release",
+            "cacheVariables": {
+                "BUILD_DEVDOC": "ON",
+                "CAIRNDEVDOC_HOME": "${sourceDir}/doc/devDocCairn",
+                "BUILD_WHEEL": "OFF",
+                "INSTALL_WHEEL": "OFF",
+                "BUILD_MIPMODELER": "OFF",
+                "BUILD_MODULECAIRN": "OFF",
+                "BUILD_CAIRNGUI": "OFF",
+                "BUILD_CAIRN": "OFF",
+                "WITH_TESTING": "OFF"
             }
         }
     ],
@@ -193,6 +209,13 @@
             "configurePreset": "fulldebug",
             "configuration": "debug",
             "jobs": 4
+        },
+        {
+            "name": "buildDevDoc",
+            "displayName": "DevDoc",
+            "configurePreset": "buildDevDoc",
+            "configuration": "release",
+            "jobs": 4
         }
     ],
     "testPresets": [
@@ -200,11 +223,11 @@
             "name": "debug",
             "displayName": "Debug",
             "configurePreset": "debug",
-            "configuration": "debug",
+            "configuration": "debug",            
             "environment": {
                 "GUI_HOME": "${sourceDir}/gui",
                 "CAIRN_BIN": "${sourceDir}/bin/${presetName}/bin",
-                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/src/models",
+                "CAIRN_MODELSDEBUG": "${sourceDir}/out/${presetName}/bin",
                 "PATH": "${sourceDir}/bin/${presetName}/bin;C:/Qt/Qt5.15.0/5.15.0/msvc2019_64/bin;$penv{PATH}"
             }
         },

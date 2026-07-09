@@ -133,7 +133,6 @@ public:
 
         //re-declare these parameters to change their default values
         addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - i.e. use Capex and Opex if true", "", "EcoInvestModel");
-        addParameter("UseWeightOptimization", &mUseWeightOptimization, true, false, true, "Use sizing based on Weight if true - weight will be considered flat by default allowing for upward compatibility with previous computations", "");
         addParameter("LPModelONLY", &mLPModelOnly, true, false, true, "Use LP Model - i.e. integer variables imposed or relaxed to real variables if true", "");
         // bool
         addParameter("UseControlledFlux", &mUseControlledFlux, false, false, true, "Optional - If true: SourceLoadFlow will be set from another component using equality bus constraint instead of imposing SourceLoad flow from timeSeries - default = false", "", "ControlOptions");

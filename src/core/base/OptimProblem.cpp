@@ -5,6 +5,10 @@
 #include "OptimProblem.h"
 #include "MIPModeler.h"
 #include "CairnUtils.h"
+
+#include "ElectricalCarrier.h"
+#include "MaterialCarrier.h"
+
 using namespace CairnUtils;
 
 using Eigen::Map;
@@ -23,28 +27,23 @@ OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aM
     this->setObjectType("OptimProblem");
     this->setObjectName(aName);
 
-    mJsonDescription  = new JsonDescription (this, "JsonDescription");
-
     //Retrieve the list of private submodels
     mModelFactory = new ModelFactory(spdlog::default_logger());
     mModelFactory->findModels();
 
     //Default TecEcoAnalysis
     if (!createTecEcoAnalysis()) {
-        Cairn_Exception cairn_error((std::string)"Error creating the default TecEcoAnalysis!", -1);
-        throw cairn_error;
+        throw Cairn_Exception("Error creating the default TecEcoAnalysis!", -1);
     }
 
     //Default Solver 
     if (!createSolver()) {
-        Cairn_Exception cairn_error((std::string)"Error creating the default Solver!", -1);
-        throw cairn_error;
+        throw Cairn_Exception("Error creating the default Solver!", -1);
     }
 
     //Default SimulationControl 
     if (!createSimulationControl()) {
-        Cairn_Exception cairn_error((std::string)"Error creating the default SimulationControl!", -1);
-        throw cairn_error;
+        throw Cairn_Exception("Error creating the default SimulationControl!", -1);
     }
 
 } // OptimProblem()
@@ -54,14 +53,12 @@ OptimProblem::~OptimProblem()
     //delete mTecEcoAnalysis; mTecEcoAnalysis == mCompoModel which is deleted in ~TecEcoComponent()
     delete mSolver;
     delete mSimulationControl;
-    delete mJsonDescription;
     delete mModelFactory;
 
     // Avoid dangling pointer
     mTecEcoAnalysis = nullptr;
     mSolver = nullptr;
     mSimulationControl = nullptr;
-    mJsonDescription = nullptr;
     mModelFactory = nullptr;
 
     // Clean up published variables
@@ -87,7 +84,6 @@ OptimProblem::~OptimProblem()
     }
     mDynamicIndicators.clear();
 }
-
 
 std::vector<MilpComponent*> OptimProblem::NonBusMilpComponents()
 {
@@ -119,7 +115,6 @@ std::vector<EnergyVector*> OptimProblem::EnergyVectors()
     return findChildren<EnergyVector>();
 }
 
-
 //------------------------------------------------------------------------------
 //  init Problem
 //------------------------------------------------------------------------------
@@ -130,36 +125,8 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
 
     if (aLoad) {     
         /* Case of GUI */
-
-        /* Initialization of Optimization problem from input Values */
-        std::string vStudyFile = mStudyFile->archFile();
         try {
-            cInfo() << " Use JSON input file ";
-            mMilpComponents = mJsonDescription->parseJsonDescription(mStudyFile->archFile());
-            mDynamicIndicatorsData = mJsonDescription->dynamicIndicators();
-
-            if (mJsonDescription->getException().error() != 0)//It is never set. A Cairn_Exception is thrown directly inside JsonDescription.cpp
-            {
-                Cairn_Exception cairn_error("Fatal error parsing file " + vStudyFile, -1);
-                throw cairn_error;
-            }
-        }
-        catch (Cairn_Exception& cairn_err) {
-            Cairn_Exception cairn_error("Fatal error parsing file " + vStudyFile, -1);
-            cairn_error.setMessage(cairn_err.message());
-            throw cairn_error;
-        }
-        catch (...) {
-            Cairn_Exception cairn_error("Fatal error parsing file " + vStudyFile, -1);
-            throw cairn_error;
-        }
-
-        // create components from Milp description map mMilpComponents
-        try {
-            createTecEcoAnalysisFromParamMap(); 
-            createSimulationControlFromParamMap();
-            createEnergyVectorsFromParamMap();
-            createMilpComponentsFromParamMap();
+            createComponentsFromJsonData(mStudyFile->archFile());
             createLinksToBus();
             createDynamicIndicators();
         }
@@ -171,24 +138,403 @@ void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
 
     computeExtrapolationFactor();
 
-    // init components and their models
-    int ierr = 0;
     try {
-        ierr = initProblem();
+        initProblem();
     }
     catch (Cairn_Exception& cairn_error) {
-        cCritical() << "Error in initialization of OptimProblem !";
         throw cairn_error;
     }
 
-    if (ierr < 0) {
-        Cairn_Exception cairn_error((std::string)"Error in initialization of OptimProblem !", -1);
-        throw cairn_error;
-    }
+    //TODO: move to MilpComponent::initProblem so a component-related vars are published at the component creation
+    createImportZEVariablesList(); 
 
-    // create input ZEvariable (associated to input time series) list by component, and register them at Problem level.
-    createImportZEVariablesList(); //TODO: move to MilpComponent::initProblem so a component-related vars are published at the component creation
     createExportZEVariablesList();
+}
+
+void OptimProblem::createComponentsFromJsonData(const std::string& vJsonFile, 
+    std::vector<CompoData>* importedComponents, bool isGroup,
+    std::string* groupName, std::string* mainNode)
+{
+    // Use smart pointer for automatic memory management
+    std::unique_ptr<JsonDescription> jsonDesc;
+    try {
+        jsonDesc = std::make_unique<JsonDescription>(vJsonFile);
+    }
+    catch (const Cairn_Exception& error) {
+        throw Cairn_Exception(std::string("Failed to load JSON file. ") + error.message(), -1);
+    }
+
+    // Must be created in the following order
+    if (!isGroup) {
+        // Base components: TecEcoAnalysis, SimulationControl, Solver
+        createBaseComponents(jsonDesc.get());
+
+        // Extract user-defined indicators (only in case of read study)
+        mDynamicIndicatorsData = jsonDesc->dynamicIndicators();
+
+        // Extract groups (only in case of read study)
+        mGroups = jsonDesc->extractGroupData();
+    }
+
+    // Carriers
+    createEnergyVectors(jsonDesc.get(), importedComponents);
+
+    // Create remaining components
+    if (isGroup) {
+        createComponents(jsonDesc.get(), importedComponents);
+    }
+    else {
+        createUniqueComponents(jsonDesc.get()); // collect components ?!
+    }
+
+    // Populate group name if needed
+    if (isGroup) {
+        if(groupName)
+            *groupName = jsonDesc->groupName();
+
+        if(mainNode)
+            *mainNode = jsonDesc->groupMainNode();
+    }
+}
+
+void OptimProblem::createBaseComponents(JsonDescription* jsonDesc)
+{
+    if (!jsonDesc) {
+        throw Cairn_Exception("JsonDescription is null", -1);
+    }
+
+    // TecEcoAnalysis — must be created first
+    const auto& tecEcoParamData = jsonDesc->TecEcoParamData();
+    if (!tecEcoParamData.empty()) {
+        const std::string compoType = CairnUtils::getParamValue(tecEcoParamData, "type");
+        const std::string compoName = CairnUtils::getParamValue(tecEcoParamData, "name");
+        const auto ports = jsonDesc->extractPortParamData(compoName);
+
+        if (!createTecEcoAnalysis(compoType, tecEcoParamData, ports, jsonDesc->LabelList())) {
+            throw Cairn_Exception("Error creating the default TecEcoAnalysis!", -1);
+        }
+    }
+
+    // SimulationControl — must be created second
+    const auto& simControlParamData = jsonDesc->SimulationControlParamData();
+    if (!simControlParamData.empty()) {
+        const std::string compoType = CairnUtils::getParamValue(simControlParamData, "type");
+        const std::string compoName = CairnUtils::getParamValue(simControlParamData, "name");
+
+        if (!createSimulationControl(compoName, simControlParamData)) {
+            throw Cairn_Exception("Error creating SimulationControl: " + compoName, -1);
+        }
+    }
+    else {
+        cInfo() << "No SimulationControl found. The default SimulationControl will be used.";
+    }
+
+    // Solver - order not important
+    const auto& solverParamData = jsonDesc->SolverParamData();
+    if (!solverParamData.empty()) {
+        const std::string compoType = CairnUtils::getParamValue(solverParamData, "type");
+        const std::string compoName = CairnUtils::getParamValue(solverParamData, "name");
+
+        if (!createSolver(compoName, solverParamData)) {
+            throw Cairn_Exception("Error creating Solver: " + compoName, -1);
+        }
+    }
+}
+
+void OptimProblem::createEnergyVectors(JsonDescription* jsonDesc,
+    std::vector<CompoData>* importedComponents)
+{
+    if (!jsonDesc) {
+        throw Cairn_Exception("JsonDescription is null", -1);
+    }
+
+    const auto& carrierParamDataList = jsonDesc->CarrierParamDataList();
+    for (const auto& carrierParamData : carrierParamDataList) {
+        const std::string compoType = CairnUtils::getParamValue(carrierParamData, "type");
+        const std::string compoName = CairnUtils::getParamValue(carrierParamData, "name");
+        const std::string model = CairnUtils::getParamValue(carrierParamData, "ModelType");
+
+        //if (!CairnUtils::isEnergyVector(compoType))
+        //    continue;
+ 
+        // Skip if already exists (only case of group)
+        if (findChild<EnergyVector>(compoName)) {
+            continue; // TODO: verify that the two EnergyVectors are identical 
+                               // => have same type and parameter values
+        }
+
+        if (!createEnergyVector(compoName, compoType, model, carrierParamData)) {
+            throw Cairn_Exception("Error creating EnergyVector " + compoName, -1);
+        }
+
+        if (importedComponents) {
+            addImportedComponent(importedComponents, compoName, compoName, compoType); /* EnergyVector name doesn't change */
+        }
+    }
+}
+
+void OptimProblem::createUniqueComponents(JsonDescription* jsonDesc)
+{
+    /** Assumes that the names of all the components are unique (no collision).
+        Used while reading a study (to improve performance).
+    */
+
+    if (!jsonDesc) {
+        throw Cairn_Exception("JsonDescription is null in createUniqueComponents", -1);
+    }
+
+    static const std::map<std::string, t_mapLabels> emptyLabelMap{};
+    const auto& labels = jsonDesc->LabelMap();
+
+    auto& busParamDataList = jsonDesc->BusParamDataList();
+    auto& componentParamDataList = jsonDesc->ComponentParamDataList();
+
+    // Helper function to check if component should be skipped
+    auto shouldSkipComponent = [](const std::string& compoType) -> bool {
+        return compoType == "TecEcoAnalysis"
+            || compoType == "SimulationControl"
+            || compoType == "Solver"
+            || CairnUtils::isEnergyVector(compoType);
+    };
+
+    // Helper lambda to process any map of components
+    auto processComponentMap = [&](auto& paramDataList)
+    {
+        for (auto& compoParamData : paramDataList) 
+        {
+            const std::string compoType = CairnUtils::getParamValue(compoParamData, "type");
+
+            if (shouldSkipComponent(compoType))
+                continue;
+
+            const std::string compoName = CairnUtils::getParamValue(compoParamData, "name");
+            auto ports = jsonDesc->extractPortParamData(compoName);
+
+            createComponent(compoParamData, ports, labels, nullptr); // , true /* isUniqueName */);
+        }
+    };
+
+    // Process both maps (order is not important)
+    processComponentMap(busParamDataList);
+    processComponentMap(componentParamDataList);
+}
+
+void OptimProblem::createComponents(JsonDescription* jsonDesc,
+    std::vector<CompoData>* importedComponents)
+{
+    /** A component may have the same name as an existing component.
+        Used while importing a group (to resolve collision).
+    */
+
+    if (!jsonDesc) {
+        throw Cairn_Exception("JsonDescription is null in createComponents", -1);
+    }
+
+    const std::vector<std::string> existingComponents = childrenNames();
+    std::map<std::string, std::string> nameMapping{};
+
+    const auto& labels = jsonDesc->LabelMap();
+
+    // Helper lambda to extract linked components from ports
+    auto extractLinkedComponents = [](const std::map<std::string, t_mapParamData>& ports)
+        -> std::vector<std::string> {
+        std::vector<std::string> linkedComponents;
+        linkedComponents.reserve(ports.size());
+
+        for (const auto& [portId, portData] : ports) {
+            linkedComponents.push_back(
+                CairnUtils::getParamValue(portData, "LinkedComponent")
+            );
+        }
+
+        return linkedComponents;
+    };
+
+    // Helper lambda to check if all linked components are already created
+    //auto areAllLinkedComponentsCreated = [&](const std::vector<std::string>& linkedComponents) -> bool {
+    //    for (const auto& compo : linkedComponents) {
+    //        if (nameMapping.find(compo) == nameMapping.end()) {
+    //            return false;
+    //        }
+    //    }
+    //    return true;
+    //};
+
+    auto areAllLinkedComponentsCreated = [&](const std::vector<std::string>& linkedComponents) -> bool
+    {
+        for (const auto& compo : linkedComponents) { /* linkedComponents contain raw names from the input file */
+            // Look for a matching rawName
+            auto it = std::find_if(importedComponents->begin(), importedComponents->end(),
+                [&](const CompoData& c) { return c.rawName == compo; }
+            );
+
+            if (it == importedComponents->end())
+                return false;
+        }
+
+        return true;
+    };
+
+
+    //TODO: split between busesWithoutPorts vs busesWithPorts or define hasPorts() inside JsonDescription
+
+    // Buses (must be created before other components)
+    const auto& busParamData = jsonDesc->BusParamDataList();
+    std::vector<t_mapParamData> busesWithoutPorts{};
+    std::vector<t_mapParamData> busesWithPorts{};
+
+    // Separate buses based on whether they have ports
+    for (const auto& bus : busParamData) {
+        const std::string compoType = CairnUtils::getParamValue(bus, "type");
+        //if (!CairnUtils::isBus(compoType))
+        //    continue;
+
+        const std::string compoName = CairnUtils::getParamValue(bus, "name");
+        auto ports = jsonDesc->extractPortParamData(compoName);
+
+        if (ports.empty()) {
+            busesWithoutPorts.push_back(bus);
+        }
+        else {
+            busesWithPorts.push_back(bus);
+        }
+    }
+
+    // Create buses without ports first (they have no dependencies)
+    for (auto& bus : busesWithoutPorts) {
+        std::map<std::string, t_mapParamData> emptyPorts{};
+        createComponent(bus, emptyPorts, labels, importedComponents, existingComponents);
+    }
+
+    // Create buses with ports in dependency order
+    while (!busesWithPorts.empty()) {
+        for (auto it = busesWithPorts.begin(); it != busesWithPorts.end(); ) {
+            auto& bus = *it;
+            const std::string compoName = CairnUtils::getParamValue(bus, "name");
+            auto ports = jsonDesc->extractPortParamData(compoName);
+
+            auto linkedComponents = extractLinkedComponents(ports);
+
+            if (areAllLinkedComponentsCreated(linkedComponents)) {
+                createComponent(bus, ports, labels, importedComponents, existingComponents);
+                it = busesWithPorts.erase(it);  // Safe erase
+            }
+            else {
+                ++it;
+            }
+        }
+    }
+
+    // Helper function to check if component should be skipped in main processing
+    auto shouldSkipComponent = [](const std::string& compoType) -> bool {
+        return compoType == "TecEcoAnalysis"
+            || compoType == "SimulationControl"
+            || compoType == "Solver"
+            || CairnUtils::isEnergyVector(compoType)
+            || CairnUtils::isBus(compoType);
+    };
+
+    // Create remaining MILP components (non-bus)
+    auto& componentParamData = jsonDesc->ComponentParamDataList();
+    for (auto& component : componentParamData) {  
+        const std::string compoType = CairnUtils::getParamValue(component, "type");
+
+        if (shouldSkipComponent(compoType))
+            continue;
+
+        const std::string compoName = CairnUtils::getParamValue(component, "name");
+        auto ports = jsonDesc->extractPortParamData(compoName);
+
+        createComponent(component, ports, labels, importedComponents, existingComponents);
+    }
+}
+
+void OptimProblem::createComponent(
+    const t_mapParamData& compoParamData, 
+    const std::map<std::string, t_mapParamData>& ports, 
+    const std::map<std::string, t_mapLabels>& labels,
+    std::vector<CompoData>* importedComponents,
+    // bool isUniqueName,
+    const std::vector<std::string>& existingComponents)  
+{
+    // Validate parameters
+    //if (!isUniqueName && !nameMapping) {
+    //    throw Cairn_Exception(
+    //        "nameMapping must be provided when isUniqueName is false", -1);
+    //}
+
+    // Extract component information (done before !)
+    const std::string compoType = CairnUtils::getParamValue(compoParamData, "type");
+    const std::string compoName = CairnUtils::getParamValue(compoParamData, "name");
+
+    if (compoType.empty() || compoName.empty()) {
+        throw Cairn_Exception(
+            "Component missing required 'type' or 'name' field", -1);
+    }
+
+    std::string uniqueName = compoName;
+
+    // Ensure that the component has a unique name, if needed
+    if (importedComponents) {
+        const std::string model = CairnUtils::getParamValue(compoParamData, "ModelType");
+
+        // Collect names to exclude
+        std::vector<std::string> excludeNames;
+        //if (nameMapping) {
+        //    excludeNames.reserve(nameMapping->size());
+        //    for (const auto& [originalname, newName] : *nameMapping) {
+        //        excludeNames.push_back(newName);
+        //    }
+        //}
+
+        excludeNames.reserve(importedComponents->size());
+        for (const auto& component : *importedComponents) {
+            excludeNames.push_back(component.name);
+        }
+
+        uniqueName = CairnUtils::getAutoCompoName(existingComponents, model, compoName, true, excludeNames);
+
+        // Update the component's name in the parameter data (for safety)
+        CairnUtils::setParamValue(const_cast<t_mapParamData&>(compoParamData), "name", uniqueName);
+
+        // importedComponents is also used for name Mapping and to generate excludeNames
+        addImportedComponent(importedComponents, compoName, uniqueName, compoType);
+
+        // Update linked component references in ports
+        for (const auto& [portId, portData] : ports)
+        {
+            const std::string linkedComponent = CairnUtils::getParamValue(portData, "LinkedComponent");
+
+            // Find matching CompoData in the vector
+            auto it = std::find_if(importedComponents->begin(), importedComponents->end(),
+                [&](const CompoData& c) { return c.rawName == linkedComponent; }
+            );
+
+            if (it != importedComponents->end() && linkedComponent != it->name)
+            {
+                CairnUtils::setParamValue(const_cast<t_mapParamData&>(portData),
+                    "LinkedComponent", it->name);
+            }
+        }
+    }
+
+    // Create the actual component
+    MilpComponent* pComponent = createMilpComponent(uniqueName, compoType, compoParamData, ports);
+
+    if (!pComponent) {
+        throw Cairn_Exception(
+            "Failed to create component of type '" + compoType +
+            "' with name '" + compoName + "'", -1);
+    }
+
+    // Set labels 
+    SubModel* pModel = pComponent->compoModel();
+    if (pModel) {
+        auto it = labels.find(compoName); /* original name */
+        if (it != labels.end()) {
+            pModel->setLabelMap(it->second);
+        }
+    }
 }
 
 void OptimProblem::computeExtrapolationFactor() {
@@ -197,149 +543,139 @@ void OptimProblem::computeExtrapolationFactor() {
     mTecEcoAnalysis->computeExtrapolationFactor(mMilpData);
 }
 
-bool OptimProblem::createTecEcoAnalysis()
+bool OptimProblem::createTecEcoAnalysis(const std::string& componentType, 
+    const t_mapParamData& paramsMap,
+    const std::map < std::string, t_mapParamData>& portsMap, 
+    const std::vector<std::string>& labelList)
 {
-    createComponent("TecEcoAnalysis");
+    const std::string compoName = CairnUtils::getParamValue(paramsMap, "name");
+
+    createMilpComponent(compoName, componentType, paramsMap, portsMap);
+
+    if (!mTecEcoAnalysis)
+        return false;
+
     computeExtrapolationFactor();
-    return (mTecEcoAnalysis != nullptr);
+    mTecEcoAnalysis->setLabelList(labelList);
+
+    return true;
 }
 
-void OptimProblem::createTecEcoAnalysisFromParamMap()
-{        
-    mTecEcoAnalysis = nullptr;
-    for (auto & component : mMilpComponents) {        
-        if (component["type"] == "TecEcoAnalysis") {
-            std::map < std::string, std::map<std::string, std::string> > ports = mJsonDescription->getCompoPortData(component["id"]);
-            createComponent(component["type"], component, ports);
-            if (mTecEcoAnalysis) {
-                mTecEcoAnalysis->setLabelList(mJsonDescription->LabelList());
-                computeExtrapolationFactor();
-            }
-            break;
-        }
-    }
-}
-
-void OptimProblem::createEnergyVectorsFromParamMap()
+bool OptimProblem::createSimulationControl(const std::string& aName, const t_mapParamData& paramMap)
 {
-    for (auto& component : mMilpComponents)
-    {
-        if (component["type"] == "TecEcoAnalysis" || component["type"] == "SimulationControl")
-        {
-            continue; //already created
-        }
-        if (component["type"] == "Solver") {
-            //component["id"] is componenet name, and component["Solver"] is the name of the Solver: Cplex, Cbc, Highs, ...
-            bool vOK = createSolver(component["id"], component);
-            if (!vOK) {
-                Cairn_Exception cairn_error("Error creating Solver " + component["id"] + ": cannot found solver asked " + component["Solver"], -1);
-                throw cairn_error;
-            }
-        }
-        else if (component["type"] == "EnergyVector") {
-            //component["Type"] is the carrier type : Fluid, Electrical, Thermal
-            bool vOK = createEnergyVector(component["id"], component["Type"], component);
-            if (!vOK) {
-                Cairn_Exception cairn_error("Error creating EnergyVector " + component["id"], -1);
-                throw cairn_error;
-            }
-        }
-        else {
-            continue; //create after
-        }
+    delete mSimulationControl;
+    mSimulationControl = new SimulationControl(this, aName, paramMap);
+    //TODO: use mException
+    if (mSimulationControl) {
+        //Set MilpData from SimulationControl params
+        mMilpData->setMilpDataFromSettings(mSimulationControl->getParameters(), mStdAloneMode);
+        computeExtrapolationFactor();
+        return true;
     }
+    return false;
 }
 
-
-void OptimProblem::createMilpComponentsFromParamMap()
-{    
-    for (auto& component : mMilpComponents)
-    {        
-        if (component["type"] == "TecEcoAnalysis" || component["type"] == "SimulationControl"
-            || component["type"] == "EnergyVector" || component["type"] == "Solver")
-        {
-            continue; //already created
-        }
-        else {
-            std::map < std::string, std::map<std::string, std::string> > ports = mJsonDescription->getCompoPortData(component["id"]);
-            createComponent(component["type"], component, ports);
-        }
+bool OptimProblem::createSolver(const std::string& aName, const t_mapParamData& paramMap)
+{
+    delete mSolver;
+    mSolver = new Solver(this, aName, paramMap);
+    if (mSolver->getException().error() == -1) {
+        return false;
     }
+    return (mSolver != nullptr);
 }
 
-bool OptimProblem::createComponent(const std::string& componentType, const std::map<std::string, std::string>& paramsMap,
-    const std::map < std::string, std::map<std::string, std::string> >& portsMap)
+bool OptimProblem::createEnergyVector(const std::string& aName, const std::string& aType,
+    const std::string& aTechnoType, const t_mapParamData& paramMap)
+{
+    EnergyVector* lptr_EV = nullptr;
+    if (aType == "ElectricalCarrier" || aType == "Electrical" || aTechnoType == "Electricity")
+        lptr_EV = new ElectricalCarrier(this, aName, aTechnoType, paramMap);
+    else
+        lptr_EV = new MaterialCarrier(this, aName, aTechnoType, paramMap);
+
+    return (lptr_EV != nullptr);
+}
+
+MilpComponent* OptimProblem::createMilpComponent(const std::string& compoName, const std::string& compoType,
+    const t_mapParamData& paramsMap, const std::map < std::string, t_mapParamData>& portsMap)
 {
     MilpComponent* lptr = nullptr;
     try {
-        if (componentType == "TecEcoAnalysis")
+        if (compoType == "TecEcoAnalysis")
         {
             // only one TecEco
             TecEcoCompo *pTecEco = findChild<TecEcoCompo>();
             if (pTecEco) removeChild(pTecEco);
-            lptr = dynamic_cast <MilpComponent*> (new TecEcoCompo(this, paramsMap, portsMap, mMilpData, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (new TecEcoCompo(this, compoName, paramsMap, portsMap, mMilpData, mModelFactory));
             lptr->initMilpComponent();
             mTecEcoAnalysis = dynamic_cast<TecEcoAnalysis*> (lptr->compoModel());
             lptr->setTecEcoAnalysis(mTecEcoAnalysis); //In case of TecEcoCompo mTecEcoAnalysis == mCompoModel ! 
         }
-        else if (componentType == "Converter"
-            || componentType == "Storage"
-            || componentType == "PhysicalEquation"
-            || componentType == "OperationConstraint") {
-            lptr = dynamic_cast <MilpComponent*> (new MilpComponent(this, paramsMap.at("id"), mMilpData, mTecEcoAnalysis, paramsMap, portsMap, mModelFactory));
+        else if (compoType == "Converter"
+            || compoType == "Storage"
+            || compoType == "PhysicalEquation"
+            || compoType == "OperationConstraint")
+        {
+            lptr = dynamic_cast <MilpComponent*> (
+                new MilpComponent(this, compoName, mMilpData, mTecEcoAnalysis, paramsMap, portsMap, mModelFactory)
+                );
             lptr->initMilpComponent();
         }    
-        else if (componentType == "Grid")
+        else if (compoType == "Grid")
         {
-            lptr = dynamic_cast <MilpComponent*> (new GridCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
+            lptr = dynamic_cast <MilpComponent*> (
+                new GridCompo(this, compoName, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory)
+                );
             lptr->initMilpComponent();
         }
-        else if (componentType == "SourceLoad") {
-            lptr = dynamic_cast <MilpComponent*> (new SourceLoadCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
+        else if (compoType == "SourceLoad") {
+            lptr = dynamic_cast <MilpComponent*> (
+                new SourceLoadCompo(this, compoName, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory)
+                );
             lptr->initMilpComponent();
         }
-        else if (componentType == "BusFlowBalance" || componentType == "BusSameValue") {
-            lptr = dynamic_cast <MilpComponent*> (new BusCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
+        else if (compoType == "BusFlowBalance" || compoType == "BusSameValue") {
+            lptr = dynamic_cast <MilpComponent*> (
+                new BusCompo(this, compoName, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory)
+                );
             lptr->initMilpComponent();
             /* set EnergyCarrier (needed for case GUI). When using API, carrier is set in OptimProblemAPI::create_Bus */
-            configureBusCarrier(lptr, CairnUtils::getParam(paramsMap, "componentCarrier"));
+            configureBusCarrier(lptr, CairnUtils::getParamValue(paramsMap, "componentCarrier"));
         }
-        else if (componentType == "MultiObjCompo") {
-            lptr = dynamic_cast <MilpComponent*> (new MultiObjCompo(this, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory));
+        else if (compoType == "MultiObjCompo") {
+            lptr = dynamic_cast <MilpComponent*> (
+                new MultiObjCompo(this, compoName, paramsMap, portsMap, mMilpData, mTecEcoAnalysis, mModelFactory)
+                );
             lptr->initMilpComponent();
-            configureBusCarrier(lptr, CairnUtils::getParam(paramsMap, "componentCarrier"));
+            configureBusCarrier(lptr, CairnUtils::getParamValue(paramsMap, "componentCarrier"));
         }        
-        else if (componentType == "" || componentType == "undefined")
+        else if (compoType == "" || compoType == "undefined")
         {
-            Cairn_Exception cairn_error("Unkown type " + componentType + " for component " + paramsMap.at("id"), -1);
+            Cairn_Exception cairn_error("Unkown type " + compoType + " for component " + compoName, -1);
             throw cairn_error;
         }
         else
         {
-            cInfo() << "Try loading special component type " << componentType;
-            f_MilpComponent UserMilp = LoadDllMilpComponent(paramsMap.at("file"), componentType);
+            cInfo() << "Try loading special component type " << compoType;
+
+            const std::string UserMilpFilePath = CairnUtils::getParamValue(paramsMap, "file");
+            f_MilpComponent UserMilp = LoadDllMilpComponent(UserMilpFilePath, compoType);
             if (UserMilp == nullptr)
             {
-                cCritical() << "Unable to load library or component " << paramsMap.at("id") + " of type " + componentType;
-                Cairn_Exception cairn_error("Please Check that file exists and is in the PATH: " + (paramsMap.at("file")), -1);
+                cCritical() << "Unable to load library or component " << compoName + " of type " + compoType;
+                Cairn_Exception cairn_error("Please Check that file exists and is in the PATH: " + UserMilpFilePath, -1);
                 throw cairn_error;
             }
-            MilpComponent* lptr_temp = dynamic_cast <MilpComponent*> (UserMilp(this, paramsMap.at("id"), mMilpData, mTecEcoAnalysis, paramsMap, portsMap));
+            MilpComponent* lptr_temp = dynamic_cast <MilpComponent*> (UserMilp(this, compoName, mMilpData, mTecEcoAnalysis, paramsMap, portsMap));
             lptr_temp->initMilpComponent(); 
         }
     }
     catch (...) {
-        Cairn_Exception cairn_error("Error creating component " + paramsMap.at("id") + " of type " + componentType, -1);
+        Cairn_Exception cairn_error("Error creating component " + compoName + " of type " + compoType, -1);
         throw cairn_error;
     }
-    if (lptr && lptr->compoModel()) {
-        // mJsonDescription->LabelMap() is [compoName, [label: value]]
-        auto vItr = mJsonDescription->LabelMap().find(lptr->Name());
-        if (vItr != mJsonDescription->LabelMap().end()) {
-            lptr->compoModel()->setLabelMap(vItr->second); 
-        }
-    }
-    return true;
+    return lptr;
 }
 
 void OptimProblem::configureBusCarrier(MilpComponent* lptrBus, const std::string& carrierName)
@@ -435,8 +771,8 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
                     }                    
                     if (!isFound)
                     {
-                        cWarning() << warningMessage;
-                        cWarning() << "Indicator" << mipExpName << "of componenet" << compoName << "not found!";
+                        cWarning() << warningMessage 
+                            << ", indicator" << mipExpName << "of componenet" << compoName << "not found!";
                     }
                 }
                 //Other components
@@ -461,76 +797,27 @@ void OptimProblem::computeDynamicIndicators(const int& aNsol) //Assumes that the
                             }
                             if (!isFoundIndicator)
                             {
-                                cWarning() << warningMessage;
-                                cWarning() << "Indicator" << mipExpName << "of componenet" << compoName << "not found!";
+                                cWarning() << warningMessage 
+                                           << ", indicator" << mipExpName << "of componenet" << compoName << "not found!";
                             }
                             isFoundComponent = true;
                             break;//component
                         }
                     }
                     if (!isFoundComponent) {
-                        cWarning() << warningMessage;
-                        cWarning() << "Componenet" << compoName << "not found!";
+                        cWarning() << warningMessage << ", componenet" << compoName << "not found!";
                     }
                 }
             }
             else {
-                cWarning() << warningMessage;
-                cWarning() << value << " is not a valid variable format. It should be in the form ComponentName.VarName";
+                cWarning() << warningMessage
+                    << ", an invalid variable format detected ('" << value
+                    << "'). Expected format is: ComponentName.VarName";
+
                 break; //while loop
             }
         }
     }
-}
-
-bool OptimProblem::createSolver(const std::string& aName, const std::map<std::string, std::string>& paramMap)
-{
-    delete mSolver;
-    mSolver = new Solver(this, aName, paramMap);
-    if (mSolver->getException().error() == -1) {
-        return false;
-    }
-    return (mSolver != nullptr);
-}
-
-void OptimProblem::createSimulationControlFromParamMap()
-{
-    bool found = false;    
-    for (auto& component : mMilpComponents)
-    {      
-        if (component["type"] == "SimulationControl") {
-            bool vOK = createSimulationControl(component["id"], component);
-            if (!vOK) {
-                Cairn_Exception cairn_error("Error creating SimulationControl " + component["id"], -1);
-                throw cairn_error;
-            }
-            found = true;
-        }
-    }
-    if (!found) {
-        cWarning() << "No SimulationControl found. The default SimulationControl will be used.";
-    }
-}
-
-bool OptimProblem::createSimulationControl(const std::string& mSimulationControlName, const std::map<std::string, std::string>& paramMap)
-{
-    delete mSimulationControl;
-    mSimulationControl = new SimulationControl(this, mSimulationControlName, paramMap);
-    //TODO: use mException
-    if (mSimulationControl) {
-        //Set MilpData from SimulationControl params
-        mMilpData->setMilpDataFromSettings(mSimulationControl->getParameters(), mStdAloneMode); 
-        computeExtrapolationFactor();
-        return true;
-    }
-    return false;
-}
-
-bool OptimProblem::createEnergyVector(const std::string& aName, const std::string& aType, const std::map<std::string, std::string> paramMap)
-{
-    EnergyVector* lptr_EV = nullptr;
-    lptr_EV = new EnergyVector(this, aName, aType, paramMap);
-    return (lptr_EV != nullptr);
 }
 
 f_MilpComponent OptimProblem::LoadDllMilpComponent(std::string Filename, std::string ModuleName)
@@ -606,43 +893,51 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
         * 2- store initial port carrier and initial linked bus (from input study file) 
         *    inside MilpPort class at the creation of the port
         */
-        std::map<std::string, std::string> inputPortParam = lptrComponent->portDataFromInputFile(lptrport->ID(), lptrport->Name()); /* port data from input study file (.json) */
-        std::string portCarrierName = inputPortParam["Carrier"];
-        std::string linkedBusName = inputPortParam["LinkedComponent"];
+
+        t_mapParamData inputPortParam = lptrComponent->portData(lptrport->ID(), lptrport->Name()); /* port data from input study file (.json) */
+        std::string portCarrierName = CairnUtils::getParamValue(inputPortParam, "Carrier");
+        std::string linkedBusName = CairnUtils::getParamValue(inputPortParam, "LinkedComponent");
 
         EnergyVector* lptrEnergyVector = nullptr;
-        if (portCarrierName != "") {
+        if (!portCarrierName.empty()) {
             lptrEnergyVector = this->findChild<EnergyVector>(portCarrierName);
         }
 
         BusCompo* lptrLinkedBus = nullptr;
-        if (linkedBusName != "") {            
+        if (!linkedBusName.empty()) {
             lptrLinkedBus =  this->findChild<BusCompo>(linkedBusName);
         }
 
         if (lptrLinkedBus)
         {
+            const std::string errorMsg = "Error creating link from " + lptrComponent->Name() + " (port " + lptrport->Name() + ") to Bus "
+                + linkedBusName;
+
             //Verify that Bus and port have the same carrier
             if (lptrLinkedBus->CarrierName() != portCarrierName) {
-                std::string errorMsg = "Error creating link from " + lptrComponent->Name() + " (port " + lptrport->Name() + ") to Bus " 
-                    + linkedBusName + ". Bus and port must have the same carrier (EnergyVector)!";
-                Cairn_Exception cairn_error(errorMsg, -1);
-                throw cairn_error;
+                throw Cairn_Exception(errorMsg + ". Bus and port must have the same carrier (EnergyVector)!", -1);
             }
 
             //The EnergyVector of the Bus is set (same value) for every link!
-            if (lptrEnergyVector != nullptr) {
+            if (lptrEnergyVector) {
                 lptrLinkedBus->setMainCarrier(lptrEnergyVector);
             }
             else {
-                std::string errorMsg = "Error creating link from " + lptrComponent->Name() + " (port " + lptrport->Name() + ") to Bus " 
-                    + linkedBusName + ". EnergyVector " + lptrLinkedBus->CarrierName() + " does not exist!";
-                Cairn_Exception cairn_error(errorMsg, -1);
-                throw cairn_error;
+                throw Cairn_Exception(errorMsg+ ". EnergyVector " + lptrLinkedBus->CarrierName() + " does not exist!", -1);
             }
 
-            //Set EnergyVector of the port
-            lptrport->setCarrier(lptrEnergyVector);
+            //Set port EnergyVector 
+            const bool isTecEco = (lptrComponent->objectType() == "TecEcoCompo");
+
+            if (isTecEco) {
+                // TecEcoCompo: set port carrier 
+                lptrport->setCarrier(lptrEnergyVector);
+            }
+            else if (lptrport->getCarrier() != lptrEnergyVector) {
+                // Other components: carrier must be already; verify that it is the same carrier for safety
+                throw Cairn_Exception("Carrier for componenet " + lptrComponent->Name() + ", port " + lptrport->Name() 
+                    + " doesn't match the carrier name from the study input file!", -1);
+            }
 
             //Add bus port and create the corresponding link
             lptrLinkedBus->addLink(lptrComponent, lptrport);
@@ -666,7 +961,7 @@ void OptimProblem::createLinksToBus(MilpComponent* lptrComponent)
                 else
                 {
                     //Linked component is not defined !
-                    cWarning() << "The linked component " + linkedBusName + " to the port " + lptrComponent->Name()
+                    cInfo() << "The linked component " + linkedBusName + " to the port " + lptrComponent->Name()
                         + "." + lptrport->Name() + " is not defined (a Bus is expected). Link skipped !!";
                 }
             }
@@ -716,13 +1011,6 @@ void OptimProblem::createImportZEVariablesList()
         //register subscribed lists at OptimProblem level
         lptr->createImportListVars(mListSubscribedVars);
     }
-
-    //TecEco doesn't have timeseries
-    //TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
-    //if (lptrTecEco) {
-    //    lptrTecEco->readTSVariablesFromModel();
-    //    lptrTecEco->createImportListVars(mListSubscribedVars);
-    //}
 }
 
 void OptimProblem::createExportZEVariablesList()
@@ -964,11 +1252,13 @@ void OptimProblem::jsonSaveDocument (ojson &jsonOutputFile)
 {    
     jsonOutputFile = ojson{      
         {"Components", ojson::array()},
-        {"Links", ojson::array()}
+        {"Links", ojson::array()},
+        {"Groups", ojson::array()}
     };
     //Links should be before Components to set the name of Bus ports 
     jsonSaveGuiLinks(jsonOutputFile["Links"]);
     jsonSaveGuiComponents(jsonOutputFile["Components"]);  
+    jsonSaveGuiGroups(jsonOutputFile["Groups"]);
 }
 
 void OptimProblem::jsonSaveGuiComponents(ojson &componentsArray)
@@ -1007,7 +1297,7 @@ void OptimProblem::jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& co
             linksArray = ojson::array();
         }
         else {
-            cWarning() << "linksArray is not an array; type=" << linksArray.type_name()
+            cDebug() << "linksArray is not an array; type=" << linksArray.type_name()
                 << ". Re-initializing it to an array.";
             linksArray = ojson::array();
         }
@@ -1112,11 +1402,16 @@ void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
             }
 
             MilpComponent* pComponent = nullptr;
+
             if (compoName == mTecEcoAnalysis->Name()) {
                 pComponent = findChild<TecEcoCompo>(compoName);
             }
             else {
                 pComponent = findChild<MilpComponent>(compoName);
+                if (!pComponent) {
+                    // => Bus
+                    pComponent = findChild<BusCompo>(compoName);
+                }
             }
 
             if (!pComponent) {
@@ -1154,6 +1449,44 @@ void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
                 continue;
             }
         }
+    }
+}
+
+void OptimProblem::jsonSaveGuiGroups(ojson& groupsArray) const
+{
+    groupsArray = ojson::array();
+
+    for (const auto& group : mGroups)
+    {
+        ojson groupObject;
+
+        // Basic fields
+        groupObject["groupId"] = group.at("groupId");
+        groupObject["groupName"] = group.at("groupName");
+        groupObject["mainNodeName"] = group.at("mainNodeName");
+        groupObject["minimized"] = (group.at("minimized") == "true");
+        groupObject["borderColor"] = group.at("borderColor");
+
+        // listNodeName: comma-separated -> JSON array
+        ojson listNodeArray = ojson::array();
+
+        if (auto it = group.find("listNodeName"); it != group.end())
+        {
+            const std::string& str = it->second;
+
+            std::stringstream ss(str);
+            std::string token;
+
+            while (std::getline(ss, token, ','))
+            {
+                if (!token.empty())
+                    listNodeArray.push_back(token);
+            }
+        }
+
+        groupObject["listNodeName"] = std::move(listNodeArray);
+
+        groupsArray.push_back(std::move(groupObject));
     }
 }
 
@@ -1195,48 +1528,54 @@ void OptimProblem::setStopSignal(int *stopSignal){
 
 int OptimProblem::initProblem()
 {
+    cInfo() << "Initializing problem: configuring ports and declaring parameters/timeseries...";
+
     if (mMilpData->iHMFuturSize() < mMilpData->timeshift())
     {
-        cCritical() << "DoInit timeShift " << mMilpData->timeshift() << " should be < futursize " << mMilpData->iHMFuturSize() << " !! ";
-        Cairn_Exception cairn_error((std::string)"Error in doInit of Cairn!", -1);
-        //throw cairn_error;
-        return -1 ;
+        const std::string msg = "Error in doInit of Cairn! timeShift " +
+            std::to_string(mMilpData->timeshift()) +
+            " should be < futursize " +
+            std::to_string(mMilpData->iHMFuturSize()) + " !!";
+        throw Cairn_Exception(msg, -1);
     }
 
-    int ierr = 0;    
+    // Is order important ?!
+
+    //Loop on EnergyVectors
+    for (auto* pCarrier : EnergyVectors()) {
+        if (pCarrier->initProblem() < 0) {
+            throw Cairn_Exception("ERROR in initialization of carrier: " + pCarrier->Name(), -1);
+        }
+    }
 
     //Loop on Non-Bus components
-    for (auto& lptrCompo : NonBusMilpComponents()) 
+    for (auto& pComponent : NonBusMilpComponents())
     {
-        ierr = lptrCompo->initProblem(); // read parameters then create and initialize MIP variables
-        if (ierr <0) {
-            cCritical() << "ERROR in initialization of component : " << (lptrCompo->Name());
-            return ierr ;
+        // read parameters then create and initialize MIP variables
+        if (pComponent->initProblem() < 0) {
+            throw Cairn_Exception("ERROR in initialization of component: " + pComponent->Name(), -1);
         }
     }
 
     // Loop on Bus components
-    for (auto& lptrBus : BusComponents()) 
+    for (auto& pBus : BusComponents()) 
     {
-        ierr = lptrBus->initProblem(); // read parameters then create and initialize MIP variables
-        if (ierr <0) {
-            cCritical() << "ERROR in initialization of Bus component : " << (lptrBus->Name());
-            return ierr ;
+        // read parameters then create and initialize MIP variables
+        if (pBus->initProblem() < 0) {
+            throw Cairn_Exception("ERROR in initialization of Bus component: " + pBus->Name(), -1);
         }
     }
 
     // init TecEcoAnalysis
-    TecEcoCompo* lptrTecEco = dynamic_cast<TecEcoCompo*> (mTecEcoAnalysis->parent());
-    if (lptrTecEco) {
-        ierr = lptrTecEco->initPorts();
-        if (ierr < 0) return ierr;
-        ierr = lptrTecEco->initSubModelConfiguration();
-    }
-    else {
+    TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    if (!pTecEco
+        || pTecEco->initPorts() < 0
+        || pTecEco->initSubModelConfiguration() < 0)
+    {
         throw Cairn_Exception("Error while configuring optim problem: TecEcoAnalysis is not well defined!", -1);
     }
 
-    return ierr ;
+    return 0;
 }
 
 void OptimProblem::redeclareEnvImpactParameters()
@@ -1252,6 +1591,8 @@ void OptimProblem::redeclareEnvImpactParameters()
 
 int OptimProblem::initSubModelInput()
 {
+    cInfo() << "Setting/Reading parameters and timeseries values...";
+
     int ierr = 0;
 
     for (auto& [key, lptr] : MilpComponents()) {
@@ -1280,11 +1621,35 @@ int OptimProblem::initSubModelInput()
     return ierr ;
 }
 
+void OptimProblem::exportRHVariableInModel()
+{
+    // Export for all MILP components
+    for (auto& [key, comp] : MilpComponents()) {
+        comp->exportRHVariableInModel();
+    }
+
+    // Export for TecEcoCompo (parent of TecEcoAnalysis) -- TecEcoAnalysis is not expected to have Control IOs
+    auto* tecEco = dynamic_cast<TecEcoCompo*>(mTecEcoAnalysis->parent());
+    if (!tecEco) {
+        //throw Cairn_Exception(
+        //    "Error while initializing OptimProblem: TecEcoAnalysis has no valid TecEcoCompo parent.",
+        //    -1
+        //);
+        cWarning() << "Error while initializing OptimProblem: TecEcoAnalysis has no valid TecEcoCompo parent.";
+        return;
+    }
+
+    tecEco->exportRHVariableInModel();
+}
+
+
 //------------------------------------------------------------------------------
 //  Build Problem
 //------------------------------------------------------------------------------
 void OptimProblem::buildComponentConstraints()
 {
+    cInfo() << "Constructing MILP component models and related-adding optimization constraints...";
+
     for (auto& [key, lptr] : MilpComponents()) { // for (auto& lptr : NonBusMilpComponents()) use ?
 
         BusCompo* lptrBus = dynamic_cast<BusCompo*> (lptr);
@@ -1316,6 +1681,8 @@ void OptimProblem::buildBusConstraints()
     //        busNames.push_back(bus->Name());
     //    }
     //}
+
+    cInfo() << "Constructing Bus models and adding related-optimization constraints...";
 
     std::vector<BusCompo*> buses;
     std::list<std::string> busNames;
@@ -1396,18 +1763,21 @@ void OptimProblem::buildProblem()
         throw Cairn_Exception("Error in OptimProblem init!", -1);
     }
 
+    exportRHVariableInModel();
+
     // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
     //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()
 
+    cInfo() << "  ";
+    cInfo() << "Building problem...";
+
     // Create Constraints
-    cInfo() << "OptimProblem::buildComponentConstraints";
     buildComponentConstraints();
 
     // Compute PreSimulation TecEco expressions 
     if (mTecEcoAnalysis) {
         try {
-            cInfo() << "optimProblem::computeAllContribution";
-            mTecEcoAnalysis->computeAllContribution();
+            mTecEcoAnalysis->computeTecEcoContribution();
 
             //TecEcoAnalysis Model Interface at ports
             MilpComponent* pTecEcoCompo = dynamic_cast<MilpComponent*> (mTecEcoAnalysis->parent());
@@ -1417,17 +1787,15 @@ void OptimProblem::buildProblem()
             }
         }
         catch (...) {
-            throw Cairn_Exception("ERROR in component setting the ports of TecEcoAnalysis", -1);
+            throw Cairn_Exception("Error while computing pre-simulation expressions of TecEcoAnalysis!", -1);
         }
     }
 
-    cInfo() << "OptimProblem::buildBusConstraints";
     buildBusConstraints();
 
     // Model component behaviour
     if (mTecEcoAnalysis)  {
-        cInfo() << "buildModel: " << mTecEcoAnalysis->objectName();
-        mTecEcoAnalysis->buildModel();             /**  define behaviour model and associated Variables */
+        mTecEcoAnalysis->buildTecEcoModel();             /**  define behaviour model and associated Variables */
         computeObjectiveFunction(*mExpObjective);  /** set the value of mObjective to the ObjectiveExpression from TecEcoAnalysis */
     }
 
@@ -1652,7 +2020,7 @@ void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, c
                     header1 += ";" + impact + ";" + impact + ";" + impact;
                     header2 += ";Cumulative impact mass"
                         ";Env impact mass"
-                        ";EnvGrey impact mass";
+                        ";Embodied impact mass";
                     headerUnits += ";" + unit + ";" + unit + ";" + unit;
                 }
 
@@ -1898,9 +2266,9 @@ void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, c
     out.close();
 }
 
-ExportParameterData OptimProblem::collectParameterData(const std::map<std::string, bool>& optionsMap)
+ExportParameterRows OptimProblem::collectParameterData(const std::map<std::string, bool>& optionsMap)
 {
-    ExportParameterData data;
+    ExportParameterRows data;
 
     // Get options
     auto getOption = [&](const std::string& key, bool defaultValue) {
@@ -1973,7 +2341,7 @@ void OptimProblem::exportParameters(
     }
 
     // Collect data
-    ExportParameterData data = collectParameterData(optionsMap);
+    ExportParameterRows data = collectParameterData(optionsMap);
 
     // ------ Add extra data -------------
 
@@ -2216,4 +2584,25 @@ std::string OptimProblem::getAbsoluteFileName(const std::string& filename)
         return (projectDir() + filename);
     }
     return filename;
+}
+
+std::vector<std::string> OptimProblem::GroupNames() const {
+    std::vector<std::string> names{};
+    names.reserve(mGroups.size());
+    for (const auto& group : mGroups) {
+        names.push_back(group.at("groupName"));
+    }
+    return names;
+};
+
+void OptimProblem::addGroup(const std::vector<std::string>& compoNames, 
+    const std::string& mainCompo, const std::string& groupName)
+{
+    t_mapGroups groupData{};
+
+    // buildGroupData() returns std::map<std::string, std::string>
+    groupData = CairnUtils::buildGroupData(compoNames, GroupNames(), 
+        mainCompo, groupName);
+
+    mGroups.push_back(groupData);
 }

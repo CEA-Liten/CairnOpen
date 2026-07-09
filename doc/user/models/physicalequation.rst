@@ -1,5 +1,5 @@
 #####################
-Physical Equations 
+Physical equations 
 #####################
 
 

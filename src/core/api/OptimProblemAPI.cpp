@@ -9,6 +9,8 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 using namespace CairnAPIUtils;
+constexpr auto SAMPLINGRES = "sampling_results.csv";
+
 
 CairnAPI::OptimProblemAPI::OptimProblemAPI()
 {
@@ -18,7 +20,7 @@ CairnAPI::OptimProblemAPI::OptimProblemAPI()
 void CairnAPI::OptimProblemAPI::set_Problem(class OptimProblem* ap_Problem)
 {
 	m_Problem = ap_Problem;
-	// Par d�faut par d'exportResults
+	// By default, no exportResults
 	SimulationControl* vSimulationControl = m_Problem->getSimulationControl();
 	if (vSimulationControl) {
 		CairnAPIUtils::setParameters({ 
@@ -29,7 +31,7 @@ void CairnAPI::OptimProblemAPI::set_Problem(class OptimProblem* ap_Problem)
 	}
 
 	// Default TecEcoAnalysis
-	cInfo() << "Init default TecEcoAnalysis...";
+	cDebug() << "Init default TecEcoAnalysis...";
 	TecEcoCompo* pTecEco = m_Problem->findChild<TecEcoCompo>();
 	if (pTecEco) {
 		pTecEco->initSubModelConfiguration();
@@ -97,6 +99,179 @@ void CairnAPI::OptimProblemAPI::save_Study(const std::string& a_filename, const 
 	CairnAPIUtils::setError(vErr);
 }
 
+t_list CairnAPI::OptimProblemAPI::import_Group(const std::string& a_filename)
+{
+	const std::map <std::string, std::string> nameMapping = import_Group_GUI(a_filename);
+
+	t_list names;
+	names.reserve(nameMapping.size());
+
+	for (const auto& [key, value] : nameMapping)
+		names.push_back(key);
+
+	return names;
+}
+
+std::map <std::string, std::string> CairnAPI::OptimProblemAPI::import_Group_GUI(const std::string& a_filename)
+{
+	if (!m_Problem) {
+		CairnAPIUtils::setError(noCairn);
+		return {};
+	}
+
+	std::string groupName;
+	std::string mainNode;
+	//std::map<std::string, std::string> components; 
+	std::vector<CompoData> importedComponents;
+
+	m_Problem->createComponentsFromJsonData(a_filename, &importedComponents,
+		true /* isGroup */, &groupName, &mainNode);
+
+	// TODO: use OptimProblem::initProblem() ?
+	// TODO: move initProblem to CairnObject
+
+	std::map <std::string, std::string> nameMapping;
+
+	for (auto& component : importedComponents)
+	{
+		const std::string nameFromJsonFile = component.rawName;
+
+		const std::string type = component.type;
+		const std::string name = component.name;
+
+		if (type == "TecEcoAnalysis" || type == "SimulationControl" || type == "Solver")
+			continue; // it is not the case for a group
+
+		if (CairnUtils::isEnergyVector(type)) {
+			EnergyVector* pCarrier = m_Problem->findChild<EnergyVector>(name);
+			if (pCarrier->initProblem() < 0) {
+				throw Cairn_Exception("ERROR in initialization of carrier: " + pCarrier->Name(), -1);
+			}
+			continue;
+		}
+
+		MilpComponent* pComponent = m_Problem->findChild<MilpComponent>(name);
+
+		if (pComponent) {
+			m_Problem->createLinksToBus(pComponent);
+			if (pComponent->initProblem() < 0) {
+				throw Cairn_Exception("ERROR in initialization of component: " + pComponent->Name(), -1);
+			}
+		}
+		else {
+			BusCompo* pBus = m_Problem->findChild<BusCompo>(name);
+			if (pBus) {
+				m_Problem->createLinksToBus(pBus);
+				if (pBus->initProblem() < 0) {
+					throw Cairn_Exception("ERROR in initialization of Bus component: " + pBus->Name(), -1);
+				}
+				
+			}
+			else {
+				// Error ?!
+			}
+		}
+
+		nameMapping.emplace(nameFromJsonFile, name);
+	}
+
+	// Add group
+	t_list names;
+	names.reserve(nameMapping.size());
+
+	for (const auto& [key, value] : nameMapping)
+		names.push_back(key);
+
+	m_Problem->addGroup(names, mainNode, groupName);
+
+	// TODO: export/import vars for a single componenet?!
+	m_Problem->createImportZEVariablesList();
+	m_Problem->createExportZEVariablesList();
+
+	return nameMapping; // Doesn't include EnergyVectors
+}
+
+std::shared_ptr <CairnAPI::MilpComponentAPI> CairnAPI::OptimProblemAPI::copy_Component(const std::string& name,
+	const std::string& newName, bool connexions)
+{
+	// TODO: Generalize into copy object
+
+	// Retrieve original component
+	std::shared_ptr <MilpComponentAPI> compo = get_Component(name);
+
+	// Create the new component with same model class
+	std::string mo = compo->get_ModelClass();
+	std::shared_ptr < CairnAPI::MilpComponentAPI> compo2 = create_Component(newName, compo->get_ModelClass());
+
+	// ---------------------------------------------------------
+	// Copy carriers + settings of default ports
+	// ---------------------------------------------------------
+	for (const auto& portID : compo->get_DefaultPortIDs())
+	{
+		std::shared_ptr < CairnAPI::MilpPortAPI> port = compo->get_Port(portID);
+		std::shared_ptr<EnergyVectorAPI> carrier = get_EnergyCarrier(port->get_CarrierName());
+
+		std::shared_ptr < CairnAPI::MilpPortAPI> port2 = compo2->get_Port(portID);
+		port2->set_EnergyCarrier(*carrier);
+		port2->set_SettingValues(port->get_SettingValues());
+	}
+
+	// ---------------------------------------------------------
+	// Copy component-level settings and labels
+	// ---------------------------------------------------------
+	compo2->set_SettingValues(compo->get_SettingValues());
+	compo2->set_LabelValues(compo->get_LabelValues());
+
+	// ---------------------------------------------------------
+	// Copy connections (optional)
+	// ---------------------------------------------------------
+	t_list existingPorts = compo2->get_Ports();
+	if (connexions)
+	{
+		for (const auto& portName : compo->get_Ports())
+		{
+			std::shared_ptr < CairnAPI::MilpPortAPI> port = compo->get_Port(portName);
+			std::shared_ptr<EnergyVectorAPI> carrier = get_EnergyCarrier(port->get_CarrierName());
+
+			std::shared_ptr < CairnAPI::MilpPortAPI> port2;
+
+			// If port does not exist in compo2 -> add it
+			if (!CairnUtils::contains(existingPorts, portName))
+			{
+				port2 = compo2->add_Port(portName, *carrier); 
+				port2->set_SettingValues(port->get_SettingValues());
+			}
+			else
+			{
+				port2 = compo2->get_Port(portName);
+			}
+
+			// Create links
+			t_dict links{};
+			compo->get_Links(links);
+			for (const auto& [linkName, busName] : links) 
+			{
+				// linkName format: "ComponentName.PortName"
+				const t_list parts = CairnUtils::split(linkName, '.');
+				if (parts.size() == 2) {
+					const std::string compoNameLink = parts[0];
+					const std::string portNameLink = parts[1];
+
+					if (compoNameLink == name && portNameLink == port->get_Name())
+					{
+						if (auto p = std::get_if<std::string>(&busName)) { // t_value -> std::string
+							std::string bName = *p;
+							std::shared_ptr < CairnAPI::BusAPI> bus = get_Bus(bName);
+							add(*port2, *bus);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return compo2;
+}
 
 void CairnAPI::OptimProblemAPI::export_Parameters(const std::string& fileName, const std::string& encoding,
 	const std::map<std::string, bool>& optionsMap,
@@ -193,13 +368,36 @@ t_list CairnAPI::OptimProblemAPI::get_Objects()
 	return vRet;
 }
 
-CairnAPI::ObjectAPI CairnAPI::OptimProblemAPI::get_Object(const std::string& a_Name)
+std::shared_ptr<CairnAPI::ObjectAPI> CairnAPI::OptimProblemAPI::get_Object(const std::string& a_Name)
 {
-	ObjectAPI vRet;
+	std::shared_ptr<CairnAPI::ObjectAPI> vRet = nullptr;
 	if (m_Problem) {
 		CairnObject* vObject = m_Problem->findChild(a_Name);
 		if (vObject) {
-			vRet.set_Object(vObject);
+			std::string vType = vObject->objectType();
+			if (vType == "MilpComponent") {
+				vRet = std::make_shared<CairnAPI::MilpComponentAPI>();
+			}
+			else if (vType == "BusCompo") {
+				vRet = std::make_shared<CairnAPI::BusAPI>();
+			}
+			else if (vType == "EnergyVector") {
+				vRet = std::make_shared<CairnAPI::EnergyVectorAPI>();
+			}
+			else if (vType == "MilpPort") {
+				vRet = std::make_shared<CairnAPI::MilpPortAPI>();
+			}
+			else if (vType == "Solver") {
+				vRet = std::make_shared<CairnAPI::SolverAPI>();
+			}
+			else if (vType == "TecEcoCompo") {
+				vRet = std::make_shared<CairnAPI::TecEcoAnalysisAPI>();
+			}
+			else if (vType == "SimulationControl") {
+				vRet = std::make_shared<CairnAPI::SimulationControlAPI>();
+			}
+			if (vRet)
+				vRet->set_Object(vObject);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "Object " + a_Name);
@@ -211,24 +409,26 @@ CairnAPI::ObjectAPI CairnAPI::OptimProblemAPI::get_Object(const std::string& a_N
 	return vRet;
 }
 
+
+
 // -------------------------- EnergyCarriers ---------------------
-CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::create_EnergyCarrier(const std::string& a_Name, const std::string& a_Type) const
+std::shared_ptr<CairnAPI::EnergyVectorAPI> CairnAPI::OptimProblemAPI::create_EnergyCarrier(const std::string& a_Name, 
+	const std::string& a_Type, const std::string& a_TechnoType) const
 {
-	EnergyVectorAPI vCarrier;
+	std::shared_ptr<CairnAPI::EnergyVectorAPI> vCarrier;
 	ECodeError vErr = noError;
 	std::string vErrMsg = "EnergyCarrier " + a_Name;
 	if (m_Problem) {
-		vErr = noError;
-		std::string name = std::string(a_Name.c_str());
-		std::string type = std::string(a_Type.c_str());
+		vErr = noError;		
 		EnergyVector* vEnergyVector = m_Problem->findChild<EnergyVector>(a_Name);
 		if (!vEnergyVector) {
 			//Create EnergyVector
-			bool vOK = m_Problem->createEnergyVector(name, type);
+			bool vOK = m_Problem->createEnergyVector(a_Name, a_Type, a_TechnoType);
 			if (vOK)
 			{
 				vEnergyVector = m_Problem->findChild<EnergyVector>(a_Name);
-				vCarrier.set_EnergyVector(vEnergyVector);				
+				vCarrier = std::make_shared<CairnAPI::EnergyVectorAPI>();
+				vCarrier->set_EnergyVector(vEnergyVector);				
 			}
 			else {
 				vErr = errCreate;
@@ -248,8 +448,8 @@ CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::create_EnergyCarrier(const 
 
 void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(const std::string& a_Name, bool forceDeletion)
 {
-	EnergyVectorAPI vVector = get_EnergyCarrier(a_Name); 
-	remove_EnergyCarrier(vVector, forceDeletion);
+	std::shared_ptr<EnergyVectorAPI> vVector = get_EnergyCarrier(a_Name);
+	remove_EnergyCarrier(*vVector, forceDeletion);
 }
 
 void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVector)
@@ -267,7 +467,7 @@ void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVe
 			// The EnergyVector must not be used by other components of the problem
 			
 			// Verification in TecEcoAnalysis
-			if (get_TecEcoAnalysis().useEnergyVector(vEVName)) {
+			if (get_TecEcoAnalysis()->useEnergyVector(vEVName)) {
 				used = true;
 			}
 
@@ -275,7 +475,7 @@ void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVe
 			if (!used) {
 				t_list vBuses = get_Buses();
 				for (auto& vBus : vBuses) {
-					if (get_Bus(vBus).get_CarrierName() == vEVName)
+					if (get_Bus(vBus)->get_CarrierName() == vEVName)
 					{
 						used = true;
 						break;
@@ -287,7 +487,7 @@ void CairnAPI::OptimProblemAPI::remove_EnergyCarrier(EnergyVectorAPI& a_EnergyVe
 			if (!used) {
 				t_list vComps = get_Components();
 				for (auto& vComp : vComps) {
-					if (get_Component(vComp).useEnergyVector(vEVName)) {
+					if (get_Component(vComp)->useEnergyVector(vEVName)) {
 						used = true;
 						break;
 					}
@@ -325,13 +525,14 @@ t_list CairnAPI::OptimProblemAPI::get_EnergyCarriers() const
 }
 
 //Returns the energy carrier of a given name 
-CairnAPI::EnergyVectorAPI CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std::string &a_Name) const
+std::shared_ptr<CairnAPI::EnergyVectorAPI> CairnAPI::OptimProblemAPI::get_EnergyCarrier(const std::string &a_Name) const
 {
-	EnergyVectorAPI vCarrier;
+	std::shared_ptr<EnergyVectorAPI> vCarrier;
 	if (m_Problem) {
 		EnergyVector* vEnergyVector = m_Problem->findChild<EnergyVector>(a_Name);
 		if (vEnergyVector) {
-			vCarrier.set_EnergyVector(vEnergyVector);
+			vCarrier = std::make_shared<EnergyVectorAPI>();
+			vCarrier->set_EnergyVector(vEnergyVector);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "EnergyVector " + a_Name);
@@ -384,23 +585,23 @@ t_dict CairnAPI::OptimProblemAPI::get_All_IndicatorValues(const std::string& ran
 	}
 
 	// TecEco indicators
-	TecEcoAnalysisAPI tecEco = get_TecEcoAnalysis();
-	t_dict tecEcoIndicators = tecEco.get_IndicatorValues(range);
+	std::shared_ptr < TecEcoAnalysisAPI> tecEco = get_TecEcoAnalysis();
+	t_dict tecEcoIndicators = tecEco->get_IndicatorValues(range);
 	vRet.insert(tecEcoIndicators.begin(), tecEcoIndicators.end());
 
 	// Component indicators
 	const t_list& compoNames = get_Components();
 	for (const auto& name : compoNames) {
-		MilpComponentAPI compo = get_Component(name);
-		t_dict compoIndicators = compo.get_IndicatorValues(range);
+		std::shared_ptr <MilpComponentAPI> compo = get_Component(name);
+		t_dict compoIndicators = compo->get_IndicatorValues(range);
 		vRet.insert(compoIndicators.begin(), compoIndicators.end());
 	}
 
 	// Bus indicators
 	const t_list& busNames = get_Buses();
 	for (const auto& name : busNames) {
-		BusAPI bus = get_Bus(name);
-		t_dict busIndicators = bus.get_IndicatorValues(range);
+		std::shared_ptr < BusAPI> bus = get_Bus(name);
+		t_dict busIndicators = bus->get_IndicatorValues(range);
 		vRet.insert(busIndicators.begin(), busIndicators.end());
 	}
 
@@ -424,19 +625,15 @@ t_list CairnAPI::OptimProblemAPI::get_optimized_components() const
 	return vRet;
 }
 
-CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::get_Component(const std::string &a_Name) const
+std::shared_ptr<CairnAPI::MilpComponentAPI> CairnAPI::OptimProblemAPI::get_Component(const std::string &a_Name) const
 {
-	MilpComponentAPI vRet;
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vRet = nullptr;
 	if (m_Problem) {		
 		MilpComponent* vComp = m_Problem->findChild<MilpComponent>(a_Name);
 
-		//BusCompo* vBus = dynamic_cast<BusCompo*> (vComp);
-		//if (vBus) {
-		//	CairnAPIUtils::setError(errDefault, a_Name + " is a bus component. Please, use method get_bus");
-		//}
-
 		if (vComp) {
-			vRet.set_MilpComponent(vComp);
+			vRet = std::make_shared<CairnAPI::MilpComponentAPI>();
+			vRet->set_MilpComponent(vComp);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "component " + a_Name);
@@ -447,30 +644,34 @@ CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::get_Component(const std::s
 	return vRet;
 }
 
-CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::create_Component(const std::string& a_Name, const std::string& a_ModelName) const
+std::shared_ptr < CairnAPI::MilpComponentAPI> CairnAPI::OptimProblemAPI::create_Component(const std::string& a_Name, const std::string& a_ModelName) const
 {
-	MilpComponentAPI vRetCompo;
-	std::string type = CairnAPIUtils::get_Component_Type(a_ModelName);
+	std::shared_ptr < MilpComponentAPI> vRetCompo;
 	ECodeError vErr = noError;
 	std::string vErrMsg = "";
+
 	if (m_Problem) {
-		std::string vCompoName(a_Name);
 		MilpComponent* vComponent = m_Problem->findChild<MilpComponent>(a_Name);
 		if (!vComponent) {
-			//Set the essential parameters of the componenet			
-			std::map<std::string, std::string> paramMap;
-			paramMap["id"] = vCompoName;
-			paramMap["type"] = type;
-			paramMap["ModelClass"] = a_ModelName;
+			//Set the essential parameters of the componenet	
+			const std::string compoType = CairnAPIUtils::get_Component_Type(a_ModelName);
+			const std::string compoName(a_Name);
+
+			auto paramMap = CairnUtils::buildParamMap({
+				{"type",  compoType},
+				{"ModelType",  a_ModelName},
+				{"ModelClass", a_ModelName}
+			});
 
 			//Create component
 			try {
-				if (m_Problem->createComponent(type, paramMap, {})) {
+				if (m_Problem->createMilpComponent(compoName, compoType, paramMap, {})) {
 					vComponent = m_Problem->findChild<MilpComponent>(a_Name);
 					if (vComponent) {
 						int ierr = vComponent->initProblem(false);
 						if (ierr >= 0) {
-							vRetCompo.set_MilpComponent(vComponent);
+							vRetCompo = std::make_shared<MilpComponentAPI>();
+							vRetCompo->set_MilpComponent(vComponent);							
 						}
 						else {
 							vErr = errParam;
@@ -497,14 +698,15 @@ CairnAPI::MilpComponentAPI CairnAPI::OptimProblemAPI::create_Component(const std
 	else {
 		vErr = noCairn;
 	}
+
 	CairnAPIUtils::setError(vErr, vErrMsg);
 	return vRetCompo;
 }
 
 void CairnAPI::OptimProblemAPI::remove_Component(const std::string& a_Name)
 {
-	MilpComponentAPI vCompAPI = get_Component(a_Name);
-	remove_Component(vCompAPI);
+	std::shared_ptr <MilpComponentAPI> vCompAPI = get_Component(a_Name);
+	remove_Component(*vCompAPI);
 }
 
 void CairnAPI::OptimProblemAPI::remove_Component(MilpComponentAPI& a_Component)
@@ -515,8 +717,8 @@ void CairnAPI::OptimProblemAPI::remove_Component(MilpComponentAPI& a_Component)
 		// Suppression des ports
 		t_list vPorts = a_Component.get_Ports();
 		for (const std::string& vPort : vPorts) {
-			MilpPortAPI vPortObj = a_Component.get_Port(vPort);
-			a_Component.remove_Port(vPortObj, true);
+			std::shared_ptr < MilpPortAPI> vPortObj = a_Component.get_Port(vPort);
+			a_Component.remove_Port(*vPortObj, true);
 		}
 		// Suppression du composant
 		MilpComponent* vComp = a_Component.get_MilpComponent();
@@ -553,13 +755,14 @@ t_list CairnAPI::OptimProblemAPI::get_Buses() const
 	return vRet;
 }
 
-CairnAPI::BusAPI CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name) const
+std::shared_ptr < CairnAPI::BusAPI> CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name) const
 {
-	BusAPI vRet;
+	std::shared_ptr < BusAPI> vRet;
 	if (m_Problem) {
 		BusCompo* vComp = m_Problem->findChild<BusCompo>(a_Name);
 		if (vComp) {
-			vRet.set_BusCompo(vComp);
+			vRet = std::make_shared<BusAPI>();
+			vRet->set_BusCompo(vComp);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "Bus " + a_Name);
@@ -570,17 +773,16 @@ CairnAPI::BusAPI CairnAPI::OptimProblemAPI::get_Bus(const std::string& a_Name) c
 	return vRet;	
 }
 
-CairnAPI::BusAPI CairnAPI::OptimProblemAPI::create_Bus(const std::string& a_Name, 
+std::shared_ptr < CairnAPI::BusAPI> CairnAPI::OptimProblemAPI::create_Bus(const std::string& a_Name,
 	const std::string& a_ModelName, const EnergyVectorAPI& a_EnergyVector) const
 {
-	BusAPI vBus;
+	std::shared_ptr < BusAPI> vBus;
 
 	if (!a_EnergyVector.get_EnergyVector()) {
 		CairnAPIUtils::setError(errDefault, "The EnergyCarrier must be defined!");
 	}
 
-	//std::string type = CairnAPIUtils::get_Component_Type(a_ModelName);
-	std::string type = CairnAPIUtils::get_Bus_Type(a_ModelName);
+	const std::string compoType = CairnAPIUtils::get_Bus_Type(a_ModelName);
 
 	ECodeError vErr = noError;
 	std::string vErrMsg = "";
@@ -588,23 +790,25 @@ CairnAPI::BusAPI CairnAPI::OptimProblemAPI::create_Bus(const std::string& a_Name
 		std::string vBusName(std::string(a_Name.c_str()));
 		BusCompo* vBusCompo = m_Problem->findChild<BusCompo>(a_Name);
 		if (!vBusCompo) {
-			//Build params map	
-			std::map<std::string, std::string> paramMap;
-			paramMap["id"] = vBusName;
-			paramMap["type"] = std::string(type.c_str());
-			paramMap["ModelClass"] = std::string(a_ModelName.c_str());
-			paramMap["componentCarrier"] = std::string(a_EnergyVector.get_Name().c_str());
+
+			auto paramMap = CairnUtils::buildParamMap({
+				{"type", compoType},
+				{"ModelType", a_ModelName},
+				{"ModelClass", a_ModelName},
+				{"componentCarrier", a_EnergyVector.get_Name()}
+			});
 
 			//Create Bus component
 			try {
-				if (m_Problem->createComponent(paramMap["type"], paramMap, {})) {
+				if (m_Problem->createMilpComponent(vBusName, compoType, paramMap, {})) {
 					vBusCompo = m_Problem->findChild<BusCompo>(a_Name);
 					if (vBusCompo) {
 						vBusCompo->setMainCarrier(a_EnergyVector.get_EnergyVector());
 						int ierr = vBusCompo->initProblem(false);
 						//vBusCompo->declareIOVariables();
 						if (ierr >= 0) {
-							vBus.set_BusCompo(vBusCompo);
+							vBus = std::make_shared<BusAPI>();
+							vBus->set_BusCompo(vBusCompo);
 						}
 						else {
 							vErr = errParam;
@@ -634,8 +838,8 @@ CairnAPI::BusAPI CairnAPI::OptimProblemAPI::create_Bus(const std::string& a_Name
 
 void CairnAPI::OptimProblemAPI::remove_Bus(const std::string& a_Name)
 {	
-	CairnAPI::BusAPI vBusAPI = get_Bus(a_Name);
-	remove_Bus(vBusAPI);
+	std::shared_ptr < CairnAPI::BusAPI> vBusAPI = get_Bus(a_Name);
+	remove_Bus(*vBusAPI);
 }
 
 void CairnAPI::OptimProblemAPI::remove_Bus(BusAPI& a_Bus)
@@ -646,8 +850,8 @@ void CairnAPI::OptimProblemAPI::remove_Bus(BusAPI& a_Bus)
 		// Suppression des liens
 		BusCompo* vBus = a_Bus.get_BusCompo();
 		if (vBus) {			
-			for (auto& vPort : vBus->PortList()) {
-				vPort->setLinkedBus(nullptr);
+			for (auto& vPort : vBus->LinkedPorts()) {
+				vPort->unlinkBus();
 			}
 		}		
 		// Suppression du composant		
@@ -676,11 +880,11 @@ t_dict CairnAPI::OptimProblemAPI::get_Links()
 
 	t_list vComps = get_Components();
 	for (auto& vComp : vComps) {
-		get_Component(vComp).get_Links(vRet);
+		get_Component(vComp)->get_Links(vRet);
 	}
 
 	// Add TecEcoAnalysis links
-	get_TecEcoAnalysis().get_Links(vRet);
+	get_TecEcoAnalysis()->get_Links(vRet);
 
 	return vRet;
 }
@@ -819,13 +1023,14 @@ void CairnAPI::OptimProblemAPI::remove(BusAPI& a_bus, MilpPortAPI& a_port)
 }
 
 // -- TecEcoAnalysis ---
-CairnAPI::TecEcoAnalysisAPI CairnAPI::OptimProblemAPI::get_TecEcoAnalysis() const
+std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> CairnAPI::OptimProblemAPI::get_TecEcoAnalysis() const
 {
-	TecEcoAnalysisAPI vRet;
+	std::shared_ptr < TecEcoAnalysisAPI> vRet;
 	if (m_Problem) {
 		TecEcoCompo* pTecEco = m_Problem->findChild<TecEcoCompo>();
 		if (pTecEco) {
-			vRet.set_Object(pTecEco);
+			vRet = std::make_shared<TecEcoAnalysisAPI>();
+			vRet->set_Object(pTecEco);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "TecEcoAnalysis");
@@ -837,13 +1042,14 @@ CairnAPI::TecEcoAnalysisAPI CairnAPI::OptimProblemAPI::get_TecEcoAnalysis() cons
 }
 
 //----------- Solver ---------
-CairnAPI::SolverAPI  CairnAPI::OptimProblemAPI::get_Solver() const
+std::shared_ptr < CairnAPI::SolverAPI>  CairnAPI::OptimProblemAPI::get_Solver() const
 {
-	SolverAPI vRet;
+	std::shared_ptr < SolverAPI> vRet;
 	if (m_Problem) {
 		Solver* vSolver = m_Problem->getSolver();
 		if (vSolver) {
-			vRet.set_Object(vSolver);
+			vRet = std::make_shared<SolverAPI>();
+			vRet->set_Object(vSolver);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "Solver");
@@ -855,13 +1061,14 @@ CairnAPI::SolverAPI  CairnAPI::OptimProblemAPI::get_Solver() const
 }
 
 //------------ SimulationControl ---------
-CairnAPI::SimulationControlAPI CairnAPI::OptimProblemAPI::get_SimulationControl() const
+std::shared_ptr < CairnAPI::SimulationControlAPI> CairnAPI::OptimProblemAPI::get_SimulationControl() const
 {
-	SimulationControlAPI vRet;
+	std::shared_ptr < SimulationControlAPI> vRet;
 	if (m_Problem) {
 		SimulationControl* vSimulationControl = m_Problem->getSimulationControl();
 		if (vSimulationControl) {
-			vRet.set_Object(vSimulationControl);
+			vRet = std::make_shared<SimulationControlAPI>();
+			vRet->set_Object(vSimulationControl);
 		}
 		else {
 			CairnAPIUtils::setError(errNotFound, "SimulationControl");
@@ -876,18 +1083,36 @@ CairnAPI::SimulationControlAPI CairnAPI::OptimProblemAPI::get_SimulationControl(
 // -- Run ---
 void CairnAPI::OptimProblemAPI::add_TimeSeries(const std::string& a_fileName)
 {	
-	// si filename = "" , efface la liste	
-	if (a_fileName == "")	{	
-		m_timestepfileList.clear();
+	ECodeError vErr = noCairn;
+	if (m_Problem) {
+		try {
+			CairnCore* vCairn = (CairnCore*)m_Problem->parent();
+			vCairn->addTS(CairnUtils::toWString(a_fileName));
+			vErr = noError;
+		}
+		catch (Cairn_Exception& error)
+		{
+			vErr = errInit;
+		}
 	}
-	else	{
-		// ajoute un fichier time series dans la liste des fichiers
-		m_timestepfileList.push_back(a_fileName);
-	}
+	CairnAPIUtils::setError(vErr);	
 }
 
-void CairnAPI::OptimProblemAPI::add_TimeSeries(const std::string& a_serie_name, const std::string& a_description, const std::string& a_unit, const t_values& a_times, const t_values& a_values)
+void CairnAPI::OptimProblemAPI::add_TimeSeries(const t_dict& a_TS)
 {
+	ECodeError vErr = noCairn;
+	if (m_Problem) {
+		try {
+			CairnCore* vCairn = (CairnCore*)m_Problem->parent();
+			vCairn->addTS(a_TS);
+			vErr = noError;
+		}
+		catch (Cairn_Exception& error)
+		{
+			vErr = errInit;
+		}
+	}
+	CairnAPIUtils::setError(vErr);
 }
 
 void CairnAPI::OptimProblemAPI::initialize()
@@ -919,26 +1144,16 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 	ECodeError vErr = noCairn;
 	std::string vErrMsg = "";
 	
-	if (!a_coSim) {
-		if (!m_timestepfileList.size()) {
-			CairnAPIUtils::setError(errDefault, "Please, load at least one timeseries file before running");
-		}
-		else {
-			// Verify timeseries files
-			for (auto& vFileName : m_timestepfileList) {
-				fs::path vTimeStepFile(vFileName);
-				std::error_code vErrFile;
-				if (!fs::exists(vTimeStepFile, vErrFile)) {
-					CairnAPIUtils::setError(errDefault, "Error : timeseries file: " + vFileName + " does not exist");
-				}
-			}
-		}
-	}
-
 	if (m_Problem) {
 		vRet.set_Problem(m_Problem);
 
 		CairnCore* vCairn = (CairnCore*)m_Problem->parent();
+		if (!a_coSim) {
+			if (!vCairn->checkTS(vErrMsg)) {
+				CairnAPIUtils::setError(errDefault, vErrMsg);
+			}
+		}
+
 		int numCycle = vCairn->getNumCycle();
 		if (numCycle < 0) {
 			//init
@@ -975,7 +1190,7 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 		{
 			if (!a_coSim) {
 				try {
-					vCairn->importTS(m_timestepfileList, iShift);
+					vCairn->importTS(iShift);
 				}
 				catch (Cairn_Exception cairn_error) {
 					vErr = errRun;
@@ -1001,7 +1216,7 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 				cCritical() << "Error : No solution found by Cairn in cycle # " << numCycle;
 				break;
 			}
-			cInfo() << "Cycle" << numCycle << "has finished.";
+			//cInfo() << "Cycle " << std::to_string(numCycle) << " has finished.";
 			CairnLogger::Flush();
 			if (!persistent) iShift += timeShift;
 
@@ -1055,6 +1270,8 @@ t_list CairnAPI::OptimProblemAPI::getPublishedVariables()
 		const t_mapExchange &sub = m_Problem->ListPublishedVariables();
 	
 		for (const auto& elem : sub) {
+			if (!elem.second->IsUsed())
+				continue;
 			varNames.push_back(elem.first);
 		}
 		vErr = noError;
@@ -1113,5 +1330,385 @@ std::vector<double> CairnAPI::OptimProblemAPI::getPublishedVariableValue(const s
 	}
 	else
 		CairnAPIUtils::setError(noCairn);
+	return vRet;
+}
+
+// -----------------------  run_sensitivity  -----------------------
+CairnAPI::OptimProblemAPI::ModelValue::ModelValue(const t_dict& a_values)
+{
+	t_dict::const_iterator vIter = a_values.find("model");
+	if (vIter != a_values.end()) {
+		if (const std::string* pSrc = std::get_if<std::string>(&vIter->second)) {
+			m_Model = *pSrc;
+		}
+	}
+	vIter = a_values.find("property");
+	if (vIter != a_values.end()) {
+		if (const std::string* pSrc = std::get_if<std::string>(&vIter->second)) {
+			m_Setting = *pSrc;
+			if (CairnUtils::contains(m_Setting, "--")) {
+				std::vector<std::string> vStrs = CairnUtils::split(m_Setting, "--");
+				if (vStrs.size() > 1) {
+					m_Port = vStrs[0];
+					m_Setting = vStrs[1];
+				}
+			}
+		}
+	}
+	vIter = a_values.find("port");
+	if (vIter != a_values.end()) {
+		if (const std::string* pSrc = std::get_if<std::string>(&vIter->second)) {
+			m_Port = *pSrc;
+		}
+	}
+	cDebug() << "run sensitivity, model: " << m_Model << ", setting: " << m_Setting << ", port: " << m_Port;
+
+	vIter = a_values.find("value");
+	if (vIter != a_values.end()) {
+		m_Value = vIter->second;
+	}	
+}
+
+CairnAPI::OptimProblemAPI::ModelValue::ModelValue(const std::string& a_Model, const std::string& a_Setting)
+{
+	m_Model = a_Model;
+	
+	if (CairnUtils::contains(a_Setting, "--")) {
+		std::vector<std::string> vStrs = CairnUtils::split(a_Setting, "--");
+		if (vStrs.size() > 1) {
+			m_Port = vStrs[0];
+			m_Setting = vStrs[1];
+		}
+	}
+	else
+		m_Setting = a_Setting;
+}
+
+bool CairnAPI::OptimProblemAPI::ModelValue::setValue(CairnAPI::OptimProblemAPI& a_Problem)
+{
+	bool vRet = true;	
+	m_Component = a_Problem.get_Object(m_Model);
+	if (m_Port == "") {
+		try
+		{
+			m_SaveValue = m_Component->get_SettingValue(m_Setting);
+			m_Component->set_SettingValue(m_Setting, m_Value);
+		}
+		catch (const std::exception&)
+		{
+			cError() << "run_sensitivity, set_value, parameter " << m_Setting;
+			vRet = false;
+		}
+	}
+	else {
+		CairnAPI::MilpPortAPI vPort;
+		if (get_Port(vPort)) {
+			try
+			{
+				m_SaveValue = vPort.get_SettingValue(m_Setting);
+				vPort.set_SettingValue(m_Setting, m_Value);
+			}
+			catch (const std::exception&)
+			{
+				cError() << "run_sensitivity, set_value, port " << m_Port << ", parameter " << m_Setting;
+				vRet = false;
+			}
+		}
+		else {
+			cError() << "run_sensitivity, set_value, port not found " << m_Port;
+			vRet = false;
+		}
+	}	
+	return vRet;
+}
+
+bool CairnAPI::OptimProblemAPI::ModelValue::setValue(CairnAPI::OptimProblemAPI& a_Problem, const std::string& a_Value)
+{
+	m_Value = a_Value;
+	return setValue(a_Problem);
+}
+
+void CairnAPI::OptimProblemAPI::ModelValue::reset()
+{
+	if (m_Port == "") {
+		m_Component->set_SettingValue(m_Setting, m_SaveValue);
+	}
+	else {
+		CairnAPI::MilpPortAPI vPort;
+		if (get_Port(vPort)) {
+			vPort.set_SettingValue(m_Setting, m_SaveValue);
+		}
+	}
+}
+
+bool CairnAPI::OptimProblemAPI::ModelValue::get_Port(CairnAPI::MilpPortAPI& a_Port) {
+	bool vRet = false;
+	std::string  vType = m_Component->get_ObjectType();
+	if (vType == "MilpComponent") {
+		auto vComp = std::dynamic_pointer_cast<CairnAPI::MilpComponentAPI>(m_Component);
+		a_Port = *vComp->get_Port(m_Port);
+		vRet = true;
+	}
+	else if (vType == "BusCompo") {
+		auto vComp = std::dynamic_pointer_cast<CairnAPI::BusAPI>(m_Component);
+		a_Port = *vComp->get_Port(m_Port);
+		vRet = true;
+	}
+	else if (vType == "TecEcoCompo") {
+		auto vComp = std::dynamic_pointer_cast<CairnAPI::TecEcoAnalysisAPI>(m_Component);
+		a_Port = *vComp->get_Port(m_Port);
+		vRet = true;
+	}
+	return vRet;
+}
+
+CairnAPI::OptimProblemAPI::KPI::KPI(const t_dict& a_values)
+{
+	t_dict::const_iterator vIter = a_values.find("model");
+	if (vIter != a_values.end()) {
+		if (const std::string* pSrc = std::get_if<std::string>(&vIter->second)) {
+			m_Model = *pSrc;
+		}		
+	}
+	vIter = a_values.find("indicator");
+	if (vIter != a_values.end()) {
+		if (const std::string* pSrc = std::get_if<std::string>(&vIter->second)) {
+			m_Indicator = *pSrc;
+		}
+	}
+}
+
+CairnAPI::OptimProblemAPI::KPI::KPI(const std::string& a_Model, const std::string& a_Indicator)
+{
+	m_Model = a_Model;
+	m_Indicator = a_Indicator;
+}
+
+double CairnAPI::OptimProblemAPI::KPI::getValue(OptimProblemAPI& a_Problem)
+{
+	double vValue = 0;
+	try
+	{
+		std::shared_ptr <MilpComponentAPI> vComp = a_Problem.get_Component(m_Model);
+		vValue = vComp->get_IndicatorValue(m_Indicator);
+	}
+	catch (const std::exception&)
+	{
+		try
+		{
+			std::shared_ptr < CairnAPI::BusAPI> vBus = a_Problem.get_Bus(m_Model);
+			vValue = vBus->get_IndicatorValue(m_Indicator);
+		}
+		catch (const std::exception&)
+		{
+			try
+			{
+				std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEco = a_Problem.get_TecEcoAnalysis();
+				vValue = vTecEco->get_IndicatorValue(m_Indicator);
+			}
+			catch (const std::exception&)
+			{
+				// Indicator not found!
+				vValue = 0;
+			}
+		}
+	}
+	return vValue;
+}
+
+
+void CairnAPI::OptimProblemAPI::KPI::printValue(OptimProblemAPI& a_Problem, t_dict& a_res)
+{	
+	a_res[m_Model + "." + m_Indicator] = getValue(a_Problem);	
+}
+
+void CairnAPI::OptimProblemAPI::KPI::printHeader(std::fstream& f)
+{
+	f << ";" << m_Model << "." << m_Indicator;
+}
+
+void CairnAPI::OptimProblemAPI::KPI::printValue(OptimProblemAPI& a_Problem, std::fstream& f)
+{	
+	f << ";" << getValue(a_Problem);
+}
+
+void CairnAPI::OptimProblemAPI::runSensitivityCSV(const std::string& a_samplingFileName, int a_max_time, const std::string& a_indicatorsFileName)
+{
+	CairnAPIUtils::ECodeError vErr = CairnAPIUtils::errFile;
+	std::string vErrMsg = a_samplingFileName;
+	fs::path vSamplingFilePath(a_samplingFileName);
+	
+	if (fs::exists(vSamplingFilePath)) {
+		std::vector<std::vector<std::string>> vSamplings = CairnUtils::readFromCsvFile(a_samplingFileName);
+		if (vSamplings.size() > 2) {
+			if (vSamplings[0].size() > 1 && vSamplings[0].size() == vSamplings[1].size()) {
+				if (a_max_time != -1) {
+					std::shared_ptr <SolverAPI> vSolver = get_Solver();
+					vSolver->set_SettingValue("TimeLimit", a_max_time);					
+				}
+				std::vector<std::vector<std::string>> vSamplingsKpi;
+				if (fs::exists(a_indicatorsFileName)) {
+					vSamplingsKpi = CairnUtils::readFromCsvFile(a_indicatorsFileName);
+				}
+				if (vSamplingsKpi.size() < 2) {
+					vSamplingsKpi = { {"Model", "Indicator"}, {"TecEco", "OBJECTIVE"} };
+				}
+				std::vector< KPI > vKPIs;
+				for (size_t i = 1; i < vSamplingsKpi.size(); i++) {					
+					if (vSamplingsKpi[i].size() > 1)
+						vKPIs.push_back({ vSamplingsKpi[i][0], vSamplingsKpi[i][1] });
+				}
+				std::fstream outfile;
+				fs::path vResultSampling = vSamplingFilePath.replace_filename(SAMPLINGRES);
+				if (!CairnUtils::openFileForWriting(outfile, vResultSampling.string(), std::ios_base::out)) {
+					cWarning() << "OptimProblem, run_sensitivity: couldn't open result file for writing: " << vResultSampling.string();
+				}
+				else {
+					outfile << ";Case";
+					for (auto& vKPI : vKPIs) {
+						 vKPI.printHeader(outfile);
+					}
+					outfile << std::endl;
+				}
+
+				std::vector< ModelValue > vModels;
+				vModels.reserve(vSamplings[0].size() - 1);
+				for (size_t i = 1; i < vSamplings[0].size(); i++) {
+					vModels.push_back({ vSamplings[0][i], vSamplings[1][i] });
+				}
+
+				// loop on lines (one line = one case)
+				for (size_t i = 2; i < vSamplings.size(); i++) {
+					if (vSamplings[i].size() == vSamplings[0].size()) {
+						// loop on rows (values)
+						for (size_t j = 1; j < vSamplings[0].size(); j++) {
+							if (!vModels[j - 1].setValue(*this, vSamplings[i][j])) {
+								CairnAPIUtils::setError(CairnAPIUtils::errSet, vSamplings[0][i]);
+								break;
+							}										
+						}
+						run("Report_s" + vSamplings[i][0]);
+
+						if (outfile.is_open()) {
+							outfile << i-2 << ";" << vSamplings[i][0];
+							for (auto& vKPI : vKPIs) {
+								vKPI.printValue(*this, outfile);
+							}
+							outfile << std::endl;
+						}
+
+						for (auto& vModel : vModels) {
+							vModel.reset();
+						}
+					}
+				}
+				vErr = CairnAPIUtils::noError;
+			}
+		}
+
+	}	
+	CairnAPIUtils::setError(vErr, vErrMsg);
+}
+
+t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_sampling, int a_max_time, 
+	const t_dicts& a_indicators, std::function<void(int)> on_iter)
+{
+	/* a_sampling: table: one line = one case, 
+		one case: several maps, 
+				first map= name of the case, 
+				other map= model,property,value to change 
+	*	[ 
+			[ {"Case": "case1"},
+			  {"model": "model1", "property":"prop1", "value":<value> }, 
+			  {"model": "model2", "property":"prop1", "port":"port1", "value":<value> },
+			  {"model": "model3", "property":"prop1", "value":<value> }
+			],
+			[ {"Case": "case2"},
+			  {"model": "model1", "property":"prop1", "value":<value> },
+			  {"model": "model1", "property":"prop1", "value":<value> }
+			]		  
+		],	
+	*	
+	* a_indicators (kpi)
+	*	[ {"model": "model1", "indicator": "ind1" },
+	*	  {"model": "model2", "indicator": "ind1" }
+	*	]
+	* 
+	* return value (kpi results)
+	*	[ {"Case": "case1", "model1.ind1": <value>, "model2.ind1":<value> },
+	* 	  {"Case": "case2", "model1.ind1": <value>, "model2.ind1":<value> }
+	*	],	
+	*/	
+	t_dicts vRet = {};
+	if (a_sampling.size()) {
+		if (a_max_time != -1) {
+			std::shared_ptr <SolverAPI> vSolver = get_Solver();
+			vSolver->set_SettingValue("TimeLimit", a_max_time);
+		}
+		std::vector< KPI > vKPIs;
+		if (!a_indicators.size()) {
+			vKPIs.push_back({ "TecEco", "OBJECTIVE" });
+		}
+		else {			
+			for (auto& vKPI : a_indicators) {
+				vKPIs.push_back(vKPI);
+			}			
+		}
+		
+		// loop on case
+		int vIdx = 0;
+		for (auto &vSampling: a_sampling) {
+			// loop on properties to change for the case
+			// first: get the name of the case
+			std::string vCase = "";
+			std::vector< ModelValue > vModels;						
+			for (auto& vModel : vSampling) {
+				t_dict::const_iterator vIter = vModel.find("model");
+				if (vIter != vModel.end()) {
+					vModels.push_back(vModel);					
+					vModels[vModels.size() - 1].setValue(*this);
+				}
+				else {
+					t_dict::const_iterator vIter = vModel.find("Case");
+					if (vIter != vModel.end()) {
+						if (const std::string* pSrc = std::get_if<std::string>(&vIter->second)) {
+							vCase = *pSrc;			
+						}
+						else if (const int* pSrc = std::get_if<int>(&vIter->second)) {
+							vCase = std::to_string(*pSrc);
+						}
+					}
+				}
+			}			
+			if (vCase == "") {
+				vCase = "Case" + std::to_string(vIdx);
+			}
+
+			cInfo() << "  ";
+			cInfo() << " ############################################################################ ";
+			cInfo() << "  ";
+			cInfo() << " RunSensitivity, case: " << vCase;
+
+			t_dict vResult = { { "Case", vCase } };
+
+			run("Report_s" + vCase);
+
+			for (auto& vKPI : vKPIs) {
+				vKPI.printValue(*this, vResult);
+			}
+
+			for (auto& vModel : vModels) {
+				vModel.reset();
+			}
+
+			vRet.push_back(vResult);
+
+			vIdx++;
+
+			if (on_iter) {
+				on_iter(static_cast<int>(vIdx));   // notify caller
+			}
+		}
+	}
 	return vRet;
 }

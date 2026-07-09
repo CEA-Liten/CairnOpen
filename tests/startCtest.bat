@@ -1,36 +1,54 @@
-rem echo off
+@ECHO off
+rem =========================================================
+rem
+rem startCTest [<empty>=release|debug|fullrelease|fulldebug] 
+rem	 		 [<empty>=level]			: if not empty run test in parallel, level : limit of parallelism
+rem			 [<empty>|tests path]		 
+rem		
+rem ========================================================= 
+
 set CMAKEPATH=C:/PROGRAM FILES/MICROSOFT VISUAL STUDIO/2022/COMMUNITY/COMMON7/IDE/COMMONEXTENSIONS/MICROSOFT/CMAKE/CMake/bin/
 if exist "cmakepath.bat" (	
 	call cmakepath.bat
 )
-echo %CMAKEPATH%
 
-set OPTION=%1
-if "%OPTION%"=="" (
- 	set OPTION=release
+echo CMake: %CMAKEPATH%
+
+rem Input parameters: 
+rem ---------------------------------
+set CONFIGURATION=%1
+if "%CONFIGURATION%"=="" (
+	set CONFIGURATION=release
 )
-set TESTDIR=%2
+echo Configuration: %CONFIGURATION%
+
+set PARALLEL=%2
+
+set TESTDIR=%3
 if "%TESTDIR%"=="" (
- 	set TESTDIR=out/%OPTION%
+ 	set TESTDIR=out/%CONFIGURATION%
 )
 
+rem ---------------------------------
 set WORKSPACE=%~dp0
-
-call GenericAppEnv.bat %OPTION%
+set REPORT=%WORKSPACE%\reports\CairnCtest-TNR
+rem !! Warning: current dir must be Cairn root
+call GenericAppEnv.bat %CONFIGURATION%
 
 rem "%CMAKEPATH%/ctest.exe" -I 7,7 -C release --test-dir out/release -V
-set BUILD_TESTING=on
 
-echo %BUILD_TESTING%
-
-"%CMAKEPATH%/ctest.exe" --preset %OPTION% --test-dir %TESTDIR% --output-junit %WORKSPACE%\tests\reports\CairnCtest-TNR.xml
+if "%PARALLEL%"=="" (
+	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% --test-dir %TESTDIR% --output-junit %REPORT%.xml
+) else (
+	echo Parallel: %PARALLEL%
+	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% -j %PARALLEL% --test-dir %TESTDIR% --output-junit %REPORT%.xml
+)
 
 rem convert to html
-pip install junit2html
-junit2html  %WORKSPACE%\tests\reports\CairnCtest-TNR.xml %WORKSPACE%\tests\reports\CairnCtest-TNR.html
+junit2html %REPORT%.xml %REPORT%.html
 
 rem temp
-copy %WORKSPACE%\tests\reports\CairnCtest-TNR.html %WORKSPACE%\tests\reports\CairnCtest-TNR-log.html
+copy %REPORT%.html %REPORT%-log.html
 
 rem force script to return code 0
 rem exit /B 0

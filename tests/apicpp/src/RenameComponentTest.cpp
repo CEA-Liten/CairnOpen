@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -15,6 +15,10 @@ using namespace std;
 int main()
 {
 	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	CairnAPI::OptimProblemAPI m_Problem;
 
 	//File PathsPersee
@@ -37,30 +41,30 @@ int main()
 
 	TESTAPI("read study: " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
-	CairnAPI::TecEcoAnalysisAPI vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
-	TESTAPI("rename TecEcoAnalysis: ", vTecEcoAnalysis.rename("TecEco"))
+	std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
+	TESTAPI("rename TecEcoAnalysis: ", vTecEcoAnalysis->rename("TecEco"))
 
-	CairnAPI::SolverAPI vSolver = m_Problem.get_Solver();
-	TESTAPI("rename Solver: ", vSolver.rename("Cplex"))
+	std::shared_ptr < CairnAPI::SolverAPI> vSolver = m_Problem.get_Solver();
+	TESTAPI("rename Solver: ", vSolver->rename("Cplex"))
 
-	CairnAPI::SimulationControlAPI vSimulationControl = m_Problem.get_SimulationControl();
-	TESTAPI("rename SimulationControl: ", vSimulationControl.rename("Cairn"))
+	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
+	TESTAPI("rename SimulationControl: ", vSimulationControl->rename("Cairn"))
 
-	CairnAPI::MilpComponentAPI electrolyzer = m_Problem.get_Component("electrolyzer");
-	TESTAPI("rename electrolyzer: ", electrolyzer.rename("ELY_PEM"))
+	std::shared_ptr<CairnAPI::MilpComponentAPI> electrolyzer = m_Problem.get_Component("electrolyzer");
+	TESTAPI("rename electrolyzer: ", electrolyzer->rename("ELY_PEM"))
 
-	CairnAPI::BusAPI electrical_bus = m_Problem.get_Bus("Electrical_Bus");
-	TESTAPI("rename Electrical_Bus: ", electrical_bus.rename("Elec_Bus"))
+	std::shared_ptr < CairnAPI::BusAPI> electrical_bus = m_Problem.get_Bus("Electrical_Bus");
+	TESTAPI("rename Electrical_Bus: ", electrical_bus->rename("Elec_Bus"))
 
-	CairnAPI::EnergyVectorAPI h2_vector = m_Problem.get_EnergyCarrier("H2Vector");
-	TESTAPI("rename H2Vector: ", h2_vector.rename("H2"))
+	std::shared_ptr < CairnAPI::EnergyVectorAPI> h2_vector = m_Problem.get_EnergyCarrier("H2Vector");
+	TESTAPI("rename H2Vector: ", h2_vector->rename("H2"))
 
 	//Execute a simulation then compare the result with the referance
 	TESTAPI("Read the Timeseries: " + TimeseriesFileName, m_Problem.add_TimeSeries(TimeseriesFileName))
 
 	TESTAPI("Run: ", m_Problem.run() )
 
-	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
+	TESTAPIBOOL("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
 
 	return noError;
 }

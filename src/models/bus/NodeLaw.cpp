@@ -58,12 +58,15 @@ void NodeLaw::computeModelContribution()
     addStrictConstraint();
 }
 
-void NodeLaw::finalizeModelData() {
-    const double extrapolationFactor  = mParentCompo->ExtrapolationFactor();
-    //Divide by UseExtrapolationFactor; assuming that the *BusValue are over one year
-    if (mUseExtrapolationFactor) {
-        mStrictConstraintBusValue = mStrictConstraintBusValue / extrapolationFactor;
-    }
+void NodeLaw::computeInitialData() 
+{
+    /* When UseExtrapolationFactor is true, then *BusValue is assumed to be over one year */
+
+    const double factor = mParentCompo->ExtrapolationFactor();
+
+    const double scale = mUseExtrapolationFactor ? (1.0 / factor) : 1.0;
+
+    mStrictConstraintBusValue *= scale;
 }
 
 void NodeLaw::addExpressionToBalance(MIPModeler::MIPExpression1D& aFluxExpression)

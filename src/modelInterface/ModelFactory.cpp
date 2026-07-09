@@ -51,6 +51,12 @@ void ModelFactory::deleteModel(const std::string& modelName, const std::string& 
 
 void ModelFactory::findModels(){
 	// Search for models
+#ifdef CAIRN_MODELSDEBUG    
+    lookupModels(CAIRN_MODELSDEBUG);        
+#ifdef CAIRN_PMODELSDEBUG    
+    lookupModels(CAIRN_PMODELSDEBUG);
+#endif
+#else
     if (!lookupModels(fs::current_path().string())) {
         if (const char* env_p = std::getenv("CAIRN_BIN"))
             lookupModels(env_p);
@@ -58,6 +64,7 @@ void ModelFactory::findModels(){
             spdlog::critical("environment variable CAIRN_BIN does not exist!");
         }
     }
+#endif    
 }
 
 static bool ends_with(std::string_view str, std::string_view suffix)
@@ -96,7 +103,7 @@ bool ModelFactory::lookupModels(const std::string& a_Path)
                     vModelName.replace(0, filterStart.size(), "");
                     modelDesc.setModelName(vModelName);
                     m_PlugIns[vModelName] = modelDesc;
-                    spdlog::info("Found model "  + vModelName + "(" + fs::absolute(vFile).string() + ")");
+                    spdlog::debug("Found model "  + vModelName + "(" + fs::absolute(vFile).string() + ")");
                     vRet = true;                    
                 }               
             }

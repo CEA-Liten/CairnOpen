@@ -276,6 +276,8 @@ def redact_files(perseegui_dir, directory_name0, dest_folder, private=""):
         print("dirnames: ", dirnames)
         print("filenames:", filenames)
         for file in filenames:
+            if file == "MyModel.h" or file == "MyModel.cpp":
+                continue
             if 'cpp' in file:
                 sub_directory = dirpath.replace(directory_name,"")
                 print("dirname i :",sub_directory)

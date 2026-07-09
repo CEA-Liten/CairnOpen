@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -17,6 +17,11 @@ using namespace std;
 
 int main()
 {
+	CairnAPI m_Cairn;
+	StudyCTest vTest("", "");
+	std::string vSolverType = vTest.TrySolver(m_Cairn, "Cplex");
+	if (vSolverType == "Highs") return noError; // No test if solver is Highs
+
 	string const StudyRoot = TEST_RESULTS + (std::string)"/removeComp/";
 	std::string vFileName = StudyRoot + (std::string)"/formation_cairn.json";
 	string const TimeseriesFileName = StudyRoot + (std::string)"/formation_cairn_dataseries.csv";
@@ -39,12 +44,12 @@ int main()
 
 	string componentToBeRemoved = "H2_Load";
 
-	CairnAPI m_Cairn;
+	
 	CairnAPI::OptimProblemAPI m_Problem;
 	TESTAPI("read study : " + vFileName, m_Problem = m_Cairn.read_Study(vFileName))
 
-	CairnAPI::MilpComponentAPI vDelComp = m_Problem.get_Component(componentToBeRemoved);
-	TESTAPI("remove component : " + componentToBeRemoved, m_Problem.remove_Component(vDelComp))
+	std::shared_ptr<CairnAPI::MilpComponentAPI> vDelComp = m_Problem.get_Component(componentToBeRemoved);
+	TESTAPI("remove component : " + componentToBeRemoved, m_Problem.remove_Component(*vDelComp))
 
 	t_list ListAfterRemove = m_Problem.get_Components();
 	t_list::iterator vIter = find(ListAfterRemove.begin(), ListAfterRemove.end(), componentToBeRemoved);
@@ -52,12 +57,12 @@ int main()
 	if (!found) {
 		CairnAPI::MilpComponentAPI vH2_Load(m_Problem, "H2_Load", "SourceLoad");
 
-		CairnAPI::EnergyVectorAPI vH2 = m_Problem.get_EnergyCarrier("H2");
+		std::shared_ptr < CairnAPI::EnergyVectorAPI> vH2 = m_Problem.get_EnergyCarrier("H2");
 
 		t_list vH2_Load_Ports = vH2_Load.get_DefaultPorts();
-		CairnAPI::MilpPortAPI vH2_Load_L0 = vH2_Load.get_Port("PortL0");
-		vH2_Load_L0.set_EnergyCarrier(vH2);
-		vH2_Load_L0.set_SettingValues({
+		std::shared_ptr < CairnAPI::MilpPortAPI> vH2_Load_L0 = vH2_Load.get_Port("PortL0");
+		vH2_Load_L0->set_EnergyCarrier(*vH2);
+		vH2_Load_L0->set_SettingValues({
 					{"Direction", "INPUT"},
 					{"Variable", "SourceLoadFlow"}
 		});
@@ -74,9 +79,9 @@ int main()
 			}
 		);
 
-		CairnAPI::BusAPI vBusH2 = m_Problem.get_Bus("H2_Bus");
+		std::shared_ptr < CairnAPI::BusAPI> vBusH2 = m_Problem.get_Bus("H2_Bus");
 		TESTAPI("Re - create link",
-			m_Problem.add(vBusH2, vH2_Load_L0)
+			m_Problem.add(*vBusH2, *vH2_Load_L0)
 		)
 
 		TESTAPI("Read the Timeseries from the file path : " + TimeseriesFileName,
@@ -89,7 +94,7 @@ int main()
 		)
 		vSolution.exportTimeSeries();
 
-		TESTAPI2("Compare results",
+		TESTAPIBOOL("Compare results",
 			TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 		)
 
@@ -116,7 +121,7 @@ int main()
 		)
 		vSolution2.exportTimeSeries();
 
-		TESTAPI2("Compare results 2",
+		TESTAPIBOOL("Compare results 2",
 			TestUtils::ComparaisonCsvFile(ResultFileNameAfterReAddingComponent, ReferenceResultFileName)
 		)
 	}

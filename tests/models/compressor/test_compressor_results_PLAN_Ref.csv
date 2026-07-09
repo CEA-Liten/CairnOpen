@@ -1,4 +1,4 @@
-Model;Indicator;Value;Unit;Alias
+﻿Model;Indicator;Value;Unit;Alias
 TecEcoAnalysis#1;NbYear;20;year;NbYear
 TecEcoAnalysis#1;Discount Rate;0.07;-;DiscountRate
 TecEcoAnalysis#1;Impact Discount Rate;0.07;-;ImpactDiscountRate
@@ -8,61 +8,62 @@ TecEcoAnalysis#1;Payback period offset;0;-;PaybackPeriodOffset
 TecEcoAnalysis#1;Discount Factor;11.3356;-;DiscountFactor
 TecEcoAnalysis#1;Impact Discount Factor;11.3356;-;ImpactDiscountFactor
 TecEcoAnalysis#1;Extrapolation Factor;365;-;ExtrapolationFactor
-TecEcoAnalysis#1;OBJECTIVE;23.8508;EUR;Objective
-TecEcoAnalysis#1;Net Present Value (Levelized Profit);-23.8508;EUR;NPV
+TecEcoAnalysis#1;OBJECTIVE;23.8534;EUR;Objective
+TecEcoAnalysis#1;Net Present Value (Levelized Profit);-23.8534;EUR;NPV
 TecEcoAnalysis#1;Total SubObjective (Type Add);0;EUR;SubObjective
-TecEcoAnalysis#1;Total CAPEX;21.4225;EUR;CAPEX
+TecEcoAnalysis#1;Total CAPEX;21.4248;EUR;CAPEX
 TecEcoAnalysis#1;Total PenaltyConstraintContribution;0;-;PenaltyPart
-TecEcoAnalysis#1;Total project discounted operation cost;2.42836;EUR;DiscountedNetOPEX
-TecEcoAnalysis#1;Total project discounted OPEX;2.42836;EUR;DiscountedPureOPEX
+TecEcoAnalysis#1;Total project discounted operation cost;2.42863;EUR;DiscountedNetOPEX
+TecEcoAnalysis#1;Total project discounted OPEX;2.42863;EUR;DiscountedPureOPEX
 TecEcoAnalysis#1;Total project replacement costs;0;EUR;DiscountedReplacement
 TecEcoAnalysis#1;Total project income;0;EUR;DiscountedSellPart
 TecEcoAnalysis#1;Total project buying costs;0;EUR;DiscountedBuyPart
-TecEcoAnalysis#1;Annual operation cost;0.214225;EUR;NetOPEX
-TecEcoAnalysis#1;Annual OPEX;0.214225;EUR;PureOPEX
+TecEcoAnalysis#1;Annual operation cost;0.214248;EUR;NetOPEX
+TecEcoAnalysis#1;Annual OPEX;0.214248;EUR;PureOPEX
 TecEcoAnalysis#1;Annual replacement costs;0;EUR;ReplacementPart
 TecEcoAnalysis#1;Annual income;0;EUR;SellPart
 TecEcoAnalysis#1;Annual buying costs;0;EUR;BuyPart
-Compressor;CAPEX;21.4225;EUR;CAPEX
+Compressor;CAPEX;21.4248;EUR;CAPEX
 Compressor;is installed;1;-;IsInstalled
-Compressor;Annual operation cost;0.214225;EUR;OPEX
-Compressor;Annual fixed OPEX;0.214225;EUR;PureOPEX
+Compressor;Annual operation cost;0.214248;EUR;OPEX
+Compressor;Annual fixed OPEX;0.214248;EUR;PureOPEX
 Compressor;Annual variable OPEX;0;EUR;VariableOPEX
 Compressor;Annual replacement costs;0;EUR;Replacement
-Compressor;Installed Size;2.14225;MW;Size
+Compressor;Installed Size;2.14248;MW;Size
+Compressor;Weight;1;-;Weight
 Compressor;Running time at power >0.;7300;h;RunningTime
 Compressor;Running time availability;0.833333;-;RunningTimeAvailable
-Compressor;Annual consumption of FluidH2Mass InMassFlowRate;-1.46e+07;kg;TotConsInMassFlowRate
-Compressor;Mean consumption of FluidH2Flowrate InMassFlowRate;-2000;kg/h;MeanConsInMassFlowRate
-Compressor;Load factor InMassFlowRate;777.999;-;UseRateInMassFlowRate
-Compressor;Annual production of FluidH2Mass OutMassFlowRate;1.46e+07;kg;TotProdOutMassFlowRate
-Compressor;Mean production of FluidH2Flowrate OutMassFlowRate;2000;kg/h;MeanProdOutMassFlowRate
-Compressor;Annual consumption of ElectricalEnergy UsedPower;-15638.4;MWh;TotConsUsedPower
-Compressor;Mean consumption of ElectricalPower UsedPower;-2.14225;MW;MeanConsUsedPower
+Compressor;Annual consumption of MaterialMass InMassFlowRate;-1.46e+07;kg;TotConsInMassFlowRate
+Compressor;Mean consumption of Flowrate InMassFlowRate;-2000;kg/h;MeanConsInMassFlowRate
+Compressor;Load factor InMassFlowRate;777.915;-;UseRateInMassFlowRate
+Compressor;Annual production of MaterialMass OutMassFlowRate;1.46e+07;kg;TotProdOutMassFlowRate
+Compressor;Mean production of Flowrate OutMassFlowRate;2000;kg/h;MeanProdOutMassFlowRate
+Compressor;Annual consumption of ElectricalEnergy UsedPower;-15640.1;MWh;TotConsUsedPower
+Compressor;Mean consumption of ElectricalPower UsedPower;-2.14248;MW;MeanConsUsedPower
 Compressor;Load factor UsedPower;0.833333;-;UseRateUsedPower
 Compressor;Max MassFlowRate;2000;kg/h;MaxMFR
 ElecGrid;is installed;1;-;IsInstalled
 ElecGrid;Annual operation cost;0;EUR;OPEX
 ElecGrid;Annual variable OPEX;0;EUR;VariableOPEX
 ElecGrid;Grid extraction time;7300;h;extractionTime
-ElecGrid;Grid extraction ElectricalEnergy GridFlow;15638.4;MWh;TotGridFlow
-ElecGrid;Levelized Grid extraction ElectricalEnergy GridFlow;177271;MWh;LvlzdTotGridFlow
-ElecGrid;Mean extraction ElectricalPower GridFlow;2.14225;MW;MeanGridFlow
+ElecGrid;Grid extraction ElectricalEnergy GridFlow;15640.1;MWh;TotGridFlow
+ElecGrid;Levelized Grid extraction ElectricalEnergy GridFlow;177290;MWh;LvlzdTotGridFlow
+ElecGrid;Mean extraction ElectricalPower GridFlow;2.14248;MW;MeanGridFlow
 H2Grid;is installed;1;-;IsInstalled
 H2Grid;Annual operation cost;0;EUR;OPEX
 H2Grid;Annual variable OPEX;0;EUR;VariableOPEX
 H2Grid;Grid extraction time;7300;h;extractionTime
-H2Grid;Grid extraction FluidH2Mass GridFlow;1.46e+07;kg;TotGridFlow
-H2Grid;Levelized Grid extraction FluidH2Mass GridFlow;1.655e+08;kg;LvlzdTotGridFlow
-H2Grid;Mean extraction FluidH2Flowrate GridFlow;2000;kg/h;MeanGridFlow
+H2Grid;Grid extraction MaterialMass GridFlow;1.46e+07;kg;TotGridFlow
+H2Grid;Levelized Grid extraction MaterialMass GridFlow;1.655e+08;kg;LvlzdTotGridFlow
+H2Grid;Mean extraction Flowrate GridFlow;2000;kg/h;MeanGridFlow
 H2Load;is installed;1;-;IsInstalled
 H2Load;Annual operation cost;0;EUR;OPEX
 H2Load;Annual variable OPEX;0;EUR;VariableOPEX
 H2Load;Component Weight;1;Unit;Weight
 H2Load;ImposedProfile load time;7300;h;ImposedProfileTime
-H2Load;ImposedProfile FluidH2Mass SourceLoadFlow;-1.46e+07;kg;TotImposedProfileSourceLoadFlow
-H2Load;Levelized ImposedProfile FluidH2Mass SourceLoadFlow;-1.655e+08;kg;LvlzdTotImposedProfileSourceLoadFlow
-H2Load;Mean FluidH2Flowrate SourceLoadFlow;-2000;kg/h;MeanImposedProfileSourceLoadFlow
+H2Load;ImposedProfile MaterialMass SourceLoadFlow;-1.46e+07;kg;TotImposedProfileSourceLoadFlow
+H2Load;Levelized ImposedProfile MaterialMass SourceLoadFlow;-1.655e+08;kg;LvlzdTotImposedProfileSourceLoadFlow
+H2Load;Mean Flowrate SourceLoadFlow;-2000;kg/h;MeanImposedProfileSourceLoadFlow
 NodeLaw#1;Integrated bus balance;0;MWh;BusBalance
 NodeLaw#2;Integrated bus balance;0;kg;BusBalance
 NodeLaw#3;Integrated bus balance;0;kg;BusBalance

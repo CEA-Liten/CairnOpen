@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "Utils.h"
-#include "UtilsJson.h"
+#include "StudyCTest.h"
+
 
 using namespace std;
 
@@ -13,37 +13,17 @@ using namespace std;
 
 int main()
 {
+	StudyCTest vTest("formation_cairn_coSim", "getsetpubsub");
 	CairnAPI m_Cairn;
-	CairnAPI::OptimProblemAPI m_Problem;
+	// Test with solver Cplex, if not exist test with solver Highs
+	int vRet = vTest.readStudyChangeSolver(m_Cairn, "Cplex");	
+	if (vRet != noError && vRet != errType) return vRet;
+	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.get_Study();
 
-	string const Study = "formation_cairn_coSim";
-	string const StudyRoot = TEST_RESULTS + (std::string)"/getsetpubsub/";
-
-
-
-	std::string vFileName = StudyRoot + Study + ".json";
-	string const ResultFileName = StudyRoot + Study + "_results_Results.csv";
-
-	if (fs::exists(StudyRoot)) {
-		fs::remove_all(StudyRoot);
-	}
-	if (!fs::exists(TEST_RESULTS)) {
-		fs::create_directory(TEST_RESULTS);
-	}
-	fs::create_directory(StudyRoot);
-	fs::copy_file(TEST_DATA + (std::string)"/" + Study + ".json", vFileName);
-
-	string const ReferenceResultFileName = TEST_DATA + (std::string)"/" + Study + (std::string)"_Results_Reference.csv";
-
-
-	TESTAPI("read study file from the file path: " + vFileName,
-		m_Problem = m_Cairn.read_Study(vFileName)
-	)
-	
 	t_list vSubVars = m_Problem.getSubscribedVariables();
-	TESTAPI2FALSE("getSubscribedVariables", vSubVars.size() > 0);
+	TESTAPIBOOL("getSubscribedVariables", vSubVars.size() > 0);
 
-	CairnAPI::MilpComponentAPI h2Tank = m_Problem.get_Component("H2_Tank");
+	std::shared_ptr <CairnAPI::MilpComponentAPI> h2Tank = m_Problem.get_Component("H2_Tank");
 	
 	//m_Problem.initialize();
 
@@ -81,17 +61,17 @@ int main()
 	)
 
 	t_list vPubVars = m_Problem.getPublishedVariables();
-	TESTAPI2FALSE("getPublishedVariables", vPubVars.size() > 0);
+	TESTAPIBOOL("getPublishedVariables", vPubVars.size() > 0);
 
 	vector<double> vValues = m_Problem.getPublishedVariableValue("Elec_Grid_Inject.GridPrice");
-	TESTAPI2FALSE("getPublishedVariableValue", vValues.size() > 0);
+	TESTAPIBOOL("getPublishedVariableValue", vValues.size() > 0);
 
 	TESTAPIFALSE("error, variable does not exist", m_Problem.getPublishedVariableValue("Nothing"));
 
 	vValues = m_Problem.getPublishedVariableValue("H2_Tank.Estock");
 
-	std::vector<double> histStock = h2Tank.getControlVarHistValues("Estock");
-	TESTAPI2FALSE("getControlVarHistValues size", histStock.size()== 22);
+	std::vector<double> histStock = h2Tank->getControlVarHistValues("Estock");
+	TESTAPIBOOL("getControlVarHistValues size", histStock.size()== 22);
 	TESTVALUE(histStock[0], 0.61);
 	TESTVALUE(histStock[9], 0.7)
 

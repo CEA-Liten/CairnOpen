@@ -15,8 +15,11 @@ class CAIRNCORESHARED_EXPORT SimulationControl: public CairnObject
 {
     
 public:
-    SimulationControl(CairnObject *ap_Parent, const std::string& aSimulationControlName="SimulationControl", const std::map<std::string, std::string>& aComponent={});
-    virtual ~SimulationControl();
+    SimulationControl(CairnObject *ap_Parent, 
+        const std::string& aSimulationControlName = "SimulationControl", 
+        const t_mapParamData& aComponent = {});
+    
+    ~SimulationControl();
 
     void jsonSaveGuiComponent(ojson &componentsArray) ;
 
@@ -48,10 +51,18 @@ public:
     std::vector<InputParam*> get_ParamInputParams();
     std::vector<InputParam*> get_OptionInputParams();
 
+    std::vector<std::string> getReadingModes() const {
+        return std::vector<std::string>{ "Average", "Interpolation" };
+    };
+        
+    std::vector<std::string> getRollingModes() const {
+        return std::vector<std::string>{ "Periodic", "Persistent", "Stop" };
+    };
+
 private:
     void declareCompoInputParam();
-    void setCompoInputParam(const std::map<std::string, std::string>& aComponent);
-    void doInit(const std::map<std::string, std::string>& aComponent);
+    void setCompoInputParam(const t_mapParamData& aComponent);
+    void doInit(const t_mapParamData& aComponent);
 
     GUIData* mGUIData;                  /** Pointer to GUI Data */
     InputParam* mCompoInputParam;      /** COMPONENT Input parameter List from XML File -> Options */

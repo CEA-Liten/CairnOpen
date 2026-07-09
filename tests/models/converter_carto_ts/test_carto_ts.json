@@ -110,7 +110,7 @@
 				"nodeName": "Electricity#1",
 				"nodeType": "Electricity",
 				"nodeTechnoType": "Electricity",
-				"componentPERSEEType": "EnergyVector",
+				"componentPERSEEType": "ElectricalCarrier",
 				"nodeComment": "",
 				"componentWidth": 40,
 				"x": 470,
@@ -119,6 +119,10 @@
 				"paramListJson": [
 					{
 						"key": "Potential",
+						"value": 230
+					},
+					{
+						"key": "Voltage",
 						"value": 230
 					}
 				],

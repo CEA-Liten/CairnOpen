@@ -1,4 +1,5 @@
-;Compressor
-;AddLosses
-withoutLosses;false
-withLosses;true
+;Compressor;Compressor
+;AddLosses;SetManualPowerConsumption
+withoutLosses;false;false
+withLosses;true;false
+withManualPowerConsumption;false;true

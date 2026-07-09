@@ -116,7 +116,7 @@ public:
    
     /* ------------------------------------------------------------------------------------------------------------------------------- */
 
-    int readParameters(const std::map<std::string, std::string>& aSettings);
+    int readParameters(const t_mapParamData& aSettings);
     void readVectorParameters (const std::string &aName, const std::string &aFileName, std::vector<std::string>& aPerfParamNames) ;
     
     int fillVectorData(const std::string& aName, const InputParam &aSrc, const uint& aOffset);
@@ -178,7 +178,7 @@ public:
     const t_Indicators& getIndicators() const { return mIndicators; };
 
 private:    
-    std::vector <std::string> mShowConfigList = {};  /** List of possible parameter set configurations */
+    std::vector <std::string> mShowConfigList = {"Base"};  /** List of possible parameter set configurations */
     t_mapParams mMapParams = {};
     t_Indicators mIndicators = {};
 };

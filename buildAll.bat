@@ -6,8 +6,10 @@ rem	 		 [<empty>=all|open]					: all=with private models, open=without
 rem			 [<empty>|wheel|wheel-noinstall]	: wheel=build and install wheel, wheel-noinstall=build but no install
 rem			 [<empty>|deps]			: deps=use dependencies installed in the directory D:/Tools/DepsCairn
 rem			 [<empty>|envCairn]		: envCairn=use env python enCairn<Number> else use defaultoption
-rem			 [<empty>|buildDoc]		: buildDoc=buil cairn documentation
+rem			 [<empty>|buildDoc|buildDevDoc]		: buildDoc=buil cairn documentation, buildDevDoc=build developper documentation
 rem		
+rem for example to build only developper documentation
+rem     buildAll nothing all nothing nothing nothing buildDevDoc
 rem ========================================================= 
 SET STARTTIME=%TIME%
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
@@ -100,5 +102,10 @@ if "%BUILD_DOCCAIRN%"=="buildDoc" (
 	"%CMAKEPATH%" -G "Ninja" --preset=buildDoc %OPTION_PRIVATE% -S . 
 )
 
+if "%BUILD_DOCCAIRN%"=="buildDevDoc" (		
+	"%CMAKEPATH%" -G "Ninja" --preset=buildDevDoc -S . 
+	"%CMAKEPATH%" --build --preset=buildDevDoc 
+
+)
 
 

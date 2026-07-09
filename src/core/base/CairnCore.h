@@ -44,6 +44,10 @@ public:
 
     void setStdAloneMode(const bool& abool);
 
+    void addTS(const std::wstring& a_fileName);
+    void addTS(const t_dict& a_TS);
+    bool checkTS(string& a_ErrMsg);
+    void importTS(const int& iShift);
     void importTS(const std::vector<std::string>& aTSfileList, const int& iShift);
     void importTS(const std::vector<std::wstring>&aTSfileList, const int& iShift);
 
@@ -81,8 +85,7 @@ public:
     OptimProblem* getProblem() {return mProblem ;}
     MilpComponent* getComponent(const std::string & aName) {return mProblem->findChild<MilpComponent>(aName); }
        
-    void exportTotalTimeResolutionAllCycles(const std::string& aFileName, const std::string& encoding = "UTF-8");
-    int exportResults(int aNsol, bool isRollingHorizon, int istat, const std::string& encoding = "UTF-8");
+    int  exportResults( int aNsol, bool isRollingHorizon, int istat, const std::string& encoding = "UTF-8");
     void exportAnalysis(int aNsol, bool isRollingHorizon, const std::string& encoding = "UTF-8");
 
     void setStudyName(const std::string& aStudyName, const std::string& aResultFile="");
@@ -117,6 +120,8 @@ public:
 
     int getNumCycle() { return mIter; }
 
+    void loadDefUnits() const;
+
 private:
     OptimProblem* mProblem ;
     MilpData *mMilpData ;
@@ -128,8 +133,6 @@ private:
 
     std::string mOptimLogFile; 
     StudyPathManager mStudy;
-    
-    std::vector<double> mSolverRunningTimeAllCycles;
 };
 
 #endif // CAIRNCORE_H
