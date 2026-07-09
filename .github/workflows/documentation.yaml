@@ -16,7 +16,7 @@ jobs:
 
     env:
       GITHUB_URL: https://github.com/CEA-Liten/CairnOpen
-      VERSION: 5.4.0
+      VERSION: 6.0.0
     steps:
       - uses: actions/checkout@v4
         with:
