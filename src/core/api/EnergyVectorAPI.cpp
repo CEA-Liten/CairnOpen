@@ -55,7 +55,14 @@ void CairnAPI::EnergyVectorAPI::set_SettingValue(const std::string& a_SettingNam
 			EnergyVector* pEnergyVector = (EnergyVector*)m_Object;	
 			const std::string value = CairnAPIUtils::getParamValue(a_SettingValue);
 			bool vOk = pEnergyVector->updateCompoParamMap(a_SettingName, "value", value);
-			vRet = (vOk) ? noError : errParam;
+			if (vOk) {
+				if (a_SettingName == "FluxUnit" || CairnUtils::contains(a_SettingName, "Unit"))
+					pEnergyVector->initEnergyVector();
+				vRet = noError;
+			}
+			else {
+				vRet = errParam;
+			}
 		}
 		catch (const std::exception&) {
 			vRet = errParam;

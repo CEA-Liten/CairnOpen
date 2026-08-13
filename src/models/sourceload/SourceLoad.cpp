@@ -101,16 +101,20 @@ void SourceLoad::computeInitialData()
 
 void SourceLoad::computeModelContribution()
 {
+    const uint64_t horizon = mHorizon;
+    const uint64_t milpNpdtU = static_cast<uint64_t>(mMilpNpdt);
+    const double   maxFluxAbs = fabs(mMaxFlux);
+
     if (mUseControlledFlux)
     {
         // Imposed flux is set by external expression via node equality constraint
-        addVariable(mVarControlledFlux, "SoCtrlFlux", 0., fabs(mMaxFlux));
+        addVariable(mVarControlledFlux, "SoCtrlFlux", 0., maxFluxAbs);
 
-        for (uint64_t t = 0; t < mHorizon; ++t)
+        for (uint64_t t = 0; t < horizon; ++t)
         {
             mExpImposedFlux[t] += mVarControlledFlux(t);
             // Muting last time steps if pre-computed seasonalCosts model
-            if (mSeasonalCosts && t >= (uint64_t)mMilpNpdt) {
+            if (mSeasonalCosts && t >= milpNpdtU) {
                 addConstraint(mExpImposedFlux[t] == 0, "seasonalMute", t);
             }
         }
@@ -121,13 +125,13 @@ void SourceLoad::computeModelContribution()
 
         addVariable(mVarFluxWeight, "SoWghtFlux", 0., 1.e6);
 
-        for (uint64_t t = 0; t < mHorizon; ++t)
+        for (uint64_t t = 0; t < horizon; ++t)
         {
             mExpFluxWeight[t] += mVarFluxWeight(t);
 
             mExpImposedFlux[t] += (mExpFluxWeight[t] + mStartStopProfile[t]) * mImposedFlux[t];
             // Muting last time steps if pre-computed seasonalCosts model
-            if (mSeasonalCosts && t >= (uint64_t)mMilpNpdt) {
+            if (mSeasonalCosts && t >= milpNpdtU) {
                 addConstraint(mExpImposedFlux[t] == 0, "seasonalMute", t);
             }
         }
@@ -135,18 +139,19 @@ void SourceLoad::computeModelContribution()
     else
     {
         // Imposed flux is imposed by time series, possibly weighted by optimal Size
+        const uint64_t forecastStartT = static_cast<uint64_t>(mTimeStepBeginForecast);
 
-        for (uint64_t t = 0; t < mHorizon; ++t)
+        for (uint64_t t = 0; t < horizon; ++t)
         {
             // Muting last time steps if pre-computed seasonalCosts model
-            if (mSeasonalCosts && t >= (uint64_t)mMilpNpdt)
+            if (mSeasonalCosts && t >= milpNpdtU)
             {
                 // Imposed flux is set to zero for seasonnal cost model.
                 mExpImposedFlux[t] += 0. * mImposedFlux[t];
             }
             else
             {
-                if (t >= mTimeStepBeginForecast && mSeasonalPrevisions)
+                if (t >= forecastStartT && mSeasonalPrevisions)
                 {
                     cInfo() << "SourceLoad, mTimeStepBeginForecast =" << mTimeStepBeginForecast;
                     // Imposed flux is imposed by Seasonnal flux time series, possibly weighted by optimal Size
@@ -175,26 +180,17 @@ void SourceLoad::computeModelContribution()
         coeffout = coeffin - 1.;   // Pout = Pin - ImposedFlux
     }
 
-    for (uint64_t t = 0; t < mHorizon; ++t)
+    for (uint64_t t = 0; t < horizon; ++t)
     {
         mExpPowerOut[t] += coeffout * mExpImposedFlux[t];
         mExpPowerIn[t] += coeffin * mExpImposedFlux[t];
-    }
 
-    for (uint64_t t = 0; t < mHorizon; ++t)
-    {
         if (mComputeOptimalPrice) {
             mExpCost[t] += Sens() * mExpImposedFlux[t];
         }
         else {
             mExpCost[t] += mEnergyPrice[t] * mExpImposedFlux[t];
         }
-    }
-    // 1 constraints: 1 for maximum value, the other one if power Imposed (constant or profile)
-
-    for (uint64_t t = 0; t < mHorizon; ++t)
-    {
-        addConstraint(mExpFlux[t] <= fabs(mMaxFlux), "MSFx", t);
     }
 
     if (mAddStaticCompensation) {
@@ -209,8 +205,11 @@ void SourceLoad::computeModelContribution()
         addPeakShaving();
     }
 
-    for (uint64_t t = 0; t < mHorizon; ++t)
+    for (uint64_t t = 0; t < horizon; ++t)
     {
+        // 1 constraints: 1 for maximum value, the other one if power Imposed (constant or profile)
+        addConstraint(mExpFlux[t] <= maxFluxAbs, "MSFx", t);
+
         mExpFlux[t] = mExpImposedFlux[t];
         if (mAddSheddingDetailed) {
             mExpFlux[t] -= mExpPowerShedding[t];
@@ -434,6 +433,6 @@ void SourceLoad::addPeakShaving()
 
 void SourceLoad::computeAllIndicators(const double* optSol)
 {
-    SourceLoadSubModel::computeDefaultIndicators(optSol);
+    SourceLoadSubModel::computeAllIndicators(optSol);
 }
 

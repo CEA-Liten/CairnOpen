@@ -41,73 +41,106 @@ void CairnAPI::TecEcoAnalysisAPI::set_SettingValue(const std::string& a_SettingN
 // Set the values of several parameters
 void CairnAPI::TecEcoAnalysisAPI::set_SettingValues(const t_dict& a_Settings)
 {
-	ECodeError vErr = noCairn;
-	std::string vErrMsg = "";
-	if (m_Object) {
-		TecEcoCompo* pTecEco = (TecEcoCompo*)m_Object;
-		if (pTecEco) {
-			OptimProblem* pProblem = (OptimProblem*)pTecEco->parent();
-			if (pProblem) {
-				TecEcoAnalysis* vTecEcoAnalysis = (TecEcoAnalysis*)pTecEco->compoModel();
-				//save the previous value of "ConsideredEnvironmentalImpacts"
-				std::string preSelectedEnvImpacts;
-				vTecEcoAnalysis->getConfigParam()->getParameterValue("ConsideredEnvironmentalImpacts", preSelectedEnvImpacts, EParamType::eStringList);
-
-				//split between configuration and non-configuration parameters
-				std::vector<std::string> configParamNames;
-				vTecEcoAnalysis->getConfigParam()->getParameters(configParamNames);
-				t_dict config_settings = {};
-				t_dict settings = a_Settings;
-				for (auto& vParam : a_Settings) {
-					if (CairnUtils::contains(configParamNames, vParam.first)) {
-						config_settings[vParam.first] = vParam.second;
-						settings.erase(vParam.first);
-					}
-				}
-
-				//set configuration parameters
-				bool vOk1 = CairnAPIUtils::setParameters({ vTecEcoAnalysis->getConfigParam() }, config_settings);
-				if (vOk1 && config_settings.find("ConsideredEnvironmentalImpacts") != config_settings.end()) {
-					//re-declare EnvImpact parameters of TecEcoAnalysis
-					vTecEcoAnalysis->declareEnvImpactParam();
-				}
-
-				//set non-Configuration parameters
-				bool vOk2 = CairnAPIUtils::setParameters({
-					vTecEcoAnalysis->getCompoInputParam(),
-					vTecEcoAnalysis->getCompoInputSettings(),
-					vTecEcoAnalysis->getCompoEnvImpactsParam(),
-					pTecEco->getGUIData()->getGuiInputParam() },
-					settings);
-
-				if (vOk1 && vOk2) {
-					cDebug() << "initialize the Optim Problem From Tec Eco Analysis";
-					pProblem->computeExtrapolationFactor();
-					//
-					std::string selectedEnvImpacts;
-					vTecEcoAnalysis->getConfigParam()->getParameterValue("ConsideredEnvironmentalImpacts", selectedEnvImpacts, EParamType::eStringList);
-					if (selectedEnvImpacts != preSelectedEnvImpacts) {
-						//Reinitialize added/created componenets
-						try {
-							pProblem->redeclareEnvImpactParameters();
-							TecEcoCompo* pTecEco = dynamic_cast<TecEcoCompo*> (vTecEcoAnalysis->parent());
-							if (pTecEco) {
-								pTecEco->declareIOVariables();
-								pTecEco->declareIndicators();
-							}
-						}
-						catch (Cairn_Exception& error)
-						{
-							vOk1 = false;
-						}
-					}
-				}
-				vErr = (vOk1 && vOk2) ? noError : errParam;
-				vErrMsg = (vOk1 && vOk2) ? "" : "parameter";
-			}
-		}
+	if (!m_Object) {
+		CairnAPIUtils::setError(errDefault, "No TecEco object available");
+		return;
 	}
-	CairnAPIUtils::setError(vErr, vErrMsg);
+
+	// resolve TecEcoComponent 
+	auto* tecEcoCompo = dynamic_cast<TecEcoCompo*>(m_Object);
+	if (!tecEcoCompo) {
+		CairnAPIUtils::setError(errDefault, "set_SettingValues: m_Object is not a TecEcoCompo");
+		return;
+	}
+
+	auto* problem = dynamic_cast<OptimProblem*>(tecEcoCompo->parent());
+	if (!problem) {
+		CairnAPIUtils::setError(errDefault, "set_SettingValues: TecEcoCompo has no OptimProblem parent");
+		return;
+	}
+
+	auto* model = dynamic_cast<TecEcoAnalysis*>(tecEcoCompo->compoModel());
+	if (!model) {
+		CairnAPIUtils::setError(errDefault, "set_SettingValues: TecEcoCompo has no TecEcoAnalysis model");
+		return;
+	}
+
+	// Save current env impacts selection before applying settings
+	std::string prevEnvImpacts;
+	model->getConfigParam()->getParameterValue("ConsideredEnvironmentalImpacts", prevEnvImpacts, EParamType::eStringList);
+
+	// Split settings into config vs non-config
+	std::vector<std::string> configNames;
+	model->getConfigParam()->getParameters(configNames);
+
+	t_dict configSettings;    /** Parameters belonging to the config InputParam */
+	t_dict nonConfigSettings; /** All other parameters */
+	for (const auto& [name, value] : a_Settings)
+	{
+		if (CairnUtils::contains(configNames, name))
+			configSettings[name] = value;
+		else
+			nonConfigSettings[name] = value;
+	}
+
+	// Apply config parameters
+	const bool configOk = CairnAPIUtils::setParameters(
+		{ model->getConfigParam() }, configSettings);
+
+	if (configOk && configSettings.count("ConsideredEnvironmentalImpacts"))
+		model->declareEnvImpactParam();
+
+	// Apply non-config parameters
+	const bool nonConfigOk = CairnAPIUtils::setParameters(
+		{
+			model->getCompoInputParam(),
+			model->getCompoInputSettings(),
+			model->getCompoEnvImpactsParam(),
+			tecEcoCompo->getGUIData()->getGuiInputParam()
+		},
+		nonConfigSettings);
+
+	if (!configOk || !nonConfigOk) {
+		CairnAPIUtils::setError(errParam,
+			std::string(!configOk ? "Failed to set config parameters" : "")
+			+ std::string(!nonConfigOk ? " Failed to set non-config parameters" : ""));
+		return;
+	}
+
+	cDebug() << "set_SettingValues: computing extrapolation factor";
+	problem->computeExtrapolationFactor();
+
+	// Redeclare env impact parameters if the selection changed
+	std::string newEnvImpacts;
+	model->getConfigParam()->getParameterValue(
+		"ConsideredEnvironmentalImpacts", newEnvImpacts, EParamType::eStringList);
+
+	if (newEnvImpacts == prevEnvImpacts)
+	{
+		CairnAPIUtils::setError(noError, "");
+		return;
+	}
+
+	cDebug() << "ConsideredEnvironmentalImpacts changed — redeclaring env impact parameters";
+
+	try
+	{
+		problem->redeclareEnvImpactParameters();
+		tecEcoCompo->declareIOVariables();
+		tecEcoCompo->declareIndicators();
+		CairnAPIUtils::setError(noError, "");
+	}
+	catch (const Cairn_Exception& e)
+	{
+		cError() << "set_SettingValues: failed to redeclare env impact parameters:"
+			<< e.message();
+		CairnAPIUtils::setError(errParam, "Failed to redeclare env impact parameters: " + e.message());
+	}
+	catch (const std::exception& e)
+	{
+		cError() << "set_SettingValues: unexpected exception:" << e.what();
+		CairnAPIUtils::setError(errParam, std::string("Unexpected error: ") + e.what());
+	}
 }
 
 // -- Ports ---

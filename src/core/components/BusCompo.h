@@ -25,9 +25,6 @@ public:
 
     virtual ~BusCompo();
 
-    int checkPorts() override;
-    int checkConnections();
-
     void defineMainCarrier() {
         /*
         * Do nothing. The main carrier of a Bus component is set in OptimProblem::createPortsAndLinksToBus
@@ -60,7 +57,7 @@ public:
     /** Save as json file */
     int NbPorts(const std::string& aDirection = "");
     std::vector<MilpPort*> listSidePorts(const std::string& aside);
-    void jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide) override;
+    void jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide, int* busLinkedPortId = nullptr) override;
 
 protected:  
     // Iterate on LinkedPorts and obtain their parents?!

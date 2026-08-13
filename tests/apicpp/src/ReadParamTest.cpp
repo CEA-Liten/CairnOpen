@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -46,7 +46,7 @@ int main()
 
 	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
 	CairnAPI::ParamAPI vELY_PEM_P1 = vELY_PEM->get_Setting("Capex");
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM_P1.get_Value(), 480000.0, eDouble)
 	)
 
@@ -61,7 +61,7 @@ int main()
 		vSolution = m_Problem.run()
 	)
 
-	TESTAPI2("Compare results",
+	TESTAPIBOOL("Compare results",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 		TESTAPI("Export time series", vSolution.exportTimeSeries())
@@ -71,10 +71,10 @@ int main()
 	CairnAPI::ParamAPI vSimulationControl_P1 = vSimulationControl->get_Setting("FutureSize");
 	
 	vSimulationControl_P1.set_Value(156);
-	TESTAPI2("Verify the value of SimulationControl",
+	TESTAPIBOOL("Verify the value of SimulationControl",
 		TestUtils::compare_scalar(vSimulationControl->get_SettingValue("FutureSize"), 156, eInt)
 	)
-	TESTAPI2("Verify the value of SimulationControl",
+	TESTAPIBOOL("Verify the value of SimulationControl",
 		TestUtils::compare_scalar(vSimulationControl_P1.get_Value(), 156, eInt)
 	)
 	
@@ -82,7 +82,7 @@ int main()
 		m_Problem.run()
 	)
 
-	TESTAPI2("Compare results for run 2",
+	TESTAPIBOOL("Compare results for run 2",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName_2)
 	)
 	return noError;

@@ -2,53 +2,56 @@
 #include "MilpPort.h"
 #include "MaterialCarrier.h"
 #include "CairnUtils.h"
+#include "SubModelLoopEngine.h"
+
+using namespace SubModelComputation;
 using namespace CairnUtils;
 
-SubModel::SubModel(CairnObject* aParent) :   
-    CairnObject(aParent),
-    mException(Cairn_Exception()),
-    mModel(nullptr),
-    mParentCompo(nullptr),
-    mMainCarrier(nullptr),
-    mAllocate(true),
-    mComputeSizeMax(false),
-    mAddStateVariable(false),
-    mAddStartUpShutDownVariable(false),
-    mWeight(1.), //needed for models that doesn't have parameter "Weight" such as Ramp
-    mLPWeightOptimization(false),
-    mLPModelOnly(false),
-    mMaxValue(MIP_INFINITY),
-    mMinValue(-MIP_INFINITY),
-    mVariablePortNumber(false),
-    mNbInputPorts(1),
-    mNbOutputPorts(1),
-    mNbInputFlux(1),
-    mNbOutputFlux(1),
-    mActivateConstraintsBetweenTP(false),
-    mCondenseVariablesOnTP(false),
-    mCondenseBinariesOnly(false),
-    mTypicalPeriods(false),
-    mAbsInitialState(0),
-    mHistVariableCostsDiscounted(0.),
-    m_OptimalSizeUnit("OptimalSizeUnit"),
-    p_OptimalSizeUnit(nullptr),
-    mSubObjectiveExpression("N/A"),
-    mPenaltyConstraintExpression("N/A"),
-    mOpexExpression("N/A"),
-    mOptimalSizeExpression(""),
-    mHorizon(0),
-    mInputParam(nullptr),
-    mInputPerfParam(nullptr),
-    mInputTimeSeries(nullptr),
-    mInputIndicators(nullptr),
-    mInputEnvImpacts(nullptr),
-    mInputPortImpacts(nullptr),
-    mTSInputPortImpacts(nullptr),
-    mLabelMap({})
+// --- Construction & identity ------------------------------------------------
+
+SubModel::SubModel(CairnObject* aParent)
+   : CairnObject(aParent, aParent ? aParent->objectName() : "_SubModel"), 
+     mModel(nullptr),
+     mMainCarrier(nullptr),
+     mAllocate(true),
+     mComputeSizeMax(false),
+     mAddStateVariable(false),
+     mAddStartUpShutDownVariable(false),
+     mWeight(1.),
+     mLPWeightOptimization(false),
+     mLPModelOnly(false),
+     mMaxValue(MIP_INFINITY),
+     mMinValue(-MIP_INFINITY),
+     mVariablePortNumber(false),
+     mNbInputPorts(1),
+     mNbOutputPorts(1),
+     mNbInputFlux(1),
+     mNbOutputFlux(1),
+     mActivateConstraintsBetweenTP(false),
+     mCondenseVariablesOnTP(false),
+     mCondenseBinariesOnly(false),
+     mTypicalPeriods(0),
+     mAbsInitialState(0),
+     mHistVariableCostsDiscounted(0.),
+     m_OptimalSizeUnit("OptimalSizeUnit"),
+     p_OptimalSizeUnit(nullptr),
+     mSubObjectiveExpression("N/A"),
+     mPenaltyConstraintExpression("N/A"),
+     mOpexExpression("N/A"),
+     mOptimalSizeExpression(""),
+     mHorizon(0),
+     mInputConfigParam(nullptr),
+     mInputParam(nullptr),
+     mInputPerfParam(nullptr),
+     mInputTimeSeries(nullptr),
+     mInputIndicators(nullptr),
+     mInputConfigEnvImpacts(nullptr),
+     mInputEnvImpacts(nullptr),
+     mInputConfigPortImpacts(nullptr),
+     mInputPortImpacts(nullptr),
+     mTSInputPortImpacts(nullptr)
 {
-    std:string name = "_SubModel"; //case of AgeingRunningHours
-    if (aParent) name = aParent->objectName();
-    declareInputParams(name);
+    declareInputParams(this->objectName());
 }
 
 SubModel::~SubModel()
@@ -59,125 +62,231 @@ SubModel::~SubModel()
     deleteEnvImpacts();
 }
 
-int SubModel::checkPorts() 
+std::string SubModel::ModelClassName() const
 {
-    // Check that all defualt ports has been created
-    //for (auto [portId, _] : mDefaultPorts) {
-    //    const auto* port = getPort(portId);
-    //    if (!port) {
-    //        cCritical() << "Default port of " + Name() + " is null";
-    //        return -1;
-    //    }
-    //}
+    const auto* compo = parentComponent();
+    return compo ? compo->ModelClassName() : "";
+}
 
-    // 1- Check that Variable exists as SubModel expression (0D or 1D)
-    // 2- Warning if Use type has not been defined
-    // 3- Check that units are consistent between Port (inherited from Bus) and SubModel expression
-    for (MilpPort* port : PortList()) {
-        if (checkUnit(port) < 0) {
-            cCritical() << ("Error checkUnit at port " + Name() + "." + port->Name());
+// --- Core virtual interface -------------------------------------------------
+
+void SubModel::setTimeData()
+{
+    mMilpNpdt = (mTimeStepBeginLP > 0) ? mTimeStepBeginLP : mHorizon;
+
+    if (mTimeStepBeginLP > 0 && mUseTypicalPeriods)
+        cError() << "Typical periods models are not compatible with variable time step models";
+
+    // Reset historical state vectors
+    const std::size_t histSize = mHorizon + mNpdtPast;
+    for (auto* hist : { &mHistState, &mHistStartUp, &mHistShutDown })
+    {
+        hist->clear();
+        hist->resize(histSize);
+    }
+
+    mOptimalSizeAllCycles.clear();
+}
+
+void SubModel::setTypicalPeriods(
+    const bool& useTypicalPeriods,
+    const uint& aTypicalPeriods,
+    const uint& aNDtTypicalPeriods,
+    const std::vector<int>& aVectTypicalPeriods)
+{
+    mUseTypicalPeriods   = useTypicalPeriods;
+    mTypicalPeriods      = aTypicalPeriods;
+    mNDtTypicalPeriods   = aNDtTypicalPeriods;
+    mVectTypicalPeriods  = aVectTypicalPeriods;
+
+    if (mUseTypicalPeriods && mCondenseVariablesOnTP)
+    {
+        mCondensedNpdt = mTypicalPeriods * mNDtTypicalPeriods;
+    }
+    else
+    {
+        for (uint i = 0; i < mTimeSteps.size(); ++i)
+            mVectTypicalPeriods[i] = i;
+        mCondensedNpdt = static_cast<uint>(mTimeSteps.size());
+    }
+}
+
+bool SubModel::isSizeOptimized()
+{
+    if (mOptimalSizeExpression.empty())
+        return false;
+
+    const ModelParam* pParam = getInputParam()->getParameter(mOptimalSizeExpression);
+    if (!pParam)
+        return false;
+
+    double vValue = 0.;
+    return pParam->getNumValue(vValue) && vValue <= 0.; 
+}
+
+bool SubModel::isPriceOptimized()
+{
+    return false;
+}
+
+uint64_t SubModel::exprMilpHorizon()
+{
+    /** Horizon for expressions: never condensed for typical periods */
+    return mUseTypicalPeriods ? static_cast<uint64_t>(mHorizon) : mMilpNpdt;
+}
+
+uint64_t SubModel::varMilpHorizon()
+{
+    /** Horizon for variables: may be condensed for typical periods */
+    return (mUseTypicalPeriods || mUseVariableTimeSteps) ? mCondensedNpdt : mMilpNpdt;
+}
+
+void SubModel::buildControlVariables()
+{
+    for (auto& [key, var] : mListControlIO) 
+        var->ComputeValue(mNpdtPast);
+}
+
+// --- Component identity, parent, ports & topology ---------------------------
+
+MilpComponent* SubModel::parentComponent() const
+{
+    auto* component = dynamic_cast<MilpComponent*>(this->parent());
+    if (!component)
+        throw Cairn_Exception("Model " + Name() + " must have a defined MilpComponent parent", -1);
+    return component;
+}
+
+int SubModel::checkPortCount()
+{
+    if (!parentComponent()->isBus() && PortList().empty())
+    {
+        cError() << Name() << ": model must have at least one port";
+        return -1;
+    }
+    return 0;
+}
+
+int SubModel::checkPorts()
+{
+    if (checkPortCount() < 0)
+        return -1;
+
+    for (const MilpPort* port : PortList())
+    {
+        if (!port) 
+        {
+            cError() << Name() << ": encountered a null port in PortList()";
             return -1;
+        }
+
+        const std::string pID         = port->ID();
+        const std::string pName       = port->Name();
+        const std::string varName     = port->Variable();
+        const std::string direction   = port->Direction();
+        const std::string fluxUnit    = port->FluxUnit();
+        const std::string storageUnit = port->StorageUnit();
+        const std::string exprUnit    = ExpUnit(varName);
+        const bool        checkUnit   = CairnUtils::toUpper(port->VarCheckUnit()) == "YES";
+
+        if (!port->getCarrier()) 
+        {
+            cError() << Name() << ": port [" << pID << "] '" << pName
+                     << "' has no carrier defined (variable = '" << varName << "')";
+            return -1;
+        }
+
+        if (direction != KCONS() && direction != KPROD() && direction != KDATA()) 
+        {
+            cError() << Name() << ": invalid direction for port [" << pID << "] '" << pName
+                     << "' — value = '" << direction << "'";
+            cInfo() << "Expected directions: " << KCONS() << ", " << KPROD() << ", " << KDATA();
+            return -1;
+        }
+
+        if (checkVariable(varName) < 0)
+        {
+            cError() << Name() << ": port [" << pID << "] '" << pName
+                     << "' references unknown variable '" << varName << "'";
+            dumpIOExpressions();
+            return -1;
+        }
+
+        if (checkUnit)
+        {
+            const bool unitOk = CairnUtils::contains(exprUnit, fluxUnit)
+                             || CairnUtils::contains(exprUnit, storageUnit);
+            if (!unitOk)
+            {
+                cError() << Name() << ": unit mismatch for port [" << pID << "] '" << pName << "'"
+                    << "Variable: '" << varName << "'"
+                    << "Variable unit (model): '" << exprUnit << "'"
+                    << "Expected unit (carrier): '" << fluxUnit << "' or '" << storageUnit << "'";
+                dumpIOExpressions();
+                return -1;
+            }
         }
     }
 
     return 0;
 }
 
-int SubModel::checkConsistency() 
+MilpPort* SubModel::getPort(const std::string& aPortId)
 {
-    return checkPorts();
+    const auto it = std::find_if(mListPort.cbegin(), mListPort.cend(),
+        [&aPortId](const MilpPort* p) { return p->ID() == aPortId; });
+    return (it != mListPort.cend()) ? *it : nullptr;
 }
 
-std::string SubModel::ModelClassName() const {
-    return mParentCompo ? mParentCompo->ModelClassName() : "";
-}
-
-void SubModel::deleteInputParams()
+MilpPort* SubModel::getPortByType(const std::string& aType, const std::string& aDirection)
 {
-    delete mInputParam;
-    delete mInputTimeSeries;
-    delete mInputEnvImpacts;
-    delete mInputPortImpacts;
-    delete mTSInputPortImpacts;
-    delete mInputPerfParam;
-    delete mInputIndicators;
-
-    // Avoid dangling pointer
-    mInputParam = nullptr;
-    mInputTimeSeries = nullptr;
-    mInputEnvImpacts = nullptr;
-    mInputPortImpacts = nullptr;
-    mTSInputPortImpacts = nullptr;
-    mInputPerfParam = nullptr;
-    mInputIndicators = nullptr;
-}
-
-
-void SubModel::removeImpactExpressionName(const std::string& impactName) {
-    CairnUtils::removeMatchingSubstring(mEnvImpactCostExpression, impactName);
-    CairnUtils::removeMatchingSubstring(mEnvImpactMassExpression, impactName);
-    CairnUtils::removeMatchingSubstring(mEnvGreyImpactCostExpression, impactName);
-    CairnUtils::removeMatchingSubstring(mEmbodiedMassExpression, impactName);
-}
-
-void SubModel::deleteEnvImpacts()
-{
-    for (EnvImpact* impact : mEnvImpacts) {
-        if (impact) {
-            removeImpactExpressionName(impact->Name());
-            removeEnvImpactIOs(impact->Name());
-            /* remove related Exps from mExpressions0D and mExpressions1D? (currently there is no any!) */
-            delete impact;
-        }
+    for (MilpPort* port : mListPort)
+    {
+        if (port->getCarrier()->Type() == aType
+            && (port->Direction() == aDirection || aDirection == "ANY"))
+            return port;
     }
-    mEnvImpacts.clear();
-}
-
-void SubModel::declareInputParams(const std::string& name)
-{
-    deleteInputParams();
-
-    // Param
-    mInputParam = new InputParam(this, "SubModelbaseInputParam" + name);
-    // Carto
-    mInputPerfParam = new InputParam(this, "SubModelbaseInputPerfParam" + name);
-    // TimeSeries
-    mInputTimeSeries = new InputParam(this, "SubModelbaseInputDataTS" + name);
-
-    // Impacts
-    deleteEnvImpacts(); 
-    mInputEnvImpacts = new InputParam(this, "SubModelbaseInputEnvImpactsParam" + name);
-    mInputPortImpacts = new InputParam(this, "SubModelbaseInputPortImpactsParam" + name);
-    mTSInputPortImpacts = new InputParam(this, "SubModelbaseTSInputPortImpactsParam" + name);
-
-    // Indicateurs
-    resetIndicators();
-    mInputIndicators = new InputParam(this, "SubModelbaseInputIndicators" + name);
-}
-
-void SubModel::resetIndicators()
-{
-    if (mInputIndicators) {
-        //reset contribution values
-        const InputParam::t_Indicators& vIndicators = mInputIndicators->getIndicators();
-        for (auto& vIndicator : vIndicators) {
-            vIndicator->resetValue();
-        }
-        delete(mInputIndicators);
-    }
-
-    resetHistStoredValues();
-}
-
-const std::string* SubModel::pCurrency() const {
-    return mParentCompo->pCurrency(); 
-}
-
-const std::string* SubModel::pQuantity(const std::string& a_Quantity) const {
-    if (mMainCarrier != nullptr) {        
-        return mMainCarrier->pQuantity(a_Quantity);
-    }   
     return nullptr;
+}
+
+void SubModel::removePort(MilpPort* port)
+{
+    if (!port)
+        return;
+
+    const auto it = std::find(mListPort.begin(), mListPort.end(), port);
+    if (it == mListPort.end())
+        throw Cairn_Exception("Cannot delete port '" + port->Name() + "' — not found in " + Name(), -1);
+
+    mListPort.erase(it);
+    delete port;
+}
+
+void SubModel::removeBusPort(MilpPort* port)
+{
+    if (!port)
+        return;
+
+    const auto it = std::find(mListPort.begin(), mListPort.end(), port);
+    if (it != mListPort.end())
+        mListPort.erase(it);
+}
+
+bool SubModel::isPortIndicatorNameUnique(const MilpPort* targetPort)
+{
+    if (!targetPort)
+        return true;
+
+    const auto& tdir = targetPort->Direction();
+    const auto& tvar = targetPort->Variable();
+
+    return std::none_of(mListPort.cbegin(), mListPort.cend(),
+        [&](const MilpPort* port)
+        {
+            return port != targetPort
+                && port->Direction() == tdir
+                && port->Variable()  == tvar;
+        });
 }
 
 std::map<std::string, std::string> SubModel::getDefaultPortData(const std::string& portId) const
@@ -190,173 +299,258 @@ std::map<std::string, std::string> SubModel::getDefaultPortData(const std::strin
     return {};
 }
 
-MilpPort* SubModel::getPort(const std::string& aPortId) 
+// --- Indicators -------------------------------------------------------------
+
+void SubModel::resetIndicators()
 {
-    for(MilpPort * lptrport: mListPort)
+    if (mInputIndicators)
     {
-        if (lptrport->ID() == aPortId) {
-            return lptrport;
-        }
+        for (auto& indicator : mInputIndicators->getIndicators())
+            indicator->resetValue();
+        delete mInputIndicators;
+        mInputIndicators = nullptr;
     }
-    return nullptr;
+    resetHistStoredValues();
 }
 
-MilpPort* SubModel::getPortByType(const std::string& aType, const std::string& aDirection)
+void SubModel::exportIndicators(std::fstream& out,
+    std::string name,
+    const std::string& range,
+    const std::vector<std::string>& refLabelList,
+    const bool showDescription,
+    bool forced,
+    const bool isRollingHorizon)
 {
-    for(MilpPort * lptrport: mListPort)
+    // Filter and order labels from refLabelList (defined by TecEcoAnalysis)
+    std::vector<std::string> vLabelList;
+    vLabelList.reserve(refLabelList.size());
+    for (const auto& label : refLabelList)
+        vLabelList.push_back(getLabelValue(label));
+
+    const bool vIsSizeOptimized  = isSizeOptimized();
+    const bool vIsPriceOptimized = isPriceOptimized();
+
+    for (auto& indicator : mInputIndicators->getIndicators())
     {
-        if (lptrport->getCarrier()->Type() == aType && (lptrport->Direction() == aDirection || aDirection == "ANY"))
-        {
-            return lptrport;
-        }
-    }
-    return nullptr;
-}
-
-void SubModel::removePort(MilpPort* lptrport)
-{
-    if (lptrport != nullptr) {
-        std::vector<MilpPort*>::iterator vIter = find(mListPort.begin(), mListPort.end(), lptrport);
-        if (vIter != mListPort.end()) {
-            mListPort.erase(vIter);       
-            delete lptrport;
-        }
-        else {
-            Cairn_Exception erreur((std::string)"Error deleting port", -1);
-            this->setException(erreur);
-        }
+        indicator->Export(out, name, range, forced,
+            vIsSizeOptimized, vIsPriceOptimized,
+            isRollingHorizon, mOptimalSizeAllCycles,
+            showDescription, vLabelList);
     }
 }
 
-void SubModel::removeBusPort(MilpPort* lptrport) 
+// --- Parameters & time series registration ----------------------------------
+
+void SubModel::declareInputParams(const std::string& name)
 {
-    if (lptrport != nullptr) {
-        std::vector<MilpPort*>::iterator vIter = find(mListPort.begin(), mListPort.end(), lptrport);
-        if (vIter != mListPort.end()) {
-            mListPort.erase(vIter);
-        }
-    }
+    deleteInputParams();
+
+    mInputConfigParam   = new InputParam(this, "SubModelInputConfigParam" + name);
+    mInputParam         = new InputParam(this, "SubModelInputParam" + name);
+    mInputPerfParam     = new InputParam(this, "SubModelInputPerfParam" + name);
+    mInputTimeSeries    = new InputParam(this, "SubModelInputDataTS" + name);
+
+    mInputConfigEnvImpacts  = new InputParam(this, "SubModelInputConfigEnvImpactsParam" + name);
+    mInputEnvImpacts        = new InputParam(this, "SubModelInputEnvImpactsParam" + name);
+    mInputConfigPortImpacts = new InputParam(this, "SubModelInputConfigPortImpactsParam" + name);
+    mInputPortImpacts       = new InputParam(this, "SubModelInputPortImpactsParam" + name);
+    mTSInputPortImpacts     = new InputParam(this, "SubModelTSInputPortImpactsParam" + name);
+
+    deleteEnvImpacts();
+
+    resetIndicators();
+    mInputIndicators = new InputParam(this, "SubModelInputIndicators" + name);
 }
 
-void SubModel::addParameter(const std::string& aParamName, const t_pvalue &aPtr, t_value aDefaultValue, t_flag aIsBlocking, t_flag aIsUsed, 
-    const std::string& aDescription, const t_unit& aUnit, const std::string& aShowConfig)
+void SubModel::deleteInputParams()
 {
-    mInputParam->addParameter(aParamName, aPtr, aDefaultValue, aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
+    auto clear = [](auto*& ptr) {
+        delete ptr;
+        ptr = nullptr;
+    };
+
+    clear(mInputConfigParam);
+    clear(mInputParam);
+    clear(mInputTimeSeries);
+    clear(mInputConfigEnvImpacts);
+    clear(mInputEnvImpacts);
+    clear(mInputConfigPortImpacts);
+    clear(mInputPortImpacts);
+    clear(mTSInputPortImpacts);
+    clear(mInputPerfParam);
+    clear(mInputIndicators);
 }
 
-void SubModel::addPerfParam(const std::string& aParamName, std::vector<double>* aPtr, t_flag aIsBlocking, t_flag aIsUsed, 
-    const std::string& aDescription, const t_unit& aUnit)
+void SubModel::addConfigParameter(
+    const std::string& aParamName,
+    const t_pvalue& aPtr,
+    t_value aDefaultValue,
+    t_flag aIsBlocking,
+    t_flag aIsUsed,
+    const std::string& aDescription,
+    const t_unit& aUnit,
+    const std::string& aShowConfig)
+{
+    mInputConfigParam->addParameter(aParamName, aPtr, aDefaultValue,
+        aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
+}
+
+void SubModel::addParameter(
+    const std::string& aParamName,
+    const t_pvalue& aPtr,
+    t_value aDefaultValue,
+    t_flag aIsBlocking,
+    t_flag aIsUsed,
+    const std::string& aDescription,
+    const t_unit& aUnit,
+    const std::string& aShowConfig)
+{
+    mInputParam->addParameter(aParamName, aPtr, aDefaultValue,
+        aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig);
+}
+
+void SubModel::addTimeSeries(
+    const std::string& aParamName,
+    std::vector<double>* aDblePtr,
+    t_flag aIsBlocking,
+    t_flag aIsUsed,
+    const std::string& aDescription,
+    const t_unit& aUnit,
+    const std::string& aShowConfig,
+    double a_default,
+    double a_min,
+    double a_max)
+{
+    mInputTimeSeries->addTimeSeries(aParamName, aDblePtr, a_default,
+        aIsBlocking, aIsUsed, aDescription, aUnit, aShowConfig, a_min, a_max);
+}
+
+void SubModel::addPerfParam(
+    const std::string& aParamName,
+    std::vector<double>* aPtr,
+    t_flag aIsBlocking,
+    t_flag aIsUsed,
+    const std::string& aDescription,
+    const t_unit& aUnit)
 {
     mInputPerfParam->addPerfParam(aParamName, aPtr, aIsBlocking, aIsUsed, aDescription, aUnit);
 }
 
-void SubModel::addTimeSeries(const std::string& aParamName, std::vector<double>* aDblePtr, t_flag IsBlocking, t_flag aIsUsed, 
-    const std::string& aDescription, const t_unit& aUnit, const std::string& aShowConfig, double a_default, double a_min, double a_max)
-{
-    mInputTimeSeries->addTimeSeries(aParamName, aDblePtr, a_default, IsBlocking, aIsUsed, aDescription, aUnit, aShowConfig, a_min, a_max);
-}
+// --- IO & expressions (interface) -------------------------------------------
 
-//Model IO Interface
-void SubModel::addIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, 
-    const t_unit& aUnit, const std::string& aDescription)
+void SubModel::addIO(
+    const std::string& aIOName,
+    MIPModeler::MIPExpression* aExprPtr,
+    t_flag aIsUsed,
+    const t_unit& aUnit,
+    const std::string& aDescription)
 {
-    /* 0D Exp and dynamic unit */
-    if (assertIONonExistence(aIOName, aExprPtr)) {
+    if (assertIONonExistence(aIOName, aExprPtr))
         removeIO(aIOName);
-    }
     assertIsNotSizeMaxExp(aExprPtr);
     mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aDescription);
 }
 
-void SubModel::addIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, 
-    const t_unit& aUnit, const std::string& aDescription)
+void SubModel::addIO(
+    const std::string& aIOName,
+    MIPModeler::MIPExpression1D* aExprPtr1D,
+    t_flag aIsUsed,
+    const t_unit& aUnit,
+    const std::string& aDescription)
 {
-    /* 1D Exp and dynamic unit */
-    if (assertIONonExistence(aIOName, aExprPtr1D)) {
+    if (assertIONonExistence(aIOName, aExprPtr1D))
         removeIO(aIOName);
-    }
     mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr1D, aIsUsed, aUnit, aDescription);
 }
 
-void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, 
-    const std::string& aUnit, const std::string& aDescription)
+void SubModel::addSizeMaxIO(
+    const std::string& aIOName,
+    MIPModeler::MIPExpression* aExprPtr,
+    t_flag aIsUsed,
+    const std::string& aUnit,
+    const std::string& aDescription)
 {
-    /* used only for mExpSizeMax(0D, scalar unit) */
-    if (assertIONonExistence(aIOName, aExprPtr)) {
+    if (assertIONonExistence(aIOName, aExprPtr))
         removeIO(aIOName);
-    }
     assertIsSizeMaxExp(aExprPtr);
-    mComputeSizeMax = true;
+    mComputeSizeMax        = true;
     mOptimalSizeExpression = aIOName;
-    m_OptimalSizeUnit = aUnit;
+    m_OptimalSizeUnit      = aUnit;
     mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, aUnit, aDescription);
 }
 
-void SubModel::addSizeMaxIO(const std::string& aIOName, MIPModeler::MIPExpression* aExprPtr, t_flag aIsUsed, 
-    const std::string* pUnit, const std::string& aDescription)
+void SubModel::addSizeMaxIO(
+    const std::string& aIOName,
+    MIPModeler::MIPExpression* aExprPtr,
+    t_flag aIsUsed,
+    const std::string* pUnit,
+    const std::string& aDescription)
 {
-    /* used only for mExpSizeMax(0D, scalar unit) */
-    if (assertIONonExistence(aIOName, aExprPtr)) {
+    if (assertIONonExistence(aIOName, aExprPtr))
         removeIO(aIOName);
-    }
     assertIsSizeMaxExp(aExprPtr);
-    mComputeSizeMax = true;
+    mComputeSizeMax        = true;
     mOptimalSizeExpression = aIOName;
-    p_OptimalSizeUnit = pUnit;
+    p_OptimalSizeUnit      = pUnit;
     mIOExpressions[aIOName] = new ModelIO(aIOName, aExprPtr, aIsUsed, pUnit, aDescription);
 }
 
 bool SubModel::assertIONonExistence(const std::string& name, const t_pExpr expression)
 {
-//#ifdef DEBUG 
-    for (auto& [vName, vIO] : mIOExpressions) {
-        /* throw an error if an IO with the same name but different expression already exist */
-        if (vName == name && vIO && vIO->getPtr() != expression) {
-            Cairn_Exception error("An IO Expression with the same name but different expression already exist: " + vName, -1);
-            throw error;
-        }
-        /* throw an error if an IO with the same expression but different name already exist */
-        else if (vName != name && vIO && vIO->getPtr() == expression) {
-            Cairn_Exception error("An IO associated to the same expression but different name already exists: " + vName + " and " + name, -1);
-            throw error;
-        }
-        else if (vName == name && vIO && vIO->getPtr() == expression) {
-            /* An IO with the same name and same expression already exist. return true to delete the IO and create a new one
-            with possibly difefrent comment, unit, or isUsed values */
-            return true;
-        }
+    for (const auto& [vName, vIO] : mIOExpressions)
+    {
+        if (!vIO) continue;
+
+        const bool sameName = (vName == name);
+        const bool sameExpr = (vIO->getPtr() == expression);
+
+        if (sameName && !sameExpr)
+            throw Cairn_Exception("IO expression with same name but different pointer already exists: " + vName, -1);
+
+        if (!sameName && sameExpr)
+            throw Cairn_Exception("IO expression with same pointer but different name already exists: " + vName + " vs " + name, -1);
+
+        if (sameName && sameExpr)
+            return true; /** Same name and same expression — delete and recreate to update metadata */
     }
     return false;
-//#endif
 }
 
-void SubModel::assertIsSizeMaxExp(MIPModeler::MIPExpression* aExprPtr) {
-    /* throw an error if a given pointer doesn't point to the expression mExpSizeMax */
-    if (aExprPtr != &mExpSizeMax) {
-        Cairn_Exception error("Method addSizeMaxIO can only be used for mExpSizeMax. Please, use method addIO for other expressions!", -1);
-        throw error;
-    }
+void SubModel::assertIsSizeMaxExp(MIPModeler::MIPExpression* aExprPtr)
+{
+    if (aExprPtr != &mExpSizeMax)
+        throw Cairn_Exception("addSizeMaxIO can only be used for mExpSizeMax — use addIO for other expressions", -1);
 }
 
-void SubModel::assertIsNotSizeMaxExp(MIPModeler::MIPExpression* aExprPtr) {
-    /* throw an error if a given pointer points to the expression mExpSizeMax */
-    if (aExprPtr == &mExpSizeMax) {
-        Cairn_Exception error("Method addIO cannot be used for mExpSizeMax. Please, use method addSizeMaxIO!", -1);
-        throw error;
-    }
+void SubModel::assertIsNotSizeMaxExp(MIPModeler::MIPExpression* aExprPtr)
+{
+    if (aExprPtr == &mExpSizeMax)
+        throw Cairn_Exception("addIO cannot be used for mExpSizeMax — use addSizeMaxIO instead", -1);
 }
 
-
-// Model Rolling Horizon variables
-void SubModel::addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, 
-    const t_unit& aUnit, double* aValuePtr, double* aDefaultValue, bool a_isMPC, const std::string& aDescription)
+void SubModel::addControlIO(
+    const std::string& aIOName,
+    MIPModeler::MIPExpression1D* aExprPtr1D,
+    t_flag aIsUsed,
+    const t_unit& aUnit,
+    double* aValuePtr,
+    double* aDefaultValue,
+    bool a_isMPC,
+    const std::string& aDescription)
 {
     addIO(aIOName, aExprPtr1D, aIsUsed, aUnit);
     mListControlIO[aIOName] = new ControlVar(aIOName, aValuePtr, aDescription, aDefaultValue, a_isMPC);
 }
 
-void SubModel::addControlIO(const std::string& aIOName, MIPModeler::MIPExpression1D* aExprPtr1D, t_flag aIsUsed, 
-    const t_unit& aUnit, std::vector<double>* aHistPtr, double* aDefaultValue, bool a_isMPC, const std::string& aDescription)
+void SubModel::addControlIO(
+    const std::string& aIOName,
+    MIPModeler::MIPExpression1D* aExprPtr1D,
+    t_flag aIsUsed,
+    const t_unit& aUnit,
+    std::vector<double>* aHistPtr,
+    double* aDefaultValue,
+    bool a_isMPC,
+    const std::string& aDescription)
 {
     addIO(aIOName, aExprPtr1D, aIsUsed, aUnit);
     mListControlIO[aIOName] = new ControlVar(aIOName, aHistPtr, aDescription, aDefaultValue, a_isMPC);
@@ -364,22 +558,18 @@ void SubModel::addControlIO(const std::string& aIOName, MIPModeler::MIPExpressio
 
 void SubModel::removeIO(const std::string& name)
 {
-    auto it = mIOExpressions.find(name);
-    if (it != mIOExpressions.end()) {
-        // Delete the expression pointer
+    const auto it = mIOExpressions.find(name);
+    if (it != mIOExpressions.end())
+    {
         delete it->second;
-
-        // Erase from the map
         mIOExpressions.erase(it);
     }
 
-    auto itControl = mListControlIO.find(name);
-    if (itControl != mListControlIO.end()) {
-        // Delete the expression pointer
-        delete itControl->second;
-
-        // Erase from the map
-        mListControlIO.erase(itControl);
+    const auto itCtrl = mListControlIO.find(name);
+    if (itCtrl != mListControlIO.end())
+    {
+        delete itCtrl->second;
+        mListControlIO.erase(itCtrl);
     }
 }
 
@@ -387,1067 +577,927 @@ SubModel::IOIterator SubModel::removeIO(SubModel::IOIterator it)
 {
     if (it == mIOExpressions.end())
         return it;
-
     delete it->second;
-    return mIOExpressions.erase(it);   // erase and returns next iterator
+    return mIOExpressions.erase(it);
 }
 
 void SubModel::removeEnvImpactIOs(const std::string& aImpactName)
 {
-    // Remove from mIOExpressions
-    for (auto it = mIOExpressions.begin(); it != mIOExpressions.end(); ) {
-        if (it->second && CairnUtils::contains(it->first, aImpactName)) {
-            delete it->second; // Consider unique_ptr to avoid manual delete
+    for (auto it = mIOExpressions.begin(); it != mIOExpressions.end(); )
+    {
+        if (it->second && CairnUtils::contains(it->first, aImpactName))
+        {
+            delete it->second;
             it = mIOExpressions.erase(it);
         }
-        else {
+        else
             ++it;
-        }
     }
 
-    // Remove from mListControlIO
-    for (auto it = mListControlIO.begin(); it != mListControlIO.end(); ) {
-        if (it->second && CairnUtils::contains(it->first, aImpactName)) {
+    for (auto it = mListControlIO.begin(); it != mListControlIO.end(); )
+    {
+        if (it->second && CairnUtils::contains(it->first, aImpactName))
+        {
             delete it->second;
             it = mListControlIO.erase(it);
         }
-        else {
+        else
             ++it;
-        }
     }
 }
 
 void SubModel::removeIOs()
 {
-    for (auto& [vKey, value] : mIOExpressions) {
-        if (value) delete value;
-    }
+    for (auto& [key, value] : mIOExpressions)
+        delete value;
     mIOExpressions.clear();
 
-    for (auto& [vKey, value] : mListControlIO) {
-        if (value) delete value;
-    }
+    for (auto& [key, value] : mListControlIO)
+        delete value;
     mListControlIO.clear();
-}
-
-MIPModeler::MIPExpression* SubModel::getMIPExpression(std::string aExpressionName) const
-{
-    ModelIO* vIO = getIOExpression(aExpressionName);
-    if (vIO) {
-        if (vIO->getType() == EIOModelType::eMIPExpression) {
-            return (MIPModeler::MIPExpression*)(std::get<EIOModelType::eMIPExpression>(vIO->getPtr()));
-        }
-    }
-    return nullptr;
-}
-
-void SubModel::buildControlVariables()
-{
-    for (auto [key, var] : mListControlIO) {
-        var->ComputeValue(mNpdtPast);
-    }
-}
-
-MIPModeler::MIPExpression1D* SubModel::getMIPExpression1D(std::string aExpressionName) const
-{
-    const ModelIO* vIO = getIOExpression(aExpressionName);
-    if (vIO) {
-        if (vIO->getType() == EIOModelType::eMIPExpression1D) {
-            return (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
-        }
-    }
-    return nullptr;
-}
-
-MIPModeler::MIPExpression& SubModel::getMIPExpression1D(uint i, std::string aExpressionName)
-{
-    ModelIO* vIO = getIOExpression(aExpressionName);
-    if (vIO) {
-        if (vIO->getType() == EIOModelType::eMIPExpression1D) {
-            if (i < vIO->size()) {
-                MIPModeler::MIPExpression1D* vExpr = (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
-                return (*vExpr)[i];
-            }
-        }
-    }
-    Cairn_Exception error("ERROR: MilpExpression " + aExpressionName + " does not exist in the component model or its size is less than " + std::to_string(i), -1);
-    throw error;
-}
-
-void SubModel::dumpIOExpression1DList() const
-{
-    // Loop on expected input parameters
-    cInfo() << "\n\t Vector Expression ;" << " \t\t\t " << " Unit ;";
-    for (auto& [key, vIO] : mIOExpressions) {
-        if (vIO != nullptr) {
-            if (vIO->getType() == EIOModelType::eMIPExpression1D) {
-                cInfo() << key << " \t\t\t " << vIO->getUnit();
-            }
-        }
-    }
-}
-
-void SubModel::dumpIOExpressionList() const
-{
-    // Loop on expected input parameters
-    cInfo() << "\n\t Scalar Expression " << " \t\t\t " << " Unit ";
-    for (auto& [key, vIO] : mIOExpressions) {
-        if (vIO != nullptr) {
-            if (vIO->getType() == EIOModelType::eMIPExpression) {
-                cInfo() << key << " \t\t\t " << vIO->getUnit();
-            }
-        }
-    }
 }
 
 ModelIO* SubModel::getIOExpression(const std::string& aName) const
 {
-    t_mapIOs::const_iterator vIter = mIOExpressions.find(aName);
-    if (vIter != mIOExpressions.end()) {
-        return vIter->second;
-    }
-    return nullptr;
+    const auto it = mIOExpressions.find(aName);
+    return (it != mIOExpressions.end()) ? it->second : nullptr;
 }
 
 std::vector<ModelIO*> SubModel::getIOExpressions(const EIOModelType& aIOType)
 {
-    std::vector<ModelIO*> vRet;
-    for (auto& [key, vIO] : mIOExpressions) {
-        if (vIO != nullptr) {
-            if (vIO->getType() == aIOType) {
-                vRet.push_back(vIO);
+    std::vector<ModelIO*> result;
+    for (auto& [key, vIO] : mIOExpressions)
+    {
+        if (vIO && vIO->getType() == aIOType)
+            result.push_back(vIO);
+    }
+    return result;
+}
+
+MIPModeler::MIPExpression* SubModel::getMIPExpression(const std::string& aExpressionName) const
+{
+    const ModelIO* vIO = getIOExpression(aExpressionName);
+    if (vIO && vIO->getType() == EIOModelType::eMIPExpression)
+        return static_cast<MIPModeler::MIPExpression*>(
+            std::get<EIOModelType::eMIPExpression>(vIO->getPtr()));
+    return nullptr;
+}
+
+MIPModeler::MIPExpression1D* SubModel::getMIPExpression1D(const std::string& aExpressionName) const
+{
+    const ModelIO* vIO = getIOExpression(aExpressionName);
+    if (vIO && vIO->getType() == EIOModelType::eMIPExpression1D)
+        return static_cast<MIPModeler::MIPExpression1D*>(
+            std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
+    return nullptr;
+}
+
+MIPModeler::MIPExpression& SubModel::getMIPExpression1D(uint i, const std::string& aExpressionName)
+{
+    ModelIO* vIO = getIOExpression(aExpressionName);
+    if (vIO && vIO->getType() == EIOModelType::eMIPExpression1D && i < vIO->size())
+    {
+        auto* vExpr = static_cast<MIPModeler::MIPExpression1D*>(
+            std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
+        return (*vExpr)[i];
+    }
+    throw Cairn_Exception("MIPExpression '" + aExpressionName
+        + "' does not exist or size is less than " + std::to_string(i), -1);
+}
+
+// --- Model / solver integration ---------------------------------------------
+
+void SubModel::addStateConstraints(const uint64_t& aCondensedNpdt, const MIPModeler::MIPExpression& aExpInstalled)
+{
+    addVariable(mState, "State", 0, 1, MIPModeler::MIP_INT, static_cast<int>(aCondensedNpdt));
+
+    for (uint64_t t = 0; t < mHorizon; ++t)
+        mExpState[t] += mState(mVectTypicalPeriods[t]);
+
+    for (uint64_t t = 0; t < mHorizon; ++t)
+        addConstraint(mExpState[t] <= aExpInstalled, "NotRunningIfNotInstalled", static_cast<uint>(t));
+
+    if (mLPModelOnly)
+    {
+        for (uint64_t t = 0; t < aCondensedNpdt; ++t)
+            mState(t).fix(1);
+    }
+}
+
+void SubModel::addStartUpShutDown(const uint64_t& aCondensedNpdt, const MIPModeler::MIPExpression& aExpInstalled)
+{
+    addVariable(mStartUp,  "StartUp",  0, 1, MIPModeler::MIP_INT, static_cast<int>(aCondensedNpdt));
+    addVariable(mShutDown, "ShutDown", 0, 1, MIPModeler::MIP_INT, static_cast<int>(aCondensedNpdt));
+
+    const uint64_t nUsedNpdt = exprMilpHorizon();
+
+    for (uint64_t t = 0; t < nUsedNpdt; ++t)
+    {
+        mExpStartUp[t]  += mStartUp(mVectTypicalPeriods[t]);
+        mExpShutDown[t] += mShutDown(mVectTypicalPeriods[t]);
+    }
+
+    for (uint64_t t = 0; t < nUsedNpdt; ++t)
+    {
+        const uint ut = static_cast<uint>(t);
+        addConstraint(mExpStartUp[t]  <= aExpInstalled, "NoStartUpIfNotInstalled",  ut);
+        addConstraint(mExpShutDown[t] <= aExpInstalled, "NoShutDownIfNotInstalled", ut);
+        addConstraint(mExpStartUp[t]  - mExpState[t] <= 0, "StateUp",   ut);
+        addConstraint(mExpShutDown[t] + mExpState[t] <= 1, "StateDown", ut);
+
+        if (t > 0)
+        {
+            if (mUseTypicalPeriods)
+            {
+                /** No constraint between two typical periods — use mAbsInitialState instead */
+                const bool crossPeriod = (t + *mptrTimeshift - 1) % mNDtTypicalPeriods == 0
+                                      && !mActivateConstraintsBetweenTP;
+                if (crossPeriod)
+                    addConstraint(mExpState[t] - mAbsInitialState - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", ut);
+                else
+                    addConstraint(mExpState[t] - mExpState[t - 1] - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", ut);
+            }
+            else
+            {
+                addConstraint(mExpState[t] - mExpState[t - 1] - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", ut);
             }
         }
+        else if (*mptrAbsoluteTimeStep > *mptrTimeshift)
+        {
+            addConstraint(mExpState[t] - mHistState[mNpdtPast - 1] - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", ut);
+        }
+        else
+        {
+            addConstraint(mExpState[t] - mAbsInitialState - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", ut);
+        }
     }
-    return vRet;
 }
 
-double* SubModel::envEmbodiedMassContribution(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactMass(); 
-}
-
-double* SubModel::envGreyImpactCostContribution(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactPart(); 
-}
-
-double* SubModel::envImpactCostContribution(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartPLAN(); 
-}
-
-double* SubModel::envHistImpactCostContribution(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartHIST(); 
-}
-
-double* SubModel::envImpactCostContributionDiscounted(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartDiscountedPLAN(); 
-}
-
-double* SubModel::envHistImpactCostContributionDiscounted(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartDiscountedHIST(); 
-}
-
-double* SubModel::envImpactMassContribution(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassPLAN(); 
-}
-
-double* SubModel::envHistImpactMassContribution(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassHIST(); 
-}
-
-double* SubModel::envImpactMassContributionDiscounted(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassDiscountedPLAN(); 
-}
-
-double* SubModel::envHistImpactMassContributionDiscounted(const int aIdxEnvImpact) { 
-    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassDiscountedHIST(); 
-}
-
-void SubModel::fillExpression(MIPModeler::MIPExpression1D& aExpress1D, MIPModeler::MIPVariable1D& aVariable) 
+void SubModel::addVariable(
+    MIPModeler::MIPVariable0D& variable0D,
+    const std::string& name,
+    const double& lowerBound,
+    const double& upperBound,
+    const MIPModeler::MIPVarType& varType)
 {
-    int dimVar = aVariable.getDims();
-    int dimExpr = aExpress1D.size();
-    if (dimVar != dimExpr) {
-        Cairn_Exception cairn_error(Name() + ": expression and variable sizes don't match");
-        cCritical() << Name() + ": expression and variable sizes don't match";
-        throw cairn_error;
-    }
-    for (uint64_t t = 0; t < mHorizon; ++t) {
-        aExpress1D[t] += aVariable(t); 
-    }
+    if (mAllocate)
+        variable0D = MIPModeler::MIPVariable0D(lowerBound, upperBound, varType);
+    mModel->add(variable0D, VName(name));
 }
+
+void SubModel::addVariable(
+    MIPModeler::MIPVariable1D& variable1D,
+    const std::string& name,
+    const double& lowerBound,
+    const double& upperBound,
+    const MIPModeler::MIPVarType& varType,
+    const int& cols)
+{
+    if (mAllocate)
+    {
+        const int dimension = (cols < 0) ? mHorizon : cols;
+        variable1D = MIPModeler::MIPVariable1D(dimension, lowerBound, upperBound, varType);
+    }
+    mModel->add(variable1D, VName(name));
+}
+
+void SubModel::addConstraint(
+    MIPModeler::MIPConstraint constraint,
+    const std::string& name,
+    const uint& t)
+{
+    mModel->add(constraint, CName(name, t));
+}
+
+// --- Expression allocation & lifecycle --------------------------------------
+
+void SubModel::fillExpression(
+    MIPModeler::MIPExpression1D& aExpress1D,
+    MIPModeler::MIPVariable1D& aVariable)
+{
+    if (aVariable.getDims() != aExpress1D.size())
+        throw Cairn_Exception(Name() + ": expression and variable sizes do not match", -1);
+
+    for (uint64_t t = 0; t < mHorizon; ++t)
+        aExpress1D[t] += aVariable(t);
+}
+
 void SubModel::closeExpression(MIPModeler::MIPExpression& aExpress)
 {
-    aExpress.close() ;
+    aExpress.close();
 }
 
 void SubModel::closeExpression1D(MIPModeler::MIPExpression1D& aExpress1D)
 {
-    for (int i = 0; i < (int)aExpress1D.size();i++) {
+    for (int i = 0; i < static_cast<int>(aExpress1D.size()); ++i)
         aExpress1D.at(i).close();
-    }
 }
 
 void SubModel::allocateExpressions()
 {
-    /* Allocate IO expressions*/
-    for (auto& [key, vIO] : mIOExpressions) {
-        if (vIO && vIO->isPExpr()) {
-            //0D
-            if (vIO->getType() == EIOModelType::eMIPExpression) {
-                MIPModeler::MIPExpression* ptrIOExp0D = (MIPModeler::MIPExpression*)(std::get<EIOModelType::eMIPExpression>(vIO->getPtr()));
-                *ptrIOExp0D = MIPModeler::MIPExpression(); /* not really needed */
-            }
-            //1D
-            else if (vIO->getType() == EIOModelType::eMIPExpression1D) {
-                MIPModeler::MIPExpression1D* ptrIOExp1D = (MIPModeler::MIPExpression1D*)(std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
-                *ptrIOExp1D = MIPModeler::MIPExpression1D(mHorizon); /* always size mHorizon for IO expressions */
-            }
+    /** Allocate IO expressions */
+    for (auto& [key, vIO] : mIOExpressions)
+    {
+        if (!vIO || !vIO->isPExpr()) continue;
+
+        if (vIO->getType() == EIOModelType::eMIPExpression)
+        {
+            auto* ptrExp0D = static_cast<MIPModeler::MIPExpression*>(
+                std::get<EIOModelType::eMIPExpression>(vIO->getPtr()));
+            *ptrExp0D = MIPModeler::MIPExpression();
+        }
+        else if (vIO->getType() == EIOModelType::eMIPExpression1D)
+        {
+            auto* ptrExp1D = static_cast<MIPModeler::MIPExpression1D*>(
+                std::get<EIOModelType::eMIPExpression1D>(vIO->getPtr()));
+            *ptrExp1D = MIPModeler::MIPExpression1D(mHorizon); /** IO expressions always sized mHorizon */
         }
     }
 
-    /* Allocate 0D expressions*/
-    for (auto& ptrExp0D : mExpressions0D) {
-        if (ptrExp0D) {
-            *ptrExp0D = MIPModeler::MIPExpression(); /* not really needed */
-        }
-    }
+    /** Allocate registered 0D expressions */
+    for (auto* ptrExp0D : mExpressions0D)
+        if (ptrExp0D)
+            *ptrExp0D = MIPModeler::MIPExpression();
 
-    /* Allocate 1D expressions*/
-    for (auto& sExp1D : mExpressions1D) {
-        if (sExp1D.pExp1D) {
-            *(sExp1D.pExp1D) = MIPModeler::MIPExpression1D(*(sExp1D.pSize)); /* given size */
-        }
-    }
+    /** Allocate registered 1D expressions */
+    for (auto& sExp1D : mExpressions1D)
+        if (sExp1D.pExp1D)
+            *(sExp1D.pExp1D) = MIPModeler::MIPExpression1D(*(sExp1D.pSize));
 
-    /* Allocate particular expressions
-     *
-     * These are the expressions declared in SubModel. But, not used in all models.
-     * Usually, they are used in TechnicalSubModel. But, not in OperationSubModel and/or BusSubModel.
-     * When they are used in a certain non-Technical model, e.g. Ramp, they should be registered
-     * using "add IO" or addExp inside that model.
-     * This close here is for safety in case they are used in a model but, have not been registered.
-     * 
-     * Allocate size mHorizon for 1D expressions
-    */
-    mExpSizeMax = MIPModeler::MIPExpression();
-    mExpState = MIPModeler::MIPExpression1D(mHorizon);
-    mExpStartUp = MIPModeler::MIPExpression1D(mHorizon);
+    /**
+     * Allocate base SubModel expressions.
+     * These are declared here but not necessarily used in every model.
+     * TechnicalSubModel typically uses them; Bus and Operation models may not.
+     * This ensures a safe state even if they are referenced without being registered.
+     */
+    mExpSizeMax  = MIPModeler::MIPExpression();
+    mExpState    = MIPModeler::MIPExpression1D(mHorizon);
+    mExpStartUp  = MIPModeler::MIPExpression1D(mHorizon);
     mExpShutDown = MIPModeler::MIPExpression1D(mHorizon);
 }
 
 void SubModel::closeExpressions()
 {
-    /* Close IO expressions*/
-    for (auto& [key, vIO] : mIOExpressions) {
-        if (vIO) {
-            vIO->close();
-        }
-    }
+    /** Close IO expressions */
+    for (auto& [key, vIO] : mIOExpressions)
+        if (vIO) vIO->close();
 
-    /* Close 0D expressions*/
-    for (auto& ptrExp0D : mExpressions0D) {
-        if (ptrExp0D) {
-            ptrExp0D->close();
-        }
-    }
+    /** Close registered 0D expressions */
+    for (auto* ptrExp0D : mExpressions0D)
+        if (ptrExp0D) ptrExp0D->close();
 
-    /* Close 1D expressions*/
-    for (auto& sExp1D : mExpressions1D) {
-        if (sExp1D.pExp1D) {
-            closeExpression1D(*(sExp1D.pExp1D));
-        }
-    }
+    /** Close registered 1D expressions */
+    for (auto& sExp1D : mExpressions1D)
+        if (sExp1D.pExp1D) closeExpression1D(*(sExp1D.pExp1D));
 
-    /* Close particular expressions 
-     *
-     * These are the expressions declared in SubModel. But, not used in all models.
-     * Usually, they are used in TechnicalSubModel. But, not in OperationSubModel and/or BusSubModel.
-     * When they are used in a certain non-Technical model, e.g. Ramp, they should be registered 
-     * using "add IO" or addExp inside that model. 
-     * This close here is for safety in case they are used in a model but, have not been registered. 
-    */
+    /** Close base SubModel expressions (safety — see allocateExpressions comment) */
     closeExpression(mExpSizeMax);
     closeExpression1D(mExpState);
     closeExpression1D(mExpStartUp);
     closeExpression1D(mExpShutDown);
 }
 
-int SubModel::defineDefaultVarNames()
+// --- Computation helpers ----------------------------------------------------
+
+/**
+ * Internal helper: resolve the year index for a given time step t.
+ */
+
+void SubModel::computeTime(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol, 
+    double& ret)
 {
-    int ierr = 0;
-    // check BusVarName,    
-    int inumberchange = 0;
-    std::string varUseCheck = "none";
-    for (auto &port : PortList()) {    
-        std::string portType = port->PortType();
-        if (portType == "BusSameValue") {
-            ierr = checkBusSameValueVarName(port);
+    double factor = 1.0;
+    if (bsetValue) {
+        ret = 0.0;
+        auto* compo = parentComponent();
+        factor = compo ? compo->ExtrapolationFactor() : 1.0;
+    }
+
+    runLoop(this, aNpdt, exp, optSol,
+        makeTimeAccumulator(this, ret, factor));
+}
+
+void SubModel::computeTime(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    double& retCharged,
+    double& retDischarged)
+{
+    double factor = 1.0;
+
+    if (bsetValue)
+    {
+        retCharged = retDischarged = 0.0;
+        auto* compo = parentComponent();
+        factor = compo ? compo->ExtrapolationFactor() : 1.0;
+    }
+
+    runLoop(this, aNpdt, exp, optSol,
+        makeTimeCDAccumulator(this, retCharged, retDischarged, factor));
+}
+
+void SubModel::computeProduction(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& ret,
+    const bool& integrate)
+{
+    double factor = 1.0;
+    if (bsetValue) {
+        ret = 0.0;
+        auto* compo = parentComponent();
+        factor = compo ? compo->ExtrapolationFactor() : 1.0;
+    }
+
+    runLoop(this, aNpdt, exp, optSol,
+        makeProdAccumulator(this, ret, factor, aCoeff, bCoeff, integrate));
+}
+
+void SubModel::computeProduction(
+    bool bsetValue,
+    uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& retCharged,
+    double& retDischarged)
+{
+    double factor = 1.0;
+
+    if (bsetValue)
+    {
+        retCharged = retDischarged = 0.0;
+        auto* compo = parentComponent();
+        factor = compo ? compo->ExtrapolationFactor() : 1.0;
+    }
+
+    runLoop(this, aNpdt, exp, optSol,
+        makeProdCDAccumulator(this, retCharged, retDischarged,
+            factor, aCoeff, bCoeff));
+}
+
+void SubModel::computeLvlProduction(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& ret)
+{
+    auto* compo = parentComponent();
+    double factor = compo ? (1.0 / compo->ExtrapolationFactor()) : 1.0;
+
+    if (bsetValue) {
+        ret = 0.0;
+        factor = 1.0;
+    }
+
+    runLoop(this, aNpdt, exp, optSol,
+        makeLvlAccumulator(this, ret, aCoeff, bCoeff, factor, false));
+}
+
+void SubModel::computeLvlProduction(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& retCharged,
+    double& retDischarged)
+{
+    auto* compo = parentComponent();
+
+    // HIST: extrapolation already embedded in LevelizationTable
+    double factor = compo ? (1.0 / compo->ExtrapolationFactor()) : 1.0;
+
+    if (bsetValue)
+    {
+        retCharged = retDischarged = 0.0;
+        factor = 1.0;   // PLAN: no extrapolation needed
+    }
+
+    runLoop(this, aNpdt, exp, optSol,
+        [&](uint t, double val)
+        {
+            static int year = 0;
+            year = resolveYear(
+                t,
+                TimeStep(t),
+                compo->HistNbHours(),
+                year,
+                compo->TableYearsHours()
+            );
+
+            // Levelization factor
+            const double lvl = compo->LevelizationTable().at(year);
+
+            // Contribution
+            const double contrib =
+                (aCoeff * val + bCoeff) *
+                TimeStep(t) *
+                lvl *
+                factor;
+
+            // Charged/discharged split
+            if (val > kEpsilon) retDischarged += contrib;
+            if (val < -kEpsilon) retCharged += contrib;
         }
-        else if (portType == "BusFlowBalance") {
-            ierr = checkBusFlowBalanceVarName(port, inumberchange, varUseCheck);
-        }      
-        if (ierr < 0) return -1;
-    }
-    return ierr;
+    );
 }
 
-int SubModel::checkBusSameValueVarName(MilpPort *port)
+void SubModel::computeConsumption(
+    bool bsetValue,
+    uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& aConsumption)
 {
-    if (port->Variable() == "")
+    double factor = 1.0;
+
+    if (bsetValue)   // PLAN: extrapolate; HIST: accumulate without extrapolation
     {
-        cCritical() << " ERROR at port " << (port->Name())
-            << " You should set Variable= property in <port> field to be able to impose same value through BusSameValue bus ";
-        return -1;
+        aConsumption = 0.0;
+        auto* compo = parentComponent();
+        factor = compo ? compo->ExtrapolationFactor() : 1.0;
     }
-    if (port->Direction() == "")
+
+    runLoop(this, aNpdt, exp, optSol,
+        [&](uint t, double val)
+        {
+            const double ts = TimeStep(t);
+            aConsumption -= (aCoeff * val + bCoeff) * ts * factor;
+        }
+    );
+}
+
+void SubModel::computeLvlConsumption(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& aConsumption)
+{
+    auto* compo = parentComponent();
+
+    // HIST: extrapolation already embedded in LevelizationTable
+    double factor = compo ? (1.0 / compo->ExtrapolationFactor()) : 1.0;
+
+    if (bsetValue)
     {
-        cCritical() << " ERROR at port " << (port->Name())
-            << " You should set Use= DATAEXCHANGE in <port> field to be able to impose same value through BusSameValue bus ";
-        return -1;
+        aConsumption = 0.0;
+        factor = 1.0;   // PLAN: no extrapolation needed
     }
-    return 0;
-}
-
-int SubModel::checkBusFlowBalanceVarName(MilpPort* port, int& inumberchange, std::string& varUseCheck)
-{
-    std::string varName = port->Variable();
-    std::string varUse = port->Direction();
-    if (varUseCheck != varUse) {
-        varUseCheck = varUse;
-        inumberchange++;
-    }
-
-    // Uncomplete description -> use default definitions functions of models
-    if (varName == "") {
-        if (!defineDefaultVarNames(port)) {
-            cCritical() << " ERROR at port " << (port->Name())
-                << " No default variable exist for that port type " << (port->getCarrier()->Type())
-                << " - You should set Variable field to send from Converter to BusFlowBalance bus ";
-            return -1;
-        }        
-    }
-    if (varUse == "") {
-        cCritical() << " ERROR at port " << (port->Name())
-            << " No default use type Producer / Consumer exist for that port type " << (port->getCarrier()->Type())
-            << " - You should set Variable & Use fields to exchanger from Converter to BusFlowBalance bus ";
-        return -1;
-    }
-    if (inumberchange == 0) {
-        cCritical() << " ERROR on component " << (Name())
-            << " Found only one type of port : " << (varUseCheck)
-            << " You should have at least one consumer and one producer ! ";
-        return -1;
-    }
-    return 0;
-}
-
-bool SubModel::defineDefaultVarNames(MilpPort* port)
-{
-    // pas de définition par défaut
-    return false;
-}
-
-int SubModel::checkVariable(const std::string variable) const
-{
-    const MIPModeler::MIPExpression* ptrExp = getMIPExpression(variable);
-    const MIPModeler::MIPExpression1D* ptrExp1D = getMIPExpression1D(variable);
-
-    if (ptrExp == nullptr && ptrExp1D == nullptr) {
-        cCritical() << ("ERROR no Milp Expression " + variable + " exist in submodel ! ");
-        cInfo() << "Available Milp Expressions are";
-        dumpIOExpressionList();
-        dumpIOExpression1DList();
-        return -1;
-    }
-    return 0;
-}
-
-
-int SubModel::checkUnit(MilpPort* port)
-{
-    if (port->getCarrier() == nullptr) return 0;
-    const std::string varName = port->Variable() ;
-    const std::string direction = port->Direction() ;
-    const std::string varFluxUnit = port->FluxUnit();
-    const std::string varStorageUnit = port->StorageUnit();
-    const std::string ExprUnit = ExpUnit(varName) ;
-
-    if (direction.empty()) {
-        cWarning() << Name() << ": the direction of port " << varName << " is not defined!";
-    }
-
-    if (checkVariable(varName) < 0) {
-        return -1;
-    }
-
-    if (port->PortType() == "BusSameValue")
-    {
-         if (!CairnUtils::contains(ExprUnit, varFluxUnit) && !CairnUtils::contains(ExprUnit, varStorageUnit) 
-             && CairnUtils::toUpper(port->VarCheckUnit()) == "YES")
-         {
-             cCritical() << (" ERROR MilpExpression "+varName +" unit found is "+ExprUnit) ;
-             cCritical() << (" Unit should be either "+varFluxUnit +" or "+varStorageUnit) ;
-             dumpIOExpressionList();
-             dumpIOExpression1DList();
-             return -1 ;
-         }
-    }
-    if (port->PortType()=="BusFlowBalance")
-    {
-         if (!CairnUtils::contains(ExprUnit, varFluxUnit) && !CairnUtils::contains(ExprUnit, varStorageUnit)             
-             && CairnUtils::toUpper(port->VarCheckUnit()) == "YES")
-         {
-             cCritical() << (" ERROR MilpExpression "+varName +" flux unit (from SubModel) is "+ExprUnit) ;
-             cCritical() << (" But unit expected by energy vector is "+varFluxUnit) ;
-             dumpIOExpressionList();
-             dumpIOExpression1DList();
-             return -1 ;
-         }
-    }
-    return 0;
-}
-
-void SubModel::computeAllIndicators(const double* optSol) {
-    //computeDefaultIndicators(optSol);
-}
-
-void SubModel::computeIndicator(const MIPModeler::MIPExpression1D& exp, const double* optSol, double& aUnDiscounted, double& aDiscounted, double& aHistUnDiscounted, double& aHistDiscounted, bool isEnvImpact)
-{
-    //PLAN values are initialized to 0 as they are calculated at each cycle whereas HIST values are cumulated 
-    aUnDiscounted = 0.0;
-    aDiscounted = 0.0;
-
-    double ExtrapolationFactor = mParentCompo->ExtrapolationFactor();
 
     int year = 0;
-    double value_t = 0.0;
-    for (unsigned int t = 0; t < mTimeSteps.size(); ++t)
-    {
-        uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-        while (t_hour > mParentCompo->TableYearsHours().at(year) && year < mParentCompo->TableYearsHours().size() - 1) {
-            year += 1;
-        }
-        //Note that, LevelizationFactor is already multiplied by ExtrapolationFactor
-        double LevelizationFactor = 1.0;
-        if(isEnvImpact)
-            LevelizationFactor = mParentCompo->ImpactLevelizationTable().at(year);
-        else 
-            LevelizationFactor = mParentCompo->LevelizationTable().at(year);
-        value_t = exp[t].evaluate(optSol);
-        aUnDiscounted += value_t * ExtrapolationFactor;
-        aDiscounted += value_t * LevelizationFactor; 
-        if (t < *mptrTimeshift) {  
-            aHistUnDiscounted += value_t;
-            aHistDiscounted += (value_t * LevelizationFactor) / ExtrapolationFactor;  
-        }
-    }
-}
 
-
-void SubModel::computeTime(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, double& ret) {
-    float factor = 1.;
-    if (bsetValue) {
-        ret = 0.; // réinitialisation de ret à 0 pour le fichier plan
-        factor = mParentCompo->ExtrapolationFactor(); // pour le fichier plan, mutliplication par le facteur d'actualisation
-    }
-    for (uint64_t t = 0; t < aNpdt; ++t)
-    {
-        if (fabs(exp.at(t).evaluate(optSol)) > 1.e-6f) ret += TimeStep(t) * factor; 
-    }
-}
-
-void SubModel::computeTime(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, double& retCharged, double& retDischarged) {
-    float factor = 1.;
-    if (bsetValue) {
-        retCharged = retDischarged = 0.; // réinitialisation de ret à 0 pour le fichier plan
-        factor = mParentCompo->ExtrapolationFactor();
-    }
-    for (uint64_t t = 0; t < aNpdt; ++t)
-    {
-        if (exp.at(t).evaluate(optSol) > 1.e-6f) retDischarged += TimeStep(t) * factor;
-        else if (exp.at(t).evaluate(optSol) < -1.e-6f) retCharged += TimeStep(t) * factor;
-    }
-}
-
-void SubModel::computeProduction(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& aProduction, const bool& aTimeIntegration)
-{
-    float factor = 1;
-    if (bsetValue) {
-        aProduction = 0.;
-        factor = mParentCompo->ExtrapolationFactor();
-    }
-    //compute indicators on the planification part
-    for (unsigned int t = 0; t < aNpdt; ++t)
-    {
-        if (fabs(exp.at(t).evaluate(optSol)) > 1.e-6)
+    runLoop(this, aNpdt, exp, optSol,
+        [&](uint t, double val)
         {
-            if (aTimeIntegration) aProduction += (aCoeff * exp.at(t).evaluate(optSol) + bCoeff) * TimeStep(t) * factor;// *mParentCompo->ExtrapolationFactor();
-            else aProduction += (aCoeff * exp.at(t).evaluate(optSol) + bCoeff);
+            year = resolveYear(
+                t,
+                TimeStep(t),
+                compo->HistNbHours(),
+                year,
+                compo->TableYearsHours()
+            );
+
+            // Levelization factor
+            const double lvl = compo->LevelizationTable().at(year);
+
+            // Contribution (negative for consumption)
+            aConsumption -= (aCoeff * val + bCoeff)
+                * TimeStep(t)
+                * lvl
+                * factor;
         }
-    }
+    );
 }
 
-void SubModel::computeProduction(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& retCharged, double& retDischarged) {
-    float factor = 1.;
-    if (bsetValue) {
-        retCharged = retDischarged = 0.;
-        factor = mParentCompo->ExtrapolationFactor();
-    }
-    for (uint64_t t = 0; t < aNpdt; ++t)
-    {
-        if (exp.at(t).evaluate(optSol) > 1.e-6f) retDischarged += (aCoeff * exp.at(t).evaluate(optSol) + bCoeff) * TimeStep(t) * factor;// *mParentCompo->ExtrapolationFactor();
-        else if (exp.at(t).evaluate(optSol) < -1.e-6f) retCharged += (aCoeff * exp.at(t).evaluate(optSol) + bCoeff) * TimeStep(t) * factor;// *mParentCompo->ExtrapolationFactor();
-    }
-}
-
-void SubModel::computeConsumption(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& aConsumption)
+void SubModel::computeLvlImpact(bool bsetValue, uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    const double& aCoeff,
+    const double& bCoeff,
+    double& aProduction)
 {
-    float factor = 1.;
-    if (bsetValue) { // fichier plan : on extrapole sans ajouter; sinon on ajoute sans extrapoler
-        aConsumption = 0.;
-        factor = mParentCompo->ExtrapolationFactor();
-    }
-    //compute indicators on the planification part
-    for (unsigned int t = 0; t < aNpdt; ++t)
-    {
-        if (fabs(exp.at(t).evaluate(optSol)) > 1.e-6)
-        {
-            aConsumption -= (aCoeff * (exp.at(t).evaluate(optSol)) + bCoeff) * TimeStep(t) * factor;// *mParentCompo->ExtrapolationFactor();
-        }
-    }
-}
+    if (bsetValue)
+        aProduction = 0.0;
 
-void SubModel::computeLvlConsumption(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& aConsumption)
-{
+    auto* compo = parentComponent();
     int year = 0;
-    float factor = 1. / mParentCompo->ExtrapolationFactor();// si c'est le fichier, HIST, on doit enlever l'extrapolation de la LevelizationTable
-    if (bsetValue) {
-        aConsumption = 0.;
-        factor = 1.;
-    }
-    for (unsigned int t = 0; t < aNpdt; ++t)
-    {
-        if (fabs((exp.at(t).evaluate(optSol))) > 1.e-6)
+
+    runLoop(this, aNpdt, exp, optSol,
+        [&](uint t, double val)
         {
-            uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-            while ((t_hour) > mParentCompo->TableYearsHours()[year] && year < (mParentCompo->TableYearsHours()).size() - 1) {
-                year += 1;
-                //cInfo() << "year:" << year << "hours" << t_hour << mParentCompo->TableYearsHours() << "mhistnbhour" << mParentCompo->HistNbHours() << "table" << mParentCompo->LevelizationTable();
-            }
-            aConsumption -= (aCoeff * (exp.at(t).evaluate(optSol)) + bCoeff) * TimeStep(t) * mParentCompo->LevelizationTable().at(year) * factor;
+            year = resolveYear(
+                t,
+                TimeStep(t),
+                compo->HistNbHours(),
+                year,
+                compo->TableYearsHours()
+            );
+
+            // Impact-levelization factor
+            const double lvl = compo->ImpactLevelizationTable().at(year);
+
+            // Contribution
+            aProduction += (aCoeff * val + bCoeff)
+                * TimeStep(t)
+                * lvl;
         }
-    }
+    );
 }
 
-
-void SubModel::computeLvlProduction(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& aProduction)
+void SubModel::computeDiscounted(uint aNpdt,
+    const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    double& aDiscounted)
 {
+    auto* compo = parentComponent();
     int year = 0;
-    float factor = 1./ mParentCompo->ExtrapolationFactor();// si c'est le fichier, HIST, on doit enlever l'extrapolation de la LevelizationTable
-    if (bsetValue) {
-        aProduction = 0.;
-        factor = 1.; // si c'est le plan, on laisse tel quel
-    }
-    for (unsigned int t = 0; t < aNpdt; ++t)
-    {
-        if (fabs((exp.at(t).evaluate(optSol))) > 1.e-6)
+
+    runLoop(this, aNpdt, exp, optSol,
+        [&](uint t, double val)
         {
-            uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-            while ((t_hour) > mParentCompo->TableYearsHours()[year] && year < (mParentCompo->TableYearsHours()).size() - 1) {
-                year += 1;
-                //cInfo() << "year:" << year << "hours" << t_hour << mParentCompo->TableYearsHours() << "mhistnbhour" << mParentCompo->HistNbHours() << "table" << mParentCompo->LevelizationTable();
-            }
-            aProduction += (aCoeff * (exp.at(t).evaluate(optSol)) + bCoeff) * TimeStep(t) * mParentCompo->LevelizationTable().at(year) * factor;
+            year = resolveYear(
+                t,
+                TimeStep(t),
+                compo->HistNbHours(),
+                year,
+                compo->TableYearsHours()
+            );
+
+            // Levelization factor
+            const double lvl = compo->LevelizationTable().at(year);
+
+            // Contribution
+            aDiscounted += val * lvl;
         }
-    }
+    );
 }
 
-void SubModel::computeLvlProduction(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& retCharged, double& retDischarged) {
+void SubModel::computeIndicator(const MIPModeler::MIPExpression1D& exp,
+    const double* optSol,
+    double& unDisc,
+    double& disc,
+    double& histUnDisc,
+    double& histDisc,
+    bool isEnv)
+{
+    unDisc = disc = 0.0;
+
+    auto* compo = parentComponent();
+    const double extrap = compo ? compo->ExtrapolationFactor() : 1.0;
+    const uint histHours = compo ? compo->HistNbHours() : 0;
+
     int year = 0;
-    float factor = 1. / mParentCompo->ExtrapolationFactor();// si c'est le fichier, HIST, on doit enlever l'extrapolation de la LevelizationTable
-    if (bsetValue) {
-        retCharged = retDischarged = 0.;
-        factor = 1.;
-    }
-    for (uint64_t t = 0; t < aNpdt; ++t)
+
+    for (uint t = 0; t < mTimeSteps.size(); ++t)
     {
-        uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-        while ((t_hour) > mParentCompo->TableYearsHours()[year] && year < (mParentCompo->TableYearsHours()).size() - 1) {
-            year += 1;
-            //cInfo() << "year:" << year << "hours" << t_hour << mParentCompo->TableYearsHours() << "mhistnbhour" << mParentCompo->HistNbHours() << "table" << mParentCompo->LevelizationTable();
+        const double val = exp[t].evaluate(optSol);
+        year = resolveYear(t, TimeStep(t), histHours, year, compo->TableYearsHours());
+
+        const double lvl = levelFactor(this, year, isEnv);
+
+        unDisc += val * extrap;
+        disc += val * lvl;
+
+        if (t < *mptrTimeshift) {
+            histUnDisc += val;
+            histDisc += (val * lvl) / extrap;
         }
-        if (exp.at(t).evaluate(optSol) > 1.e-6) retDischarged += (aCoeff * (exp.at(t).evaluate(optSol)) + bCoeff) * TimeStep(t) * mParentCompo->LevelizationTable().at(year) * factor;
-        else if (exp.at(t).evaluate(optSol) < -1.e-6f) retCharged += (aCoeff * exp.at(t).evaluate(optSol) + bCoeff) * TimeStep(t) * mParentCompo->LevelizationTable().at(year) * factor;
     }
 }
 
-void SubModel::computeLvlImpact(bool bsetValue, uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, const double& aCoeff, const double& bCoeff, double& aProduction)
+
+void SubModel::writeSolution(const double* optimalSolution,
+    std::map<std::string, std::vector<double>>& resultats)
 {
-    int year = 0;
-    if (bsetValue) aProduction = 0.;
-    for (unsigned int t = 0; t < aNpdt; ++t)
+    auto* compo = parentComponent();
+
+    // Cache npdtPast, horizon and name
+    const std::size_t past = static_cast<std::size_t>(npdtPast());
+    const std::size_t totalSize = static_cast<std::size_t>(mHorizon + mNpdtPast);
+    const std::string baseName = Name();
+
+    // Iterate IO expressions once
+    for (auto& kv : getMapIOExpression())
     {
-        if (fabs((exp.at(t).evaluate(optSol))) > 1.e-6)
+        const std::string& key = kv.first;
+        auto* vExpr = kv.second;
+        if (!vExpr)
+            continue;
+
+        const EIOModelType type = vExpr->getType();
+
+        // --- Scalar expression (0D) ---
+        if (type == EIOModelType::eMIPExpression)
         {
-            uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-            while ((t_hour) > mParentCompo->TableYearsHours()[year] && year < (mParentCompo->TableYearsHours()).size() - 1) {
-                year += 1;
-                //cInfo() << "year:" << year << "hours" << t_hour << mParentCompo->TableYearsHours() << "mhistnbhour" << mParentCompo->HistNbHours() << "table" << mParentCompo->ImpactLevelizationTable();
+            if (key == mOptimalSizeExpression)
+            {
+                const t_value& optimalSize = vExpr->evaluate(optimalSolution);
+                compo->setOptimalSize(static_cast<double>(std::get<eDouble>(optimalSize)));
             }
-            aProduction += (aCoeff * (exp.at(t).evaluate(optSol)) + bCoeff) * TimeStep(t) * mParentCompo->ImpactLevelizationTable().at(year);
+            continue;
         }
+
+        // --- Vector expression (1D) ---
+        const t_value& optimalValues = vExpr->evaluate(optimalSolution);
+
+        // Skip if not a vector<double>
+        if (!std::holds_alternative<std::vector<double>>(optimalValues))
+            continue;
+
+        // Get reference to vector inside variant (avoid copying)
+        const auto& vOptimalValues = std::get<std::vector<double>>(optimalValues);
+        const std::size_t vNb = vOptimalValues.size();
+
+        // Build result key once (avoid repeated string concatenation)
+        std::string fullName;
+        fullName.reserve(baseName.size() + key.size() + 1);
+        fullName = baseName;
+        fullName += '.';
+        fullName += key;
+
+        // Access or create result vector
+        auto& pResults = resultats[fullName];
+
+        // Resize result vector
+        pResults.resize(totalSize);
+
+        // Copy values
+        double* dest = pResults.data();  // faster than operator[]
+        const double* src = vOptimalValues.data();
+
+        const std::size_t limit = std::min<std::size_t>(mHorizon, vNb);
+
+        // Copy contiguous block
+        for (std::size_t t = 0; t < limit; ++t)
+            dest[t + past] = src[t];
     }
 }
 
+// --- Economic & size expressions --------------------------------------------
 
-void SubModel::computeDiscounted(uint aNpdt, uint aShift, MIPModeler::MIPExpression1D exp, const double* optSol, double& aDiscounted)
+std::string SubModel::ExpUnit(const std::string& aExpressionName)
 {
-    int year = 0;
-    for (unsigned int t = 0; t < aNpdt; ++t)
+    const auto it = mIOExpressions.find(aExpressionName);
+    return (it != mIOExpressions.end()) ? it->second->getUnit() : "N/A";
+}
+
+const UnitParam* SubModel::pExpUnitParam(const std::string& aExpressionName)
+{
+    const auto it = mIOExpressions.find(aExpressionName);
+    return (it != mIOExpressions.end()) ? it->second->pUnitParam() : nullptr;
+}
+
+const FlagParam* SubModel::pExpIsUsed(const std::string& aExpressionName)
+{
+    const auto it = mIOExpressions.find(aExpressionName);
+    return (it != mIOExpressions.end()) ? it->second->pIsUsed() : nullptr;
+}
+
+// --- Environmental impacts --------------------------------------------------
+
+void SubModel::removeImpactExpressionName(const std::string& impactName)
+{
+    CairnUtils::removeMatchingSubstring(mEnvImpactCostExpression,    impactName);
+    CairnUtils::removeMatchingSubstring(mEnvImpactMassExpression,    impactName);
+    CairnUtils::removeMatchingSubstring(mEnvGreyImpactCostExpression,impactName);
+    CairnUtils::removeMatchingSubstring(mEmbodiedMassExpression,     impactName);
+}
+
+void SubModel::deleteEnvImpacts()
+{
+    for (EnvImpact* impact : mEnvImpacts)
     {
-        if (fabs(exp.at(t).evaluate(optSol)) > 1.e-6)
+        if (impact)
         {
-            //uint t_hour=qCeil((t+startingAbsoluteTimeStep())*TimeStep(t)) + mHistNbHours;
-            uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours(); // + mHistNbHours
-            while ((t_hour) > mParentCompo->TableYearsHours()[year] && year < mParentCompo->TableYearsHours().size() - 1) {
-                year += 1;
-            }
-            aDiscounted += (exp.at(t).evaluate(optSol)) * mParentCompo->LevelizationTable().at(year);
+            removeImpactExpressionName(impact->Name());
+            removeEnvImpactIOs(impact->Name());
+            delete impact;
         }
     }
+    mEnvImpacts.clear();
 }
 
-bool SubModel::isSizeOptimized()
+double* SubModel::envEmbodiedMassContribution(int aIdxEnvImpact)
 {
-    if (getOptimalSizeExpression() == "") return false;
-    ModelParam *pParam = getInputParam()->getParameter(getOptimalSizeExpression());
-    if (pParam == nullptr) return false;
-    else {
-        double vValue;
-        if (pParam->getNumValue(vValue)) {
-            return (vValue > 0) ? false : true;
-        }
-        else
-            return false;
-    }    
-}
-bool SubModel::isPriceOptimized()
-{
-    return false;
-}
-//-----------------------------------------------------------------------------
-
-std::string SubModel::getLabelValue(const std::string& aLabel) const
-{
-    auto vIter = mLabelMap.find(aLabel);
-    if (vIter != mLabelMap.end()) {
-        return vIter->second;
-    }
-    else {
-        return "";
-    }
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactMass();
 }
 
-void SubModel::exportIndicators(std::fstream& out, std::string name, const std::string &range, const std::vector< std::string >& refLabelList, 
-    const bool showDescription, bool forced, const bool isRollingHorizon)
+double* SubModel::envGreyImpactCostContribution(int aIdxEnvImpact)
 {
-    /* labels applies to all indicator(same redundant value in all lines) */
-
-    //filter labels that are not defined in refLabelList (from TecEcoAnalysis) and order the labels 
-    std::vector<std::string> vLabelList = {};
-    for (auto const& label : refLabelList) {
-        vLabelList.push_back(getLabelValue(label));
-    }
-
-    const InputParam::t_Indicators& vIndicators = mInputIndicators->getIndicators();
-    bool vIsSizeOptimized = isSizeOptimized();
-    bool vIsPriceOptimized = isPriceOptimized();
-    for (auto& vIndicator : vIndicators) {
-        vIndicator->Export(out, name, range, forced, vIsSizeOptimized, vIsPriceOptimized, 
-            isRollingHorizon, mOptimalSizeAllCycles, showDescription, vLabelList);
-    }   
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvGreyImpactPart();
 }
 
-void SubModel::writeSolution(const double* optimalSolution, std::map<std::string, std::vector<double>>& resultats)
+double* SubModel::envImpactCostContribution(int aIdxEnvImpact)
 {
-    for (auto& [key, vExpr] : getMapIOExpression()) {
-        if (vExpr) {
-            if (vExpr->getType() == EIOModelType::eMIPExpression) {
-                if (key == getOptimalSizeExpression()) {
-                    const t_value& optimalSize = vExpr->evaluate(optimalSolution);
-                    mParentCompo->setOptimalSize((double)std::get<eDouble>(optimalSize));
-                }
-            }
-            else {
-                const t_value& optimalValues = vExpr->evaluate(optimalSolution);
-
-                if (std::holds_alternative<vector<double>>(optimalValues)) {
-                    const vector<double>& vOptimalValues = (const vector<double> &)std::get<vector<double>>(optimalValues);                                        
-                    std::string vName = Name() + "." + key;
-                    resultats[vName].resize(mHorizon + mNpdtPast);
-                    std::vector<double>& pResults = resultats[vName];
-                    size_t vNb = vOptimalValues.size();
-                    for (unsigned int t = 0; t < mHorizon; ++t) {
-                        if (t < vNb) {
-                            pResults[t + npdtPast()] = vOptimalValues[t];
-                        }
-                    }
-                }
-
-            }
-        }
-    }
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartPLAN();
 }
 
-void SubModel::setTimeData()
+double* SubModel::envHistImpactCostContribution(int aIdxEnvImpact)
 {
-    if (mTimeStepBeginLP > 0) {
-        mMilpNpdt = mTimeStepBeginLP;
-        if (mUseTypicalPeriods) {
-            cCritical() << "Typical periods models are not compatible with variable time step models";
-        }
-    }
-    else {
-        mMilpNpdt = mHorizon;
-    }
-
-    mHistState.clear();
-    mHistState.resize(mHorizon + mNpdtPast);
-
-    mHistStartUp.clear();
-    mHistStartUp.resize(mHorizon + mNpdtPast);
-
-    mHistShutDown.clear();
-    mHistShutDown.resize(mHorizon + mNpdtPast);
-
-    mOptimalSizeAllCycles.clear();
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartHIST();
 }
 
-void SubModel::setTypicalPeriods(const bool& useTypicalPeriods, const uint& aTypicalPeriods, const uint& aNDtTypicalPeriods, const std::vector<int>& aVectTypicalPeriods)
+double* SubModel::envImpactCostContributionDiscounted(int aIdxEnvImpact)
 {
-    mUseTypicalPeriods = useTypicalPeriods;
-    mTypicalPeriods = aTypicalPeriods;
-    mNDtTypicalPeriods = aNDtTypicalPeriods;
-    mVectTypicalPeriods = aVectTypicalPeriods;
-    if (mUseTypicalPeriods && mCondenseVariablesOnTP)
-        mCondensedNpdt = mTypicalPeriods * mNDtTypicalPeriods;
-    else {
-        for (uint i = 0; i < mTimeSteps.size(); i++)
-        {
-            mVectTypicalPeriods[i] = i;
-        }
-        mCondensedNpdt = mTimeSteps.size();
-    }
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartDiscountedPLAN();
 }
 
-void SubModel::setTimeSteps(const bool& useVariableTimeSteps, std::vector<double> aTimeSteps, uint64_t aTimeStepBeginLP, uint64_t aTimeStepBeginForecast, uint64_t aDecreaseOptimizationHorizon)    /** TimeStep settings */
+double* SubModel::envHistImpactCostContributionDiscounted(int aIdxEnvImpact)
 {
-    mUseVariableTimeSteps = useVariableTimeSteps;
-    mHorizon = aTimeSteps.size();
-    mTimeSteps = aTimeSteps;
-    mTimeStepBeginLP = aTimeStepBeginLP;
-    mTimeStepBeginForecast = aTimeStepBeginForecast;
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactPartDiscountedHIST();
+}
+
+double* SubModel::envImpactMassContribution(int aIdxEnvImpact)
+{
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassPLAN();
+}
+
+double* SubModel::envHistImpactMassContribution(int aIdxEnvImpact)
+{
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassHIST();
+}
+
+double* SubModel::envImpactMassContributionDiscounted(int aIdxEnvImpact)
+{
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassDiscountedPLAN();
+}
+
+double* SubModel::envHistImpactMassContributionDiscounted(int aIdxEnvImpact)
+{
+    return mEnvImpacts.at(aIdxEnvImpact)->getEnvImpactMassDiscountedHIST();
+}
+
+// --- Time step & horizon management -----------------------------------------
+
+void SubModel::setTimeSteps(
+    const bool& useVariableTimeSteps,
+    std::vector<double> aTimeSteps,
+    uint64_t aTimeStepBeginLP,
+    uint64_t aTimeStepBeginForecast,
+    uint64_t aDecreaseOptimizationHorizon)
+{
+    mUseVariableTimeSteps        = useVariableTimeSteps;
+    mHorizon                     = static_cast<int>(aTimeSteps.size());
+    mTimeSteps                   = std::move(aTimeSteps);  
+    mTimeStepBeginLP             = aTimeStepBeginLP;
+    mTimeStepBeginForecast       = aTimeStepBeginForecast;
     mDecreaseOptimizationHorizon = aDecreaseOptimizationHorizon;
 }
 
-void SubModel::decreaseOptimizationHorizon()                  /** Update mTimeSteps */
+void SubModel::decreaseOptimizationHorizon()
 {
-    if (mDecreaseOptimizationHorizon == 1) {
-        cInfo() << "virtuSubModel, mDecreaseOptimizationHorizon = " << mDecreaseOptimizationHorizon;        
-        uint64_t sumTimeSteps = accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0.);
+    if (mDecreaseOptimizationHorizon != 1)
+        return;
 
-        while (sumTimeSteps + *mptrAbsoluteTimeStep - *mptrTimeshift > *mptrFuturesize)
+    cInfo() << "decreaseOptimizationHorizon activated for" << Name();
+
+    double sumTimeSteps = std::accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0.);
+
+    while (sumTimeSteps + *mptrAbsoluteTimeStep - *mptrTimeshift > *mptrFuturesize)
+    {
+        int i = static_cast<int>(mTimeSteps.size()) - 1;
+        while (i > 0 && mTimeSteps[i] == 0) --i;
+
+        if (mTimeSteps[i] == 1)
+            mTimeSteps[i] -= 1;
+        else
+            mTimeSteps[i] -= *mptrTimeshift;
+
+        sumTimeSteps = std::accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0.);
+
+        if (mTimeSteps[i] < 0)
         {
-            int i = mTimeSteps.size() - 1;
-            if (mTimeSteps[i] <= 0)
-            {
-                while (mTimeSteps[i] == 0) { i--; }
-            }
-            if (mTimeSteps[i] == 1)
-                mTimeSteps[i] -= 1;
-            else
-                mTimeSteps[i] -= *mptrTimeshift;
-
-            sumTimeSteps = accumulate(mTimeSteps.begin(), mTimeSteps.end(), 0.);
-
-            cInfo() << "decreaseOptimizationHorizon: *mptrAbsoluteTimeStep = " << *mptrAbsoluteTimeStep;
-            cInfo() << "decreaseOptimizationHorizon: *mptrTimeshift = " << *mptrTimeshift;
-            cInfo() << "decreaseOptimizationHorizon: *mptrFuturesize = " << *mptrFuturesize;
-            cInfo() << "decreaseOptimizationHorizon: mTimeSteps = " << mTimeSteps;
-            if (mTimeSteps[i] < 0)
-            {
-                cCritical() << "Time steps list found is aTimeSteps = " << mTimeSteps;
-                Cairn_Exception erreur((std::string)"Error : decreaseOptimizationHorizon Time step sizes must be multiple of timeshift ", -1);
-                this->setException(erreur);
-                return;
-            }
+            cCritical() << "decreaseOptimizationHorizon: negative time step at index" << i;
+            throw Cairn_Exception("decreaseOptimizationHorizon: time step sizes must be multiples of timeshift", -1);
         }
+    }
+}
+
+// --- Size max & bounds ------------------------------------------------------
+
+void SubModel::setMaxValue(const double& aMaxVal) { mMaxValue = aMaxVal; }
+void SubModel::setMinValue(const double& aMinVal) { mMinValue = aMinVal; }
+
+double SubModel::getMaxBound()
+{
+    if (mMaxValue == MIP_INFINITY)
+        throw Cairn_Exception("SubModel " + parent()->objectName() + ": maxbound not defined", -1);
+    return std::fabs(mMaxValue) * std::fabs(mWeight);
+}
+
+double SubModel::getMinBound()
+{
+    if (mMinValue == -MIP_INFINITY)
+        throw Cairn_Exception("SubModel " + parent()->objectName() + ": minbound not defined", -1);
+    return std::fabs(mMinValue) * std::fabs(mWeight);
+}
+
+void SubModel::addVarSizeMax(const double& aMaxVal, const std::string& aStrName)
+{
+    /** Maximum sizing value: negative weight = size optimization, positive = fixed absolute value */
+    if (mWeight < 0.)
+    {
+        if (mLPWeightOptimization)
+            addVariable(mVarSizeMax, "Weight", 0.0, std::fabs(mWeight));
+        else
+            addVariable(mVarSizeMax, "Weight", 0.0, std::fabs(mWeight), MIPModeler::MIP_INT);
+    }
+    else
+    {
+        addVariable(mVarSizeMax, aStrName, 0.0, std::fabs(aMaxVal));  
     }
 }
 
 void SubModel::setExpSizeMax(const MIPModeler::MIPExpression& aExpInstalled)
 {
-    if (!mComputeSizeMax) return ;
-    if (mMaxValue == MIP_INFINITY) {
-        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " maxbound not defined", -1);
-        throw error;
-    }
-    if (mMinValue == -MIP_INFINITY) {
-        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " minbound not defined", -1);
-        throw error;
-    }
-    if (mOptimalSizeExpression == "") {
-        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " OptimalSizeExpression not defined", -1);
-        throw error;
-    }
+    if (!mComputeSizeMax)
+        return;
 
-    //Add SizeMax variable
+    if (mMaxValue == MIP_INFINITY)
+        throw Cairn_Exception("SubModel " + parent()->objectName() + ": maxbound not defined", -1);
+    if (mMinValue == -MIP_INFINITY)
+        throw Cairn_Exception("SubModel " + parent()->objectName() + ": minbound not defined", -1);
+    if (mOptimalSizeExpression.empty())
+        throw Cairn_Exception("SubModel " + parent()->objectName() + ": OptimalSizeExpression not defined", -1);
+
     addVarSizeMax(mMaxValue, mOptimalSizeExpression);
 
-    //Compute SizeMax expression and add constraints
-    if (mWeight<0)
-    {
-        mExpSizeMax = fabs(mMaxValue) * mVarSizeMax;
-    }
+    if (mWeight < 0.)
+        mExpSizeMax = std::fabs(mMaxValue) * mVarSizeMax;
     else
     {
-        mExpSizeMax = mVarSizeMax * fabs(mWeight);
-        if (mMaxValue >= 0.) {
+        mExpSizeMax = mVarSizeMax * std::fabs(mWeight);
+        if (mMaxValue >= 0.)
             addConstraint(mVarSizeMax == mMaxValue, "sMaxVal");
-        }
-        if (abs(mMaxValue) <= 0.0000001) {
+        if (std::fabs(mMaxValue) <= 1.e-7)
             addConstraint(aExpInstalled == 0, "nullInstalledSize");
-        }
     }
-    addConstraint(mExpSizeMax <= aExpInstalled * fabs(mMaxValue) * fabs(mWeight), "sBigMInstalled");
+
+    addConstraint(mExpSizeMax <= aExpInstalled * std::fabs(mMaxValue) * std::fabs(mWeight), "sBigMInstalled");
     addConstraint(mExpSizeMax >= aExpInstalled * mMinValue, "sMinSizeInstalled");
 }
 
-void SubModel::addVarSizeMax(const double& aMaxVal, const std::string& aStrName)
+// --- Units, labels, metadata ------------------------------------------------
+
+const std::string* SubModel::pCurrency() const
 {
-    //Max sizing value of the component (Weighting value, or Absolute value). Negative means optimization, absolute value gives max range value
-    if (mWeight<0)
-    {
-        if (mLPWeightOptimization) {
-            addVariable(mVarSizeMax, "Weight", 0.f, fabs(mWeight));
-        }
-        else {
-            addVariable(mVarSizeMax, "Weight", 0, fabs(mWeight), MIPModeler::MIP_INT);
-        }
-    }
-    else {
-        // optimize size on the basis of absolute capicity
-        addVariable(mVarSizeMax, aStrName, 0.f, fabs(aMaxVal));
-    }
+    const auto* compo = parentComponent();
+    return compo ? compo->pCurrency() : nullptr;
 }
 
-double SubModel::getMaxBound() {
-    /** Upper bound of size equal to weight * maxval */
-    if (mMaxValue == MIP_INFINITY) {
-        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " maxbound not defined", -1);
-        throw error;
-    }
-    return fabs(mMaxValue) * fabs(mWeight);
-}
-
-double SubModel::getMinBound() {
-    /** Lower bound of size equal to weight * minval */
-    if (mMinValue == -MIP_INFINITY) {
-        Cairn_Exception error("ERROR : submodel " + parent()->objectName() + " minbound not defined", -1);
-        throw error;
-    }
-    return fabs(mMinValue) * fabs(mWeight);
-}
-
-void SubModel::setMaxValue(const double& aMaxVal)
+const std::string* SubModel::pQuantity(const std::string& a_Quantity) const
 {
-    /* 
-    *  getMaxBound() = fabs(mMaxValue) * fabs(mWeight) is an upper bound on mExpSizeMax
-    */
-    mMaxValue = aMaxVal;
+    return mMainCarrier ? mMainCarrier->pQuantity(a_Quantity) : nullptr;
 }
 
-void SubModel::setMinValue(const double& aMinVal)
+const std::string* SubModel::pOptimalSizeUnit() const
 {
-    /*
-    *  mMinValue is a lower bound on mExpSizeMax
-    */
-    mMinValue = aMinVal;
-}
-
-uint64_t SubModel::exprMilpHorizon()
-//compute horizon to be considered for expression (never condensed for typical periods)
-//Extending a part of the MILP formulation to all time steps if start up is considered on the long-term or for typical periods
-{
-    if (mUseTypicalPeriods)
-    {
-        return mHorizon;
-    }
-    else
-    {
-        return mMilpNpdt;
-    }
-}
-
-uint64_t SubModel::varMilpHorizon()
-//compute horizon to be considered for variables (may be condensed for typical periods)
-//Extending a part of the MILP formulation to all time steps if start up is considered on the long-term or for typical periods
-{
-    if (mUseTypicalPeriods || mUseVariableTimeSteps)
-    {
-        return mCondensedNpdt;
-    }
-    else
-    {
-        return mMilpNpdt;
-    }
-}
-
-void SubModel::addStateConstraints(const uint64_t& aCondensedNpdt, const MIPModeler::MIPExpression& aExpInstalled)
-{
-    addVariable(mState, "State", 0, 1, MIPModeler::MIP_INT, aCondensedNpdt);
-
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpState[t] += mState(mVectTypicalPeriods[t]);
-    }
-
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        addConstraint(mExpState[t] <= aExpInstalled, "NotRunningIfNotInstalled", t);
-    }
-
-    // constrain that force relaxed variables mState to float variable = 1. (ON)
-    if (mLPModelOnly) {
-        for (uint64_t t = 0; t < aCondensedNpdt; t++) {
-            mState(t).fix(1);
-        }
-    }
-}
-
-void SubModel::addStartUpShutDown(const uint64_t& aCondensedNpdt, const MIPModeler::MIPExpression& aExpInstalled)
-{
-    addVariable(mStartUp, "StartUp", 0, 1, MIPModeler::MIP_INT, aCondensedNpdt);
-    addVariable(mShutDown, "ShutDown", 0, 1, MIPModeler::MIP_INT, aCondensedNpdt);
-
-    uint64_t nUsedNpdt = exprMilpHorizon();
-
-    for (uint64_t t = 0; t < nUsedNpdt; t++)
-    {
-        mExpStartUp[t] += mStartUp(mVectTypicalPeriods[t]);
-        mExpShutDown[t] += mShutDown(mVectTypicalPeriods[t]);
-    }
-    
-    for (uint64_t t = 0; t < nUsedNpdt; t++)
-    {
-        addConstraint(mExpStartUp[t] <= aExpInstalled, "NoStartUpIfNotInstalled", t);
-        addConstraint(mExpShutDown[t] <= aExpInstalled, "NoShutDownIfNotInstalled", t);
-        addConstraint(mExpStartUp[t] - mExpState[t] <= 0, "StateUp", t);
-        addConstraint(mExpShutDown[t] + mExpState[t] <= 1, "StateDown", t);
-
-        if (t > 0)
-        {
-            if (mUseTypicalPeriods)
-            {
-                //On n'applique pas de contraintes entre 2 periodes types, le parametre mAbsInitialState est utilise
-                if ((t + *mptrTimeshift - 1) % mNDtTypicalPeriods != 0 || mActivateConstraintsBetweenTP)
-                    addConstraint(mExpState[t] - mExpState[t - 1] - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", t);
-                else
-                    addConstraint(mExpState[t] - mAbsInitialState - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", t);
-            }
-            else {
-                addConstraint(mExpState[t] - mExpState[t - 1] - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", t);
-            }
-        }
-        else if (*mptrAbsoluteTimeStep > *mptrTimeshift) {
-            addConstraint(mExpState[t] - mHistState[mNpdtPast - 1] - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", t);
-        }
-        else {
-            addConstraint(mExpState[t] - mAbsInitialState - mExpStartUp[t] + mExpShutDown[t] == 0, "StatesUpDown", t);
-        }
-    }
-}
-
-std::string SubModel::ExpUnit(const std::string &aExpressionName)
-{
-    /* get the unit value of a given expression */
-    std::string vRet = "N/A";
-    t_mapIOs::iterator vIter = mIOExpressions.find(aExpressionName);
-    if (vIter != mIOExpressions.end()) {
-        vRet = vIter->second->getUnit();
-    }
-    return vRet;
-}
-
-const UnitParam* SubModel::pExpUnitParam(const std::string& aExpressionName) {
-    /* get a pointer to the UnitParam of a given expression (IO) in order to dynamically pass it to e.g. ZEVariables */
-    t_mapIOs::iterator vIter = mIOExpressions.find(aExpressionName);
-    if (vIter != mIOExpressions.end()) {
-        return vIter->second->pUnitParam();
-    }
-    return nullptr;
-}
-
-void SubModel::addVariable(MIPModeler::MIPVariable0D& variable0D, const std::string& name, const double& lowerBound,
-    const double& upperBound, const MIPModeler::MIPVarType& varType)
-{
-    if (mAllocate) {
-        variable0D = MIPModeler::MIPVariable0D(lowerBound, upperBound, varType);
-    }
-    mModel->add(variable0D, VName(name));
-}
-
-void SubModel::addVariable(MIPModeler::MIPVariable1D& variable1D, const std::string& name, const double& lowerBound, 
-    const double& upperBound, const MIPModeler::MIPVarType& varType, const int& cols)
-{
-    if (mAllocate) {
-        int dimension = cols;
-        if (dimension < 0) dimension = mHorizon;
-        variable1D = MIPModeler::MIPVariable1D(dimension, lowerBound, upperBound, varType);
-    }
-    mModel->add(variable1D, VName(name)); 
-}
-
-void SubModel::addConstraint(MIPModeler::MIPConstraint constraint, const std::string& name, const uint& t)
-{
-    mModel->add(constraint, CName(name,t));
-}
-
-bool SubModel::isPortIndicatorNameUnique(const MilpPort* targetPort)
-{
-    // Find if there is a port that results in indicator names identical to that of targetPort 
-    if(!targetPort) return true;
-    const auto& tdir = targetPort->Direction();
-    const auto& tvar = targetPort->Variable();
-    for (MilpPort* port : mListPort) {
-        if (port == targetPort) continue;
-        if (tdir == port->Direction() && tvar == port->Variable()) {
-            return false;
-        }
-    }
-    return true;
+    return p_OptimalSizeUnit ? p_OptimalSizeUnit : &m_OptimalSizeUnit;
 }
 
 std::string SubModel::getAbsoluteFileName(const std::string& filename) const
 {
-    if (mParentCompo) return mParentCompo->getAbsoluteFileName(filename);
-    return filename;
+    const auto* compo = parentComponent();
+    return compo ? compo->getAbsoluteFileName(filename) : filename;
 }
 
-//std::string SubModel::OptimalSizeUnit() const
-//{
-//    if (p_OptimalSizeUnit) {
-//        return *p_OptimalSizeUnit;
-//    }
-//    else {
-//        return m_OptimalSizeUnit;
-//    }
-//}
-
-const std::string* SubModel::pOptimalSizeUnit() const
+std::string SubModel::getLabelValue(const std::string& aLabel) const
 {
-    if (p_OptimalSizeUnit) {
-        return p_OptimalSizeUnit;
+    const auto it = mLabelMap.find(aLabel);
+    return (it != mLabelMap.end()) ? it->second : ""; 
+}
+
+// --- Private helpers --------------------------------------------------------
+
+int SubModel::checkVariable(const std::string& variable) const
+{
+    return (getMIPExpression(variable) || getMIPExpression1D(variable)) ? 0 : -1;
+}
+
+void SubModel::dumpIOExpressions() const
+{
+    std::ostringstream oss;
+    oss << "Available variables:\nVariable\t\tType\t\tUnit\n";
+    for (const auto& [key, vIO] : mIOExpressions)
+    {
+        if (!vIO) continue;
+        const char* typeStr = nullptr;
+        switch (vIO->getType())
+        {
+        case EIOModelType::eMIPExpression:   typeStr = "(Scalar)"; break;
+        case EIOModelType::eMIPExpression1D: typeStr = "(Vector)"; break;
+        default: continue;
+        }
+        oss << key << "\t\t" << typeStr << "\t\t" << vIO->getUnit() << "\n";
     }
-    else {
-        return &m_OptimalSizeUnit;
-    }
+    cInfo() << oss.str();
 }

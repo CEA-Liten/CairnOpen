@@ -1,37 +1,78 @@
 # -*- coding: utf-8 -*-
-"""
-Created on December 2025
 
-@author: sc258201
-"""
 import os
-import shutil
+import sys
+import re
 
-
-def replace_string_in_file(input_file, output_file, string_to_replace, new_string):
+def replace_key_opex(input_file, output_file):
     try:
-        # Open the input file in read mode
-        with open(input_file, 'r', encoding='utf-8') as file:
-            content = file.read()
+        with open(input_file, 'r', encoding='utf-8') as f:
+            content = f.read()
 
-        # Replace the string
-        new_content = content.replace(string_to_replace, new_string)
+        # Replace ONLY: "key": "Opex"
+        pattern = r'"key"\s*:\s*"Opex"'
+        replacement = '"key": "FixedOpex"'
 
-        # Open the output file in write mode
-        with open(output_file, 'w', encoding='utf-8') as file:
-            file.write(new_content)
+        content = re.sub(pattern, replacement, content)
 
-    except FileNotFoundError:
-        print(f"The file '{input_file}' was not found.")
+        # Replace ONLY: "key": "OpexOffset"
+        pattern = r'"key"\s*:\s*"OpexOffset"'
+        replacement = '"key": "FixedOpexOffset"'
+
+        content = re.sub(pattern, replacement, content)
+
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+
     except Exception as e:
-        print(f"The file '{input_file}:An error occurred: {e}")
+        print(f"Error processing '{input_file}': {e}")
+
 
 def update_v521_v53(directory, file_type):
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith(file_type):
                 json_file = os.path.join(root, file)
-                replace_string_in_file(json_file, json_file, "Opex", "FixedOpex")
+                replace_key_opex(json_file, json_file)
 
+def main():
+    if len(sys.argv) < 2:
+        print("Usage:")
+        print("  Single file mode:")
+        print("     python update_v521_v53.py <file.json>")
+        print("")
+        print("  Directory mode:")
+        print("     python update_v521_v53.py <directory> <file_extension>")
+        print("     Example: python update_v521_v53.py C:\\path\\to\\models .json")
+        sys.exit(1)
 
-update_v521_v53("C:\\Users\\SC258201\\Documents\\Cairn_5.1.41\\examples\\models\\compressor",".json")
+    # --- Single-file mode ---
+    if len(sys.argv) == 2:
+        file_path = sys.argv[1]
+
+        if not os.path.isfile(file_path):
+            print(f"Error: '{file_path}' is not a valid file.")
+            sys.exit(1)
+
+        print(f"Updating single file: {file_path}")
+        replace_key_opex(file_path, file_path)
+        print("Done.")
+        return
+
+    # --- Directory mode ---
+    if len(sys.argv) == 3:
+        directory = sys.argv[1]
+        file_type = sys.argv[2]
+
+        if not os.path.isdir(directory):
+            print(f"Error: '{directory}' is not a valid directory.")
+            sys.exit(1)
+
+        print(f"Updating directory: {directory}")
+        print(f"File type: {file_type}")
+        update_v521_v53(directory, file_type)
+        print("Done.")
+        return
+
+if __name__ == "__main__":
+    main()

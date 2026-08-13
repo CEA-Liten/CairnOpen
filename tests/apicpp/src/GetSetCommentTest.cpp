@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -99,49 +99,49 @@ int main()
 	)
 
 	vSimulationControl = m_Problem.get_SimulationControl();
-	TESTAPI2("Verify the comment of SimulationControl.FutureSize",
+	TESTAPIBOOL("Verify the comment of SimulationControl.FutureSize",
 		TestUtils::compare_scalar(vSimulationControl->get_SettingComment("FutureSize"), "This is FutureSize", eString)
 	)
 
 	vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
-	TESTAPI2("Verify the comment of TecEcoAnalysis.MaxConstraint",
+	TESTAPIBOOL("Verify the comment of TecEcoAnalysis.MaxConstraint",
 		TestUtils::compare_scalar(vTecEcoAnalysis->get_SettingComment("MaxConstraint"), "This is MaxConstraint", eString)
 	)
 
 	vSolver = m_Problem.get_Solver();
-	TESTAPI2("Verify the comment of Solver.Gab",
+	TESTAPIBOOL("Verify the comment of Solver.Gab",
 		TestUtils::compare_scalar(vSolver->get_SettingComment("Gap"), "This is Gap", eString)
 	)
 
 	vH2 = m_Problem.get_EnergyCarrier("H2");
-	TESTAPI2("Verify the comment of H2.LHV",
+	TESTAPIBOOL("Verify the comment of H2.LHV",
 		TestUtils::compare_scalar(vH2->get_SettingComment("LHV"), "This is LHV", eString)
 	)
 
-	TESTAPI2("Verify the comment of H2.GHV",
+	TESTAPIBOOL("Verify the comment of H2.GHV",
 		TestUtils::compare_scalar(vH2->get_SettingComment("GHV"), "This is GHV", eString)
 	)
 
 	vElec_Bus = m_Problem.get_Bus("Elec_Bus");
-	TESTAPI2("Verify the comment of Elec_Bus.UseExtrapolationFactor",
+	TESTAPIBOOL("Verify the comment of Elec_Bus.UseExtrapolationFactor",
 		TestUtils::compare_scalar(vElec_Bus->get_SettingComment("UseExtrapolationFactor"), "This is UseExtrapolationFactor", eString)
 	)
 
-	TESTAPI2("Verify the comment of Elec_Bus.MaxConstraint",
+	TESTAPIBOOL("Verify the comment of Elec_Bus.MaxConstraint",
 		TestUtils::compare_scalar(vElec_Bus->get_SettingComment("InitBusValue"), "This is InitBusValue", eString)
 	)
 
 	vELY_PEM = m_Problem.get_Component("ELY_PEM");
-	TESTAPI2("Verifythe comment of ELY_PEM.Capex",
+	TESTAPIBOOL("Verifythe comment of ELY_PEM.Capex",
 		TestUtils::compare_scalar(vELY_PEM->get_SettingComment("Capex"), "This is Capex", eString)
 	)
 
-	TESTAPI2("Verify the comments of ELY_PEM.vELY_PEM",
+	TESTAPIBOOL("Verify the comments of ELY_PEM.vELY_PEM",
 		TestUtils::compare_scalar(vELY_PEM->get_SettingComment("FixedOpex"), "This is FixedOpex", eString)
 	)
 
 	vELY_PEM_PortL0 = vELY_PEM->get_Port("PortL0");
-	TESTAPI2("Verify the comment of ELY_PEM.PortL0.VariableOpex",
+	TESTAPIBOOL("Verify the comment of ELY_PEM.PortL0.VariableOpex",
 		TestUtils::compare_scalar(vELY_PEM_PortL0->get_SettingComment("VariableOpex"), "This is VariableOpex", eString)
 	)
 

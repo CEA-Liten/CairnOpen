@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -19,7 +19,7 @@ int test(StudyCTest& a_Test, CairnAPI& a_Cairn, const std::string& a_SolverName)
 		vProblem.run(a_SolverName)
 	)
 
-	TESTAPI2FALSE("Check Run",
+	TESTAPIBOOL("Check Run",
 		a_Test.checkResults("Reference", true, true)
 	)
 
@@ -45,7 +45,7 @@ int main()
 	TESTAPI("Add port", vELY_PEM_Port = vELY_PEM->add_Port("ELY_PEM_Port", *vElec))
 
 	// Verify if related EnvImpacts have been added
-	TESTAPI2("Check if ELY_PEM_Port-related EnvImpact exists", 
+	TESTAPIBOOL("Check if ELY_PEM_Port-related EnvImpact exists", 
 		TestUtils::contains(vELY_PEM->get_SettingsList(), "ELY_PEM_Port.Climate change#Global Warming Potential 100 EnvContentCoefficient_A")
 	)
 
@@ -55,7 +55,7 @@ int main()
 	TESTAPI("Remove ELY_PEM_Port", vELY_PEM->remove_Port(*vELY_PEM_Port))
 
 	// Verify if related EnvImpacts have been deleted
-	TESTAPI2FALSE("Check if ELY_PEM_Port-related EnvImpact is deleted",
+	TESTAPIBOOLFALSE("Check if ELY_PEM_Port-related EnvImpact is deleted",
 		TestUtils::contains(vELY_PEM->get_SettingsList(), "ELY_PEM_Port.Climate change#Global Warming Potential 100 EnvContentCoefficient_A")
 	)
 
@@ -68,7 +68,7 @@ int main()
 		{"Variable", "Total Capex"}
 	});
 
-	TESTAPI2("Check the ports of TecEcoAnalysis", TestUtils::contains(vTecEcoAnalysis->get_Ports(), "TecEcoPort"))
+	TESTAPIBOOL("Check the ports of TecEcoAnalysis", TestUtils::contains(vTecEcoAnalysis->get_Ports(), "TecEcoPort"))
 
 	std::shared_ptr < CairnAPI::BusAPI> vElec_Bus = m_Problem.get_Bus("Elec_Bus");
 	TESTAPI("Add link to TecEcoAnalysis", m_Problem.add(*vTecEcoPort, *vElec_Bus))
@@ -76,15 +76,15 @@ int main()
 	t_dict vTecEcoLinksRef = { {vTecEcoAnalysis->get_Name() + (std::string)".TecEcoPort",  "Elec_Bus"} };
 	t_dict vTecEcoLinks;
 	vTecEcoAnalysis->get_Links(vTecEcoLinks);
-	TESTAPI2("Check the links of TecEcoAnalysis", TestUtils::compare_dict(vTecEcoLinks, vTecEcoLinksRef))
+	TESTAPIBOOL("Check the links of TecEcoAnalysis", TestUtils::compare_dict(vTecEcoLinks, vTecEcoLinksRef))
 
 	TESTAPI("Remove the TecEcoAnalysis link", m_Problem.remove(*vTecEcoPort, *vElec_Bus))
 	vTecEcoLinks = {};
 	vTecEcoAnalysis->get_Links(vTecEcoLinks);
-	TESTAPI2("Check the TecEcoAnalysis link has been removed", TestUtils::compare_dict(vTecEcoLinks, {}))
+	TESTAPIBOOL("Check the TecEcoAnalysis link has been removed", TestUtils::compare_dict(vTecEcoLinks, {}))
 
 	TESTAPI("Remove the TecEcoAnalysis port", vTecEcoAnalysis->remove_Port(*vTecEcoPort))
-	TESTAPI2("Check the TecEcoAnalysis port has been removed", TestUtils::compare_lists(vTecEcoAnalysis->get_Ports(), {}))
+	TESTAPIBOOL("Check the TecEcoAnalysis port has been removed", TestUtils::compare_lists(vTecEcoAnalysis->get_Ports(), {}))
 
 	//Execute a simulation then compare the result with the referance
 

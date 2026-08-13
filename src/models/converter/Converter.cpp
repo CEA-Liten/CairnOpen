@@ -16,6 +16,7 @@ Converter::Converter(CairnObject* aParent)
     mPortPowerOut(nullptr),
     mMaxPowerOut(0.)
 {
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 Converter::~Converter() {}
@@ -29,53 +30,52 @@ void Converter::setTimeData() {
     mMinPowerTS.resize(mHorizon);
 }
 
-void Converter::timeSeriesMapEfficiency(std::vector<std::vector<double>> aPowerInSetPointVec, std::vector<std::vector<double>> aPowerOutSetPointVec, const bool aRelaxedFormSOE)
+void Converter::timeSeriesMapEfficiency(const std::vector<std::vector<double>>& aPowerInSetPointVec,
+    const std::vector<std::vector<double>>& aPowerOutSetPointVec, const bool aRelaxedFormSOE)
 {
-    //Verify vector sizes
+    // Verify vector sizes
     if (aPowerInSetPointVec.size() != aPowerOutSetPointVec.size()) {
-        setException(Cairn_Exception((std::string)"ERROR: the number of InputSetPoints should be equal to the number of OutputSetPoints", -1));
-        return;
+        throw Cairn_Exception("ERROR: the number of InputSetPoints should be equal to the number of OutputSetPoints", -1);
     }
 
-    int aSize = aPowerInSetPointVec.size();
-    for (int i = 0; i < aSize; i++) {
-        if (aPowerInSetPointVec[i].size() != mHorizon) {
-            setException(Cairn_Exception("ERROR: the size of InputSetPoint#" + std::to_string(i + 1) + " Should be " + std::to_string(mHorizon) + ". It is " + std::to_string(aPowerInSetPointVec[i].size()), -1));
-            return;
+    const auto checkSetPointSize = [this](const std::vector<double>& aSetPoint, const std::string& aLabel, std::size_t aIndex) {
+        if (aSetPoint.size() != mHorizon) {
+            throw Cairn_Exception("ERROR: the size of " + aLabel + "#" + std::to_string(aIndex + 1) +
+                " should be " + std::to_string(mHorizon) + ". It is " + std::to_string(aSetPoint.size()), -1);
         }
-        if (aPowerOutSetPointVec[i].size() != mHorizon) {
-            setException(Cairn_Exception("ERROR: the size of OutputSetPoint#" + std::to_string(i + 1) + " Should be " + std::to_string(mHorizon) + ". It is " + std::to_string(aPowerOutSetPointVec[i].size()), -1));
-            return;
-        }
+    };
+
+    const std::size_t vecSize = aPowerInSetPointVec.size();
+    for (std::size_t i = 0; i < vecSize; ++i) {
+        checkSetPointSize(aPowerInSetPointVec[i], "InputSetPoint", i);
+        checkSetPointSize(aPowerOutSetPointVec[i], "OutputSetPoint", i);
     }
 
-    //Use line by line
-    std::vector<double> powerIn_t;
-    std::vector<double> powerOut_t;
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        powerIn_t.clear();
-        powerOut_t.clear();
+    // Build the piecewise-linear mapping and constraint 
+    std::vector<double> powerIn_t(vecSize);
+    std::vector<double> powerOut_t(vecSize);
 
-        for (int i = 0; i < aSize; i++) {
-            powerIn_t.push_back(aPowerInSetPointVec[i][t]);
-            powerOut_t.push_back(aPowerOutSetPointVec[i][t]);
+    for (uint64_t t = 0; t < mHorizon; ++t) 
+    {
+        for (std::size_t i = 0; i < vecSize; ++i) {
+            powerIn_t[i] = aPowerInSetPointVec[i][t];
+            powerOut_t[i] = aPowerOutSetPointVec[i][t];
         }
+        mExpPower_Out[t] = MIPModeler::MIPPiecewiseLinearisation(*mModel, mExpPower_In[t], 
+            powerIn_t, powerOut_t, "Power_In", MIPModeler::MIP_SOS, aRelaxedFormSOE);
 
-        mExpPower_Out[t] = MIPModeler::MIPPiecewiseLinearisation(*mModel, mExpPower_In[t], powerIn_t, powerOut_t, "Power_In",
-            MIPModeler::MIP_SOS, aRelaxedFormSOE);
-    }
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        addConstraint(mExpPower_Out[t] == mPower_Out(t), "map1Delectro",t);
+        addConstraint(mExpPower_Out[t] == mPower_Out(t), "map1Delectro", t);
     }
 }
 
-void Converter::mapEfficiency(std::vector<double> aPowerInSetPoint , std::vector<double> aPowerOutSetPoint, const bool aRelaxedFormSOE)
+void Converter::mapEfficiency(const std::vector<double>& aPowerInSetPoint, 
+    const std::vector<double>& aPowerOutSetPoint, const bool aRelaxedFormSOE)
 {
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        mExpPower_Out[t] = MIPModeler::MIPPiecewiseLinearisation(*mModel, mExpPower_In[t], aPowerInSetPoint, aPowerOutSetPoint, "Power_In", 
-                                                                     MIPModeler::MIP_SOS, aRelaxedFormSOE);
-    }
-    for (uint64_t t = 0; t < mHorizon; t++){
+    for (uint64_t t = 0; t < mHorizon; ++t) 
+    {
+        mExpPower_Out[t] = MIPModeler::MIPPiecewiseLinearisation(*mModel, mExpPower_In[t], 
+            aPowerInSetPoint, aPowerOutSetPoint, "Power_In", MIPModeler::MIP_SOS, aRelaxedFormSOE);
+
         addConstraint(mExpPower_Out[t]==mPower_Out(t), "map1Delectro",t);
     }
 }
@@ -95,8 +95,6 @@ void Converter::computeInitialData()
 {
     setMinValue(mMinSize);
     setMaxValue(mMaxPower);
-
-    mAddStateVariable = true; /* always add state constraints */
 }
 
 void Converter::computeModelContribution()
@@ -147,5 +145,5 @@ void Converter::computeEconomicalContribution()
 //-----------------------------------------------------------------------------
 void Converter::computeAllIndicators(const double* optSol)
 {
-    ConverterSubModel::computeDefaultIndicators(optSol);
+    ConverterSubModel::computeAllIndicators(optSol);
 }

@@ -38,7 +38,7 @@ int main()
 
 	t_list vBus1_Ports = vBus1.get_Ports();
 	t_list vPorts_Ref = { "PortBus" };
-	TESTAPI2("Bus1 ports", TestUtils::compare_lists(vBus1_Ports, vPorts_Ref));
+	TESTAPIBOOL("Bus1 ports", TestUtils::compare_lists(vBus1_Ports, vPorts_Ref));
 
 	vPortBus->set_SettingValues({
 		{"Direction", "OUTPUT"},

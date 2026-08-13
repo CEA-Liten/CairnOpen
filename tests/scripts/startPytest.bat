@@ -39,6 +39,7 @@ rem ---------------------------------
 set REPORT=%TESTDIR%\reports\CairnPytest-TNR.xml
 rem !! Warning: current dir must be Cairn root
 call GenericAppEnv.bat %CONFIGURATION%
+call ..\GenericAppEnv.bat %CONFIGURATION%
 
 cd /D %TESTDIR%
 

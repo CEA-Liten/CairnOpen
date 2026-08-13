@@ -162,7 +162,8 @@ def run(problem, folder):
 def get_plan_results(problem):
     ely_pem = problem.get_component("ELY_PEM")
     indicators = ely_pem.indicators
-    assert round(ely_pem.get_indicator_value("Installed Optimal Size", "PLAN"), 5) == 2.48392
+    assert round(ely_pem.get_indicator_value("Installed Optimal Size", "PLAN"), 5) == 2.48392 #name
+    assert round(ely_pem.get_indicator_value("Size", "PLAN"), 5) == 2.48392 #shortname
     ind = ely_pem.get_indicators_values("PLAN")
     print(ind)
     df = pd.DataFrame([ind]).transpose
@@ -290,6 +291,24 @@ def test_modify_port(problem):
     assert port.get_setting_value("Offset") == 0.0
     port.set_setting_value("Offset", 10)
     assert port.get_setting_value("Offset") == 10.0
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_small_values(problem):
+    storage = problem.get_component("H2_Tank")
+    storage.set_setting_value("KLoss", 0.000001)
+    assert (storage.get_setting_value("KLoss") == 0.000001)
+
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_import_group(problem):
+    app_home = path.dirname(path.realpath(__file__))
+    dataPath = path.join(app_home, 'data')
+    json_group = path.join(dataPath, "test_group.json")
+    res_import = problem.import_group(json_group)
+    assert 'Compressor'  in res_import and 'H2_Bus_Out'  in res_import and 'Purifier' in res_import
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI
@@ -561,6 +580,9 @@ if __name__ == '__main__':
     ely_pem = problem.get_component("ELY_PEM")
     default_ports = ely_pem.default_ports
     print(default_ports)
+    storage = problem.get_component("H2_Tank")
+    storage.set_setting_value("KLoss", "0.000001")
+    print(storage.get_setting_value("KLoss"))
 
     test_plan_results(problem)
 

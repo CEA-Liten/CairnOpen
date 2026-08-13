@@ -1,17 +1,16 @@
 #include "ModelTS.h"
 #include "ZEVariables.h"
 
-ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, const std::string& aDescription)
-    : ModelVar(aName, "", aDescription)
+ModelTS::ModelTS(const std::string& aName, const t_unit& aUnit, const std::string& aDescription)
+    : ModelVar(aName, t_flag{}, aUnit, aDescription)
 {
     m_default = 1.0;
     m_min = std::nan("1");
     m_max = std::nan("1");
-    if(a_Unit) m_Unit = *a_Unit; /* Case of timeseries where the unit of corresponding ModelTS is a copy of that from ModelParam */
 }
 
-ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, ModelParam* ap_Variable)
-    : ModelTS(aName, a_Unit)
+ModelTS::ModelTS(const std::string& aName, ModelParam* ap_Variable)
+    : ModelTS(aName, "", "")
 {
     if (ap_Variable) {
         p_Variable = ap_Variable;
@@ -27,12 +26,14 @@ ModelTS::ModelTS(const std::string& aName, const UnitParam* a_Unit, ModelParam* 
         if (const double* pval = std::get_if<double>(&ap_Variable->getMax())) {
             m_max = *pval;
         }
+
+        //m_Unit = *(p_Variable->pUnitParam()); // no need to store the current unit value
     }   
 }
 
 ModelTS::~ModelTS()
 {
-    if (p_ZEVariable) delete p_ZEVariable;
+    delete p_ZEVariable;
 }
 
 void ModelTS::setName(const std::string& a_Name)
@@ -47,6 +48,42 @@ void ModelTS::setName(const std::string& a_Name)
 void ModelTS::setDefault(double a_Value)
 {
     m_default = a_Value;
+}
+
+std::string ModelTS::getUnit() const
+{
+    if (!p_Variable)
+        return m_Unit.get_Value();
+
+    const UnitParam* unit = p_Variable->pUnitParam();
+
+    if (!unit)
+        return m_Unit.get_Value();
+
+    return (*unit).get_Value();
+}
+
+const UnitParam* ModelTS::pUnitParam() const
+{
+    return p_Variable ? p_Variable->pUnitParam() : &m_Unit;
+}
+
+bool ModelTS::IsUsed() const
+{
+    if (!p_Variable)
+        return m_IsUsed.get_Value();
+
+    const FlagParam* isUsed = p_Variable->pIsUsed();
+
+    if (!isUsed)
+        return m_IsUsed.get_Value();
+
+    return (*isUsed).get_Value();
+}
+
+const FlagParam* ModelTS::pIsUsed() const
+{
+    return p_Variable ? p_Variable->pIsUsed() : &m_IsUsed;
 }
 
 const std::vector<double>* ModelTS::get_Values(size_t aNpdtPast) const
@@ -166,7 +203,7 @@ bool ModelTS::checkProfile()
                 }
                 if (vMax < m_min || vMax > m_max || vMin < m_min || vMin > m_max)
                 {
-                    cCritical() << "ERROR in profile " << m_Name
+                    cError() << "ERROR in profile " << m_Name
                         << " values should be in the range [" << m_min << ";" << m_max << "] "
                         << " instead of [" << vMin << ";" << vMax << "] ";
                     vRet = false;
@@ -180,7 +217,7 @@ bool ModelTS::checkProfile()
 
 void ModelTS::subscribeTS(const std::string& a_exName, t_mapExchange& a_Import, size_t a_npdtTot)
 {
-    p_ZEVariable = new ZEVariables(m_Name, &m_Unit, m_Description + " Profile ", "1", "0", false);
+    p_ZEVariable = new ZEVariables(m_Name, pIsUsed(), pUnitParam(), m_Description + " Profile ", "1", "0", false);
     a_Import[a_exName] = p_ZEVariable;
     std::vector<double>& vZEHist = *p_ZEVariable->ptrVariable();
     vZEHist.resize(a_npdtTot, 0.0);

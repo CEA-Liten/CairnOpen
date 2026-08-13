@@ -6,7 +6,7 @@ rem	 		 [<empty>=all|open]					: all=with private models, open=without
 rem			 [<empty>|wheel|wheel-noinstall]	: wheel=build and install wheel, wheel-noinstall=build but no install
 rem			 [<empty>|deps]			: deps=use dependencies installed in the directory D:/Tools/DepsCairn
 rem			 [<empty>|envCairn]		: envCairn=use env python enCairn<Number> else use defaultoption
-rem			 [<empty>|buildDoc|buildDevDoc]		: buildDoc=buil cairn documentation, buildDevDoc=build developper documentation
+rem			 [<empty>|buildDoc|buildDevDoc]		: buildDoc=build cairn documentation, buildDevDoc=build developper documentation
 rem		
 rem for example to build only developper documentation
 rem     buildAll nothing all nothing nothing nothing buildDevDoc

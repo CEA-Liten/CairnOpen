@@ -36,12 +36,24 @@ void Ramp::setTimeData()
     mRampDownLimit.resize(mHorizon);
 }
 
+void Ramp::configureStateFlags()
+{
+    mAddStateVariable = mAddStartUpShutDownVariable;
+}
+
+
+void Ramp::paramValueChanged(const std::string& paramName)
+{
+    if(paramName == PARAM_AllowShutDown_NAME)
+        configureStateFlags();
+}
+
 void Ramp::computeInitialData()
 {
     setMaxValue(mMaxWeight);
     setMinValue(mMinSize);
 
-    mAddStateVariable = mAddStartUpShutDownVariable;
+    configureStateFlags(); 
 }
 
 void Ramp::computeModelContribution()
@@ -129,7 +141,7 @@ void Ramp::addRelativeRampWithMinPower(){
 
 void Ramp::computeAllIndicators(const double* optSol)
 {
-    OperationSubModel::computeDefaultIndicators(optSol);
+    OperationSubModel::computeAllIndicators(optSol);
 }
 
 

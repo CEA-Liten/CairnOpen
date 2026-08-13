@@ -61,15 +61,15 @@ public:
     int getImpactIndex(const std::string& impactName); 
 
     //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
     }
 
-    void declareModelParameters()
+    void declareModelParameters() override
     {
     }
 
-    void declareModelInterface()
+    void declareModelInterface() override
     {
         //TecEco total values
         if (mMainCarrier) {
@@ -99,7 +99,7 @@ public:
         }
     }
 
-    void declareModelIndicators()
+    void declareModelIndicators() override
     {
         mInputIndicators->addIndicator("NbYear", &mNbYearIndicator, &mExportIndicators, "NbYear", "year", "NbYear");
         mInputIndicators->addIndicator("Discount Rate", &mDiscountRateIndicator, &mExportIndicators, "Discount Rate", "-", "DiscountRate");
@@ -211,6 +211,8 @@ public:
     std::vector<double>& LevelizationTable() { return mLevelizationTable; }
     std::vector<double>& ImpactLevelizationTable() { return mImpactLevelizationTable; }
     std::vector<double>& TableYearsHours() { return mTableYearsHours; }
+
+    int checkPortCount() override { return 0; }
 
 private :
     void doInit(const t_mapParamData& aComponent);

@@ -196,21 +196,21 @@ int TechnicalSubModel::checkConsistency()
     // note that this function is not used for SourceLoad where the only dimensionning variable is the weight
     if (mPiecewiseCapex && mWeight<0)
     {
-        cCritical() << "ERROR : options PiecewiseCapex and Weight<0 cannot be used together  " << mPiecewiseCapex << (mWeight<0);
+        cWarning() << "Options PiecewiseCapex and Weight<0 cannot be used together  " << mPiecewiseCapex << (mWeight<0);
         return -1;
     }
 
     for (int i = 0; i < mEnvImpacts.size(); i++)
     {
         if (mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() && (mWeight<0)) {
-            cCritical() << "ERROR : options PiecewiseEnvGreyContentCoeff and (mWeight<0) cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << (mWeight < 0);
+            cWarning() << "Options PiecewiseEnvGreyContentCoeff and (mWeight<0) cannot be used together  " << mEnvImpacts[i]->PiecewiseEnvGreyContentCoeff() << (mWeight < 0);
             return -1;
         }
     }
 
     if (mMaxValue < 0. && mWeight < 0.)
     {
-        cCritical() << "ERROR : size of one component and weight cannot be optimized together maxvalue : " << mMaxValue << ", Weight : " << (mWeight);
+        cWarning() << "Size of one component and weight cannot be optimized together maxvalue : " << mMaxValue << ", Weight : " << (mWeight);
         return -1;
     }
 
@@ -314,8 +314,9 @@ void TechnicalSubModel::computeEnvContribution()
     }
 }
 
-void TechnicalSubModel::computePiecewiseContribution(const MIPModeler::MIPData1D& aCapacitySetPoint, const MIPModeler::MIPData1D& aCostSetPoint,
-    const bool& aTryRelaxation, const double& aOffset, MIPModeler::MIPExpression& aExp) 
+void TechnicalSubModel::computePiecewiseContribution(const MIPModeler::MIPData1D& aCapacitySetPoint, 
+    const MIPModeler::MIPData1D& aCostSetPoint, const bool& aTryRelaxation, 
+    const double& aOffset, MIPModeler::MIPExpression& aExp) 
 {
     if (aCapacitySetPoint.size() == 0 || aCostSetPoint.size() == 0) {
         Cairn_Exception cairn_error(parent()->objectName() + ": setpoint is void ! (CapacitySetPoint or CostSetPoint in DataFile)", -1);
@@ -475,72 +476,110 @@ void TechnicalSubModel::computeNetOpexContribution()
     }
 }
 
-void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
+void TechnicalSubModel::computeAllIndicators(const double* optSol)
 {
-    mOptimalSize.at(0) = 0.;
-    mWeightResult.at(0) = 1;
-    mWeightResult.at(1) = 1;
-    mTotalCostFunction.at(0) = 0.;
-    mCapexContribution.at(0) = 0.;
-    mOpexContribution.at(0) = 0.;
-    mFixedOpexContribution.at(0) = 0.;
-    mVariableCosts.at(0) = 0.;
-    mReplacementPart.at(0) = 0.;
-    mEnvImpactPart.at(0) = 0.;
-    mEmbodiedCost.at(0) = 0.;
+    SubModel::computeAllIndicators(optSol);
 
-    mOptimalSize.at(0) = mExpSizeMax.evaluate(optSol);
-    double sauv = mOptimalSize.at(1);
-    mOptimalSize.at(1) = max(sauv, mOptimalSize.at(0));
+    // Cache horizon and timeshift (avoid re-reading these members from memory as loop)
+    const uint64_t horizon = mHorizon;
+    const uint64_t timeshift = *mptrTimeshift;
+
+    mWeightResult[0] = 1;
+    mWeightResult[1] = 1;
+    mCapexContribution[0] = 0.;
+    mFixedOpexContribution[0] = 0.;
+    mVariableCosts[0] = 0.;
+    mReplacementPart[0] = 0.;
+    mEnvImpactPart[0] = 0.;
+    mEmbodiedCost[0] = 0.;
+
+    mOptimalSize[0] = mExpSizeMax.evaluate(optSol);
+    const double sauv = mOptimalSize[1];
+    mOptimalSize[1] = max(sauv, mOptimalSize[0]);
+
+    mExistence[0] = mExistence[1] = mExpInstalled.evaluate(optSol);
+
+    if (mOptimalSize[0] == 0.) {
+        mExistence[0] = mExistence[1] = 0.;
+    }
+
+    if (mWeight > 1 || mWeight < 0) {
+        mWeightResult[0] = mOptimalSize[0] / mMaxValue;
+        mWeightResult[1] = mOptimalSize[1] / mMaxValue;
+    }
+
+    auto* compo = parentComponent();
+    const double ExtrapolationFactor = compo ? compo->ExtrapolationFactor() : 1.0;
 
     if (mEcoInvestModel)
     {
-        mCapexContribution.at(0) = mCapexContribution.at(1) = mExpCapex.evaluate(optSol);
-        for (uint64_t t = 0; t < mHorizon; ++t) mFixedOpexContribution.at(0) += mExpFixedOpex.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // mise à jour du PLAN
-        for (uint64_t t = 0; t < *mptrTimeshift; ++t) mFixedOpexContribution.at(1) += mExpFixedOpex.at(t).evaluate(optSol); // mise à jour du HIST
-        for (uint64_t t = 0; t < mHorizon; ++t) mVariableOpexContribution.at(0) += mExpVariableOpex.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // mise à jour du PLAN
-        for (uint64_t t = 0; t < *mptrTimeshift; ++t) mVariableOpexContribution.at(1) += mExpVariableOpex.at(t).evaluate(optSol); // mise à jour du HIST
-        for (uint64_t t = 0; t < mHorizon; ++t) mReplacementPart.at(0) += mExpReplacement.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // PLAN
-        for (uint64_t t = 0; t < *mptrTimeshift; ++t) mReplacementPart.at(1) += mExpReplacement.at(t).evaluate(optSol); // HIST
+        mCapexContribution[0] = mCapexContribution[1] = mExpCapex.evaluate(optSol);
+
+        for (uint64_t t = 0; t < horizon; ++t)
+        {
+            const double v = mExpFixedOpex[t].evaluate(optSol);
+            mFixedOpexContribution[0] += v * ExtrapolationFactor; // PLAN
+            if (t < timeshift)
+                mFixedOpexContribution[1] += v; // HIST
+        }
+
+        for (uint64_t t = 0; t < horizon; ++t)
+        {
+            const double v = mExpVariableOpex[t].evaluate(optSol);
+            mVariableOpexContribution[0] += v * ExtrapolationFactor; // PLAN
+            if (t < timeshift)
+                mVariableOpexContribution[1] += v; // HIST
+        }
+
+        for (uint64_t t = 0; t < horizon; ++t)
+        {
+            const double v = mExpReplacement[t].evaluate(optSol);
+            mReplacementPart[0] += v * ExtrapolationFactor; // PLAN
+            if (t < timeshift)
+                mReplacementPart[1] += v; // HIST
+        }
     }
-    mExistence.at(0) = mExistence.at(1) = mExpInstalled.evaluate(optSol);
-    if (mOptimalSize.at(0) == 0.) {
-        mExistence.at(0) = mExistence.at(1) = 0.;
+
+    for (uint64_t t = 0; t < horizon; ++t)
+    {
+        const double v = mExpVariableCosts[t].evaluate(optSol);
+        mVariableCosts[0] += v * ExtrapolationFactor; // PLAN
+        if (t < timeshift)
+            mVariableCosts[1] += v; // HIST
     }
-    if (mWeight > 1 || mWeight < 0) {
-        mWeightResult.at(0) = mOptimalSize.at(0) / mMaxValue;
-        mWeightResult.at(1) = mOptimalSize.at(1) / mMaxValue;
-    }
-    double xxx = mExpSizeMax.evaluate(optSol);
-    for (uint64_t t = 0; t < mHorizon; ++t) mVariableCosts.at(0) += mExpVariableCosts.at(t).evaluate(optSol) * mParentCompo->ExtrapolationFactor(); // PLAN
-    for (uint64_t t = 0; t < *mptrTimeshift; ++t) mVariableCosts.at(1) += mExpVariableCosts.at(t).evaluate(optSol); // HIST
 
     if (mGeometryModel) {
-        mAreaContribution.at(0) = mAreaContribution.at(1) = mExpArea.evaluate(optSol);
-        mVolumeContribution.at(0) = mVolumeContribution.at(1) = mExpVolume.evaluate(optSol);
-        mMassContribution.at(0) = mMassContribution.at(1) = mExpMass.evaluate(optSol);
+        mAreaContribution[0] = mAreaContribution[1] = mExpArea.evaluate(optSol);
+        mVolumeContribution[0] = mVolumeContribution[1] = mExpVolume.evaluate(optSol);
+        mMassContribution[0] = mMassContribution[1] = mExpMass.evaluate(optSol);
     }
 
     if (mEnvironmentModel)
     {
         for (EnvImpact* impact : mEnvImpacts)
         {
-            computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartPLAN());
-            computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartHIST());
-            mEnvImpactPart.at(0) += *impact->getEnvImpactPartPLAN();
-            mEnvImpactPart.at(1) += *impact->getEnvImpactPartHIST();
+            const auto& envOpCost = *impact->getExpEnvOpCost();
+            computeProduction(true, horizon, envOpCost, optSol, 1., 0., *impact->getEnvImpactPartPLAN());
+            computeProduction(false, timeshift, envOpCost, optSol, 1., 0., *impact->getEnvImpactPartHIST());
+            mEnvImpactPart[0] += *impact->getEnvImpactPartPLAN();
+            mEnvImpactPart[1] += *impact->getEnvImpactPartHIST();
+
             //Use getExpEnvFlow instead of getExpEnvMass to compute getEnvImpactMassPLAN and getEnvImpactMassHIST because computeProduction multiplies by TimeStep
-            computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassPLAN());
-            computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassHIST());
+            const auto& envFlow = *impact->getExpEnvFlow();
+            computeProduction(true, horizon, envFlow, optSol, 1., 0., *impact->getEnvImpactMassPLAN());
+            computeProduction(false, timeshift, envFlow, optSol, 1., 0., *impact->getEnvImpactMassHIST());
+
             //Grey impact
             impact->evaluateEmbodiedImpact(optSol);
-            computeProduction(true, mHorizon, mNpdtPast, *impact->getExpEnvReplacement(), optSol, 1., 0., *impact->getEnvImpactReplacementPLAN());
-            computeProduction(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvReplacement(), optSol, 1., 0., *impact->getEnvImpactReplacementHIST());
+            const auto& envRepl = *impact->getExpEnvReplacement();
+            computeProduction(true, horizon, envRepl, optSol, 1., 0., *impact->getEnvImpactReplacementPLAN());
+            computeProduction(false, timeshift, envRepl, optSol, 1., 0., *impact->getEnvImpactReplacementHIST());
         }
     }
 
-    mOpexContribution.at(0) = mFixedOpexContribution.at(0) + mVariableOpexContribution.at(0) + mReplacementPart.at(0) + mEnvImpactPart.at(0) + mVariableCosts.at(0);
-    mOpexContribution.at(1) = mFixedOpexContribution.at(1) + mVariableOpexContribution.at(1) + mReplacementPart.at(1) + mEnvImpactPart.at(1) + mVariableCosts.at(1);
+    mOpexContribution[0] = mFixedOpexContribution[0] + mVariableOpexContribution[0] + mReplacementPart[0] + mEnvImpactPart[0] + mVariableCosts[0];
+    mOpexContribution[1] = mFixedOpexContribution[1] + mVariableOpexContribution[1] + mReplacementPart[1] + mEnvImpactPart[1] + mVariableCosts[1];
+
     double pureOpexContributionDiscounted = 0.;
     double replacementPartDiscounted = 0.;
     double envEmissionPartDiscounted = 0.;
@@ -549,32 +588,37 @@ void TechnicalSubModel::computeDefaultIndicators(const double* optSol)
     double variableCostsDiscounted = 0.;
 
     if (mEcoInvestModel) {
-        computeDiscounted(mHorizon, mNpdtPast, mExpFixedOpex, optSol, pureOpexContributionDiscounted);
-        computeDiscounted(mHorizon, mNpdtPast, mExpReplacement, optSol, replacementPartDiscounted);
+        computeDiscounted(horizon, mExpFixedOpex, optSol, pureOpexContributionDiscounted);
+        computeDiscounted(horizon, mExpReplacement, optSol, replacementPartDiscounted);
     }
 
     if (mEnvironmentModel) for (EnvImpact* impact : mEnvImpacts) {
         //Use getExpEnvFlow instead of getExpEnvMass to compute getEnvImpactMassDiscountedPLAN because computeLvlImpact multiplies by TimeStep
-        computeLvlImpact(true, mHorizon, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedPLAN());
-        computeLvlImpact(true, mHorizon, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassDiscountedPLAN());
+        computeLvlImpact(true, horizon, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedPLAN());
+        computeLvlImpact(true, horizon, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassDiscountedPLAN());
         envImpactPartDiscounted += *impact->getEnvImpactPartDiscountedPLAN();
     }
-    computeDiscounted(mHorizon, mNpdtPast, mExpVariableCosts, optSol, variableCostsDiscounted);
-    mTotalCostFunction.at(0) = mCapexContribution.at(0) + pureOpexContributionDiscounted + replacementPartDiscounted
-        + envEmissionPartDiscounted + envImpactPartDiscounted + variableCostsDiscounted; 
+
+    computeDiscounted(horizon, mExpVariableCosts, optSol, variableCostsDiscounted);
+
+    mTotalCostFunction[0] = mCapexContribution[0] + pureOpexContributionDiscounted + replacementPartDiscounted
+        + envEmissionPartDiscounted + envImpactPartDiscounted + variableCostsDiscounted;
 
     if (mEcoInvestModel) {
-        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpFixedOpex, optSol, mHistFixedOpexContributionDiscounted);
-        computeDiscounted(*mptrTimeshift, mNpdtPast, mExpReplacement, optSol, mHistReplacementPartDiscounted);
+        computeDiscounted(timeshift, mExpFixedOpex, optSol, mHistFixedOpexContributionDiscounted);
+        computeDiscounted(timeshift, mExpReplacement, optSol, mHistReplacementPartDiscounted);
     }
 
     if (mEnvironmentModel) for (EnvImpact* impact : mEnvImpacts) {
         //Use getExpEnvFlow instead of getExpEnvMass to compute getEnvImpactMassDiscountedHIST because computeLvlImpact multiplies by TimeStep
-        computeLvlImpact(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedHIST());
-        computeLvlImpact(false, *mptrTimeshift, mNpdtPast, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassDiscountedHIST());
+        computeLvlImpact(false, timeshift, *impact->getExpEnvOpCost(), optSol, 1., 0., *impact->getEnvImpactPartDiscountedHIST());
+        computeLvlImpact(false, timeshift, *impact->getExpEnvFlow(), optSol, 1., 0., *impact->getEnvImpactMassDiscountedHIST());
         envHistImpactPartDiscounted += *impact->getEnvImpactPartDiscountedHIST();
     }
-    computeDiscounted(*mptrTimeshift, mNpdtPast, mExpVariableCosts, optSol, mHistVariableCostsDiscounted);
-    mTotalCostFunction.at(1) = mCapexContribution.at(1) + (mHistFixedOpexContributionDiscounted + mHistReplacementPartDiscounted + envHistImpactPartDiscounted + mHistVariableCostsDiscounted) / mParentCompo->ExtrapolationFactor();
-}
 
+    computeDiscounted(timeshift, mExpVariableCosts, optSol, mHistVariableCostsDiscounted);
+
+    mTotalCostFunction[1] = mCapexContribution[1]
+        + (mHistFixedOpexContributionDiscounted + mHistReplacementPartDiscounted
+            + envHistImpactPartDiscounted + mHistVariableCostsDiscounted) / ExtrapolationFactor;
+}

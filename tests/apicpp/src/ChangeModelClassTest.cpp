@@ -1,7 +1,6 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
 
 using namespace std;
 
@@ -46,7 +45,7 @@ int main()
 	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
 	t_list refList = { "Electrolyzer", "ElectrolyzerDetailed" };
 	t_list classList = vELY_PEM->get_PossibleModelClasses();
-	TESTAPI2("Check list of model classes", TestUtils::compare_lists(refList, classList))
+	TESTAPIBOOL("Check list of model classes", TestUtils::compare_lists(refList, classList))
 
 	TESTAPIFALSE("Try using non-supported model class Converter", vELY_PEM->set_SettingValue("ModelClass", "Converter"))
 
@@ -67,7 +66,7 @@ int main()
 	CairnAPI::SolutionAPI vSolution;
 	TESTAPI("Run simulation", vSolution = m_Problem.run())
 
-	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
+	TESTAPIBOOL("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
 	
 	return noError;
 }

@@ -35,7 +35,8 @@ void ManualObjective::computeInitialData()
 {
     /* When UseExtrapolationFactor is true, then *BusValue is assumed to be over one year */
 
-    const double factor = mParentCompo->ExtrapolationFactor();
+    auto* compo = parentComponent();
+    const double factor = compo ? compo->ExtrapolationFactor() : 1.0;
     const double scale = mUseExtrapolationFactor ? (1.0 / factor) : 1.0;
 
     mMinConstraintBusValue *= scale;
@@ -57,7 +58,8 @@ void ManualObjective::computeModelContribution()
     std::vector<MIPModeler::MIPExpression> ExprIntegrate(mLinkedPorts.size());
     float factorExp = 1;
     if (mUseExtrapolationFactor) {
-        factorExp = mParentCompo->ExtrapolationFactor();
+        auto* compo = parentComponent();
+        factorExp = compo ? compo->ExtrapolationFactor() : 1.0;
     }
     if (mUseCommonMaxVariable) {
         
@@ -70,7 +72,7 @@ void ManualObjective::computeModelContribution()
                 }
                 addConstraint(mExpCommonMaxVariable >= ExprIntegrate[i]/factorExp, "MaxConstraintIntegrated");
             }
-            else if (port->FluxDim() == 1.) {
+            else if (port->IsTimeDependant()) {
                 for (unsigned int t = 0; t < mHorizon; ++t)
                 {
                     addConstraint(mExpCommonMaxVariable >= port->Flux()[t], "MaxConstraint");
@@ -93,7 +95,7 @@ void ManualObjective::computeModelContribution()
                 }
                 addConstraint(mExpCommonMaxVariable <= ExprIntegrate[i]/factorExp, "MinConstraintIntegrated");
             }
-            if (port->FluxDim() == 1.) {
+            if (port->IsTimeDependant()) {
                 for (unsigned int t = 0; t < mHorizon; ++t)
                 {
                     addConstraint(mExpCommonMinVariable <= port->Flux()[t], "MinConstraint");
@@ -108,7 +110,7 @@ void ManualObjective::computeModelContribution()
     else {
         /** Constraint related the bus connections */
         for (auto& port : mLinkedPorts) {
-            if (port->FluxDim() == 1.) {
+            if (port->IsTimeDependant()) {
                 addExpressionToBalance(port->Flux());
             }
             else {
@@ -134,13 +136,63 @@ void ManualObjective::computeModelContribution()
 
 void ManualObjective::computeSubObjectiveContribution()
 {
-    for (unsigned int t = 0; t < mHorizon; ++t) {
-        mSubObjective += TimeStep(t) * mBusBalance1D[t] * mObjectiveCoefficient;
+    if (mPiecewiseObjective)
+    {
+        // -----------------------------------------
+        // Piecewise objective
+        // -----------------------------------------
+ 
+        // ---- Validation ----
+        if (mObjectiveBalanceSetPoint.empty() || mObjectiveCostSetPoint.empty()) {
+            throw Cairn_Exception(Name() + ": Objective setpoints are empty (BalanceSetPoint or CostSetPoint).", -1);
+        }
+
+        // ---- 1D contribution (time-dependent) ----
+        MIPModeler::MIPExpression1D pw1D =
+            MIPModeler::MIPPiecewiseLinearisation(
+                *mModel,
+                mBusBalance1D,
+                mObjectiveBalanceSetPoint,
+                mObjectiveCostSetPoint,
+                "SubObjective1D",
+                MIPModeler::MIP_SOS,
+                /*relaxedForm=*/false
+            );
+
+        for (std::size_t t = 0; t < mHorizon; ++t) {
+            mSubObjective += TimeStep(t) * pw1D[t];
+        }
+
+        // ---- 0D contribution (scalar) ----
+        mSubObjective += 
+            MIPModeler::MIPPiecewiseLinearisation(
+                *mModel,
+                mBusBalance,
+                mObjectiveBalanceSetPoint,
+                mObjectiveCostSetPoint,
+                "SubObjective0D",
+                MIPModeler::MIP_SOS,
+                /*relaxedForm=*/false
+            );
     }
-    mSubObjective += mObjectiveCoefficient * mBusBalance;
+    else {
+        // -----------------------------------------
+        // Linear objective (default)
+        // -----------------------------------------
+
+        // ---- 1D contribution (time-dependent) ----
+        for (std::size_t t = 0; t < mHorizon; ++t) {
+            mSubObjective += TimeStep(t) * mBusBalance1D[t] * mObjectiveCoefficient;
+        }
+
+        // ---- 0D contribution (scalar) ----
+        mSubObjective += mBusBalance * mObjectiveCoefficient;
+    }
 }
+
 void ManualObjective::addLexicographicObjective() {
-    if (mObjectiveType == "Lexicographic") {
+    if (mObjectiveType == "Lexicographic") 
+    {
         cInfo() << "adding the objective " << parent()->objectName();
         std::string name = parent()->objectName();
         MIPModeler::MIPSubobjective subObjective(name);
@@ -183,7 +235,7 @@ void ManualObjective::addMinConstraint()
 //-------------------------------------------------------
 void ManualObjective::computeAllIndicators(const double* optSol)
 {
-    BusSubModel::computeDefaultIndicators(optSol);
+    BusSubModel::computeAllIndicators(optSol);
     mBusEnergyBalance.at(0) = 0.;
     mBusEnergyBalance.at(1) = 0.;
 }

@@ -17,27 +17,27 @@ public:
     //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        BusSubModel::declareDefaultModelConfigurationParameters();
+        BusSubModel::declareModelConfigurationParameters();
 
         //bool
-        addParameter("TimeIntegration", &mTimeIntegration, false, false, true, "TimeIntegration option indicates that each time variables at ports will be summed using timestep weighting if true or simply cumulated if false - default = true");
-        addParameter("StrictConstraint", &mStrictConstraint, false, false, true, "StrictConstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true");
-        addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false");
-        addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false");
-        addParameter("StrictIntegrateConstraint", &mStrictIntegrateConstraint, false, false, true, "Integrated StrictConstraint option enabling: time integration on horizon of sum of connected flows should be equal to StrictConstraintBusValue - default = false");
-        addParameter("MinIntegrateConstraint", &mMinIntegrateConstraint, false, false, true, "Integrated MinConstraint option enabling: time integration on horizon of sum of connected flows should be >= MinConstraintBusValue - default = false");
-        addParameter("MaxIntegrateConstraint", &mMaxIntegrateConstraint, false, false, true, "Integrated MaxConstraint option enabling: time integration on horizon of sum of connected flows should be <= MaxConstraintBusValue - default = false");
-        addParameter("MaxFlexIntegrateConstraint", &mMaxFlexIntegrateConstraint, false, false, true, "Flexible Integrated MaxConstraint option enabling, time integration on horizon of sum of connected flows should be <= MaxConstraintBusValue - default = false - If not possible huge penalty is added to still make solving possible");
-        addParameter("MinIntegrateSeparateConstraint", &mMinIntegrateSeparateConstraint, false, false, true, "Min integrate constraint on separated periods. Condition to use this functionality : FuturSize = k * intervalBetweenIntegrates + periodIntegrate - intervalBetweenIntegrates <= periodIntegrate - TimeShift = k' * intervalBetweenIntegrates");
-        addParameter("MaxIntegrateSeparateConstraint", &mMaxIntegrateSeparateConstraint, false, false, true, "Max integrate constraint on separated periods. Condition to use this functionality : FuturSize = k * intervalBetweenIntegrates + periodIntegrate - intervalBetweenIntegrates <= periodIntegrate - TimeShift = k' * intervalBetweenIntegrates");
+        addConfigParameter("TimeIntegration", &mTimeIntegration, false, false, true, "TimeIntegration option indicates that each time variables at ports will be summed using timestep weighting if true or simply cumulated if false - default = true");
+        addConfigParameter("StrictConstraint", &mStrictConstraint, false, false, true, "StrictConstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true");
+        addConfigParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false");
+        addConfigParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false");
+        addConfigParameter("StrictIntegrateConstraint", &mStrictIntegrateConstraint, false, false, true, "Integrated StrictConstraint option enabling: time integration on horizon of sum of connected flows should be equal to StrictConstraintBusValue - default = false");
+        addConfigParameter("MinIntegrateConstraint", &mMinIntegrateConstraint, false, false, true, "Integrated MinConstraint option enabling: time integration on horizon of sum of connected flows should be >= MinConstraintBusValue - default = false");
+        addConfigParameter("MaxIntegrateConstraint", &mMaxIntegrateConstraint, false, false, true, "Integrated MaxConstraint option enabling: time integration on horizon of sum of connected flows should be <= MaxConstraintBusValue - default = false");
+        addConfigParameter("MaxFlexIntegrateConstraint", &mMaxFlexIntegrateConstraint, false, false, true, "Flexible Integrated MaxConstraint option enabling, time integration on horizon of sum of connected flows should be <= MaxConstraintBusValue - default = false - If not possible huge penalty is added to still make solving possible");
+        addConfigParameter("MinIntegrateSeparateConstraint", &mMinIntegrateSeparateConstraint, false, false, true, "Min integrate constraint on separated periods. Condition to use this functionality : FuturSize = k * intervalBetweenIntegrates + periodIntegrate - intervalBetweenIntegrates <= periodIntegrate - TimeShift = k' * intervalBetweenIntegrates");
+        addConfigParameter("MaxIntegrateSeparateConstraint", &mMaxIntegrateSeparateConstraint, false, false, true, "Max integrate constraint on separated periods. Condition to use this functionality : FuturSize = k * intervalBetweenIntegrates + periodIntegrate - intervalBetweenIntegrates <= periodIntegrate - TimeShift = k' * intervalBetweenIntegrates");
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        BusSubModel::declareDefaultModelParameters();
+        BusSubModel::declareModelParameters();
         //bool
         addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, false, SFunctionFlag({ eFTypeOrNot, {  &mMinConstraint, &mMaxConstraint, &mStrictIntegrateConstraint, &mMinIntegrateConstraint, &mMaxIntegrateConstraint, &mMaxFlexIntegrateConstraint} }), true, "When true the values of *BusValue are assumed over one year instead of optimization horizon"); 
         //double
@@ -55,9 +55,9 @@ public:
         addParameter("IntervalBetweenIntegrals", &mIntervalBetweenIntegrals, 0, false, true, "Interval between integrate constraints", "Nb");
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        BusSubModel::declareDefaultModelInterface();
+        BusSubModel::declareModelInterface();
 
         addIO("PenaltyConstraintCosts", &mExpPenaltyConstraintCosts, true, pCurrency());    /** Computed penalty costs */
         setPenaltyConstraintExpression("PenaltyConstraintCosts");
@@ -68,20 +68,15 @@ public:
         addIO("Integration", &mExprIntegrate, SFunctionFlag({ eFTypeOrNot, { &mMaxIntegrateConstraint, &mMinIntegrateConstraint, &mMinIntegrateSeparateConstraint, &mMaxIntegrateSeparateConstraint} }), mMainCarrier->pStorageUnit());
     }
 
-    void declareModelIndicators() {
+    void declareModelIndicators() override {
         // Supported types are: double
-        BusSubModel::declareDefaultModelIndicators();
+        BusSubModel::declareModelIndicators();
         mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", mMainCarrier->pStorageUnit(),"BusBalance");
     }
 //----------------------------------------------------------------------------------------------------
-    void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue, double aMinIntegrateConstraintBusValue, 
-        double aMaxIntegrateConstraintBusValue, double aStrictIntegrateConstraintBusValue, double aMaxFlexIntegrateConstraintBusValue) ;
-
     void computeInitialData() override;
 
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance;}
-    void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression) ;
-    void addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression) ;
     void addStrictConstraint() ;
     void addMinConstraint() ;
     void addMaxConstraint() ;
@@ -94,8 +89,12 @@ public:
     //void addMaxIntegrateSeparateConstraint(int period, int intervalBetween);
     void addIntegrateSeparateConstraint(int period, int intervalBetween);
 
+
 //----------------------------------------------------------------------------------------------------
 protected:
+    bool isBalanceTimeIndependent() const;
+    void computeBusBalance();
+
     bool mTimeIntegration ;                     /** Use timestep weighting of each time variable at ports if true or simply add them if false - Default to true */
 
     bool mUseExtrapolationFactor;               /** When true the values of *BusValue are assumed over one year instead of optimization horizon*/
@@ -122,14 +121,16 @@ protected:
     int mIntervalBetweenIntegrals;              /** Interval to skip between each integrate constraint (int)*/
     int mPeriodIntegrateConstraint; /** Size of the period of integration to compute contraint over time */
 
-    MIPModeler::MIPExpression   mExpPenaltyConstraintCosts;      /** Scalar penalty for not meeting constraint */
+    MIPModeler::MIPExpression mExpPenaltyConstraintCosts;      /** Scalar penalty for not meeting constraint */
     MIPModeler::MIPExpression mExpConstraintGap;
     MIPModeler::MIPExpression1D mBusBalance ;
-    MIPModeler::MIPExpression1D  mExprIntegrate;
+    MIPModeler::MIPExpression1D mExprIntegrate;
 
     MIPModeler::MIPVariable0D mVarConstraintGap;
-
     MIPModeler::MIPData1D mHistBusBalance;
+
+    std::vector< MIPModeler::MIPExpression*> mExpressions0D{};
+    std::vector< MIPModeler::MIPExpression1D*> mExpressions1D{};
 
     // for GAMS
     std::vector<std::string> mPortVarSet;

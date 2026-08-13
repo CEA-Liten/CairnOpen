@@ -57,59 +57,25 @@ public:
     // Mass         : kg
     // Energy       : MWh
     // Time         : Hours
-    void declareModelInterface()
-    {
-        StorageSubModel::declareDefaultModelInterface();
 
-        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxEsto", &mExpSizeMax, true, mMainCarrier->pStorageUnit());	    /** Computed Storage Unit maximum content, in energy (MWh electrical or thermal carriers) or mass (kg fluids), ie optimized value if maximum content was given negative value as input data */
-        addIO("Flow", &mExpFlowBank, true, mMainCarrier->pFluxUnit()) ;		/** Storage balance of flows (including CapcityMuliplier) = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
-        addIO("DischargeFlow", &mExpFlowDischargeBank, true, mMainCarrier->pFluxUnit()) ;	/** Storage discharged flow (including CapcityMuliplier) */
-        addIO("ChargeFlow", &mExpFlowChargeBank, true, mMainCarrier->pFluxUnit()) ;			/** Storage charged flow (including CapcityMuliplier) */
-        addIO("InternalLosses", &mExpLosses, true, mMainCarrier->pFluxUnit());	/** Storage discharged flow (including CapcityMuliplier) */
-        addIO("EnergyVariation", &mExpEnergyBank, true, mMainCarrier->pStorageUnit()) ;			/** Computed current Storage content variation (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
-        addControlIO("Estock", &mExpEstoBank, true, mMainCarrier->pStorageUnit(), &mInitialSoe, &mInitialSoe_Def);		/** Computed current Storage content (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
-        addIO("EstockUnit", &mExpEsto, true, mMainCarrier->pStorageUnit()) ;		/** Computed current Storage Unit content, in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
-        addIO("FlowUnit", &mExpFlow, true, mMainCarrier->pFluxUnit()) ;		/** Storage Unit balance of flows = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
-
-
-        //PressureModel
-        MilpPort* portFluid = getPortByType("MaterialCarrier");
-        if (portFluid != nullptr) {
-            addIO("PressureIn", &mExpPressure, &mAddPressureModel, portFluid->pFluxUnit()); /** Inlet Pressure if pressure mode used {"Bar/Pa"}*/
-        }
-        else if (mAddPressureModel) {
-            Cairn_Exception persee_error("Error: a port with MaterialCarrier is expected for StorageGen when AddPressureModel is used (componenet " + mParentCompo->Name() + ")", -1);
-            throw persee_error;
-        }
-
-        /* Register non-IO 0D-expressions in order to automatically allocate and close them */
-        addExp(&mExpStoIni);
-
-        /* Register non-IO 1D-expressions in order to automatically allocate and close them */
-        addExp(&mExpFlowCharge, &mHorizon);
-
-        addExp(&mExpFlowDischarge, &mHorizon);
-        addExp(&mExpEnergy, &mHorizon);
-        addExp(&mExpFlowDirection, &mHorizon);
-     }
 //----------------------------------------------------------------------------------------------------
 
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        StorageSubModel::declareDefaultModelConfigurationParameters() ;
+        StorageSubModel::declareModelConfigurationParameters();
         //bool
-        addParameter("SeasonalCosts",&mSeasonalCosts, false, false, true,"If True: add optional seasonal costs","", "TimeSeriesForecast");
-        addParameter("FlowDirection",&mFlowDirection, true, false, true, "If True: prevent to charge and discharge at the same time", "bool");
-        addParameter("AddPressureModel",&mAddPressureModel, false, false, true,"If True: add optional pressure model of storage - default = false","", "AddPressureModel");
-        addParameter("AddFinalStorageValue",&mAddFinalStorageValue, false, false, true,"If Tru: define a value of the energy stored at the end of the optimization horizon - time dependent for each absolute time step", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
-        addParameter("ImposeStrictFinalSOC", &mImposeStrictFinalSOC, false, false, true, "If True: use strict equality constraint on final SOC otherwise use minimal bound constraint. Relevant only if FinalSOC > 0.", "");
-        addParameter("AddSocConstraints", &mAddSocConstraints, false, false, true, "If True: use min and max constraints on the state of charge in addition to the min and max constraints on the storage capacity", "");
+        addConfigParameter("AddChargeDischargeStates", &mAddChargeDischargeStates, false, false, true, "If true: adds the constraints defining the charging and discharging boolean states", "bool");
+        addConfigParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "If True: add optional seasonal costs", "", "TimeSeriesForecast");
+        addConfigParameter("FlowDirection", &mFlowDirection, true, false, true, "If True: prevent to charge and discharge at the same time", "bool");
+        addConfigParameter("AddPressureModel", &mAddPressureModel, false, false, true, "If True: add optional pressure model of storage - default = false", "", "AddPressureModel");
+        addConfigParameter("AddFinalStorageValue", &mAddFinalStorageValue, false, false, true, "If Tru: define a value of the energy stored at the end of the optimization horizon - time dependent for each absolute time step", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
+        addConfigParameter("ImposeStrictFinalSOC", &mImposeStrictFinalSOC, false, false, true, "If True: use strict equality constraint on final SOC otherwise use minimal bound constraint. Relevant only if FinalSOC > 0.", "");
+        addConfigParameter("AddSocConstraints", &mAddSocConstraints, false, false, true, "If True: use min and max constraints on the state of charge in addition to the min and max constraints on the storage capacity", "");
     }
 
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        StorageSubModel::declareDefaultModelParameters();
+        StorageSubModel::declareModelParameters();
         //double
         addParameter("InitSOC", &mInitSOC, 0.5, true, true, "Storage initial state of charge in the range 0-1", "");
         addParameter("MinEsto", &mMinEsto, 0., true, true, "Storage minimum content in energy or mass", mMainCarrier->pStorageUnit());
@@ -133,9 +99,47 @@ public:
         addTimeSeries("UseProfileFinalStorageValue", &mFinalStorageValue, &mAddFinalStorageValue, &mAddFinalStorageValue, "Time Series of values of the energy stored at the end of the optimization horizon - time dependent for each absolute time step", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
     }
 
-    void declareModelIndicators() 
+    void declareModelInterface() override
     {
-        StorageSubModel::declareDefaultModelIndicators(&mExportIndicators);
+        StorageSubModel::declareModelInterface();
+
+        /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
+        addSizeMaxIO("MaxEsto", &mExpSizeMax, true, mMainCarrier->pStorageUnit());	    /** Computed Storage Unit maximum content, in energy (MWh electrical or thermal carriers) or mass (kg fluids), ie optimized value if maximum content was given negative value as input data */
+        addIO("Flow", &mExpFlowBank, true, mMainCarrier->pFluxUnit());		/** Storage balance of flows (including CapcityMuliplier) = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
+        addIO("DischargeFlow", &mExpFlowDischargeBank, true, mMainCarrier->pFluxUnit());	/** Storage discharged flow (including CapcityMuliplier) */
+        addIO("ChargeFlow", &mExpFlowChargeBank, true, mMainCarrier->pFluxUnit());			/** Storage charged flow (including CapcityMuliplier) */
+        addIO("InternalLosses", &mExpLosses, true, mMainCarrier->pFluxUnit());	/** Storage discharged flow (including CapcityMuliplier) */
+        addIO("EnergyVariation", &mExpEnergyBank, true, mMainCarrier->pStorageUnit());			/** Computed current Storage content variation (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
+        addControlIO("Estock", &mExpEstoBank, true, mMainCarrier->pStorageUnit(), &mInitialSoe, &mInitialSoe_Def);		/** Computed current Storage content (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
+        addIO("EstockUnit", &mExpEsto, true, mMainCarrier->pStorageUnit());		/** Computed current Storage Unit content, in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
+        addIO("FlowUnit", &mExpFlow, true, mMainCarrier->pFluxUnit());		/** Storage Unit balance of flows = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
+
+        addIO("Charging", &mExpCharging, &mAddChargeDischargeStates, "bool", "1 if charging and 0 if discharging");
+        addIO("Discharging", &mExpDischarging, &mAddChargeDischargeStates, "bool", "1 if discharging and 0 if charging");
+
+        //PressureModel
+        MilpPort* portFluid = getPortByType("MaterialCarrier");
+        if (portFluid != nullptr) {
+            addIO("PressureIn", &mExpPressure, &mAddPressureModel, portFluid->pFluxUnit()); /** Inlet Pressure if pressure mode used {"Bar/Pa"}*/
+        }
+        else if (mAddPressureModel) {
+            throw Cairn_Exception("Error: a port with MaterialCarrier is expected for StorageGen when AddPressureModel is used (componenet " + Name() + ")", -1);
+        }
+
+        /* Register non-IO 0D-expressions in order to automatically allocate and close them */
+        addExp(&mExpStoIni);
+
+        /* Register non-IO 1D-expressions in order to automatically allocate and close them */
+        addExp(&mExpFlowCharge, &mHorizon);
+
+        addExp(&mExpFlowDischarge, &mHorizon);
+        addExp(&mExpEnergy, &mHorizon);
+        addExp(&mExpFlowDirection, &mHorizon);
+    }
+
+    void declareModelIndicators() override
+    {
+        StorageSubModel::declareModelIndicators();
         mInputIndicators->addIndicator("Cumulated losses", &mInternalLosses, &mExportIndicators, "Cumulated losses", pOptimalSizeUnit(), "CumulatedLosses");
     }
 
@@ -143,6 +147,8 @@ public:
 //----------------------------------------------------------------------------------------------------
     //void setEnvParameters(double aCO2emission, std::vector <double> aCO2PriceProfile) ;
 protected:
+    void addChargeDischargeStates();
+
     // MILP Variables
     MIPModeler::MIPVariable0D mVarStoIni;           /** MILP 0D Variable on SoC at first timestep */
     MIPModeler::MIPVariable1D mVarFlowCharge;       /** MILP 1D Variable on optimal charging flux at each timestep */
@@ -150,6 +156,9 @@ protected:
     MIPModeler::MIPVariable1D mVarEsto;             /** MILP 1D Variable on optimal stored energy (fluid mass in kg, electrical or thermal energy in MWh) */
     MIPModeler::MIPVariable1D mVarFlowDirection ;   /** MILP 1D integer variable to avoid charging while discharging ! */
     MIPModeler::MIPVariable1D mVarPressureIn;
+
+    MIPModeler::MIPVariable1D   mCharging;
+    MIPModeler::MIPVariable1D   mDischarging;
 
     //technical output for one storage unit
     MIPModeler::MIPExpression mExpStoIni;           /** Initial SoC (before the first iteration that takes into account initial fluxes)*/
@@ -159,6 +168,9 @@ protected:
     MIPModeler::MIPExpression1D mExpFlow;           /** Charging/Discharging flow balance, for one storage unit */
     MIPModeler::MIPExpression1D mExpEnergy;         /** Charging/Discharging energy balance, for one storage unit */
     MIPModeler::MIPExpression1D mExpLosses;         /** Internal losses for one storage unit */
+
+    MIPModeler::MIPExpression1D mExpCharging;
+    MIPModeler::MIPExpression1D mExpDischarging;
 
     //technical output for a bank of identical storage units, variable in time depending on CapacityMultiplier
     MIPModeler::MIPExpression1D mExpEstoBank;           /** Energy storage, for bank of units */
@@ -198,6 +210,7 @@ protected:
     std::vector<double> mFinalStorageValue;   /** time series for final storage values */
 
     //options
+    bool mAddChargeDischargeStates;
     bool mSeasonalCosts;
     bool mFlowDirection;
     bool mAddPressureModel;             /** Add pressure model - linearity between Pressure and Maxstorage*/

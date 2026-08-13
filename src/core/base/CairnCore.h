@@ -13,6 +13,14 @@ class CairnCore ;
 #include "GlobalSettings.h"
 #include "StudyPathManager.h"
 #include "TimeSeriesManager.h"
+#include "ErrorCollector.h"
+#include "Profiler.h"
+
+struct CairnResult
+{
+    int status = 0;
+    std::string error;
+};
 
 class CAIRNCORESHARED_EXPORT CairnCore : public CairnObject
 {
@@ -34,7 +42,15 @@ public:
     bool userStoppedSimu() const;
 
     void doInit(bool aLoad=true);
-    int doStep(const std::string& encoding = "UTF-8", 
+    void importTimeSeriesIfNeeded();
+    void flushErrorsIfAny();
+    void buildMilpProblem(MIPModeler::MIPModel& mipModel,
+        MIPModeler::MIPExpression& objective);
+
+    void prepareProblem();
+    CairnResult buildANDsolveProblem(const std::string& encoding = "UTF-8",
+        const std::map<std::string, bool>& paramMap = std::map<std::string, bool>());
+    CairnResult doStep(const std::string& encoding = "UTF-8",
         const std::map<std::string, bool>& paramMap = std::map<std::string, bool>());
     int doTerminate();
 
@@ -58,7 +74,7 @@ public:
     t_mapExchange &ListPublishedVariables() { return mProblem->ListPublishedVariables() ;}
 
     //Other API functions
-    std::string StudyName() { return std::string(mStudy.StudyName().c_str()); }
+    std::string StudyName() { return mStudy.StudyName(); }
     MilpData* getTimeData() { return mMilpData; }
 
     double timeStep() const {return mMilpData->TimeStep(0);}
@@ -77,10 +93,12 @@ public:
     uint npdtLongTerm() const {return mMilpData->iHMFuturSize();}
 
     // get results and input files
-    std::string resultFile()   const { return std::string(mStudy.resultFile().c_str()); }   
-    std::string archFile()     const { return std::string(mStudy.archFile().c_str()); }
-    std::string projectDir()     const { return std::string(mStudy.projectDir().c_str());}
-    std::string resultsDir()     const { return std::string(mStudy.resultsDir().c_str());}
+    std::string resultFile() const { return mStudy.resultFile(); }   
+    std::string archFile()   const { return mStudy.archFile();   }
+    std::string projectDir() const { return mStudy.projectDir(); }
+    std::string resultsDir() const { return mStudy.resultsDir(); }
+
+    std::string studyVersion() const { return mProblem ? mProblem->studyVersion() : ""; }
 
     OptimProblem* getProblem() {return mProblem ;}
     MilpComponent* getComponent(const std::string & aName) {return mProblem->findChild<MilpComponent>(aName); }
@@ -119,8 +137,34 @@ public:
     std::string getGlobalResultsFileName(const int& aNsol) { return mStudy.getScenarioFile("_PLAN.csv", aNsol); }
 
     int getNumCycle() { return mIter; }
-
+    void incrementCycleNum() { mIter++; }
     void loadDefUnits() const;
+
+    int saveStudy(const std::string& filename = {}, const std::string& posAlgorithm = {});
+
+    // ------------------------------------------------------------------------ //
+
+    /** Returns all collected warnings and errors since last flush and clears the list */
+    std::vector<CairnLogger::ErrorEntry> flushWarningANDErrors()
+    {
+        return CairnLogger::ErrorCollector::flush();
+    }
+
+    /** Returns true if any errors occurred since last flush (warnings are not counted) */
+    bool hasErrors() const
+    {
+        return CairnLogger::ErrorCollector::hasErrors();
+    }
+
+    /** Clears warnings and errors without returning them */
+    void clearWarningANDErrors()
+    {
+        CairnLogger::ErrorCollector::clear();
+    }
+
+#if ENABLE_PROFILING
+    CairnProfiling::ScopedProfiler makeIterationProfiler() const;
+#endif
 
 private:
     OptimProblem* mProblem ;

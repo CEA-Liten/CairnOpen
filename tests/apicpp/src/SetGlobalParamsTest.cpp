@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -70,22 +70,22 @@ int main()
 
 	//Check if ELY_PEM has GWP-related parameters after selection of GWP in TecEcoAnalysis
 	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
-	TESTAPI2("Check if ELY_PEM has GWP parameter after selection",
+	TESTAPIBOOL("Check if ELY_PEM has GWP parameter after selection",
 		TestUtils::contains(vELY_PEM->get_SettingsList(), "Climate change#Global Warming Potential 100 EmbodiedCoefficient_A")
 	)
 
 		//Check if ELY_PEM has GWP-related IO vars after selection of GWP in TecEcoAnalysis
-	TESTAPI2("Check if ELY_PEM has GWP IO var after selection",
+	TESTAPIBOOL("Check if ELY_PEM has GWP IO var after selection",
 		TestUtils::contains(vELY_PEM->get_VarList(), "Climate change#Global Warming Potential 100 Env impact mass")
 	)
 
 	//Check if the ODP-related parameters of ELY_PEM have been removed after unselection of ODP in TecEcoAnalysis
-	TESTAPI2FALSE("Check if ODP param is removed",
+	TESTAPIBOOLFALSE("Check if ODP param is removed",
 		TestUtils::contains(vELY_PEM->get_SettingsList(), "Ozone depletion#Ozone Depletion Potential EnvContentCoefficient_A")
 	)
 
 	//Check if the ODP-related IO vars of ELY_PEM have been removed after unselection of ODP in TecEcoAnalysis
-	TESTAPI2FALSE("Check if ODP IO var is removed",
+	TESTAPIBOOLFALSE("Check if ODP IO var is removed",
 		TestUtils::contains(vELY_PEM->get_VarList(), "Ozone depletion#Ozone Depletion Potential Env impact mass")
 	)
 
@@ -108,7 +108,7 @@ int main()
 		vSolution = m_Problem.run()
 	)
 
-	TESTAPI2("Compare results", 
+	TESTAPIBOOL("Compare results", 
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 	

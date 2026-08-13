@@ -361,5 +361,5 @@ int MultiConverter::checkConsistency()
 
 void MultiConverter::computeAllIndicators(const double* optSol)
 {
-    ConverterSubModel::computeDefaultIndicators(optSol);
+    ConverterSubModel::computeAllIndicators(optSol);
 }

@@ -30,7 +30,7 @@ class CAIRNCORESHARED_EXPORT FlagParam
 public:
     FlagParam();
     void set_Value(t_flag a_Flag);
-    bool get_Value();
+    bool get_Value() const;
 
     bool is_Scalar();
 

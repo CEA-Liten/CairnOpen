@@ -54,20 +54,19 @@ public:
     void setTimeData();
     int checkConsistency() override;
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters()override
     {
-        OperationSubModel::declareDefaultModelConfigurationParameters() ;
+        OperationSubModel::declareModelConfigurationParameters() ;
         //bool
-        addParameter("AddMinProductionTime", &mAddMinProductionTime, false, false, true, "If true: imposes a minimum production time", "bool");
-        addParameter("AddMinStandByTime", &mAddMinStandbyTime, false, false, true, "If true : imposes a minimum stand by time", "bool");
-        addParameter("AddStartUpCost", &mAddStartUpCost, false, false, true, "If true: add start up cost", "");                            
-        addParameter("AddShutDownCost", &mAddShutDownCost, false, false, true, "If true: add shut down cost", "");
-
+        addConfigParameter("AddMinProductionTime", &mAddMinProductionTime, false, false, true, "If true: imposes a minimum production time", "bool");
+        addConfigParameter("AddMinStandByTime", &mAddMinStandbyTime, false, false, true, "If true : imposes a minimum stand by time", "bool");
+        addConfigParameter("AddStartUpCost", &mAddStartUpCost, false, false, true, "If true: add start up cost", "");
+        addConfigParameter("AddShutDownCost", &mAddShutDownCost, false, false, true, "If true: add shut down cost", "");
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        OperationSubModel::declareDefaultModelParameters();
+        OperationSubModel::declareModelParameters();
         //double
         addParameter("MinProductionTime", &mMinProductionTime, 0., false, true, "Minimal number of hours to keep the production on", "hour");
         addParameter("MinStandByTime", &mMinStandbyTime, 0., false, true, "Minimal number of hours to stay in stand by", "hour");
@@ -76,9 +75,9 @@ public:
 
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        declareDefaultModelInterface();
+        OperationSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
         //...
@@ -91,8 +90,8 @@ public:
         addExp(&mExpShutDownCosts, &mHorizon);
     }
 
-    void declareModelIndicators() {
-        OperationSubModel::declareDefaultModelIndicators();
+    void declareModelIndicators() override {
+        OperationSubModel::declareModelIndicators();
 
         mInputIndicators->addIndicator("Undiscounted number of startups", &mNbStartUps, &mExportIndicators, "Total nb of startups (undiscounted)", "-", "NbStartUps");
         mInputIndicators->addIndicator("Undiscounted number of shutdowns", &mNbShutDowns, &mExportIndicators, "Total nb of shutdowns (undiscounted)", "-", "NbShutDowns");
@@ -106,7 +105,7 @@ public:
     void addMinProductionTime();
     void addMinStandByTime();
    
-    void initDefaultPorts() {
+    void initDefaultPorts() override {
         mDefaultPorts.clear();
         //PortState - bottom
         std::map<std::string, std::string> portState;

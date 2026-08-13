@@ -47,7 +47,6 @@ public:
 
     std::map<std::string, ModelParam*> getParameters();
 
-    Cairn_Exception getException() const { return mException; };
     GUIData* getGUIData() { return mGUIData; }
 
     std::string Name() const { return std::string(this->objectName().c_str()); }
@@ -67,6 +66,8 @@ public:
         return mPossibleModelTypes;
     }
 
+    void solverNameChanged(); /** actions to be done when parameter "Solver" is set */
+
 private:
     void doInit(const t_mapParamData& aComponent);
     void declareCompoInputParam();
@@ -75,8 +76,6 @@ private:
 
     static const std::vector<std::string> mPossibleModelTypes;
     static const std::vector<std::string> mGAMSProblemTypes;
-
-    Cairn_Exception mException;
 
     ModelerFactory mModelers;
     ModelerInterface* mExternalModeler;

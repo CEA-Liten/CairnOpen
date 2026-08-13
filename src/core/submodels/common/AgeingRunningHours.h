@@ -27,19 +27,19 @@ public:
     void computeAllIndicators(const double* optSol) {}
 //----------------------------------------------------------------------------------------------------
     int checkUnit(MilpPort* aPort) {return 0 ;}
-    void declareModelInterface() 
+    void declareModelInterface() override
     {
         // no model interface - keep this line to enable correct documentation generation
     }
-    void declareModelConfigurationParameters() 
+    void declareModelConfigurationParameters() override
     {
         // no configuration parameters - keep this line to enable correct documentation generation
     }
-    void declareModelIndicators() {
+    void declareModelIndicators() override {
         // no indicators - keep this line to enable correct documentation generation
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
         //bool
         addParameter("GeometricalSequence", &mGeometricalSequence, true, false, mActivateAgeing, "If the efficiency decreases following a geometrical set true. Else it will evolve artimtetically", "", "Ageing");

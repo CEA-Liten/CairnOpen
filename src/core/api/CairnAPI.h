@@ -6,6 +6,7 @@
 #include <vector>
 #include <variant>
 #include <memory>
+#include <functional>
 
 typedef std::vector<std::string> t_list;
 //Adding type bool to t_value will cause a problem for std::string being casted as bool
@@ -109,6 +110,7 @@ public:
 
     // Return the list of the possibles Solver
     t_list get_Solvers() const;
+
 	// --------------------------------------------------------------------------------	
 	class DECLSPEC ParamAPI {
 	public:
@@ -265,6 +267,7 @@ public:
 	};
 
 	// --------------------------------------------------------------------------------
+
 	class DECLSPEC TecEcoAnalysisAPI : public ObjectAPI {
 	public:
 		TecEcoAnalysisAPI();
@@ -407,7 +410,7 @@ public:
 	
 		t_value get_SettingValue(const std::string& a_SettingName);
 		t_dict get_SettingValues();
-		t_value get_TimeSeriesVector(const std::string& a_SettingName);
+		t_value get_TimeSeriesVector(const std::string& a_TimeSeriesName);
 
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
@@ -463,7 +466,7 @@ public:
 		/* Other methods */
 		void redeclarePortImpactParameters();
 		void removePortImpactParameters(const std::string& portName);
-		t_value get_OptimalSizeExpression();
+		std::string get_OptimalSizeExpression();
 
 	private:
 		void checkDefaultPortCarriers() const;	
@@ -583,7 +586,8 @@ public:
 
 		// --------- Solver ---------
 		std::shared_ptr<SolverAPI> get_Solver() const;
-		
+		void set_Solver(const std::string& name) const; // solver name
+
 		// --------- SimulationControl ---------
 		std::shared_ptr<SimulationControlAPI> get_SimulationControl() const;
 		
@@ -606,7 +610,8 @@ public:
 		SolutionAPI run(const std::string &a_resultsPath = "", const bool& a_coSim = false);
 		
 		void runSensitivityCSV(const std::string& a_samplingFileName, int a_max_time = -1, const std::string& a_indicatorsFileName = "");		
-		t_dicts runSensitivity(const t_dictsValues& a_sampling, int a_max_time = -1, const t_dicts& a_indicators = {});
+		t_dicts runSensitivity(const t_dictsValues& a_sampling, int a_max_time = -1, 
+			const t_dicts& a_indicators = {}, std::function<void(int)> on_iter = nullptr);
 
 		// Indicators
 		t_dict get_All_IndicatorValues(const std::string& range = "PLAN") const; //return the indicator values of all components
@@ -662,6 +667,8 @@ public:
 
 	// close the current Study
 	void close_Study();
+
+	CairnAPI::OptimProblemAPI apply_Compatibility_Script();
 
 private:
     class CairnCore* m_Cairn{ nullptr };

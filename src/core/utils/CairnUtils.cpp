@@ -330,6 +330,47 @@ namespace CairnUtils {
         return result;
     }
 
+    std::vector<int> parseVersion(const std::string& version)
+    {
+        std::vector<int> nums;
+        const auto parts = split(version, '.');
+
+        nums.reserve(parts.size());
+        for (const auto& p : parts)
+        {
+            try {
+                nums.push_back(std::stoi(p));
+            }
+            catch (...) {
+                nums.push_back(0); // malformed segment
+            }
+        }
+        return nums;
+    }
+
+    std::string extractVersion(const std::string& s)
+    {
+        const auto pos = s.find(':');
+        std::string raw = (pos != std::string::npos ? s.substr(pos + 1) : s);
+        return trim(raw);
+    }
+
+    int compareVersion(const std::vector<int>& a,
+        const std::vector<int>& b)
+    {
+        const size_t n = std::max(a.size(), b.size());
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            const int va = (i < a.size() ? a[i] : 0);
+            const int vb = (i < b.size() ? b[i] : 0);
+
+            if (va < vb) return -1;
+            if (va > vb) return 1;
+        }
+        return 0;
+    }
+
     std::string BuildFileName(const std::string& aFileName) {
         return BuildFileName_W(toWString(aFileName));
     }

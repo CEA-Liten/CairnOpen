@@ -145,49 +145,185 @@ def compare_csv_files(file_res, file_ref, logs:TextIOWrapper, threshold=0.1):
                     return False
     return True
 
-def new_compare_results(app_home, results, results_ref, logfileName, log_dir, threshold,pegase=False,skip_col = []):
+def new_compare_results(app_home, results, results_ref, logfileName, log_dir, 
+                        relative_threshold, pegase=False, skip_col = None, zero_tol=1e-8, absolute_threshold=1e-8):
+    """
+    Compare two CSV result files.
+
+    Parameters
+    ----------
+    relative_threshold : float
+        Maximum allowed relative error.
+
+    zero_tol : float
+        Values whose absolute value is below this threshold are considered zero.
+
+    absolute_threshold : float
+        Maximum allowed absolute error when the reference value is zero.
+    """
+
+    if skip_col is None:
+        skip_col = []
+
     if pegase:
-        skiprows = [1,2]
-        index_col=[1]
+        skiprows  = [1,2]
+        index_col = [1]
     else:
-        skiprows = []
+        skiprows  = []
         index_col = [0]
     
-    results_df = pd.read_csv(results, sep=";", index_col = index_col,skiprows=skiprows).dropna(axis=1,how="all")
-    results_df_ref = pd.read_csv(results_ref, sep=";", index_col = index_col,skiprows=skiprows).dropna(axis=1,how="all")
+    results_df = pd.read_csv(results, sep=";", index_col = index_col, skiprows=skiprows).dropna(axis=1, how="all")
+    results_df_ref = pd.read_csv(results_ref, sep=";", index_col = index_col, skiprows=skiprows).dropna(axis=1, how="all")
     
     if not pegase:
-        results_df.index = pd.to_datetime(results_df.index.values.astype(int),unit="s",dayfirst=1,yearfirst=2025)
-        results_df_ref.index = pd.to_datetime(results_df_ref.index,unit="s",dayfirst=1,yearfirst=2025)
+        results_df.index = pd.to_datetime(results_df.index.values.astype(int), unit="s")
+        results_df_ref.index = pd.to_datetime(results_df_ref.index.astype(int), unit="s",)
+
     status = True
+
+    ####################################################################
+    # Check number of rows
+    ####################################################################
+
     if len(results_df) != len(results_df_ref):
-        logfileName.write("TS file length doesn't match !")
+        logfileName.write(f"[TS] Different number of rows "
+            f"({len(results_df)} vs {len(results_df_ref)})\n")
         status = False
-    for c in results_df_ref.columns:
-        skipcol = False
-        for skip in skip_col:
-            if skip  in c:
-                skipcol = True
-        if (c not in results_df.columns) and (not skipcol):
-            logfileName.write("[TS] Column "+c+" in ref but not in results\n")
-            status=False
-        elif pd.api.types.is_numeric_dtype(results_df_ref[c]) and (not skipcol):
-            diff = (results_df[c] - results_df_ref[c])
-            diff = diff.abs()
-            idmax = diff.idxmax()
-            if max(diff)/(max(results_df_ref[c])+0.00001)>threshold:
-                status=False
-                logfileName.write("[TS] Column "+c+" differs compare to ref, max = "+str(max(diff))+"\n")
-                status+=False
-                plt.plot(results_df_ref[c], label=c+" Reference")
-                plt.plot(results_df[c], label=c, alpha=0.7)
-                plt.axvline(x=idmax, color='b', linestyle='--', linewidth=2, alpha=0.7)
-                plt.legend()
-                plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
-                plt.xticks(rotation=45)
-                plt.tight_layout()
-                plt.savefig(os.path.join(log_dir,c+".png"))
-                plt.clf()
+
+    ####################################################################
+    # Validate indexes (Time)
+    ####################################################################
+
+    original_index = results_df.index.copy()
+
+    if isinstance(results_df.index, pd.DatetimeIndex):
+        same_index = np.array_equal(
+            results_df.index.view("int64"),
+            results_df_ref.index.view("int64"),
+        )
+    elif np.issubdtype(results_df.index.dtype, np.number):
+        same_index = np.allclose(
+            results_df.index.to_numpy(dtype=float),
+            results_df_ref.index.to_numpy(dtype=float),
+            rtol=1e-12,
+            atol=1e-12,
+        )
+    else:
+        same_index = results_df.index.equals(
+            results_df_ref.index
+        )
+
+    if not same_index:
+        logfileName.write("[TS] Timestamp/index mismatch.\n")
+        status = False
+
+    
+    # From this point on we compare rows by POSITION,
+    # not by Pandas index alignment.
+    
+    results_df.reset_index(drop=True, inplace=True)
+    results_df_ref.reset_index(drop=True, inplace=True)
+
+    ####################################################################
+    # Check columns
+    ####################################################################
+
+    def skipped(col):
+        return any(s in col for s in skip_col)
+
+    ref_columns = {c for c in results_df_ref.columns if not skipped(c)}
+    result_columns = {c for c in results_df.columns if not skipped(c)}
+
+    missing = ref_columns - result_columns
+    #extra   = result_columns - ref_columns
+
+    for c in sorted(missing):
+        logfileName.write(f"[TS] Missing column: {c}\n")
+        status = False
+
+    # for c in sorted(extra):
+    #     logfileName.write(f"[TS] Unexpected column: {c}\n")
+    #     status = False
+
+
+    ####################################################################
+    # Compare common numeric columns
+    ####################################################################
+
+    common_columns = sorted(ref_columns & result_columns)
+
+    for c in common_columns:
+        if not pd.api.types.is_numeric_dtype(results_df_ref[c]):
+            continue
+
+        ref = results_df_ref[c].astype(float)
+        res = results_df[c].astype(float)
+
+        abs_diff = (res - ref).abs()
+        ref_abs = ref.abs()
+
+        relative_error = pd.Series(np.nan, index=ref.index, dtype=float)
+
+        non_zero = ref_abs > zero_tol
+
+        # Relative error where reference is non-zero
+        relative_error.loc[non_zero] = (abs_diff.loc[non_zero] / ref_abs.loc[non_zero])
+
+        
+        failed = (
+            (non_zero & (relative_error > relative_threshold))
+            |
+            (~non_zero & (abs_diff > absolute_threshold)) # Absolute error where reference is zero
+        )
+
+        if not failed.any():
+            continue
+
+        status = False
+
+        # Worst sample
+        if non_zero.any():
+            worst_rel = relative_error.idxmax()
+            rel_value = (relative_error.iloc[worst_rel]
+                if pd.notna(relative_error.iloc[worst_rel])
+                else 0.0
+            )
+        else:
+            worst_rel = 0
+            rel_value = 0.0
+
+        worst_abs = abs_diff.idxmax()
+
+        # Choose the failing sample having the largest normalized error
+        if non_zero.iloc[worst_abs]:
+            worst = worst_rel
+        else:
+            worst = worst_abs
+
+        logfileName.write(
+            f"[TS] Column '{c}' differs.\n"
+            f"     Time            : {original_index[worst]}\n"
+            f"     Reference       : {ref.iloc[worst]}\n"
+            f"     Result          : {res.iloc[worst]}\n"
+            f"     Absolute error  : {abs_diff.iloc[worst]}\n"
+            f"     Relative error  : {rel_value}\n"
+        )
+
+        ################################################################
+        # Plot
+        ################################################################
+
+        plt.figure(figsize=(10, 4))
+        plt.plot(ref.index, ref.values, label="Reference")
+        plt.plot(res.index, res.values, label="Result", alpha=0.75)
+        plt.axvline(x=worst, color="red", linestyle="--",linewidth=2)
+        plt.legend()
+        plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(nbins=6))
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(os.path.join(log_dir, c + ".png"))
+        plt.close()
+
     return status
 
 

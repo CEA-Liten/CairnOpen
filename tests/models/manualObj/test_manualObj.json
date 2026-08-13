@@ -922,7 +922,7 @@
 								"carrierType": "ANY_TYPE",
 								"direction": "DATAEXCHANGE",
 								"variable": "Weight",
-								"checkunit": "Yes",
+								"checkunit": "No",
 								"coeff": 1,
 								"offset": 0,
 								"defaultport": "No",

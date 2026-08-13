@@ -17,14 +17,17 @@ int main()
 #endif
 
 	//Get the Reference Data
-	vector<vector<string>> lsSolverList = TestUtils::ParserTxt(lsSolverListFilePath);
-	TestUtils::CreateRefrenceList(lsSolverList, AllSolverList);
+	vector<t_list> lsSolverList = TestUtils::ParserTxt(lsSolverListFilePath);
+	TESTAPIBOOL("Create Ref data", TestUtils::CreateReferenceList(lsSolverList, AllSolverList));
+
 #ifndef 	USE_CPLEX
 	t_list::iterator vIter = find(AllSolverList.begin(), AllSolverList.end(), "Cplex");
 	if (vIter != AllSolverList.end())
 		AllSolverList.erase(vIter);
 #endif
 	t_list vRet = m_Cairn.get_Solvers();
-	return TestUtils::compare_lists(vRet, AllSolverList);	
+	TESTAPIBOOL("Create solver list", TestUtils::compare_lists(vRet, AllSolverList));
+
+	return noError;
 }
 

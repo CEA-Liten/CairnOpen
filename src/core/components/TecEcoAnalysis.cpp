@@ -60,39 +60,47 @@ TecEcoAnalysis::~TecEcoAnalysis()
 
 std::map<std::string, MilpComponent*> TecEcoAnalysis::MilpComponents()
 {
-    if (mParentCompo) { 
-        OptimProblem* pProblem = dynamic_cast<OptimProblem*>(mParentCompo->parent());
-        if (pProblem) {
-            return pProblem->MilpComponents();;
-        }
-    }
-    return {};
+    auto* compo = parentComponent();
+    if(!compo)
+        return {};
+
+    OptimProblem* problem = dynamic_cast<OptimProblem*>(compo->parent());
+    if (!problem) 
+        return {};
+
+    return problem->MilpComponents();
 }
 
 std::vector<MilpComponent*> TecEcoAnalysis::NonBusMilpComponents()
 {
-    if (mParentCompo) {
-        OptimProblem* pProblem = dynamic_cast<OptimProblem*>(mParentCompo->parent());
-        if (pProblem) {
-            return pProblem->NonBusMilpComponents();
-        }
-    }
-    return {};
+    auto* compo = parentComponent();
+    if (!compo)
+        return {};
+
+    OptimProblem* problem = dynamic_cast<OptimProblem*>(compo->parent());
+    if (!problem)
+        return {};
+
+    return problem->NonBusMilpComponents();
 }
 
 std::vector<BusCompo*> TecEcoAnalysis::BusComponents()
 {
-    if (mParentCompo) {
-        OptimProblem* pProblem = dynamic_cast<OptimProblem*>(mParentCompo->parent());
-        if (pProblem) {
-            return pProblem->BusComponents();
-        }
-    }
-    return {};
+    auto* compo = parentComponent();
+    if (!compo)
+        return {};
+
+    OptimProblem* problem = dynamic_cast<OptimProblem*>(compo->parent());
+    if (!problem)
+        return {};
+
+    return problem->BusComponents();
 }
 
 void TecEcoAnalysis::doInit(const t_mapParamData& aComponent)
 {
+    CAIRN_LOG_SCOPE(Name());
+
     //Init list of Settings parameters (scalar, double) by direct reading from aSettings file
 
     //Declare and set configuration parameters
@@ -268,12 +276,12 @@ bool TecEcoAnalysis::isValidLabel(const std::string& aLabel) const
 
 void TecEcoAnalysis::jsonSaveGuiComponent(ojson &componentsArray)
 {
+    const std::string mainCarrier = mMainCarrier ? mMainCarrier->Name() : "";
+    auto* component = parentComponent();
     ojson compoObject = ojson::object();
-    std::string mainCarrier = "";
-    if (mMainCarrier) {
-        mainCarrier = mMainCarrier->Name();
-    }
-    mParentCompo->getGUIData()->jsonSaveGUILine(compoObject, mainCarrier);
+
+    if(component && component->getGUIData())
+        component->getGUIData()->jsonSaveGUILine(compoObject, mainCarrier);
 
     compoObject["paramListJson"] = ojson::array();
     compoObject["optionListJson"] = ojson::array();
@@ -294,29 +302,17 @@ void TecEcoAnalysis::jsonSaveGuiComponent(ojson &componentsArray)
     compoObject["nodePorts"] = ojson::object();
     ojson& nodePorts = compoObject["nodePorts"];
 
-    if (mParentCompo) {
-        int portCount = mParentCompo->listSidePorts(Left()).size();
-        if (portCount) {
-            nodePorts[Left()] = portCount;
-            mParentCompo->jsonSaveGUINodePortsData(compoObject["nodePortsData"], Left());
-        }
-        portCount = mParentCompo->listSidePorts(Right()).size();
-        if (portCount) {
-            nodePorts[Right()] = portCount;
-            mParentCompo->jsonSaveGUINodePortsData(compoObject["nodePortsData"], Right());
-        }
-        portCount = mParentCompo->listSidePorts(Bottom()).size();
-        if (portCount) {
-            nodePorts[Bottom()] = portCount;
-            mParentCompo->jsonSaveGUINodePortsData(compoObject["nodePortsData"], Bottom());
-        }
-        portCount = mParentCompo->listSidePorts(Top()).size();
-        if (portCount) {
-            nodePorts[Top()] = portCount;
-            mParentCompo->jsonSaveGUINodePortsData(compoObject["nodePortsData"], Top());
+    if (component) {
+        for (const auto& side : { Left(), Right(), Bottom(), Top() })
+        {
+            const int portCount = static_cast<int>(component->listSidePorts(side).size());
+            if (portCount > 0) {
+                nodePorts[side] = portCount;
+                component->jsonSaveGUINodePortsData(compoObject["nodePortsData"], side);
+            }
         }
     }
-       
+
     componentsArray.push_back(compoObject) ;
 }
 
@@ -455,15 +451,27 @@ void TecEcoAnalysis::computePenaltyConstraintCosts() {
     }
 }
 
-void TecEcoAnalysis::computeSubObjective()  
+void TecEcoAnalysis::computeSubObjective()
 {
-    for (auto& lptrBus : BusComponents()) {
-        if (lptrBus->ModelClassName() == "ManualObjective" && lptrBus->ObjectiveType() == "Add") {
-            MIPModeler::MIPExpression* expSubObjective = lptrBus->getMIPExpression("SubObjectiveExpression");
-            if (lptrBus->ObjectiveType() == "Add") {
-                mExpSubObjective += *expSubObjective;
-            }
+    // Helper: identify buses contributing to the sub-objective
+    auto isSubObjectiveBus = [&](const BusCompo* bus) {
+        return bus &&
+            bus->ModelClassName() == "ManualObjective" &&
+            bus->ObjectiveType() == "Add";
+        };
+
+    for (BusCompo* bus : BusComponents())
+    {
+        if (!isSubObjectiveBus(bus))
+            continue;
+
+        MIPModeler::MIPExpression* exp = bus->getMIPExpression("SubObjectiveExpression");
+        if (!exp) {
+            cWarning() << Name() << ": Missing SubObjectiveExpression on bus " << bus->Name();
+            continue;
         }
+
+        mExpSubObjective += *exp;
     }
 }
 
@@ -566,7 +574,8 @@ void TecEcoAnalysis::computeTecEcoContribution()
 
 void TecEcoAnalysis::computeUndiscountedExpressions() {
     //Compute undiscounted expressions from raw expressions
-    double ExtrapolationFactor = mParentCompo->ExtrapolationFactor();
+    auto* compo = parentComponent();
+    const double ExtrapolationFactor = compo ? compo->ExtrapolationFactor() : 1.0;
     for (unsigned int t = 0; t < mTimeSteps.size(); ++t)
     {
         mExpOpexUndiscounted[t] = mExpOpex[t] * ExtrapolationFactor;
@@ -643,112 +652,180 @@ void TecEcoAnalysis::closeExpressions() {
     }
 }
 
-void TecEcoAnalysis::computeEconomicalContribution() {
-    for (auto& lptr : NonBusMilpComponents()) {
-        // ---------------------- 0D ----------------------
-        if (lptr->EcoInvestModel()) {
-            mExpCapex += *(lptr->getMIPExpression("Capex"));
+void TecEcoAnalysis::computeEconomicalContribution()
+{
+    const size_t horizon = mTimeSteps.size();
+    const size_t Y_SIZE = mTableYearsHours.size();
+
+    auto* tecEcoCompo = parentComponent();
+    const double histHours = tecEcoCompo ? tecEcoCompo->HistNbHours() : 0.0;
+
+    for (auto* compo : NonBusMilpComponents())
+    {
+        const bool ecoInvestModel = compo->EcoInvestModel();
+        auto* model = compo->compoModel();
+        const bool hasEnv = compo->EnvironmentModel();
+
+        // ---------------------- 0D CAPEX ----------------------
+        if (ecoInvestModel)
+            mExpCapex += *(compo->getMIPExpression("Capex"));
+
+        // ---------------------- 1D contributions ----------------------
+        int year = 0;
+
+        // Cache pointers once per component
+        auto* expVarCost1D = compo->getMIPExpression1D("VariableCosts");
+        auto* expVarOpex1D = compo->getMIPExpression1D("VariableOpex");
+        auto* expFixedOpex1D = ecoInvestModel ? compo->getMIPExpression1D("FixedOpex") : nullptr;
+        auto* expRepl1D = ecoInvestModel ? compo->getMIPExpression1D("Replacement") : nullptr;
+        auto* expOpex1D = ecoInvestModel ? compo->getMIPExpression1D("Opex") : nullptr;
+
+        // Pre-fetch environmental cost expression names if needed
+        std::vector<std::string> envCostExprs;
+        if (!ecoInvestModel && hasEnv)
+        {
+            envCostExprs.reserve(mSelectedEnvImpacts.size());
+            for (size_t i = 0; i < mSelectedEnvImpacts.size(); ++i)
+                envCostExprs.push_back(model->getEnvImpactCostExpression(i));
         }
 
-        // ---------------------- 1D ----------------------
-        int year = 0;
-        for (unsigned int t = 0; t < mTimeSteps.size(); ++t)
+        for (size_t t = 0; t < horizon; ++t)
         {
-            MIPModeler::MIPExpression expVarCost_t;
-            MIPModeler::MIPExpression expFixedOpex_t;
-            MIPModeler::MIPExpression expVarOpex_t;
-            MIPModeler::MIPExpression exReplacement_t;
-            MIPModeler::MIPExpression expOpex_t;
+            const double ts = TimeStep(t);
 
-            uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-            while (t_hour > mTableYearsHours.at(year) && year < mTableYearsHours.size() - 1) {
-                year += 1;
+            // Resolve year 
+            const uint t_hour = static_cast<uint>(t * ts + 0.999999) + histHours;
+            while (year + 1 < Y_SIZE && t_hour > mTableYearsHours[year])
+                ++year;
+
+            const double lvl = mLevelizationTable[year];
+
+            // --- Variable Costs ---
+            const auto expVarCost = expVarCost1D ? (*expVarCost1D)[t] : MIPModeler::MIPExpression{};
+            mExpVariableCosts[t] += expVarCost;
+
+            // --- Variable Opex ---
+            const auto expVarOpex = expVarOpex1D ? (*expVarOpex1D)[t] : MIPModeler::MIPExpression{};
+            mExpVariableOpex[t] += expVarOpex;
+
+            // --- Fixed Opex & Replacement ---
+            MIPModeler::MIPExpression expFixedOpex;
+            MIPModeler::MIPExpression expRepl;
+
+            if (ecoInvestModel)
+            {
+                expFixedOpex = expFixedOpex1D ? (*expFixedOpex1D)[t] : MIPModeler::MIPExpression{};
+                expRepl = expRepl1D ? (*expRepl1D)[t] : MIPModeler::MIPExpression{};
+
+                mExpFixedOpex[t] += expFixedOpex;
+                mExpReplacement[t] += expRepl;
             }
 
-            if (lptr->getMIPExpression1D("VariableCosts") != nullptr) {
-                expVarCost_t = lptr->getMIPExpression1D(t, "VariableCosts");
-            }
+            // --- Opex ---
+            MIPModeler::MIPExpression expOpex;
 
-            if (lptr->getMIPExpression1D("VariableOpex") != nullptr) {
-                expVarOpex_t = lptr->getMIPExpression1D(t, "VariableOpex");
+            if (ecoInvestModel)
+            {
+                expOpex = expOpex1D ? (*expOpex1D)[t] : MIPModeler::MIPExpression{};
             }
+            else
+            {
+                expOpex = expVarCost + expVarOpex;
 
-            if (lptr->EcoInvestModel()) {
-                expFixedOpex_t = lptr->getMIPExpression1D(t, "FixedOpex");
-                exReplacement_t = lptr->getMIPExpression1D(t, "Replacement");
-                //Net opex includes all costs (Variable Costs, Replacement and Env Impact Cost)
-                expOpex_t = lptr->getMIPExpression1D(t, "Opex");
-            }//Count Variable Costs and Env Impact Costs for Net Opex if EcoInvestModel == false
-            else {
-                //Variable Costs exists for all models even when EcoInvestModel == false
-                expOpex_t = expVarCost_t;
-                expOpex_t += expVarOpex_t;
-                //Env Impact Costs exist only for TechnicalSubModel if EnvironmentModel == true 
-                if (lptr->EnvironmentModel()) {
-                    for (int i = 0; i < mSelectedEnvImpacts.size(); i++) {
-                        expOpex_t += lptr->getMIPExpression1D(t, lptr->compoModel()->getEnvImpactCostExpression(i));
-                    }
+                if (hasEnv)
+                {
+                    for (std::string expr : envCostExprs)
+                        expOpex += compo->getMIPExpression1D(t, expr);
                 }
             }
-            mExpVariableCosts[t] += expVarCost_t;
-            mExpFixedOpex[t] += expFixedOpex_t;
-            mExpVariableOpex[t] += expVarOpex_t;
-            mExpReplacement[t] += exReplacement_t;
-            mExpOpex[t] += expOpex_t;
-            //0D Discounted Opex Exp used to compute mExpObjective and add constraints in buildModel()
-            mExpOpexDiscounted += expOpex_t * mLevelizationTable.at(year);
+
+            mExpOpex[t] += expOpex;
+
+            // --- Discounted Opex (0D) ---
+            mExpOpexDiscounted += expOpex * lvl;
         }
     }
 }
 
 void TecEcoAnalysis::computeEnvContribution()
-{   
-    //Computes total Env contribution
-    mExpEnvImpactEmbodiedCostVec.resize(mSelectedEnvImpacts.size());
-    mExpEnvImpactEmbodiedVec.resize(mSelectedEnvImpacts.size());
-    mExpEnvImpactMassVecDiscounted.resize(mSelectedEnvImpacts.size());
-    mExpEnvImpactReplacementVecDiscounted.resize(mSelectedEnvImpacts.size());
-    mExpCumulativeEnvImpact.resize(mSelectedEnvImpacts.size());
-    for (auto& lptr : NonBusMilpComponents()) 
+{
+    // Resize vectors
+    const size_t N_IMPACTS = mSelectedEnvImpacts.size();
+    mExpEnvImpactEmbodiedCostVec.resize(N_IMPACTS);
+    mExpEnvImpactEmbodiedVec.resize(N_IMPACTS);
+    mExpEnvImpactMassVecDiscounted.resize(N_IMPACTS);
+    mExpEnvImpactReplacementVecDiscounted.resize(N_IMPACTS);
+    mExpCumulativeEnvImpact.resize(N_IMPACTS);
+
+    const size_t horizon = mTimeSteps.size();
+    const size_t Y_SIZE = mTableYearsHours.size();
+
+    auto* tecEcoCompo = parentComponent();
+    const double histHours = tecEcoCompo ? tecEcoCompo->HistNbHours() : 0.0;
+
+    // Loop over components
+    for (auto* compo : NonBusMilpComponents())
     {
-        if (lptr->EnvironmentModel()) {
-            for (int i = 0; i < mSelectedEnvImpacts.size(); i++)
+        if (!compo->EnvironmentModel())
+            continue;
+
+        auto* model = compo->compoModel();
+        if (!model)
+            continue;
+
+        const auto& impacts = model->getEnvImpacts();
+
+        // Loop over selected impacts
+        for (size_t i = 0; i < N_IMPACTS; ++i)
+        {
+            int year = 0;
+
+            // Pre-fetch expressions for this impact
+            const std::string impactMassExpName = model->getEnvImpactMassExpression(i);
+            auto* expReplacement1D = impacts[i]->getExpEnvReplacement();
+            auto* expOpCost1D = impacts[i]->getExpEnvOpCost();
+
+            // Loop over timestep
+            for (size_t t = 0; t < horizon; ++t)
             {
-                int year = 0;
-                for (unsigned int t = 0; t < mTimeSteps.size(); ++t)
-                {
-                    MIPModeler::MIPExpression expImpactMass_i_t;
-                    MIPModeler::MIPExpression expImpactCost_i_t;
-                    MIPModeler::MIPExpression expImpactReplacement_i_t;
+                const double ts = TimeStep(t);
 
-                    uint t_hour = std::ceil(t * TimeStep(t)) + mParentCompo->HistNbHours();
-                    while (t_hour > mTableYearsHours.at(year) && year < mTableYearsHours.size() - 1) {
-                        year += 1;
-                    }
-                    //operation
-                    expImpactMass_i_t = lptr->getMIPExpression1D(t, lptr->compoModel()->getEnvImpactMassExpression(i));
-                    mExpEnvImpactMassVec[i][t] += expImpactMass_i_t;
-                    //0D Discounted Mass Exp used to add constraints in buildModel()
-                    mExpEnvImpactMassVecDiscounted[i] += expImpactMass_i_t * mImpactLevelizationTable.at(year);
-                    
-                    //replacement
-                    expImpactReplacement_i_t = (lptr->compoModel()->getEnvImpacts()[i]->getExpEnvReplacement())->at(t);
-                    mExpEnvImpactReplacementVec[i][t] += expImpactReplacement_i_t;
-                    mExpEnvImpactReplacementVecDiscounted[i] += expImpactReplacement_i_t * mImpactLevelizationTable.at(year);
+                // Compute hour index
+                const uint t_hour = static_cast<uint>(t * ts + 0.999999) + histHours;
 
-                    //costs
-                    mExpEnvImpactCostVec[i][t] += (lptr->compoModel()->getEnvImpacts()[i]->getExpEnvOpCost())->at(t);
-                }
+                // Resolve year
+                while (year + 1 < Y_SIZE && t_hour > mTableYearsHours[year])
+                    ++year;
 
-                // ---------------------------- Embodied Env Impacts ----------------------------
-                mExpEnvImpactEmbodiedVec[i] += *(lptr->compoModel()->getEnvImpacts()[i]->getExpEnvEmbodied());
-                mExpEnvImpactEmbodiedCostVec[i] += *(lptr->compoModel()->getEnvImpacts()[i]->getExpEnvEmbodiedCost());
-                //Expression for total env impacts
-                mExpCumulativeEnvImpact[i] = mExpEnvImpactMassVecDiscounted[i] + mExpEnvImpactEmbodiedVec[i] + mExpEnvImpactReplacementVecDiscounted[i];
+                const double lvl = mImpactLevelizationTable[year];
+
+                // --- Mass impact ---
+                const auto expMass = compo->getMIPExpression1D(t, impactMassExpName);
+                mExpEnvImpactMassVec[i][t] += expMass;
+                mExpEnvImpactMassVecDiscounted[i] += expMass * lvl;
+
+                // --- Replacement impact ---
+                const auto expRepl = (*expReplacement1D)[t];
+                mExpEnvImpactReplacementVec[i][t] += expRepl;
+                mExpEnvImpactReplacementVecDiscounted[i] += expRepl * lvl;
+
+                // --- Cost impact ---
+                mExpEnvImpactCostVec[i][t] += (*expOpCost1D)[t];
             }
+
+            // Embodied impacts (0D)
+            mExpEnvImpactEmbodiedVec[i] += *(impacts[i]->getExpEnvEmbodied());
+            mExpEnvImpactEmbodiedCostVec[i] += *(impacts[i]->getExpEnvEmbodiedCost());
+
+            // Total cumulative impact
+            mExpCumulativeEnvImpact[i] =
+                mExpEnvImpactMassVecDiscounted[i] +
+                mExpEnvImpactEmbodiedVec[i] +
+                mExpEnvImpactReplacementVecDiscounted[i];
         }
     }
 }
+
 
 void TecEcoAnalysis::computeBuyAndSellExpressions(const double* optSol, MIPModeler::MIPExpression1D& expBuyPart, MIPModeler::MIPExpression1D& expSellPart)
 {
@@ -808,7 +885,9 @@ void TecEcoAnalysis::computeAllIndicators(const double* optSol)
             }
         }
 
-        double ExtrapolationFactor = mParentCompo->ExtrapolationFactor();
+        auto* compo = parentComponent();
+        const double ExtrapolationFactor = compo ? compo->ExtrapolationFactor() : 1.0;
+
         mExtraFactorIndicator.at(0) = mExtraFactorIndicator.at(1) = ExtrapolationFactor;
 
         //Objective

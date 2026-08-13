@@ -46,9 +46,9 @@ public:
     void computeAllIndicators(const double* optSol) override;
 
     //----------------------------------------------------------------------------------------------------
-    void declareModelInterface() 
+    void declareModelInterface() override
     {
-        ConverterSubModel::declareDefaultModelInterface();
+        ConverterSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
         addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit());				    /** Computed sizing electrolysis system power */
@@ -65,17 +65,17 @@ public:
         addExp(&mExpStdByConso, &mHorizon);
     }
     //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters() {
-        ConverterSubModel::declareDefaultModelConfigurationParameters();
+    void declareModelConfigurationParameters() override {
+        ConverterSubModel::declareModelConfigurationParameters();
         //bool 
-        addParameter("EfficiencyLHVbased", &mEfficiencyLHVbased, true, false, true, "efficiency type for electrolyzer", "bool"); /** TODO: Add a control imposed (to test different controls with the same parameters) */
-        addParameter("AddAuxConso", &mAddAuxConso, false, false, true, "Constant elec consumption in proportion of maxpower: ", "bool", "AddOperationConstraints");
-        addParameter("AddStdByConso", &mAddStdByConso, false, false, true, "Constant elec consumption in proportion of maxpower: equals to 0 if converterUse =0 but not when state = 0", "bool", "AddOperationConstraints");
+        addConfigParameter("EfficiencyLHVbased", &mEfficiencyLHVbased, true, false, true, "efficiency type for electrolyzer", "bool"); /** TODO: Add a control imposed (to test different controls with the same parameters) */
+        addConfigParameter("AddAuxConso", &mAddAuxConso, false, false, true, "Constant elec consumption in proportion of maxpower: ", "bool", "AddOperationConstraints");
+        addConfigParameter("AddStdByConso", &mAddStdByConso, false, false, true, "Constant elec consumption in proportion of maxpower: equals to 0 if converterUse =0 but not when state = 0", "bool", "AddOperationConstraints");
     }
     
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        ConverterSubModel::declareDefaultModelParameters();
+        ConverterSubModel::declareModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // InputParam instance for input data coming from User File : maximum power, performance maps...
         
@@ -94,11 +94,11 @@ public:
 
  
     //----------------------------------------------------------------------------------------------------
-    void declareModelIndicators() {
-        ConverterSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    void declareModelIndicators() override {
+        ConverterSubModel::declareModelIndicators();
     }
 
-    void initDefaultPorts()
+    void initDefaultPorts() override
     {
         mDefaultPorts.clear();
         //PortUsedPower - left

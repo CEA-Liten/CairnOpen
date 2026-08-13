@@ -90,6 +90,8 @@ public:
     std::map<std::string, t_mapParamData> extractPortParamData(const std::string& compoName) const;
     std::vector<t_mapGroups> extractGroupData() const;
 
+    std::string CairnVersionJson() const { return mCairnVersionJson; }
+
 protected:
     json mComponentsList;   // full component array (nlohmann::json)
     json mLinksList;        // full link array
@@ -107,6 +109,8 @@ protected:
     std::map<std::string, t_mapLabels> mLabelMap;  // component name -> label map
 
     std::vector<t_mapUserIndicator> mDynamicIndicators;
+
+    std::string mCairnVersionJson{};
 
     std::string mGroupName{};     // Only case of group
     std::string mGroupMainNode{}; // Only case of group

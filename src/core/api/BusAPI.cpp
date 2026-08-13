@@ -245,7 +245,7 @@ void CairnAPI::BusAPI::set_SettingValue(const std::string& a_SettingName, const 
 		//Update MilpComponent::mComponent as it is used to re-initialize the component parameters
 		const std::string value = CairnAPIUtils::getParamValue(a_SettingValue);
 		pBus->updateCompoParamMap(a_SettingName, "value", value);
-
+		pBus->paramValueChanged(a_SettingName);
 		vRet = (vOk) ? noError : errParam;
 	}
 	CairnAPIUtils::setError(vRet);

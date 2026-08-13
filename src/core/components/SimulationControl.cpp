@@ -11,7 +11,6 @@ SimulationControl::SimulationControl(CairnObject* ap_Parent,
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
     mGUIData(nullptr)
-    //TODO: create mException
 {
     this->setObjectType("SimulationControl");
     setName(aSimulationControlName);
@@ -46,7 +45,7 @@ void SimulationControl::declareCompoInputParam()
     mCompoInputSettings->addParameter("TimeStep", &mTimeStep, 3600., true, true, "constant TimeStep of optimization - overwritten by studyName_ListeOfTimeSteps.csv file ", "s", "TimeManagement");
     //int
     mCompoInputSettings->addParameter("StartTime", &mStartTime, 0, false, true, "Starting time in number of timesteps", "TimeStep", "TimeManagement");
-    mCompoInputSettings->addParameter("EndTime", &mEndTime, -1, false, true, "End time in number of timesteps - negative value means until the end of the dataseries file", "TimeStep", "Global_Optim");
+    mCompoInputSettings->addParameter("EndTime", &mEndTime, -1, false, true, "End time in number of timesteps - negative value means until the end of the dataseries file", "TimeStep", "TimeManagement");
     mCompoInputSettings->addParameter("FutureSize", &mFutureSize, 8760, true, true, "Planning horizon in number of timesteps of constant value TimeStep ", "TimeStep", "TimeManagement");
     mCompoInputSettings->addParameter("NbCycle", &mNbCycle, 1, true, true, "Number of cycles ie rolling horizons to be computed", "-", "TimeManagement");
     mCompoInputSettings->addParameter("TimeShift", &mTimeShift, 1, true, true, "Rolling horizon shifting in number of timesteps", "TimeStep", "TimeManagement");
@@ -71,6 +70,8 @@ void SimulationControl::setCompoInputParam(const t_mapParamData& aComponent)
 
 void SimulationControl::doInit(const t_mapParamData& aComponent)
 {
+    CAIRN_LOG_SCOPE(Name());
+
     delete mGUIData;
 
     mGUIData = new GUIData(this);

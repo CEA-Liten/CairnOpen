@@ -75,7 +75,7 @@ public:
     virtual bool setValue(const std::string& a_Value);
     virtual bool setValue(const t_value& a_Value);
     virtual t_value getValue() const;
-    bool getNumValue(double& a_Value); // return if possible a double value
+    bool getNumValue(double& a_Value) const; // return if possible a double value
     bool copyValues(const ModelParam& aSrc, size_t aOffset = 0);
     bool copyValues(const std::vector<double>& aSrc, size_t aOffset = 0);
     bool setValues(const double& aValue, size_t aSize);
@@ -83,6 +83,7 @@ public:
     bool readParameter(const t_mapParamData& aSettings);
     bool IsBlocking();
     bool IsUsed();
+    const FlagParam* pIsUsed() const { return &m_IsUsed; }; /* dynamically pass isUsede.g. from a timeseries ModelParam to the corresponding ModelTS */
     bool isDependent(); /* whether m_IsBlocking is a scalr or depends on other parameetrs */
     TriState isModified();
 
@@ -91,7 +92,7 @@ public:
     const std::string& getShowConfig() const { return m_ShowConfig; };
     const EParamType& getType() const { return m_Type; };
     std::string getUnit() const;
-    const UnitParam* pUnitParam() const { return &m_Unit; }; /* Used to dynamically pass the unit e.g. from a timeseries ModelParam to the corresponding ModelTS */
+    const UnitParam* pUnitParam() const { return &m_Unit; }; /* dynamically pass the unit e.g. from a timeseries ModelParam to the corresponding ModelTS */
 
     const std::string& getComment() const { return m_Comment; };
     void setComment(const std::string& a_Comment)  { m_Comment = a_Comment; };

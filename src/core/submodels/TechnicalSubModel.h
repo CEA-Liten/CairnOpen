@@ -18,7 +18,7 @@ using namespace IndicatorNames;
 class CAIRNCORESHARED_EXPORT TechnicalSubModel : public SubModel
 {
 public:
-    TechnicalSubModel(CairnObject* aParent = nullptr);
+    TechnicalSubModel(CairnObject* aParent);
     ~TechnicalSubModel();
 
     virtual void setTimeData();
@@ -31,7 +31,7 @@ public:
     virtual void computeEconomicalContribution(); /** MILP Model description : economical expressions */
     void computeNetOpexContribution();            /** Compute Net Opex contribution expression */
     virtual void computeAgeingModelContribution() { /* only relevant for ConverterSubModel */ };
-    virtual void computeDefaultIndicators(const double* optSol);
+    void computeAllIndicators(const double* optSol) override;
     void resetHistStoredValues();
     /** -------------------------------------------------------------------------------------------------------------- */
 
@@ -40,20 +40,20 @@ public:
     virtual void createEnvImpacts();
 
     // ------------------------- Defaul Parameters ----------------------------------------
-    virtual void declareDefaultModelConfigurationParameters() 
+    void declareModelConfigurationParameters() override
     {
-        SubModel::declareDefaultModelConfigurationParameters();
+        SubModel::declareModelConfigurationParameters();
         //bool
-        addParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");  
-        addParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel", "", "EnvironmentModel");  
-        addParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "GeometryModel");     
-        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");    
-        addParameter("PiecewiseCapex", &mPiecewiseCapex, false, false, true, "Provide a map of capex and sizes - see performances maps in doc", "", "EcoInvestModel");
-        addParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", "GeometryModel");
-        addParameter("PiecewiseVolume", &mPiecewiseVolume, false, false, true, "Provide a map of volumes and sizes - see performances maps in doc", "", "GeometryModel");
-        addParameter("PiecewiseMass", &mPiecewiseMass, false, false, true, "Provide a map of masses and sizes - see performances maps in doc", "", "GeometryModel");
-        addParameter("CondenseVariablesOnTP", &mCondenseVariablesOnTP, false, false, true, "To condense variables on the typical periods definition except for the storage state : allows storage between typical periods", "", "AddOperationConstraints"); 
-        addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Use long term time series forecasts", "", "TimeSeriesForecast");
+        addConfigParameter("EcoInvestModel", &mEcoInvestModel, true, false, true, "Use EcoInvestModel - ie Use Capex and Opex if true", "", "EcoInvestModel");
+        addConfigParameter("EnvironmentModel", &mEnvironmentModel, false, false, true, "Use EnvironmentModel", "", "EnvironmentModel");
+        addConfigParameter("GeometryModel", &mGeometryModel, false, false, true, "Use GeometryModel", "", "GeometryModel");
+        addConfigParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");
+        addConfigParameter("PiecewiseCapex", &mPiecewiseCapex, false, false, true, "Provide a map of capex and sizes - see performances maps in doc", "", "EcoInvestModel");
+        addConfigParameter("PiecewiseArea", &mPiecewiseArea, false, false, true, "Provide a map of areas and component sizes - see performances maps in doc", "", "GeometryModel");
+        addConfigParameter("PiecewiseVolume", &mPiecewiseVolume, false, false, true, "Provide a map of volumes and sizes - see performances maps in doc", "", "GeometryModel");
+        addConfigParameter("PiecewiseMass", &mPiecewiseMass, false, false, true, "Provide a map of masses and sizes - see performances maps in doc", "", "GeometryModel");
+        addConfigParameter("CondenseVariablesOnTP", &mCondenseVariablesOnTP, false, false, true, "To condense variables on the typical periods definition except for the storage state : allows storage between typical periods", "", "AddOperationConstraints");
+        addConfigParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Use long term time series forecasts", "", "TimeSeriesForecast");
 
         //int
         mNbInputPorts = getNbPorts(KCONS());
@@ -83,15 +83,26 @@ public:
         }
     }
     
-    virtual void declareDefaultModelParameters()
+    void declareModelParameters() override
     {
+        SubModel::declareModelParameters();
+
         //bool
         addParameter("LPWeightOptimization", &mLPWeightOptimization, false, false, true, "Use integer Weight if false ", ""); /** Use sizing based on Weight if true - default is false*/
         //double 
         addParameter("Weight", &mWeight, 1., false, true);	/** Weight of identical component, use negative value for optimization */
-        addParameter("LifeTime", &mLifeTime, 1., false, SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), "LifeTime in years", "Year", "EcoInvestModel");              /** LifeTime in years */ 
+        addParameter("LifeTime", &mLifeTime, 1., 
+            false,
+            SFunctionFlag({ eFTypeOrNot, { &mEcoInvestModel, &mEnvironmentModel} }), 
+            "LifeTime in years", "Year", "EcoInvestModel"); 
+
         addParameter("Capex", &mCapex, 0., &mEcoInvestModel, &mEcoInvestModel, "Elementary Capex in Euro per unit installed nominal storage or production capacity", SFunctionUnit({ eFTypeDivision, { pCurrency(), pOptimalSizeUnit() }}), "EcoInvestModel");                /** Elementary Capex in Euro per unit installed nominal power, flowrate or capacity  */
-        addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., false, &mEcoInvestModel, "Multiplicative coefficient on elementary Capex", "-", "EcoInvestModel");  /** Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
+        
+        addParameter("TotalCapexCoefficient", &mTotalCapexCoefficient, 1., 
+            false,
+            SFunctionFlag({ eFTypeNotAnd, {&mPiecewiseCapex}, { &mEcoInvestModel} }),
+            "Multiplicative coefficient on elementary Capex to account for fees, land taxes, structure costs", "-", "EcoInvestModel");
+       
         addParameter("TotalCapexOffset", &mTotalCapexOffset, 0., false, &mEcoInvestModel, "Additive offset coefficient on elementary Capex", pCurrency(), "EcoInvestModel");  /** Offset coefficient on elementary Capex to account for fees, land taxes, structure costs... ie cost += Capex*mTotalCapexCoefficient */
         addParameter("FixedOpex", &mFixedOpex, 0., &mEcoInvestModel, &mEcoInvestModel, "Fixed Opex in proportion of Elementary Capex", "%CAPEX/year", "EcoInvestModel");					/** Opex in percent of Elementary Capex, ie Opex cost += Capex * Opex * levelization + Sum(VariableCosts*Timestep*levelization) */
         addParameter("FixedOpexOffset", &mFixedOpexOffset, 0., false, &mEcoInvestModel, "The constant part of the Opex", "-", "EcoInvestModel");					/** The constant part of the yearly Opex : Opex = mFixedOpex * mCapex + mFixedOpexConstant */
@@ -141,12 +152,12 @@ public:
         }
     }
 
-    virtual void declareDefaultModelInterface()
+    void declareModelInterface() override
     {
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase)
            Note, the size of 1D IO expressions is always equal to mHorizon
         */
-        SubModel::declareDefaultModelInterface();
+        SubModel::declareModelInterface();
 
         //General
         addIO("isInstalled", &mExpInstalled, true, "bool", "Binary equals 1 if installed");  
@@ -196,8 +207,10 @@ public:
         }
     }
 
-    virtual void declareDefaultModelIndicators() 
+    void declareModelIndicators() override
     {
+        SubModel::declareModelIndicators();
+
         mInputIndicators->addIndicator("CAPEX", &mCapexContribution, &mEcoInvestModel, "Investment cost", pCurrency(), "CAPEX"); 
         mInputIndicators->addIndicator(IS_INSTALLED, &mExistence, &mExportIndicators, "Component installed", "-", "IsInstalled");
         mInputIndicators->addIndicator("Annual operation cost", &mOpexContribution, &mExportIndicators, "OPEX + replacement + buying cost + other cost - income", pCurrency(), "OPEX"); 
@@ -208,6 +221,9 @@ public:
         mInputIndicators->addIndicator("Mass", &mMassContribution, &mGeometryModel, "Mass", "kg", "Mass");
         mInputIndicators->addIndicator("Area", &mAreaContribution, &mGeometryModel, "Area", "m2", "Area");
         mInputIndicators->addIndicator("Volume", &mVolumeContribution, &mGeometryModel, "Volume", "m3", "Volume");
+
+        // String: weight unit (no unit by default)
+        addParameter("WeightUnit", &mWeightUnit, "", false, true, "Unit of weight (no unit by default)", "");
 
         //EnvImpact
         declareEnvImpactIndicators();
@@ -364,6 +380,8 @@ protected:
     double mLifeTime;                           /** Component LifeTime in years **/
     double mFixedOpexOffset;                       /** The constant part of the yearly Opex : Opex = mFixedOpex * mCapex + mFixedOpexConstant **/
     double mReplacementOffset;                /** The constant part of the Replacement cost : mReplacement * mCapex + mReplacementConstant**/
+
+    std::string mWeightUnit;                       /** Unit of the weight parameter */
 };
 
 #endif // TechnicalSubModel_H

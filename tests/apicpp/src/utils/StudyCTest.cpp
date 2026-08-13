@@ -150,7 +150,7 @@ int StudyCTest::runAndcheckSimple(CairnAPI& a_Cairn, const std::string& a_Solver
 		)
 	}
 
-	TESTAPI2FALSE("Check Run",
+	TESTAPIBOOL("Check Run",
 		checkResults("Reference", true, true)
 	)
 

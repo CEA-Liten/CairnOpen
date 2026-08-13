@@ -86,7 +86,8 @@ void CairnAPI::OptimProblemAPI::save_Study(const std::string& a_filename, const 
 		}
 
 		// Save
-		int iErr = m_Problem->SaveFullArchitecture(filename, a_posAlgorithm);
+		//int iErr = m_Problem->SaveFullArchitecture(filename, a_posAlgorithm);
+		int iErr = vCairn->saveStudy(filename, a_posAlgorithm); // use vCairn to register time
 
 		if (iErr == -1) {
 			CairnAPIUtils::setError(errWrite, filename);
@@ -1060,6 +1061,35 @@ std::shared_ptr < CairnAPI::SolverAPI>  CairnAPI::OptimProblemAPI::get_Solver() 
 	return vRet;
 }
 
+void CairnAPI::OptimProblemAPI::set_Solver(const std::string& name) const
+{
+	if (!m_Problem) {
+		CairnAPIUtils::setError(noCairn);
+		return;
+	}
+
+	Solver* solver = m_Problem->getSolver();
+	if (!solver) {
+		CairnAPIUtils::setError(errNotFound, "Solver");
+		return;
+	}
+
+	t_list solverList;
+	MIPSolverFactory vSolvers;
+	vSolvers.getAllInfos(solverList);
+
+	bool valid = std::find(solverList.begin(), solverList.end(), name) != solverList.end();
+	if (!valid) {
+		CairnAPIUtils::setError(errDefault, "Solver " + name + " is not valid. Available solvers are: " 
+			+ CairnUtils::joinStrings(solverList));
+		return;
+	}
+
+	SolverAPI solverAPI;
+	solverAPI.set_Object(solver);
+	solverAPI.set_SettingValue(PARAM_SOLVER_NAME, name);
+}
+
 //------------ SimulationControl ---------
 std::shared_ptr < CairnAPI::SimulationControlAPI> CairnAPI::OptimProblemAPI::get_SimulationControl() const
 {
@@ -1121,6 +1151,7 @@ void CairnAPI::OptimProblemAPI::initialize()
 	if (m_Problem) {
 		try {
 			CairnCore* vCairn = (CairnCore*)m_Problem->parent();
+			//vCairn->clearWarningANDErrors();
 			vCairn->doInit(false);			
 			vErr = noError;
 		}
@@ -1198,16 +1229,18 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 					break;
 				}
 			}
-			try {
-				ierr = vCairn->doStep();
-			}
-			catch (Cairn_Exception cairn_error) {
-				cCritical() << "ERROR : An Exception is detected in CairnCore::doStep!";
-				cCritical() << "Error : Exit simulation!";
-				ierr = -1;
+
+			CairnResult result = vCairn->doStep();
+
+			if (result.status < 0)
+			{
+				cError() << result.error;
+				ierr = result.status;
 				break;
 			}
+
 			numCycle = vCairn->getNumCycle();
+
 			if (ierr < 0) {
 				vErrMsg = "Error in doStep of Cairn at cycle #" + std::to_string(numCycle);
 				break;
@@ -1216,7 +1249,7 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 				cCritical() << "Error : No solution found by Cairn in cycle # " << numCycle;
 				break;
 			}
-			cInfo() << "Cycle" << numCycle << "has finished.";
+			//cInfo() << "Cycle " << std::to_string(numCycle) << " has finished.";
 			CairnLogger::Flush();
 			if (!persistent) iShift += timeShift;
 
@@ -1228,18 +1261,19 @@ CairnAPI::SolutionAPI CairnAPI::OptimProblemAPI::run(const std::string& a_result
 			CairnAPIUtils::setError(errRun, vErrMsg);
 		}			
 
-		SimulationControl* vSimulationControl = m_Problem->getSimulationControl();
-		if (vSimulationControl) {
-			t_value vExportJson = CairnAPIUtils::getParameter({ 
-				vSimulationControl->getCompoInputParam(), 
-				vSimulationControl->getCompoInputSettings(),
-				vSimulationControl->getGUIData()->getGuiInputParam() }, "ExportJson");
-			if (CairnAPIUtils::getParamValue(vExportJson) == "1")
-				m_Problem->SaveFullArchitecture();
+		vCairn->saveStudy(vCairn->StudyName());
+
+		// --- [PROFILING] Flush profiling data to the results directory --------------
+		// If the results directory is not yet known, "."is used.
+		{
+			std::string outDir = vCairn->resultsDir();
+			if (outDir.empty()) outDir = ".";
+			CAIRN_PROFILE_FLUSH(outDir, vCairn->StudyName());
 		}
 
 		vErr = noError;
 	}
+
 	CairnAPIUtils::setError(vErr, vErrMsg);
 	return vRet;
 }
@@ -1270,6 +1304,8 @@ t_list CairnAPI::OptimProblemAPI::getPublishedVariables()
 		const t_mapExchange &sub = m_Problem->ListPublishedVariables();
 	
 		for (const auto& elem : sub) {
+			if (!elem.second->IsUsed())
+				continue;
 			varNames.push_back(elem.first);
 		}
 		vErr = noError;
@@ -1608,7 +1644,8 @@ void CairnAPI::OptimProblemAPI::runSensitivityCSV(const std::string& a_samplingF
 	CairnAPIUtils::setError(vErr, vErrMsg);
 }
 
-t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_sampling, int a_max_time, const t_dicts& a_indicators)
+t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_sampling, int a_max_time, 
+	const t_dicts& a_indicators, std::function<void(int)> on_iter)
 {
 	/* a_sampling: table: one line = one case, 
 		one case: several maps, 
@@ -1680,7 +1717,11 @@ t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_samplin
 			if (vCase == "") {
 				vCase = "Case" + std::to_string(vIdx);
 			}
-			cDebug() << "runSensitivity, case: " << vCase;
+
+			cInfo() << "  ";
+			cInfo() << " ############################################################################ ";
+			cInfo() << "  ";
+			cInfo() << " RunSensitivity, case: " << vCase;
 
 			t_dict vResult = { { "Case", vCase } };
 
@@ -1695,7 +1736,12 @@ t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_samplin
 			}
 
 			vRet.push_back(vResult);
+
 			vIdx++;
+
+			if (on_iter) {
+				on_iter(static_cast<int>(vIdx));   // notify caller
+			}
 		}
 	}
 	return vRet;

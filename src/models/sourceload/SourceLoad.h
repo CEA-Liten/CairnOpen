@@ -127,33 +127,33 @@ public:
         // Mass         : kg
         // Energy       : MWh
         // Time         : Hours
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        SourceLoadSubModel::declareDefaultModelConfigurationParameters();
+        SourceLoadSubModel::declareModelConfigurationParameters();
 
         //re-declare these parameters to change their default values
-        addParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - i.e. use Capex and Opex if true", "", "EcoInvestModel");
-        addParameter("LPModelONLY", &mLPModelOnly, true, false, true, "Use LP Model - i.e. integer variables imposed or relaxed to real variables if true", "");
+        addConfigParameter("EcoInvestModel", &mEcoInvestModel, false, false, true, "Use EcoInvestModel - i.e. use Capex and Opex if true", "", "EcoInvestModel");
+        addConfigParameter("LPModelONLY", &mLPModelOnly, true, false, true, "Use LP Model - i.e. integer variables imposed or relaxed to real variables if true", "");
         // bool
-        addParameter("UseControlledFlux", &mUseControlledFlux, false, false, true, "Optional - If true: SourceLoadFlow will be set from another component using equality bus constraint instead of imposing SourceLoad flow from timeSeries - default = false", "", "ControlOptions");
-        addParameter("UseWeightedFlux", &mUseWeightedFlux, false, false, true, "Optional - If true: SourceLoad flow imposed by timeSeries will be weighted by another component variable using equality bus constraint - default = false", "", "ControlOptions");
-        addParameter("AddHeatConsumerModel", &mAddHeatConsumerModel, false, false, true, "Optional - If true model fluid flowrate corresponding to power source or load - default = false", "bool");
-        addParameter("AddVariableCostModel", &mAddVariableCostModel, false, false, true, "Optional - If true add precomputed costs or revenues from timeseries UseProfileBuyPrice or UseProfileSellPrice or AddShedding - can be used to account for variable costs in addition to or in substitution of Capex and Opex contributions - default = false");
-        addParameter("AddSheddingTS", &mAddSheddingTS, false, false, true, "Optional - If true compute the volume of power to be removed from the imposed profile for shedding - default = false");
-        addParameter("ComputeOptimalPrice", &mComputeOptimalPrice, false, false, true, "Optional - If true compute constant optimal price - default = false");
-        addParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Optional - If true: use forecast time series instead of historical timeseries - default = false", "", "TimeSeriesForecast");
-        addParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "Optional - If true compute SeasonalCosts - default = false", "", "TimeSeriesForecast");
-        addParameter("AddSheddingDetailed", &mAddSheddingDetailed, false, false, true, "Optional - If true compute the volume of power to be removed from the imposed profile for shedding - default = false");
-        addParameter("AddPeakShavingDetailed", &mAddPeakShavingDetailed, false, false, true, "Optional - If true compute the volume of power to be smoothed from the imposed profile for shaving - default = false");
-        addParameter("AddStaticCompensation", &mAddStaticCompensation, false, false, true, "Optional - In cases where reactive power is taken into account, this can compensate the reactive power of the components", "", "CompensationConstraints");
-        addParameter("FixedStaticCompensation", &mFixedStaticCompensation, false, false, true, "Optional - Choose if static compensation is free or not - default = false", "", "CompensationConstraints");
+        addConfigParameter("UseControlledFlux", &mUseControlledFlux, false, false, true, "Optional - If true: SourceLoadFlow will be set from another component using equality bus constraint instead of imposing SourceLoad flow from timeSeries - default = false", "", "ControlOptions");
+        addConfigParameter("UseWeightedFlux", &mUseWeightedFlux, false, false, true, "Optional - If true: SourceLoad flow imposed by timeSeries will be weighted by another component variable using equality bus constraint - default = false", "", "ControlOptions");
+        addConfigParameter("AddHeatConsumerModel", &mAddHeatConsumerModel, false, false, true, "Optional - If true model fluid flowrate corresponding to power source or load - default = false", "bool");
+        addConfigParameter("AddVariableCostModel", &mAddVariableCostModel, false, false, true, "Optional - If true add precomputed costs or revenues from timeseries UseProfileBuyPrice or UseProfileSellPrice or AddShedding - can be used to account for variable costs in addition to or in substitution of Capex and Opex contributions - default = false");
+        addConfigParameter("AddSheddingTS", &mAddSheddingTS, false, false, true, "Optional - If true compute the volume of power to be removed from the imposed profile for shedding - default = false");
+        addConfigParameter("ComputeOptimalPrice", &mComputeOptimalPrice, false, false, true, "Optional - If true compute constant optimal price - default = false");
+        addConfigParameter("SeasonalPrevisions", &mSeasonalPrevisions, false, false, true, "Optional - If true: use forecast time series instead of historical timeseries - default = false", "", "TimeSeriesForecast");
+        addConfigParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "Optional - If true compute SeasonalCosts - default = false", "", "TimeSeriesForecast");
+        addConfigParameter("AddSheddingDetailed", &mAddSheddingDetailed, false, false, true, "Optional - If true compute the volume of power to be removed from the imposed profile for shedding - default = false");
+        addConfigParameter("AddPeakShavingDetailed", &mAddPeakShavingDetailed, false, false, true, "Optional - If true compute the volume of power to be smoothed from the imposed profile for shaving - default = false");
+        addConfigParameter("AddStaticCompensation", &mAddStaticCompensation, false, false, true, "Optional - In cases where reactive power is taken into account, this can compensate the reactive power of the components", "", "CompensationConstraints");
+        addConfigParameter("FixedStaticCompensation", &mFixedStaticCompensation, false, false, true, "Optional - Choose if static compensation is free or not - default = false", "", "CompensationConstraints");
     }
 
     //----------------------------------------------------------------------------------------------------
         //Model Input Data
-    inline void declareModelParameters()
+    inline void declareModelParameters() override
     {
-        SourceLoadSubModel::declareDefaultModelParameters();
+        SourceLoadSubModel::declareModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // addParameter to InputParam instance for input data coming from User File : maximum power, performance maps...
         
@@ -188,9 +188,9 @@ public:
         addTimeSeries("UseProfileCostShedding", &mCostSheddingTS, &mAddSheddingTS, &mAddSheddingTS, "External TimeSeries defining the cost of shedding", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pPowerUnit()} }), "Base", 0.0);
     }
 
-    inline void declareModelInterface()
+    inline void declareModelInterface() override
     {
-        SourceLoadSubModel::declareDefaultModelInterface();
+        SourceLoadSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase)
            Caution : Flux must be signed wrt to Bus balance impact : >0 if energy source, <0 else.
@@ -235,8 +235,8 @@ public:
         addExp(&mExpSums, &mHorizonTimeSpanRatio);
     }
 
-    void declareModelIndicators() {
-        SourceLoadSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    void declareModelIndicators() override {
+        SourceLoadSubModel::declareModelIndicators();
     }
 
     bool isPriceOptimized();
@@ -247,7 +247,7 @@ public:
 
     double getTemperature(const std::string& direction);
 
-    void initDefaultPorts() {
+    void initDefaultPorts() override {
         mDefaultPorts.clear();
         //PortSourceLoadFlow - left
         std::map<std::string, std::string> portSourceLoadFlow;

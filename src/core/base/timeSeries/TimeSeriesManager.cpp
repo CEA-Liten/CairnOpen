@@ -2,6 +2,9 @@
 #include "Cairn_Exception.h"
 #include "CairnUtils.h"
 #include "GlobalSettings.h"
+#include "Constants.h"
+
+using namespace CairnConstants;
 
 TimeSeriesManager::TimeSeriesManager(MilpData& aMilpData, const std::string& a_ReaderKind)
     : r_MilpData(aMilpData)
@@ -128,69 +131,115 @@ bool TimeSeriesManager::importTS(TimeSeriesReader& a_Reader, const std::wstring&
 
     const std::string strTSfile = CairnUtils::toUTF8String(aTSfile);
 
+    // Open reader
     if (!a_Reader.open(aTSfile)) {
         cError() << "Timeseries file not found: " << strTSfile;
         return false;
     }
 
-    // read and analyze Times 
+    // Read and analyze times
     std::vector<double> vTimes;
     readTimes(a_Reader, aTSfile, iShift, vTimes);
 
-    // read Header (names, units)
+    // Read header (names, units)
     std::vector<TimeSeriesReader::TimeSeriesDescrp> vHeaders;
     a_Reader.readHeader(aListSubscribedVariables, vHeaders);
 
-    // read timeseries data 
+    // Prebuild a fast exact-match index from header: name -> index 
+    std::unordered_map<std::string, size_t> headerIndex;
+    headerIndex.reserve(vHeaders.size() * 2 + 1);
+    for (size_t ih = 0; ih < vHeaders.size(); ++ih) {
+        headerIndex.emplace(vHeaders[ih].Name, ih);
+    }
+
+    // Prepare unit error container; reserve to avoid repeated reallocations
     std::vector<SUnitErr> vUnitErrs;
+    vUnitErrs.reserve(std::min<size_t>(vHeaders.size(), aListSubscribedVariables.size()));
 
-    for (auto& [key, var] : aListSubscribedVariables) {
-        const std::string zeVarName = var->Name();
+    // Cache read-only references to MilpData values used repeatedly
+    const std::string readingMode = r_MilpData.readingMode();
+    const double pdtHeure = r_MilpData.pdtHeure();
+    const std::vector<double> timeSteps = r_MilpData.TimeSteps();
+    const int npdtPastVal = r_MilpData.npdtPast();
 
-        auto headerIt = std::find_if(vHeaders.begin(), vHeaders.end(),
-            [&](const TimeSeriesReader::TimeSeriesDescrp& h) {
-                return CairnUtils::compareStrings(h.Name, zeVarName);
-            });
+    // Iterate subscribed variables 
+    for (const auto& kv : aListSubscribedVariables) {
+        ZEVariables* var = kv.second;
+        if (!var) continue;
 
-        // timeseries name was not found; continue, as it may be in another file
-        if (headerIt == vHeaders.end())
-            continue; 
+        const std::string& zeVarName = var->Name(); // avoid copy
 
-        // timeseries name found
-        const auto& vHeader = *headerIt;  
+        // Try fast exact lookup first
+        size_t headerPos = SIZE_MAX;
+        auto itIdx = headerIndex.find(zeVarName);
+        if (itIdx != headerIndex.end()) {
+            headerPos = itIdx->second;
+        }
+        else {
+            // Fallback to compareStrings behavior 
+            auto it = std::find_if(vHeaders.begin(), vHeaders.end(),
+                [&](const TimeSeriesReader::TimeSeriesDescrp& h) {
+                    return CairnUtils::compareStrings(h.Name, zeVarName);
+                });
+            if (it != vHeaders.end()) {
+                headerPos = static_cast<size_t>(std::distance(vHeaders.begin(), it));
+            }
+        }
+
+        // Timeseries name was not found; continue (may be in another file)
+        if (headerPos == SIZE_MAX)
+            continue;
+
+        // Timeseries name found
+        const TimeSeriesReader::TimeSeriesDescrp& vHeader = vHeaders[headerPos];
         const std::string zeVarUnit = var->Unit();
+
+        // Check units 
         OrCheckUnits checkUnits = CheckUnits(vHeader.Unit, zeVarUnit, true);
-
-        if (!checkUnits.isConsistency)
+        if (!checkUnits.isConsistency) {
             vUnitErrs.push_back({ zeVarName, vHeader.Unit, zeVarUnit });
+        }
 
+        // Read values into vector; reserve to vTimes.size() to avoid reallocations
         std::vector<double> vValues;
+        if (!vTimes.empty()) vValues.reserve(vTimes.size());
         a_Reader.readValues(vHeader.Index, vValues);
 
+        // Extrapolate and convert in-place
         extrapolation(aTSfile, iShift, vHeader, vTimes, vValues);
         conversion(checkUnits, vValues);
 
+        // Import according to reading mode or fallback to Average (case Pegase)
         if (!vTimes.empty()) {
-            if (r_MilpData.readingMode() == "Interpolation")
+            if (readingMode == "Interpolation")
                 importZEVarInterpolation(var, vValues, vTimes, iShift);
             else
                 importZEVarAverage(var, vValues, vTimes, iShift);
         }
         else {
-            Average(var, r_MilpData.pdtHeure(), r_MilpData.TimeSteps(), r_MilpData.npdtPast());
+            Average(var, pdtHeure, timeSteps, npdtPastVal);
         }
 
-        aNotFoundNames.erase(zeVarName); 
+        // Remove from not-found set (use the exact name)
+        aNotFoundNames.erase(zeVarName);
     }
 
+    // Close reader
     a_Reader.close();
 
+    // If unit errors occurred, build message once and either throw or log
     if (!vUnitErrs.empty()) {
-        std::string errMsg = "Error while importing: " + strTSfile;
-        for (auto& e : vUnitErrs)
-            errMsg += "\n\nUnits inconsistency for variable " + e.zeVar
-            + ", file unit: " + e.dataUnit
-            + ", expected unit: " + e.zeUnit;
+        std::string errMsg;
+        errMsg.reserve(128 + vUnitErrs.size() * 64);
+        errMsg = "Error while importing: " + strTSfile;
+        for (const auto& e : vUnitErrs) {
+            errMsg += "\n\nUnits inconsistency for variable ";
+            errMsg += e.zeVar;
+            errMsg += ", file unit: ";
+            errMsg += e.dataUnit;
+            errMsg += ", expected unit: ";
+            errMsg += e.zeUnit;
+        }
 
         if (isCheckTimeSeriesUnits)
             throw Cairn_Exception(errMsg, -1);
@@ -200,6 +249,7 @@ bool TimeSeriesManager::importTS(TimeSeriesReader& a_Reader, const std::wstring&
 
     return true;
 }
+
 
 void TimeSeriesManager::readTimes(TimeSeriesReader& a_Reader, const std::wstring& aTSfile, const int& iShift, std::vector<double>& aTimes)
 {
@@ -226,7 +276,7 @@ void TimeSeriesManager::readTimes(TimeSeriesReader& a_Reader, const std::wstring
         }
         else if (vReadTimes[0] < r_MilpData.pdt()) {
             cWarning() << "The first time value is " << vReadTimes[0] << " which is less than TimeStep=" << r_MilpData.pdt() << ". " 
-                       << "The first point is at time=TimeStep." + r_MilpData.readingMode() + "will be applied in this case.";
+                       << "The first point is at time=TimeStep." + r_MilpData.readingMode() + " will be applied in this case.";
         }
 
         //Find the first row where time is greater than or equal to r_MilpData.pdt() * iShift
@@ -468,200 +518,314 @@ OrCheckUnits TimeSeriesManager::CheckUnits(const std::string& a_FileUnit, const 
 
 void TimeSeriesManager::importZEVarInterpolation(ZEVariables* var, std::vector<double> aVec, std::vector<double> pdtVec, const int& iShift)
 {
-    double time = (iShift + 1) * r_MilpData.pdt();
-    int iRow = 0;
+    // Use references to the local copies to avoid further copying.
+    const std::vector<double>& values = aVec;
+    const std::vector<double>& times = pdtVec;
 
-    for (size_t j = r_MilpData.npdtPast(); j < r_MilpData.npdtTot(); j++)
+    // Cache frequently used MilpData values
+    const std::size_t npast = static_cast<std::size_t>(r_MilpData.npdtPast());
+    const std::size_t ntot = static_cast<std::size_t>(r_MilpData.npdtTot());
+    const double basePdt = r_MilpData.pdt();
+
+    // Cache pointer to destination vector once
+    auto* destVecPtr = var->ptrVariable();
+    if (!destVecPtr) {
+        throw Cairn_Exception("importZEVarInterpolation: destination vector missing for " + var->Name(), -1);
+    }
+    std::vector<double>& dest = *destVecPtr;
+
+    // Use raw pointers for fast indexed access (safe because vectors are not reallocated here)
+    const double* valPtr = values.empty() ? nullptr : values.data();
+    const double* tPtr = times.empty() ? nullptr : times.data();
+    const std::size_t nTimes = times.size();
+
+    // Start time and row index
+    double time = (iShift + 1) * basePdt;
+    std::size_t iRow = 0;
+
+    // Iterate j from npast to ntot-1 
+    for (std::size_t j = npast; j < ntot; ++j)
     {
-        while (iRow < pdtVec.size() - 1)
+        // Advance iRow while next time exists and current time is less than next header time
+        while ((iRow + 1) < nTimes)
         {
-            if (fabs(time - pdtVec[iRow]) < 10e-6 || time < pdtVec[iRow])
+            if (std::fabs(time - tPtr[iRow]) < kEpsilon || time < tPtr[iRow])
                 break;
-            iRow++;
+            ++iRow;
         }
 
-        if (fabs(time - pdtVec[iRow]) < 10e-6) {
-            (*var->ptrVariable())[j] =  aVec[iRow];
+        if (nTimes > 0 && std::fabs(time - tPtr[iRow]) < kEpsilon) {
+            // Exact match case
+            dest[j] = valPtr ? valPtr[iRow] : 0.0;
         }
         else {
+            // Interpolation case
             double interVal = 0.0;
-            if (iRow == 0)//case where first time value in .csv is greater than TimeStep
-                interVal = aVec[iRow] * time / pdtVec[iRow];
-            else
-                interVal = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
+
+            if (nTimes == 0) {
+                // No input times: preserve behavior by setting 0.0 
+                interVal = 0.0;
+            }
+            else if (iRow == 0) {
+                // First time value in file is greater than requested time
+                // Avoid division by zero: if tPtr[0] == 0, fall back to 0.0 to avoid UB
+                if (tPtr[0] == 0.0) {
+                    interVal = valPtr ? valPtr[0] : 0.0;
+                }
+                else {
+                    interVal = (valPtr ? valPtr[0] : 0.0) * time / tPtr[0];
+                }
+            }
+            else {
+                // Standard linear interpolation between iRow-1 and iRow
+                const double denom = (tPtr[iRow] - tPtr[iRow - 1]);
+                if (denom == 0.0) {
+                    // Avoid division by zero; fall back to previous value
+                    interVal = valPtr ? valPtr[iRow - 1] : 0.0;
+                }
+                else {
+                    const double v1 = valPtr ? valPtr[iRow] : 0.0;
+                    const double v0 = valPtr ? valPtr[iRow - 1] : 0.0;
+                    interVal = ((v1 - v0) * (time - tPtr[iRow - 1]) / denom) + v0;
+                }
+            }
 
             if (std::isnan(interVal)) {
                 Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
                 throw cairn_error;
             }
 
-            //Values for variables that are not temperature or price cannot be negative 
-            if (interVal < 0)
+            // Values for variables that are not temperature or price cannot be negative
+            if (interVal < 0.0)
             {
-                std::string vUpperUnit = CairnUtils::toUpper(var->Unit());
+                const std::string vUpperUnit = CairnUtils::toUpper(var->Unit());
                 if (vUpperUnit == "DEGC" || vUpperUnit == "DEGK" || vUpperUnit == "K"
                     || CairnUtils::contains(vUpperUnit, "EUR") || CairnUtils::contains(vUpperUnit, "CURRENCY"))
                 {
-                    //temperature or price : do nothing
+                    // temperature or price: keep negative value 
                 }
-                else if (fabs(interVal) < 1.e-5) //Correction for negligible negative values that might result from sum computation 
+                else if (std::fabs(interVal) < 1.e-5) {
+                    // Correction for negligible negative values
                     interVal = 0.0;
-                else
-                    cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << interVal << aVec[iRow];
+                }
+                else {
+                    cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << (nTimes > 0 ? tPtr[iRow] : 0.0) << interVal << (valPtr ? valPtr[iRow] : 0.0);
+                }
             }
 
-            (*var->ptrVariable())[j] = interVal;
+            dest[j] = interVal;
         }
 
-        time = time + 3600. * (r_MilpData.TimeStep(j - r_MilpData.npdtPast()));
+        // Advance time by 3600 * TimeStep for the next j 
+        const int stepIndex = static_cast<int>(j - npast);
+        time += 3600.0 * (r_MilpData.TimeStep(stepIndex));
     }
 }
 
-void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double> aVec, std::vector<double> pdtVec, const int& iShift)
+void TimeSeriesManager::importZEVarAverage(ZEVariables* var, std::vector<double> aVec,
+    std::vector<double> pdtVec, const int& iShift)
 {
-    double time = iShift * r_MilpData.pdt();
-    int iRow = 0;
-    int previRow = -1;
+    // Use references to avoid further copying inside the function
+    const std::vector<double>& values = aVec;
+    const std::vector<double>& times = pdtVec;
+
+    const std::size_t nTimes = times.size();
+    const double* valPtr = nTimes ? values.data() : nullptr;
+    const double* tPtr = nTimes ? times.data() : nullptr;
+
+    // Cache MilpData values
+    const std::size_t npast = static_cast<std::size_t>(r_MilpData.npdtPast());
+    const std::size_t ntot = static_cast<std::size_t>(r_MilpData.npdtTot());
+    const double basePdt = r_MilpData.pdt();
+
+    // Destination vector
+    auto* destPtr = var->ptrVariable();
+    if (!destPtr) {
+        throw Cairn_Exception("importZEVarAverage: missing destination vector for " + var->Name(), -1);
+    }
+    std::vector<double>& dest = *destPtr;
+
+    // Initial time
+    double time = static_cast<double>(iShift) * basePdt;
+
+    std::size_t iRow = 0;
+    std::size_t prevRow = static_cast<std::size_t>(-1);
 
     double sumValue = 0.0;
     double sumTime = 0.0;
     double valInterp = 0.0;
 
-    for (size_t j = r_MilpData.npdtPast(); j < r_MilpData.npdtTot(); j++)
-    {
-        time = time + 3600. * (r_MilpData.TimeStep(j - r_MilpData.npdtPast()));
+    // Precompute uppercase unit once
+    const std::string unitUpper = CairnUtils::toUpper(var->Unit());
+    const bool isTempOrPrice =
+        (unitUpper == "DEGC" || unitUpper == "DEGK" || unitUpper == "K" ||
+            CairnUtils::contains(unitUpper, "EUR") ||
+            CairnUtils::contains(unitUpper, "CURRENCY"));
 
-        while (iRow < pdtVec.size() - 1) // pdtVec.size() == npdtTot() - npdtPast()
+    for (std::size_t j = npast; j < ntot; ++j)
+    {
+        // Advance time
+        time += 3600.0 * r_MilpData.TimeStep(static_cast<int>(j - npast));
+
+        // Advance iRow
+        while ((iRow + 1) < nTimes)
         {
-            if (fabs(time - pdtVec[iRow]) < 10e-6 || time < pdtVec[iRow]) {
-                // resynchro due to loss of precision
-                if (previRow > 0) //Is this correction really needed?!
-                    if (time <= pdtVec[previRow])
-                        time = pdtVec[previRow];
+            const double tRow = tPtr[iRow];
+
+            if (std::fabs(time - tRow) < kEpsilon || time < tRow) {
+                // Resynchronization
+                if (prevRow != static_cast<std::size_t>(-1)) {
+                    if (time <= tPtr[prevRow])
+                        time = tPtr[prevRow];
+                }
                 break;
             }
 
+            // Accumulate average
             if (iRow > 0) {
-                sumTime += (pdtVec[iRow] - pdtVec[iRow - 1]);
-                sumValue += aVec[iRow] * (pdtVec[iRow] - pdtVec[iRow - 1]);
-            }
-            else { //iRow == 0
-                sumTime += pdtVec[iRow] - iShift * r_MilpData.pdt();
-                sumValue += aVec[iRow] * (pdtVec[iRow] - iShift * r_MilpData.pdt());
-                if (sumTime < 0) {
-                    Cairn_Exception cairn_error((std::string)"Error while importing input time series. Negative time value! Something went wrong!", -1);
-                    throw cairn_error;
-                }
-            }
-
-            iRow++;
-        }
-
-        //Don't take average value for temperature and price
-        std::string vUpperUnit = CairnUtils::toUpper(var->Unit());
-        if (vUpperUnit == "DEGC" || vUpperUnit == "DEGK" || vUpperUnit == "K"
-            || CairnUtils::contains(vUpperUnit, "EUR") || CairnUtils::contains(vUpperUnit, "CURRENCY"))
-        {        
-            if (time - pdtVec[iRow] < 10e-6) {
-                (*var->ptrVariable())[j] = aVec[iRow];
+                const double dt = tPtr[iRow] - tPtr[iRow - 1];
+                sumTime += dt;
+                sumValue += valPtr[iRow] * dt;
             }
             else {
-                double sval = 0.0;
-                if (iRow == 0)//case where first time value in .csv is greater than TimeStep
-                    sval = aVec[iRow] * time / pdtVec[iRow];
-                else
-                    sval = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
+                const double dt = tPtr[0] - static_cast<double>(iShift) * basePdt;
+                sumTime += dt;
+                sumValue += valPtr[0] * dt;
 
-                if (std::isnan(sval)) {
-                    Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
-                    throw cairn_error;
+                if (sumTime < 0.0) {
+                    throw Cairn_Exception(
+                        "Error while importing input time series. Negative time value!", -1);
                 }
-
-                (*var->ptrVariable())[j] = sval;
             }
 
-            if (iRow < pdtVec.size() - 1) iRow++;
+            ++iRow;
         }
-        else // Not temperature or price
+
+        // Temperature or price -> no averaging
+        if (isTempOrPrice)
         {
-            if (iRow == previRow + 1)  //To have a better precision for the basic case
-            {
-                if (fabs(time - pdtVec[iRow]) < 10e-6) {
-                    (*var->ptrVariable())[j] = aVec[iRow];
+            if (std::fabs(time - tPtr[iRow]) < kEpsilon) {
+                dest[j] = valPtr[iRow];
+            }
+            else {
+                double sval;
+                if (iRow == 0) {
+                    sval = valPtr[0] * time / tPtr[0];
                 }
                 else {
-                    double sval = 0.0;
-                    if (iRow == 0)//case where first time value in .csv is greater than TimeStep
-                        sval = aVec[iRow] * time / pdtVec[iRow];
-                    else
-                        sval = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
-
-                    if (std::isnan(sval)) {
-                        Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
-                        throw cairn_error;
-                    }
-
-                    //Values for variables that are not temperature or price cannot be negative 
-                    if (sval < 0)
-                    {
-                        //Correction for negligible negative values that might result from sum computation 
-                        if (fabs(sval) < 1.e-5)
-                            sval = 0.0;
-                        else
-                            cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << sval << aVec[iRow];
-                    }
-
-                    (*var->ptrVariable())[j] = sval;
+                    const double denom = tPtr[iRow] - tPtr[iRow - 1];
+                    sval = ((valPtr[iRow] - valPtr[iRow - 1]) *
+                        (time - tPtr[iRow - 1]) / denom) + valPtr[iRow - 1];
                 }
 
-                sumTime = 0.0;
-                sumValue = 0.0;
+                if (std::isnan(sval)) {
+                    throw Cairn_Exception(
+                        "Error while importing input data series: NAN for " + var->Name() +
+                        " at time " + std::to_string(time) +
+                        ", row: " + std::to_string(iRow), -1);
+                }
 
-                if (iRow < pdtVec.size() - 1) {
-                    previRow = iRow;
-                    iRow++;
+                dest[j] = sval;
+            }
+
+            if (iRow + 1 < nTimes) {
+                prevRow = iRow;
+                ++iRow;
+            }
+            continue;
+        }
+
+        // Non-temperature/price -> average
+        if (iRow == prevRow + 1)
+        {
+            // Basic case
+            double sval;
+            if (std::fabs(time - tPtr[iRow]) < kEpsilon) {
+                sval = valPtr[iRow];
+            }
+            else {
+                if (iRow == 0) {
+                    sval = valPtr[0] * time / tPtr[0];
+                }
+                else {
+                    const double denom = tPtr[iRow] - tPtr[iRow - 1];
+                    sval = ((valPtr[iRow] - valPtr[iRow - 1]) *
+                        (time - tPtr[iRow - 1]) / denom) + valPtr[iRow - 1];
                 }
             }
-            else
-            {
-                valInterp = ((aVec[iRow] - aVec[iRow - 1]) * (time - pdtVec[iRow - 1]) / (pdtVec[iRow] - pdtVec[iRow - 1])) + aVec[iRow - 1];
-                //Do we really need this?!
-                if (fabs(time - pdtVec[iRow - 1]) < 1.e-6) {
-                    time = pdtVec[iRow - 1];
-                }
 
-                sumTime += (time - pdtVec[iRow - 1]);
-                sumValue += (time - pdtVec[iRow - 1]) * valInterp;
+            if (std::isnan(sval)) {
+                throw Cairn_Exception(
+                    "Error while importing input data series: NAN for " + var->Name() +
+                    " at time " + std::to_string(time) +
+                    ", row: " + std::to_string(iRow), -1);
+            }
 
-                if (std::isnan(sumValue / sumTime)) {
-                    Cairn_Exception cairn_error("Error while importing the input data series: NAN value found for " + var->Name() + " at time " + std::to_string(time) + ", row: " + std::to_string(iRow), -1);
-                    throw cairn_error;
-                }
+            if (sval < 0.0) {
+                if (std::fabs(sval) < 1e-5)
+                    sval = 0.0;
+                else
+                    cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name()
+                    << var->Unit() << iRow << time << tPtr[iRow]
+                    << sval << valPtr[iRow];
+            }
 
-                //Values for variables that are not temperature or price cannot be negative 
-                if (sumValue < 0)
-                {
-                    //Correction for negligible negative values that might result from sum computation 
-                    if (fabs(sumValue / sumTime) < 1.e-5)
-                        sumValue = 0.0;
-                    else
-                        cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name() << var->Unit() << iRow << time << pdtVec[iRow] << (sumValue / sumTime) << aVec[iRow];
-                }
+            dest[j] = sval;
 
-                (*var->ptrVariable())[j] = (sumValue / sumTime);
+            sumTime = 0.0;
+            sumValue = 0.0;
 
-                sumTime = (pdtVec[iRow] - time);
-                sumValue = (pdtVec[iRow] - time) * valInterp;
+            if (iRow + 1 < nTimes) {
+                prevRow = iRow;
+                ++iRow;
+            }
+        }
+        else
+        {
+            // Averaging case
+            const double denom = tPtr[iRow] - tPtr[iRow - 1];
+            valInterp = ((valPtr[iRow] - valPtr[iRow - 1]) *
+                (time - tPtr[iRow - 1]) / denom) + valPtr[iRow - 1];
 
-                if (iRow < pdtVec.size() - 1) {
-                    previRow = iRow;
-                    iRow++;
-                }
+            if (std::fabs(time - tPtr[iRow - 1]) < 1e-6)
+                time = tPtr[iRow - 1];
+
+            const double dt = time - tPtr[iRow - 1];
+            sumTime += dt;
+            sumValue += dt * valInterp;
+
+            const double avg = sumValue / sumTime;
+
+            if (std::isnan(avg)) {
+                throw Cairn_Exception(
+                    "Error while importing input data series: NAN for " + var->Name() +
+                    " at time " + std::to_string(time) +
+                    ", row: " + std::to_string(iRow), -1);
+            }
+
+            if (avg < 0.0) {
+                if (std::fabs(avg) < 1e-5)
+                    sumValue = 0.0;
+                else
+                    cDebug() << " ABNORMAL NEGATIVE VALUE !! " << var->Name()
+                    << var->Unit() << iRow << time << tPtr[iRow]
+                    << avg << valPtr[iRow];
+            }
+
+            dest[j] = avg;
+
+            // Prepare next segment
+            const double dt2 = tPtr[iRow] - time;
+            sumTime = dt2;
+            sumValue = dt2 * valInterp;
+
+            if (iRow + 1 < nTimes) {
+                prevRow = iRow;
+                ++iRow;
             }
         }
     }
 }
-
 
 void TimeSeriesManager::Average(ZEVariables* var, double aTimeStepIn, const std::vector<double> &aTimeStepsOut, uint aNpdtPast)
 {

@@ -96,21 +96,26 @@ def PasteSortieFromGraphProperties(projectsPath: str, TestCase: str, scenarioLis
         print("Examples of start time valid formats are: 15/01/2012 00:00:01.99 and 2012-01-15 00:00:01.99")
 
     #Read result files
-    for file in all_filenames:
+    for file_i in all_filenames:
         try:
-            table = pd.read_csv(file, sep=';', skiprows=[1, 2], encoding = "utf-8")
+            table = pd.read_csv(file_i, sep=';', skiprows=[1, 2], encoding = "utf-8")
+            print(file_i)
+            print(table.columns.tolist())
+            print("xx")
         except UnicodeDecodeError:
-            table = pd.read_csv(file, sep=';', skiprows=[1, 2], encoding = "ISO-8859-1")
+            table = pd.read_csv(file_i, sep=';', skiprows=[1, 2], encoding = "ISO-8859-1")
         table.columns = table.columns.str.strip()
         if 'Data.Time' in table.columns:  # version pegase
             table = table[table.columns.intersection(variables + ['Data.Time'])]
             table['Data.Time'] = pd.to_datetime(table['Data.Time'], unit="s")
-            case = file.split(ut.getOSsep())[-1]
+            case = file_i.split(ut.getOSsep())[-1]
             case = re.split('_(S|s)ortie', case)[0]
         else:  # version perseeGui
+            print(variables)
+            print(table.columns.intersection(variables + ['Time']))
             table = table[table.columns.intersection(variables + ['Time'])]
             table['Data.Time'] = pd.to_datetime(table['Time'], unit="s")
-            case = file.split(ut.getOSsep())[-2]
+            case = file_i.split(ut.getOSsep())[-2]
         #Add start_time as an offset to time values
         if start_time != "":
             try:
@@ -274,13 +279,18 @@ def PasteResultsMonoLoc(projectsPath, prefix, hist_plan, scenarioList=[], lines_
     sumup.to_csv(PasteFile, sep=';', encoding="utf-8")
     return(sumup)
 
-def checkParamInJson(filename: str,study_name:str):
+def checkParamInJson(filename_0: str, study_name:str):
     """store json parameters
     args:
     filename : address to the file .json
     """
+    filename = filename_0
+
     if os.path.isfile(filename):
         print("load json:", filename)
+    else: 
+        filename = filename.replace(".json", "_self.json")
+
     with open(filename, 'r',encoding="utf-8") as study_file:
         parser = ut.loadStudyCompo(json.load(study_file))
     parametres = ["optionListJson","paramListJson","timeSeriesListJson", "envImpactsListJson"]

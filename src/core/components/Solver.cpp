@@ -3,6 +3,7 @@
 #include "MilpComponent.h"
 #include "CairnDefine.h"
 #include "CairnUtils.h"
+#include "Constants.h"
 
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -10,6 +11,8 @@
 #include <algorithm>
 #include <ctime>
 #include <iostream>
+
+using namespace CairnConstants;
 
 template<typename T1, typename T2>
 using mul = std::ratio_multiply<T1, T2>;
@@ -34,7 +37,6 @@ const std::vector<std::string> Solver::mPossibleModelTypes = {
 //Default Solver (used for API)
 Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const t_mapParamData& aComponent):
     CairnObject(ap_Parent, aName),
-    mException(Cairn_Exception()),
     mSolvers(MIPSolverFactory()),
     mExternalModeler(nullptr),
     mModel(nullptr),
@@ -43,7 +45,6 @@ Solver::Solver(CairnObject* ap_Parent, const std::string& aName, const t_mapPara
     mCompoInputSettings(nullptr),
     mTerminateSignal(nullptr)
 {
-    //this->setObjectName(aName);
     this->setObjectType("Solver");
     doInit(aComponent);
 }
@@ -57,6 +58,8 @@ Solver::~Solver()
 
 void Solver::doInit(const t_mapParamData& aComponent)
 {
+    CAIRN_LOG_SCOPE(Name());
+
     delete mGUIData;
 
     mGUIData = new GUIData(this);
@@ -68,6 +71,12 @@ void Solver::doInit(const t_mapParamData& aComponent)
     InitSolverParam();
 
     mGUIData->setObjectName(mSolverName);
+}
+
+void Solver::solverNameChanged() 
+{
+    if(mGUIData)
+        mGUIData->setObjectName(mSolverName);
 }
 
 void Solver::declareCompoInputParam()
@@ -84,7 +93,7 @@ void Solver::declareCompoInputParam()
     mCompoInputParam = new InputParam(this, "CompoInputParam" + Name());
     //std::string
     mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used: MIPModeler, GAMS, etc.");
-    mCompoInputParam->addParameter("Solver", &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc, Cplex, Highs, etc.");
+    mCompoInputParam->addParameter(PARAM_SOLVER_NAME, &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc, Cplex, Highs, etc.");
     mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Problem type: MIP, LP, etc. Swich to LP with Cplex to get faster optimization if the problem has no integer values.");
     mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default NO");
     mCompoInputParam->addParameter("ReadParamFile", &mReadParamFile, "NO", false, true, "Read a study_cplexParam.prm file to parameter cplex solving");
@@ -106,38 +115,37 @@ bool Solver::setCompoInputParam(const t_mapParamData& aComponent)
     bool vRet = true;
 
     if (aComponent.size() != 0) {
-        int ierr1 = mCompoInputParam->readParameters(aComponent);
-        int ierr2 = mCompoInputSettings->readParameters(aComponent);
-        if (ierr1 < 0 || ierr2 < 0) { return false; }
+        mCompoInputParam->readParameters(aComponent);
+        mCompoInputSettings->readParameters(aComponent);
     }
-
-    //TODO: Ensure that the mandatory parameters exist in TNR .json files 
-    //if (ierr1 < 0 || ierr2 < 0) {
-    //    mException = Cairn_Exception("Error reading Parameters of Solver " + Name(), -1);
-    //    throw mException;
-    //}
 
     return true;
 }
 
 void Solver::InitSolverParam() {
-    //retrieves the list of possible solvers
+    // Retrieve available solvers
     t_list vSolverLoaded;
     mSolvers.getAllInfos(vSolverLoaded);
 
-    //retrieves the list of possible modelers
+    // Retrieve available modelers
     t_list vModelerLoaded;
     mModelers.getModelersName(vModelerLoaded);
 
-    // to be compatible with older projects
-    if (mModelType == GS::MIPMODELER() || mModelType == "" || mModelType == "Cplex" || mModelType == "MIPModeler")
+    // Default modeler handling (compatible with older projects) 
+    if (mModelType == GS::MIPMODELER() || mModelType == "" || 
+        mModelType == "Cplex" || mModelType == "MIPModeler")
     {
         mModelType = GS::MIPMODELER();
-        if (mSolverName == "") mSolverName = Name(); // old studies 
 
-        // Does the solver exist among the list of possible solvers?
-        if (!CairnUtils::contains(vSolverLoaded, mSolverName)) {
-            mException = Cairn_Exception("Error: solver asked " + mSolverName + ", possible solver names are " + std::string(CairnUtils::joinStrings(vSolverLoaded).c_str()), -1);            
+        // Old studies: solver name defaults to component name
+        if (mSolverName.empty()) 
+            mSolverName = Name();  
+
+        if (!CairnUtils::contains(vSolverLoaded, mSolverName)) 
+        {
+            cWarning() << "Solver requested: " << mSolverName
+                << ", possible solver names are: "
+                << CairnUtils::joinStrings(vSolverLoaded);
         }
     }
     else if (CairnUtils::contains(vModelerLoaded, mModelType))
@@ -145,13 +153,12 @@ void Solver::InitSolverParam() {
         if (mModelType == GS::GAMS() && !CairnUtils::contains(mGAMSProblemTypes, mProblemType))
         {
             const std::string validTypes = CairnUtils::joinStrings(mGAMSProblemTypes, ", ");
-            mException = Cairn_Exception(
-                "Error: possible problem types are: " + validTypes, -1);
+            throw Cairn_Exception("Error: possible problem types are: " + validTypes, -1);
         }
         mExternalModeler = mModelers.getModeler(mModelType);
     }
     else {
-        mException = Cairn_Exception("Error: Modeler asked " + mModelType + ", possible modeler names are MIPModeler are " + std::string(CairnUtils::joinStrings(vModelerLoaded).c_str()), -1);
+        throw Cairn_Exception("Error: Modeler asked " + mModelType + ", possible modeler names are MIPModeler are " + CairnUtils::joinStrings(vModelerLoaded), -1);
     }
 }
 
@@ -254,7 +261,7 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
         int ierr = mSolvers.solve(mSolverName, mModel, vParams, mSolverResults);
 
         if(ierr < 0)
-            cCritical() << "An error has found while building the optimal problem: NAN value " << mSolverName;
+            cCritical() << "An error has found while building the optimal problem " << mSolverName;
         else {
             //cInfo() << "  ";
             cInfo() << "End problem solving with " << mSolverName;

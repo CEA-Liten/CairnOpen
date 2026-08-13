@@ -19,8 +19,9 @@ namespace fs = std::filesystem;
 #include "OrUnitsConverter.h"
 #include "CairnUtils.h"
 #include "CarrierTypes.h"
-#include "Profiler.h"
+#include "Constants.h"
 
+using namespace CairnConstants;
 using namespace CairnUtils;
 using namespace GS;
 
@@ -235,12 +236,13 @@ bool CairnCore::checkTS(string& a_ErrMsg)
 
 void CairnCore::importTS(const int& iShift)
 {
-    try {
-        mTimeSeriesManager->importTS(mProblem->ListSubscribedVariables(), !mStdAloneMode, iShift, mProblem->getSimulationControl()->isCheckTimeSeriesUnits());
-    }
-    catch (Cairn_Exception& error) {
-        throw error;
-    }
+    if (!mProblem || !mProblem->getSimulationControl())
+        throw Cairn_Exception("Error: problem or simulationcontrol is not defined!", -1);
+
+    CAIRN_PROFILE_SCOPE("importTS", mIter + 1);
+
+    const bool isCheckUnits = mProblem->getSimulationControl()->isCheckTimeSeriesUnits();
+    mTimeSeriesManager->importTS(mProblem->ListSubscribedVariables(), !mStdAloneMode, iShift, isCheckUnits);
 }
 
 void CairnCore::importTS(const std::vector<std::string>& aTSfileList, const int& iShift) {
@@ -249,12 +251,13 @@ void CairnCore::importTS(const std::vector<std::string>& aTSfileList, const int&
 
 void CairnCore::importTS(const std::vector<std::wstring>& aTSfileList, const int& iShift)
 {
-    try {
-        mTimeSeriesManager->importTS(aTSfileList, mProblem->ListSubscribedVariables(), !mStdAloneMode, iShift, mProblem->getSimulationControl()->isCheckTimeSeriesUnits());
-    }
-    catch (Cairn_Exception& error) {
-        throw error;
-    }
+    if (!mProblem || !mProblem->getSimulationControl())
+        throw Cairn_Exception("Error: problem or simulationcontrol is not defined!", -1);
+
+    CAIRN_PROFILE_SCOPE("importTS", mIter + 1);
+
+    const bool isCheckUnits = mProblem->getSimulationControl()->isCheckTimeSeriesUnits();
+    mTimeSeriesManager->importTS(aTSfileList, mProblem->ListSubscribedVariables(), !mStdAloneMode, iShift, isCheckUnits);
 }
 
 OrCheckUnits CairnCore::CheckUnits(const std::string& a_FileUnit, const std::string& a_Units, bool a_Check)
@@ -265,7 +268,7 @@ OrCheckUnits CairnCore::CheckUnits(const std::string& a_FileUnit, const std::str
 int CairnCore::exportTS(const std::string& aTSfile,
     int iter, bool rh, const std::string& encoding)
 {
-    // Choose write or append mode
+    // Choose write or append mode 
     std::ios_base::openmode mode = (iter > 0)
         ? std::ios_base::app | std::ios::binary
         : std::ios_base::out | std::ios::binary;
@@ -276,9 +279,9 @@ int CairnCore::exportTS(const std::string& aTSfile,
         return 1;
     }
 
-    if(rh)
+    if (rh)
         cInfo() << "Exporting rollinghorizon timeseries " << aTSfile;
-    else 
+    else
         cInfo() << "Exporting result timeseries " << aTSfile;
 
     // Write BOM only when:
@@ -288,41 +291,75 @@ int CairnCore::exportTS(const std::string& aTSfile,
         writeUTF8BOM(out);
     }
 
-    // Published variables
+    // Published variables (cache reference)
     t_mapExchange& published = mProblem->ListPublishedVariables();
+
+    // Build a compact list of used variables once to avoid repeated checks in the inner loop.
+    struct VarEntry { ZEVariables* var; std::vector<double>* vec; };
+    std::vector<VarEntry> usedVars;
+    usedVars.reserve(published.size());
+
+    for (auto& entry : published) {
+        ZEVariables* var = entry.second;
+        if (!var) continue;
+        if (!var->IsUsed()) continue;
+        // ptrVariable() may return nullptr 
+        auto* vec = var->ptrVariable();
+        usedVars.push_back({ var, vec });
+    }
 
     // Write header only on first iteration
     if (iter == 0) {
-        out << "Time;";
-        for (auto& entry : published) {
-            ZEVariables* var = entry.second;
-            out << var->Name() << ";";
+        // Build header line in a single string
+        std::string header;
+        header.reserve(8 + usedVars.size() * 16); 
+        header += "Time;";
+        for (const auto& ve : usedVars) {
+            header += ve.var->Name();
+            header += ';';
         }
-        out << "\n";
+        header += '\n';
+        out.write(header.data(), static_cast<std::streamsize>(header.size()));
     }
 
-    // Determine number of timesteps to export
-    const int ts = rh ? mMilpData->timeshift()
-        : mMilpData->npdt();
-
+    // Determine number of timesteps to export and cache values
+    const int ts = rh ? mMilpData->timeshift() : mMilpData->npdt();
     const int past = npdtPast();
     const double pdt = mMilpData->pdt();
 
+    // Small stack buffer for numeric formatting
+    char numbuf[64];
+
     // Export time series rows
+    // For each row, build a single string and write it once.
     for (int j = 0; j < ts; ++j) {
         const double timeValue = (j + 1 + ts * iter) * pdt;
-        out << timeValue << ";";
 
-        for (auto& entry : published) {
-            ZEVariables* var = entry.second;
-            auto* vec = var->ptrVariable();
+        std::string line;
+        // Reserve approximate size: time + separators + values
+        line.reserve(32 + usedVars.size() * 16);
 
-            if (!vec->empty()) {
-                out << vec->at(j + past) << ";";
+        // Format timeValue 
+        int len = std::snprintf(numbuf, sizeof(numbuf), DOUBLE_FMT_C, timeValue);
+        if (len > 0) line.append(numbuf, static_cast<size_t>(len));
+        line.push_back(';');
+
+        // Append each used variable's value if its vector is non-empty 
+        const std::size_t idx = static_cast<std::size_t>(j + past);
+        for (const auto& ve : usedVars) {
+            auto* vec = ve.vec;
+            if (vec && !vec->empty()) {
+                double v = vec->at(idx);
+                int l = std::snprintf(numbuf, sizeof(numbuf), DOUBLE_FMT_C, v);
+                if (l > 0) line.append(numbuf, static_cast<size_t>(l));
+                line.push_back(';');
             }
         }
 
-        out << "\n";
+        line.push_back('\n');
+
+        // Single write call per line
+        out.write(line.data(), static_cast<std::streamsize>(line.size()));
     }
 
     out.close();
@@ -342,200 +379,306 @@ int CairnCore::exportTS(const std::string& aTSfile,
         return 1;
     }
 
-    // Write UTF‑8 BOM
+    // Write UTF‑8 BOM if requested
     if (encoding == "UTF-8") {
         CairnUtils::writeUTF8BOM(out);
     }
 
-    // Write header
-    out << "Time;";
-    for (auto& [key, values] : resultats) {
-        out << key << ";";
+    // Prepare a compact ordered list of keys and pointers to their vectors
+    struct KV { const std::string* key; std::vector<double>* values; };
+    std::vector<KV> entries;
+    entries.reserve(resultats.size());
+    for (auto& kv : resultats) {
+        entries.push_back({ &kv.first, &kv.second });
     }
-    out << "\n";
 
+    // Write header in one write
+    {
+        std::string header;
+        header.reserve(8 + entries.size() * 16);
+        header += "Time;";
+        for (const auto& e : entries) {
+            header += *e.key;
+            header.push_back(';');
+        }
+        header.push_back('\n');
+        out.write(header.data(), static_cast<std::streamsize>(header.size()));
+    }
+
+    // Cache time-related values
     const int past = mMilpData->npdtPast();
     const int total = mMilpData->npdtTot();
     const double pdt = mMilpData->pdt();
 
-    // Export time series rows
-    for (int j = past; j < total; ++j) {
-        out << (j * pdt) << ";";
+    // Buffer for numeric formatting
+    char numbuf[64];
 
-        for (auto& [key, values] : resultats) {
-            // values[j] is safe because caller guarantees correct vector sizes
-            out << values[j] << ";";
+    // Export rows: j runs from past to total-1 
+    for (int j = past; j < total; ++j) {
+        const double timeValue = (static_cast<double>(j) * pdt);
+
+        // Build line in a single string and write once
+        std::string line;
+        line.reserve(32 + entries.size() * 16);
+
+        int len = std::snprintf(numbuf, sizeof(numbuf), "%.15g", timeValue);
+        if (len > 0) line.append(numbuf, static_cast<size_t>(len));
+        line.push_back(';');
+
+        for (const auto& e : entries) {
+            const std::vector<double>* vec = e.values;
+            double v = (*vec)[static_cast<std::size_t>(j)];
+            int l = std::snprintf(numbuf, sizeof(numbuf), "%.15g", v);
+            if (l > 0) line.append(numbuf, static_cast<size_t>(l));
+            line.push_back(';');
         }
 
-        out << "\n";
+        line.push_back('\n');
+        out.write(line.data(), static_cast<std::streamsize>(line.size()));
     }
 
     out.close();
     return 0;
 }
 
-int CairnCore::doStep(const std::string& encoding, const std::map<std::string, bool>& paramMap)
+void CairnCore::importTimeSeriesIfNeeded()
 {
-    mIter++;
+    if (mStdAloneMode)
+        return;
 
-    // --- [PROFILING] Outer scope: full iteration time + memory --------------
-    // This record tracks the entire doStep body: rssAfter - rssBefore
-    // gives net memory retained after one rolling-horizon cycle.
-    CAIRN_PROFILE_ITERATION(mIter + 1);
-    // CAIRN_PROFILE_SCOPE("doStep", mIter + 1); // works but "doStep" must match Profile::CAIRN_PROFILE_ITERATION_PHASE
+    try {
+        mTimeSeriesManager->clearTS();
+        mTimeSeriesManager->addTS(L" "); // virtual file to force import
+        mTimeSeriesManager->importTS(mProblem->ListSubscribedVariables(), true);
+    }
+    catch (const Cairn_Exception&) {
+        throw;
+    }
+}
 
-    const bool isRollingHorizon = (nbcycle() > 1) || (!mStdAloneMode); //RollingHorizon is always ON if non-StdAlone
+void CairnCore::flushErrorsIfAny()
+{
+    const bool hasError = hasErrors();
+    const auto entries = flushWarningANDErrors();
 
-    // Import timeseries if non-StdAlone; in case of StdAlone the timeseries is imported before calling doStep
-    if (!mStdAloneMode) {
-        try {
-            mTimeSeriesManager->clearTS();
-            mTimeSeriesManager->addTS(L" "); // add a virtual file to force importTS
-            mTimeSeriesManager->importTS(mProblem->ListSubscribedVariables(), true);
+    std::ostringstream msg;
+
+    if (!entries.empty())
+    {
+        constexpr int levelWidth = 10;
+        constexpr int nameWidth = 16;
+
+        msg << std::left
+            << "Collected warnings and errors:\n"
+            << std::setw(levelWidth) << "LEVEL" << ' '
+            << std::setw(nameWidth) << "NAME" << ' '
+            << "MESSAGE\n";
+
+        msg << std::string(levelWidth + 1 + nameWidth + 1 + 50, '-') << '\n';
+
+        for (const auto& e : entries)
+        {
+            msg << std::left
+                << std::setw(levelWidth)
+                << e.levelStr()
+                << ' '
+                << std::setw(nameWidth)
+                << e.objectName
+                << ' '
+                << e.message
+                << '\n';
         }
-        catch (const Cairn_Exception& e) {
-            throw;
-        }
+        cInfo() << msg.str();
     }
 
-    const int cycle = isRollingHorizon ? mIter + 1 : 0;
+    if (hasError)
+        throw Cairn_Exception("Error while problem initialization/preparation", -1);
 
-    cInfo() << "  ";
-    cInfo() << "----- DoStep CairnCore (Cycle #" << int(cycle) << " ) -----";
-    cInfo() << "  ";
+    clearWarningANDErrors();
+}
 
+void CairnCore::buildMilpProblem(MIPModeler::MIPModel& mipModel,
+    MIPModeler::MIPExpression& objective)
+{
+    mProblem->buildProblem();
+ 
+    mipModel.setObjective(objective);
+    objective.close();
+
+    const bool maximize = (mProblem->getOptimDirection() == "Maximize");
+    mipModel.setObjectiveDirection(maximize
+        ? MIPModeler::MIP_MAXIMIZE
+        : MIPModeler::MIP_MINIMIZE);
+
+    mipModel.buildProblem();
+}
+
+void CairnCore::prepareProblem()
+{
     CairnLogger::Flush();
 
     // --- [PROFILING] Sub-phase: problem preparation ---------------------------
-    // Covers mMilpData->prepareOptim() + mProblem->prepareOptim().
-    // These build the timeseries update and reset component state before each
-    // MILP solve. Their duration is often dominated by matrix re-indexing.
     {
         CAIRN_PROFILE_SCOPE("prepareProblem (sub-phase of doStep)", mIter + 1);
-
         mMilpData->prepareOptim();
-        try {
-            mProblem->prepareOptim();
-        }
-        catch (...) {
-            throw Cairn_Exception("Fatal Error in prepareOptim Optim Problem", -1);
-        }
+        mProblem->prepareOptim();
     }
+}
 
-    // Setup MILP model
-    MIPModeler::MIPModel mipModel;
-    MIPModeler::MIPExpression objective;
+CairnResult CairnCore::buildANDsolveProblem(const std::string& encoding, const std::map<std::string, bool>& paramMap)
+{
+    const bool isRollingHorizon = (nbcycle() > 1) || (!mStdAloneMode);
+    const int cycle = isRollingHorizon ? mIter + 1 : 0;
+    const std::string cycleStr = std::to_string(cycle);
 
-    mProblem->setMIPModel(&mipModel);
-    mProblem->setObjective(&objective);
-    mProblem->setStopSignal(mStopSignal);
+    CairnResult result;
 
-    // Init external Modeler
-    initExternalModeler(mipModel);
+    try {
+        // --- Setup modeler --------------------------------------------------------
+        MIPModeler::MIPModel mipModel;
+        MIPModeler::MIPExpression objective;
+        auto* problem = mProblem;
 
-    // --- [PROFILING] Sub-phase: build the MILP matrix -------------------------
-    // Covers OptimProblem::buildProblem() (component constraints, bus
-    // constraints, objective assembly) plus the MIPModel::buildProblem() call
-    // that translates the MIPExpression tree into the solver matrix.
-    // Peak memory here captures the largest in-memory MILP representation.
-    {
-        CAIRN_PROFILE_SCOPE("buildProblem (sub-phase of doStep)", mIter + 1);
+        problem->setMIPModel(&mipModel);
+        problem->setObjective(&objective);
+        problem->setStopSignal(mStopSignal);
 
-        try {
-            mProblem->buildProblem();
-        }
-        catch (const std::exception& e) {
-            throw Cairn_Exception(e.what(), -1);
-        }
-        catch (...) {
-            throw Cairn_Exception("Fatal Error in building Optim Problem", -1);
+        initExternalModeler(mipModel);
+
+        // --- [PROFILING] Sub-phase: build the MILP matrix --------------------------
+        {
+            CAIRN_PROFILE_SCOPE("buildProblem (sub-phase of doStep)", mIter + 1);
+            buildMilpProblem(mipModel, objective);
         }
 
-        // Fill in objective function and build matrix 
-        mipModel.setObjective(objective);
-        objective.close();
-        const bool maximize = (mProblem->getOptimDirection() == "Maximize");
-        mipModel.setObjectiveDirection(maximize
-            ? MIPModeler::MIP_MAXIMIZE
-            : MIPModeler::MIP_MINIMIZE);
-
-        // Build MILP problem
-        try {
-            mipModel.buildProblem();
+        if (userStoppedSimu()) {
+            CairnLogger::Flush();
+            result.status = 3;
+            return result;
         }
-		catch (const std::runtime_error& e) {
-			throw Cairn_Exception(e.what(), -1);
-		}
-    }
-    
-    // Terminate if user stopped the simulation
-    if (userStoppedSimu()) {
+
+        // --- Solve problem ------------------------------------------------------------
+        cInfo() << "  ";
+        cInfo() << "----- Solving problem (Cycle #" << cycleStr << " ) -----";
+        cInfo() << "  ";
+
+        // --- [PROFILING] Sub-phase: solver execution -----------------------------
+        {
+            CAIRN_PROFILE_SCOPE("solveProblem (sub-phase of doStep)", mIter + 1);
+            problem->solveProblem(mOptimLogFile, cycle, paramMap, ExportResultsEveryCycle());
+        }
+
+        const std::string status = problem->getOptimisationStatus();
+        result.status = problem->getInterpretedOptimStatus();
+        const int nbSolutions = problem->getNumberOfSolutions();
+
+        cInfo() << "Optimization status: " << status;
+        cInfo() << "Total number of solutions: " << nbSolutions;
+
         CairnLogger::Flush();
-        return 3; // TODO: enum
-    }
 
-    //cInfo() << "  ";
-    //cInfo() << "----- Successful DoStep (Cycle #" << int(cycle) << " ) -----";
-    //cInfo() << "  ";
-
-    // Solve problem
-    cInfo() << "  ";
-    cInfo() << "----- Solving problem (Cycle #" << int(cycle) << " ) -----";
-    cInfo() << "  ";
-
-    // --- [PROFILING] Sub-phase: solver execution -----------------------------
-    // This is the most variable and often dominant phase. Its duration is almost
-    // entirely inside the MIP solver (Cplex / Highs)
-    // Memory delta here shows whether the solver heap-allocates branch nodes.
-    {
-        CAIRN_PROFILE_SCOPE("solveProblem (sub-phase of doStep)", mIter + 1);
-        mProblem->solveProblem(mOptimLogFile, cycle, paramMap, ExportResultsEveryCycle());
-    }
-    
-    const std::string status = mProblem->getOptimisationStatus();
-
-    CairnLogger::Flush();
-
-    cInfo() << "Optimization status: " << status;
-
-    int istat = mProblem->getInterpretedOptimStatus();
-    const int nbSol = mProblem->getNumberOfSolutions();
-
-    cInfo() << "Total number of solutions: " << nbSol;
-
-    // Stop here in case of check-conflicts only; don't export results
-    if (mProblem->getIsCheckConflicts()) {
-        return istat;
-    }
-
-    // Export parameters, if needed
-    if (mIter == 0 && mProblem->getSimulationControl()->isExportParameters()) {
-        mProblem->exportParameters_all_files( mStudy.getScenarioFile("_Parameters.csv", 0, false));
-    }
-
-    // Process solutions
-    cInfo() << "  ";
-    cInfo() << "----- Export Results (Cycle #" << int(cycle) << " ) -----";
-
-    // --- [PROFILING] Sub-phase: result export -------------------------------
-    // Covers reading solution, computing indicators, and CSV writing
-    // Memory growth here indicates accumulation of per-cycle CSV buffers.
-    {
-        CAIRN_PROFILE_SCOPE("exportResults (sub-phase of doStep)", mIter + 1);
-        if (istat == 2) {
-            handleNoSolution(status, isRollingHorizon, istat);
+        // Stop here in case of check-conflicts only; don't export results
+        if (problem->getIsCheckConflicts()) {
+            return result;
         }
-        else {
-            processSolutions(nbSol, status, isRollingHorizon, istat);
+
+        // Export parameters, if needed (only on first iteration)
+        if (mIter == 0 && problem->getSimulationControl()->isExportParameters()) {
+            problem->exportParameters_all_files(mStudy.getScenarioFile("_Parameters.csv", 0, false));
         }
+
+        // --- Export results ---------------------------------------------------------------------
+        cInfo() << "  ";
+        cInfo() << "----- Export Results (Cycle #" << cycleStr << " ) -----";
+
+        // --- [PROFILING] Sub-phase: result export -------------------------------
+        {
+            CAIRN_PROFILE_SCOPE("exportResults (sub-phase of doStep)", mIter + 1);
+            if (result.status == 2) {
+                handleNoSolution(status, isRollingHorizon, result.status);
+            }
+            else {
+                processSolutions(nbSolutions, status, isRollingHorizon, result.status);
+            }
+        }
+
+        cInfo() << "  ";
+        cInfo() << "----- End of Cycle #" << cycleStr << " -----";
+        cInfo() << "  ";
+
+        CairnLogger::Flush();
+    }
+    catch (const Cairn_Exception& e)
+    {
+        result.status = -1;
+        result.error = "Error while building or solving the problem: ";
+        result.error += e.message();
+    }
+    catch (const std::exception& e)
+    {
+        result.status = -1;
+        result.error = "Error while building or solving the problem: ";
+        result.error += e.what();
+    }
+    catch (...)
+    {
+        result.status = -1;
+        result.error = "Unknown error while building or solving the problem.";
     }
 
-    cInfo() << "  ";
-    cInfo() << "----- End of Cycle #" << int(cycle) << "-----";
-    cInfo() << "  ";
+    return result;
+}
 
-    CairnLogger::Flush();
-    return istat;
+CairnResult CairnCore::doStep(const std::string& encoding, const std::map<std::string, bool>& paramMap)
+{
+    CairnResult result;
+
+    {
+        // --- [PROFILING] entire doStep body: full iteration time + memory ---------
+        CAIRN_PROFILE_ITERATION(mIter + 1);
+
+        try
+        {
+            incrementCycleNum();
+
+            const bool isRollingHorizon = (nbcycle() > 1) || (!mStdAloneMode);
+            const int cycle = isRollingHorizon ? mIter + 1 : 0;
+
+            importTimeSeriesIfNeeded();
+
+            cInfo() << "  ";
+            cInfo() << "----- DoStep CairnCore (Cycle #" << std::to_string(cycle) << " ) -----";
+            cInfo() << "  ";
+
+            prepareProblem();
+
+            flushErrorsIfAny();
+        }
+        catch (const Cairn_Exception& e)
+        {
+            result.status = -1;
+            result.error = "Error while preparing the problem: ";
+            result.error += e.message();
+            return result;
+        }
+        catch (const std::exception& e)
+        {
+            result.status = -1;
+            result.error = "Error while preparing the problem: ";
+            result.error += e.what();
+            return result;
+        }
+        catch (...)
+        {
+            result.status = -1;
+            result.error = "Unknown error while preparing the problem.";
+            return result;
+        }
+
+        result = buildANDsolveProblem(encoding, paramMap);
+    }
+
+    return result;
 }
 
 void CairnCore::initExternalModeler(MIPModeler::MIPModel& mipModel)
@@ -578,10 +721,17 @@ void CairnCore::handleNoSolution(const std::string& status, bool isRollingHorizo
 
 void CairnCore::processSolutions(int nbSol, const std::string& status, bool isRollingHorizon, int& istat)
 {
-    const bool isExportResults = mProblem->getSimulationControl()->isExportResults();
+    auto* problem = mProblem;
+    auto& study = mStudy;
 
-    for (int i = nbSol - 1; i >= 0; --i) {
-        mProblem->readSolution(i);
+    const bool isExportResults = problem->getSimulationControl()->isExportResults();
+
+    // Reuse the results map across iterations to avoid repeated allocations
+    std::map<std::string, std::vector<double>> results;
+
+    for (int i = nbSol - 1; i >= 0; --i) 
+    {
+        problem->readSolution(i);
 
         cInfo() << "  ";
         cInfo() << "Exporting results for "
@@ -589,23 +739,32 @@ void CairnCore::processSolutions(int nbSol, const std::string& status, bool isRo
             << " #" << i << " (status = " << status << ")";
 
         if (i > 0 && isExportResults) {
-            std::map<std::string, std::vector<double>> results;
-            mProblem->writeSolution(i, results);
-            exportTS(mStudy.getScenarioFile(".csv", i), results);
+            // Clear previous contents but keep allocated memory
+            for (auto& kv : results) {
+                kv.second.clear();
+            }
+            results.clear();
+
+            problem->writeSolution(i, results);
+
+            const std::string fileName = study.getScenarioFile(".csv", i);
+            exportTS(fileName, results);
         }
 
-        mProblem->computeTecEcoEnvAnalysis(i);
+        problem->computeTecEcoEnvAnalysis(i);
 
-        if (isExportResults) {
+        if (isExportResults) 
             istat = exportResults(i, isRollingHorizon, istat);
-        }
     }
 }
 
 int CairnCore::exportResults(int aNsol, bool isRollingHorizon, int istat, const std::string& encoding)
 {
+    auto* problem = mProblem;
+    auto& study = mStudy;
+
     // Update published variables
-    mProblem->populatePublishedVars();
+    problem->populatePublishedVars();
 
     // Export full time series for valid solutions
     if (istat >= 0) {
@@ -613,29 +772,28 @@ int CairnCore::exportResults(int aNsol, bool isRollingHorizon, int istat, const 
 
         if (isRollingHorizon && ExportResultsEveryCycle()) {
             const std::string fileNameSuffix = "_Results_RH_" + std::to_string(mIter + 1) + ".csv";
-            exportTS(mStudy.getScenarioFile(fileNameSuffix, aNsol), 0, false, encoding);
+            exportTS(study.getScenarioFile(fileNameSuffix, aNsol), 0, false, encoding);
         }
     }
 
     // Export rolling horizon results (multi-cycle or Pegase)
     const bool needRollingHorizon = isRollingHorizon || !mStdAloneMode;
     if (needRollingHorizon) {
-        exportTS(mStudy.getScenarioFile("_rollinghorizon.csv", aNsol),
+        exportTS(study.getScenarioFile("_rollinghorizon.csv", aNsol),
             mIter, needRollingHorizon, encoding);
     }
 
-    //Export TecEcoEnv analysis
+    // Export TecEcoEnv analysis
     try {
-        if (istat < 2) {
+        if (istat < 2)
             exportAnalysis(aNsol, isRollingHorizon, encoding);
-        }
     }
     catch (const Cairn_Exception&) {
         return -1;
     }
 
-    // Save historical state
-    if (auto* pTecEco = dynamic_cast<TecEcoCompo*>(mProblem->getTecEcoAnalysis()->parent()))
+    // Save historical state 
+    if (auto* pTecEco = dynamic_cast<TecEcoCompo*>(problem->getTecEcoAnalysis()->parent()))
     {
         pTecEco->computeHistNbHours();
     }
@@ -646,7 +804,11 @@ int CairnCore::exportResults(int aNsol, bool isRollingHorizon, int istat, const 
 
 void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::string& encoding)
 {
-    auto* pTecEcoAnalysis = mProblem->getTecEcoAnalysis();
+    auto* problem = mProblem;
+    if (!problem)
+        return;
+
+    auto* pTecEcoAnalysis = problem->getTecEcoAnalysis();
     if (!pTecEcoAnalysis)
         return;
 
@@ -660,7 +822,7 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
         // Main HIST export
         const std::string histFile = mStudy.getScenarioFile("_HIST.csv", aNsol);
         cInfo() << "Exporting HIST file " << histFile;
-        mProblem->exportAllTecEcoEnvAnalysis(
+        problem->exportAllTecEcoEnvAnalysis(
             histFile,
             "HIST", showDesc, encoding, false
         );
@@ -668,8 +830,7 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
         // Rolling horizon HIST export
         if (exportRH) {
             const std::string fileRHSuffix = "_HIST_RH_" + std::to_string(mIter + 1) + ".csv";
-
-            mProblem->exportAllTecEcoEnvAnalysis(
+            problem->exportAllTecEcoEnvAnalysis(
                 mStudy.getScenarioFile(fileRHSuffix, aNsol),
                 "HIST", showDesc, encoding, isRollingHorizon
             );
@@ -686,12 +847,12 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
         // Main PLAN export
         const std::string planFile = getGlobalResultsFileName(aNsol);
         cInfo() << "Exporting PLAN file " << planFile;
-        mProblem->exportAllTecEcoEnvAnalysis(
+        problem->exportAllTecEcoEnvAnalysis(
             planFile,
             "PLAN", showDesc, encoding, false, aNsol);
 
         // Additional PLAN-related exports : a dedicated file for env impact mass indicators
-        mProblem->exportEnvImpactMassIndicators(
+        problem->exportEnvImpactMassIndicators(
             mStudy.getScenarioFile("_EnvImpactMass.csv", aNsol),
             encoding
         );
@@ -699,8 +860,7 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
         // Rolling horizon PLAN export
         if (exportRH) {
             const std::string fileRHSuffix = "_PLAN_RH_" + std::to_string(mIter + 1) + ".csv";
-
-            mProblem->exportAllTecEcoEnvAnalysis(
+            problem->exportAllTecEcoEnvAnalysis(
                 mStudy.getScenarioFile(fileRHSuffix, aNsol),
                 "PLAN", showDesc, encoding, isRollingHorizon, aNsol
             );
@@ -708,7 +868,7 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
 
         // Rolling horizon optimal size
         if (isRollingHorizon) {
-            mProblem->exportOptimaSizeAllCycles(
+            problem->exportOptimaSizeAllCycles(
                 mStudy.getScenarioFile("_optimalSize.csv", aNsol, false),
                 mIter + 1
             );
@@ -720,21 +880,27 @@ void CairnCore::exportAnalysis(int aNsol, bool isRollingHorizon, const std::stri
 }
 
 //------------------------------------------------------------------------------
+int CairnCore::saveStudy(const std::string& filename, const std::string& posAlgorithm)
+{
+    if (!mProblem)
+        return -1;
+
+    // --- [PROFILING] Phase: save study (JSON architecture export) ------------
+    //   iterationId = -1 marks it as a global phase (only once).
+    {
+        CAIRN_PROFILE_SCOPE("saveStudy", -1);
+        return mProblem->SaveFullArchitecture(filename, posAlgorithm);
+    }
+}
+
+
 int CairnCore::doTerminate()
 {
     cInfo() << "----- DoTerminate CairnCore -----";
 
-    // --- [PROFILING] Phase: save study (JSON architecture export) ------------
-    //   SaveFullArchitecture() serialises the full component graph to a .json
-    //   file. It only runs when isExportJson() is true, so the record only
-    //   appears in the CSV when the save actually took place. iterationId = -1
-    //   marks it as a global phase (only once like doInit).
+    if (mProblem && mProblem->getSimulationControl()->isExportJson())
     {
-        CAIRN_PROFILE_SCOPE("saveStudy", -1);
-        if (mProblem && mProblem->getSimulationControl()->isExportJson())
-        {
-            mProblem->SaveFullArchitecture();
-        }
+        saveStudy();
     }
 
     //Delete _rollingHorizon.csv if non-RollingHorizon because it is the same as _Results.csv in this case (case Pegase)
@@ -762,5 +928,14 @@ int CairnCore::doTerminate()
     return 0 ;
 }
 
+#if ENABLE_PROFILING
 
+CairnProfiling::ScopedProfiler
+CairnCore::makeIterationProfiler() const
+{
+    return CairnProfiling::ScopedProfiler(
+        CAIRN_PROFILE_ITERATION_PHASE,
+        mIter + 1);
+}
 
+#endif

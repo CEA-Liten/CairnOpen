@@ -1,55 +1,40 @@
-#ifndef OperationSubModel_H
-#define OperationSubModel_H
+/*
+ * \file    OperationSubModel.h
+ * \brief   OperationSubModel is a specialized SubModel implementation representing operational models
+ * \version 1.0
+ * \author	Ali KASSEM
+ * \date    13/09/2024
+ */
+
+#ifndef OPERATIONSUBMODEL_H
+#define OPERATIONSUBMODEL_H
 
 #include "SubModel.h"
 
 class CAIRNCORESHARED_EXPORT OperationSubModel : public SubModel
 {
 public:
-    OperationSubModel(CairnObject* aParent = nullptr);
-    ~OperationSubModel();
+    explicit OperationSubModel(CairnObject* aParent);
+    ~OperationSubModel() override = default;
 
-    int checkConsistency() override;
+    // --- SubModel interface -------------------------------------------------
 
-    void buildModel() override final; /* prevent models from overriding buildModel() */
+    void closeExpressions()  override;
 
-    virtual void closeExpressions();
-    void computeDefaultIndicators(const double* optSol);
+    void declareModelConfigurationParameters() override;
+    void declareModelInterface()               override;
+    void declareModelIndicators()              override;
 
-    // --------------- Default Parameters (common to all operation models) ------------------ //
-    void declareDefaultModelConfigurationParameters() { 
-        SubModel::declareDefaultModelConfigurationParameters();  
-        //bool
-        addParameter("LPModelONLY", &mLPModelOnly, false, false, true, "Use LP Model - ie integer variables imposed or relaxed to real variables if true", "");  
-    }
+    void buildModel() override final; /** Sealed - subclasses must not override buildModel() */
 
-    void declareDefaultModelParameters() 
-    { 
-    }
-
-    void declareDefaultModelInterface()
-    {
-        SubModel::declareDefaultModelInterface();
-        addIO("VariableCosts", &mExpVariableCosts, true, pCurrency());    /** Computed variable costs resulting from ramp cost */
-        addIO("State", &mExpState, &mAddStateVariable, "bool");  /** ON OFF state of the element connected to ramp */
-        addControlIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool", &mHistStartUp);
-        addControlIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool", &mHistShutDown);
-    }
-
-    void declareDefaultModelIndicators() {
-        mInputIndicators->addIndicator("Opex part", &mVariableCosts, &mExportIndicators, "Total cost of operation constraint", pCurrency(), "Opex");
-    }
+    void computeAllIndicators(const double* optSol) override;
 
 protected:
-    //expressions
-    MIPModeler::MIPExpression1D mExpVariableCosts;
-    MIPModeler::MIPExpression1D mExpVariableOpex;
+    // --- MIP expressions ----------------------------------------------------
+    MIPModeler::MIPExpression1D mExpVariableCosts; /** Computed variable costs resulting from operation constraints */
 
-    //indicators
-    std::vector<double> mVariableCosts;
-
-    //methods
-    virtual bool defineDefaultVarNames(MilpPort* port);
+    // --- Indicators ---------------------------------------------------------
+    std::vector<double> mVariableCosts; /** Variable costs: [0] = PLAN (extrapolated), [1] = HIST (cumulated) */
 };
 
-#endif // OperationSubModel_H
+#endif // OPERATIONSUBMODEL_H

@@ -38,24 +38,25 @@ public:
     //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        BusSubModel::declareDefaultModelConfigurationParameters() ;
+        BusSubModel::declareModelConfigurationParameters();
 
-        
-        addParameter("StrictConstraint",&mStrictConstraint, false, false, true, "Strictconstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true","", "Constraints");
-        addParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false", "", "Constraints");
-        addParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false ", "", "Constraints");
-        addParameter("CommonMinVariable", &mUseCommonMinVariable, false, false, true, "Creates a variable CommonBound which is smaller than all connected variables.", "", "CommonVariables");
-        addParameter("CommonMaxVariable", &mUseCommonMaxVariable, false, false, true, "Creates a variable CommonBound which is greater than all connected variables.", "", "CommonVariables");
+        addConfigParameter("StrictConstraint", &mStrictConstraint, false, false, true, "Strictconstraint option enabling : at each time sum of connected flows should be equal to StrictConstraintBusValue - default = true", "", "Constraints");
+        addConfigParameter("MinConstraint", &mMinConstraint, false, false, true, "MinConstraint option enabling : at each time sum of connected flows should be >= MinConstraintBusValue - default = false", "", "Constraints");
+        addConfigParameter("MaxConstraint", &mMaxConstraint, false, false, true, "MaxConstraint option enabling : at each time sum of connected flows should be <= MaxConstraintBusValue - default = false ", "", "Constraints");
+        addConfigParameter("CommonMinVariable", &mUseCommonMinVariable, false, false, true, "Creates a variable CommonBound which is smaller than all connected variables.", "", "CommonVariables");
+        addConfigParameter("CommonMaxVariable", &mUseCommonMaxVariable, false, false, true, "Creates a variable CommonBound which is greater than all connected variables.", "", "CommonVariables");
+        addConfigParameter("PiecewiseObjective", &mPiecewiseObjective, false, false, true, "Provide a utility map instead of using a constant objective coefficient", "", "");
+
         //std::string
-        addParameter("ObjectiveType", &mObjectiveType, "Add", false, true, "Add or Lexicographic", "", "Base");
+        addConfigParameter("ObjectiveType", &mObjectiveType, "Add", false, true, "Add or Lexicographic", "", "Base");
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        declareDefaultModelParameters();
+        BusSubModel::declareModelParameters();
         //bool
         addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, false, SFunctionFlag({ eFTypeOrNot, { &mMinConstraint, &mMaxConstraint, &mStrictConstraint} }), true, "When true the values of *BusValue are assumed over one year instead of optimization horizon");
         //int
@@ -64,17 +65,26 @@ public:
         addParameter("StrictConstraintBusValue", &mStrictConstraintBusValue, 0., false, &mStrictConstraint, "if Strictconstraint = true at each time sum of connected flows should be equal to this value - default is 0 - use for flow balance for example", "", "Constraints");
         addParameter("MinConstraintBusValue", &mMinConstraintBusValue, 0., &mMinConstraint, &mMinConstraint, "if MinConstraint = true at each time sum of connected flows should be >= this value", "", "Constraints");
         addParameter("MaxConstraintBusValue", &mMaxConstraintBusValue, INFINITY_VAL, &mMaxConstraint, &mMaxConstraint);/** if MaxConstraint=true at each time sum of connected flows should be <= this value */
-        addParameter("ObjectiveCoefficient", &mObjectiveCoefficient, 1., false, true, "Coefficient of objective. The default value is 1");
+      
+        addParameter("ObjectiveCoefficient", &mObjectiveCoefficient, 1., false, 
+            SFunctionFlag({ eFTypeNotAnd, {&mPiecewiseObjective}, { } }), 
+            "Coefficient of objective. The default value is 1");
+       
         addParameter("AbsTol", &mAbsTol, 0., false, true, "Absolute tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
         addParameter("RelTol", &mRelTol, 0., false, true, "Relative tolerance or degradation of the objective (lexicographic optim)","", "LexicographicObjective");
         //vector
         addTimeSeries("UseProfileObjectiveCoeff", &mObjectiveCoeffTS, false, true, "time series coefficient");
         addParameter("TimeIntegration", &mTimeIntegration, false, false, &mUseCommonMaxVariable||&mUseCommonMinVariable, "If True then the common max or min variable contraint is written with the integral of the variables ", "Base");
+  
+        addPerfParam("ObjectiveBalanceSetPoint", &mObjectiveBalanceSetPoint, &mPiecewiseObjective, &mPiecewiseObjective,
+            "name of vector objective balance that will be defined from DataFile specification by the User", ""); 
+        addPerfParam("ObjectiveCostSetPoint", &mObjectiveCostSetPoint, &mPiecewiseObjective, &mPiecewiseObjective,
+            "name of vector cost that will be defined from DataFile specification by the User", "");
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        BusSubModel::declareDefaultModelInterface();
+        BusSubModel::declareModelInterface();
 
         addIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit()) ; //FluxUnit of First Port
         addIO("BusBalance0D", &mBusBalance0D, true, mMainCarrier->pFluxUnit()) ;
@@ -86,12 +96,10 @@ public:
         setSubobjectiveExpression("SubObjectiveExpression");
     }
 
-    void declareModelIndicators() {
-        BusSubModel::declareDefaultModelIndicators();
+    void declareModelIndicators() override {
+        BusSubModel::declareModelIndicators();
         mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", mMainCarrier->pStorageUnit(), "BusBalance");
     }
-//----------------------------------------------------------------------------------------------------
-    void setParameters(double aMinConstraintBusValue, double aMaxConstraintBusValue, double aStrictConstraintBusValue) ;
 //----------------------------------------------------------------------------------------------------
     void computeModelContribution() override; 
     void computeSubObjectiveContribution();
@@ -120,6 +128,7 @@ protected:
 
     bool mUseCommonMaxVariable;
     bool mUseCommonMinVariable;
+    bool mPiecewiseObjective;
 
     double mStrictConstraintBusValue ;           /** Instantaneous Equality constraint value, default to 0 to perform bus balance */
     double mMinConstraintBusValue ;              /** Instantaneous Min constraint value, default to 0 to perform bus balance */
@@ -132,6 +141,9 @@ protected:
 
     MIPModeler::MIPVariable0D mCommonMinVariable;
     MIPModeler::MIPVariable0D mCommonMaxVariable;
+
+    MIPModeler::MIPData1D mObjectiveBalanceSetPoint;
+    MIPModeler::MIPData1D mObjectiveCostSetPoint;
 
     MIPModeler::MIPExpression mBusBalance;
     MIPModeler::MIPExpression mSubObjective;

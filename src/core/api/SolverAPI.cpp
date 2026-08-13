@@ -12,62 +12,75 @@ CairnAPI::SolverAPI::SolverAPI()
 // Set the value of a parameter
 void CairnAPI::SolverAPI::set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance)
 {
-	ECodeError vErr = noCairn;
-	std::string vErrMsg = "";
-	if (m_Object) {
-		bool vOk = true;
-		// particular case of the property "solver"
-		if (a_SettingName == "Solver") {
-			std::string vSolverName = CairnAPIUtils::getParamValue(a_SettingValue);
-			if (vSolverName != m_Object->objectName()) {
-				// create new solver
-				OptimProblem* pProblem = (OptimProblem * )m_Object->parent();
-				if (pProblem) {
-					vOk = pProblem->createSolver(vSolverName);
-					if (vOk) {
-						Solver* vSolver = pProblem->getSolver();
-						if (vSolver) {
-							set_Object(vSolver);
-						}
-						else {
-							vOk = false;
-							vErr = errNotFound;
-							vErrMsg = "Problem to create solver " + vSolverName;
-						}
-					}
-					else {
-						vErr = errCreate;
-						vErrMsg = "Problem to create solver " + vSolverName;
-					}
-				}
-				else {
-					vOk = false;
-					vErr = errCreate;
-					vErrMsg = "Problem to initialize solver " + vSolverName;
-				}				
+	if (!m_Object) {
+		CairnAPIUtils::setError(errNotFound, "Solver object is null");
+		return;
+	}
+
+	// Special case: switching solver
+	if (a_SettingName == PARAM_SOLVER_NAME)
+	{
+		const std::string newName = CairnAPIUtils::getParamValue(a_SettingValue);
+		const std::string currentName =
+			CairnAPIUtils::getParamValue(get_SettingValue(PARAM_SOLVER_NAME));
+
+		if (newName != currentName) 
+		{
+			auto* problem = dynamic_cast<OptimProblem*>(m_Object->parent());
+			if (!problem) {
+				CairnAPIUtils::setError(errDefault, "Parent OptimProblem is null");
+				return;
+			}
+
+			auto* solver = problem->getSolver();
+			if (!solver) {
+				CairnAPIUtils::setError(errNotFound, "Solver not found in OptimProblem");
+				return;
+			}
+
+			try {
+				solver->solverNameChanged();
+			}
+			catch (const Cairn_Exception& error) {
+				CairnAPIUtils::setError(errParam, "Error changing solver '" + newName + "': " + error.message());
+				return;
+			}
+			catch (...) {
+				CairnAPIUtils::setError(errParam, "Unknown error changing solver '" + newName + "'");
+				return;
 			}
 		}
-		if (vOk) {
-			vErr = noError;
-			CairnAPI::ObjectAPI::set_SettingValue(a_SettingName, a_SettingValue);			
-		}		
 	}
-	CairnAPIUtils::setError(vErr, vErrMsg);
+
+	// Update setting value
+	CairnAPI::ObjectAPI::set_SettingValue(a_SettingName, a_SettingValue);
 }
 
 // Set the values of several parameters
 void CairnAPI::SolverAPI::set_SettingValues(const t_dict& a_SettingValues)
 {
-	ECodeError vRet = noError;
-	if (m_Object) {
-		t_dict::const_iterator vIter = a_SettingValues.find("Solver");
-		if (vIter != a_SettingValues.end()) {			
-			CairnAPI::SolverAPI::set_SettingValue(vIter->first, vIter->second);						
-		}
-		CairnAPI::ObjectAPI::set_SettingValues(a_SettingValues);					
+	if (!m_Object) {
+		CairnAPIUtils::setError(errNotFound, "Solver object is null");
+		return;
 	}
-	CairnAPIUtils::setError(vRet);
+
+	// Apply solver name once (if present)
+	auto it = a_SettingValues.find(PARAM_SOLVER_NAME);
+	if (it != a_SettingValues.end()) {
+		set_SettingValue(it->first, it->second);
+	}
+
+	// Forward all other settings to ObjectAPI
+	for (const auto& kv : a_SettingValues) {
+		if (kv.first != PARAM_SOLVER_NAME) {
+			CairnAPI::ObjectAPI::set_SettingValue(kv.first, kv.second);
+		}
+	}
+
+	CairnAPIUtils::setError(noError);
 }
+
+
 
 Solver* CairnAPI::SolverAPI::get_Solver() const
 {

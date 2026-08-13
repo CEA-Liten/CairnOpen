@@ -37,8 +37,11 @@ OptimProblem::OptimProblem(CairnObject* aParent, std::string aName, MilpData* aM
     }
 
     //Default Solver 
-    if (!createSolver()) {
-        throw Cairn_Exception("Error creating the default Solver!", -1);
+    try {
+        createSolver();
+    }
+    catch (const Cairn_Exception& error) {
+        throw Cairn_Exception("Error creating Solver: " + error.message(), -1);
     }
 
     //Default SimulationControl 
@@ -121,12 +124,12 @@ std::vector<EnergyVector*> OptimProblem::EnergyVectors()
 
 void OptimProblem::doInit(const StudyPathManager& aStudy, bool aLoad)
 {
-    mStudyFile = &aStudy;
+    mStudyPathManager = &aStudy;
 
     if (aLoad) {     
         /* Case of GUI */
         try {
-            createComponentsFromJsonData(mStudyFile->archFile());
+            createComponentsFromJsonData(mStudyPathManager->archFile());
             createLinksToBus();
             createDynamicIndicators();
         }
@@ -162,6 +165,13 @@ void OptimProblem::createComponentsFromJsonData(const std::string& vJsonFile,
     }
     catch (const Cairn_Exception& error) {
         throw Cairn_Exception(std::string("Failed to load JSON file. ") + error.message(), -1);
+    }
+
+    mStudyVersion = jsonDesc->CairnVersionJson();
+
+    if (!isGroup && !mStudyVersion.empty()) {
+        if (checkVersion() < 0)
+            mStudyVersionMatchesCairn = false;
     }
 
     // Must be created in the following order
@@ -235,8 +245,11 @@ void OptimProblem::createBaseComponents(JsonDescription* jsonDesc)
         const std::string compoType = CairnUtils::getParamValue(solverParamData, "type");
         const std::string compoName = CairnUtils::getParamValue(solverParamData, "name");
 
-        if (!createSolver(compoName, solverParamData)) {
-            throw Cairn_Exception("Error creating Solver: " + compoName, -1);
+        try {
+            createSolver(compoName, solverParamData);
+        }
+        catch (const Cairn_Exception& error) {
+            throw Cairn_Exception("Error creating Solver: " + error.message(), -1);
         }
     }
 }
@@ -565,7 +578,7 @@ bool OptimProblem::createSimulationControl(const std::string& aName, const t_map
 {
     delete mSimulationControl;
     mSimulationControl = new SimulationControl(this, aName, paramMap);
-    //TODO: use mException
+
     if (mSimulationControl) {
         //Set MilpData from SimulationControl params
         mMilpData->setMilpDataFromSettings(mSimulationControl->getParameters(), mStdAloneMode);
@@ -575,14 +588,12 @@ bool OptimProblem::createSimulationControl(const std::string& aName, const t_map
     return false;
 }
 
-bool OptimProblem::createSolver(const std::string& aName, const t_mapParamData& paramMap)
+void OptimProblem::createSolver(const std::string& aName, const t_mapParamData& paramMap)
 {
+    // TODO: use unique_ptr
     delete mSolver;
+    mSolver = nullptr;
     mSolver = new Solver(this, aName, paramMap);
-    if (mSolver->getException().error() == -1) {
-        return false;
-    }
-    return (mSolver != nullptr);
 }
 
 bool OptimProblem::createEnergyVector(const std::string& aName, const std::string& aType,
@@ -1114,7 +1125,7 @@ int OptimProblem::SaveFullArchitecture(const std::string& filename, const std::s
 {
     std::string vFileName = filename;
     if (vFileName == "") {
-        vFileName = mStudyFile->getScenarioFile("_self.json", 0, false);
+        vFileName = mStudyPathManager->getScenarioFile("_self.json", 0, false);
     }
 
     fs::path outputPath(vFileName);
@@ -1327,11 +1338,27 @@ void OptimProblem::jsonSaveGuiLinkNodes(ojson& linksArray, const std::string& co
     linksArray.push_back(linkObject);
 }
 
-void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
+void OptimProblem::jsonSaveGuiLinks(ojson& linksArray)
 {
-    //Loop on Bus components
+    // Ensure linksArray is an array.
+    if (!linksArray.is_array())
+    {
+        if (linksArray.is_null()) {
+            linksArray = ojson::array();
+        }
+        else {
+            cDebug() << "linksArray is not an array; type="
+                << linksArray.type_name()
+                << ". Re-initializing it to an array.";
+
+            linksArray = ojson::array();
+        }
+    }
+
+    // Loop on Bus components.
     const std::vector<BusCompo*> pBuses = findChildren<BusCompo>();
-    for (const auto& pBus : pBuses) 
+
+    for (const auto& pBus : pBuses)
     {
         if (!pBus) {
             cWarning() << "Encountered null BusCompo*; skipping.";
@@ -1339,113 +1366,221 @@ void OptimProblem::jsonSaveGuiLinks(ojson &linksArray)
         }
 
         const std::string busName = pBus->Name();
-        int busX = 0, busY = 0;
-        try {
+
+        int busX = 0;
+        int busY = 0;
+
+        try
+        {
             busX = pBus->getXpos();
             busY = pBus->getYpos();
         }
-        catch (...) {
+        catch (...)
+        {
             cWarning() << "Failed to get position for bus " << busName << "; skipping bus.";
+            continue;
         }
 
-        /* Loop on (Bus) ports: 
-        *  those are pointers to the ports of the componenets connected to the Bus
-        *  Technically, the Bus doesn't have own ports. 
-        *  A Bus port means a link to the componenet that owns this port. 
-        */
-        
-        int iNum = 0; // inputs ports (=> outputs of the Bus)
-        int oNum = 0; // outputs      (=> inputs of the Bus)
-        int dNum = 0; // data ports
+        /*
+         * Each bus must have unique port names.
+         *
+         * We keep track of all names already used by this bus.
+         *
+         * If an existing BusPortName() is duplicated, empty, or otherwise
+         * unavailable, a new unique name is generated.
+         */
+        std::unordered_set<std::string> usedBusPortNames;
 
-        for (MilpPort* pPort : pBus->LinkedPorts()) 
+        int iNum = 0; // Inputs to the bus -> PortL*
+        int oNum = 0; // Outputs from the bus -> PortR*
+        int dNum = 0; // Data ports -> PortB*
+
+        /* Loop on (Bus) ports:
+        *  those are pointers to the ports of the componenets connected to the Bus
+        *  Technically, the Bus doesn't have own ports.
+        * 
+        *  A Bus port means a link to the componenet that owns this port.
+        */
+
+        for (MilpPort* pPort : pBus->LinkedPorts())
         {
             if (!pPort) {
-                cWarning() << "Null MilpPort* found in bus " << busName << "; skipping port.";
+                cWarning() << "Null MilpPort* found in bus "  << busName << "; skipping port.";
                 continue;
             }
-            // Bus side data
-            std::string busPortName = pPort->BusPortName();
-            std::string bPortName;
-            std::string bPortPosition;
+
+            // -------------------------------------------------------------
+            // Determine the expected port prefix according to direction.
+            // -------------------------------------------------------------
 
             const auto direction = pPort->Direction();
-            if (direction == KPROD()) {// => Input to the Bus
-                bPortPosition = Left();
-                bPortName = "PortL" + std::to_string(iNum++);
+
+            std::string portPrefix;
+            int* portCounter = nullptr;
+            std::string busPortPosition;
+
+            if (direction == KPROD())
+            {
+                // Input to the Bus.
+                portPrefix = "PortL";
+                portCounter = &iNum;
+                busPortPosition = Left();
             }
-            else if (direction == KCONS()) {// => Output from the Bus
-                bPortPosition = Right();
-                bPortName = "PortR" + std::to_string(oNum++);
+            else if (direction == KCONS())
+            {
+                // Output from the Bus.
+                portPrefix = "PortR";
+                portCounter = &oNum;
+                busPortPosition = Right();
             }
-            else {//KDATA()
-                bPortPosition = Bottom();
-                bPortName = "PortB" + std::to_string(dNum++);
-            }
-            
-            if (busPortName.empty()) {//Case API
-                busPortName = bPortName;
-                pPort->setBusPortName(bPortName);
+            else
+            {
+                // Data port.
+                portPrefix = "PortB";
+                portCounter = &dNum;
+                busPortPosition = Bottom();
             }
 
-            if (pPort->BusPortPosition().empty()) {//Expected
-                pPort->setBusPortPosition(bPortPosition);
+            // -------------------------------------------------------------
+            // Get existing bus port name.
+            // -------------------------------------------------------------
+
+            std::string busPortName = pPort->BusPortName();
+
+            /*
+             * Keep the existing name if it is:
+             *
+             *   1. not empty
+             *   2. not already used by another port of this bus
+             *
+             * Otherwise generate a new unique name.
+             */
+            const bool hasValidExistingName =
+                !busPortName.empty() &&
+                usedBusPortNames.find(busPortName) ==
+                usedBusPortNames.end();
+
+            if (!hasValidExistingName)
+            {
+                /*
+                 * Generate a unique name.
+                 *
+                 * The do/while is important because the counter might
+                 * generate a name that already exists.
+                 */
+                do
+                {
+                    busPortName = portPrefix + std::to_string((*portCounter)++);
+                } while (usedBusPortNames.find(busPortName) !=
+                    usedBusPortNames.end());
+
+                // Store the generated name back into the port.
+                pPort->setBusPortName(busPortName);
+
+                cDebug() << "Assigned unique bus port name:" << busName << "->" << busPortName;
             }
 
-            // Component side data
+            // Mark the name as used by this bus.
+            usedBusPortNames.insert(busPortName);
+
+            // -------------------------------------------------------------
+            // Bus port position.
+            // -------------------------------------------------------------
+
+            pPort->setBusPortPosition(busPortPosition);
+
+            // -------------------------------------------------------------
+            // Component-side information.
+            // -------------------------------------------------------------
+
             const std::string compoName = pPort->CompoName();
             const std::string compoPortName = pPort->Name();
 
-            if (compoName.empty()) {
+            if (compoName.empty()) 
+            {
                 cWarning() << "A link to bus " << busName << " has empty component name; skipping link.";
                 continue;
             }
 
+            // -------------------------------------------------------------
+            // Find the component.
+            // -------------------------------------------------------------
+
             MilpComponent* pComponent = nullptr;
 
-            if (compoName == mTecEcoAnalysis->Name()) {
+            if (mTecEcoAnalysis && compoName == mTecEcoAnalysis->Name())
+            {
                 pComponent = findChild<TecEcoCompo>(compoName);
             }
-            else {
+            else
+            {
                 pComponent = findChild<MilpComponent>(compoName);
+
                 if (!pComponent) {
-                    // => Bus
-                    pComponent = findChild<BusCompo>(compoName);
+                    // The linked object may itself be a Bus.
+                    pComponent =
+                        findChild<BusCompo>(compoName);
                 }
             }
 
             if (!pComponent) {
-                cWarning() << "Encountered null MilpComponent*; skipping.";
+                cWarning()  << "Could not find component " << compoName
+                    << " linked to bus " << busName << "; skipping link.";
                 continue;
             }
 
-            int compoX = 0, compoY = 0;
-            try {
+            // -------------------------------------------------------------
+            // Get component position.
+            // -------------------------------------------------------------
+
+            int compoX = 0;
+            int compoY = 0;
+
+            try  {
                 compoX = pComponent->getXpos();
                 compoY = pComponent->getYpos();
             }
             catch (...) {
-                cWarning() << "Failed to get position for component " << compoName << "; skipping link to bus " << busName << ".";
+                cWarning()
+                    << "Failed to get position for component " << compoName
+                    << "; skipping link to bus " << busName  << ".";
                 continue;
             }
 
-            // Consistency checks: port must actually be linked to this bus, and component must belong to this bus
-            const auto& linkedComponents = pBus->ListComponent(); // component linked to pBus
+            // -------------------------------------------------------------
+            // Consistency checks.
+            // -------------------------------------------------------------
+
+            const auto& linkedComponents = pBus->ListComponent();
             const bool busNamesMatch = (pPort->LinkedBusName() == busName);
-            const bool compoLinkedToBus = (std::find(linkedComponents.begin(), linkedComponents.end(), pComponent) != linkedComponents.end());
-            if (!busNamesMatch || !compoLinkedToBus) {
-                cWarning() << "Mismatch: the bus and the linked component must be identical! "
-                << "Skip link between " << compoName << " and " << busName << ".";
+            const bool compoLinkedToBus =
+                (std::find(
+                    linkedComponents.begin(),
+                    linkedComponents.end(),
+                    pComponent) != linkedComponents.end());
+
+            if (!busNamesMatch || !compoLinkedToBus)
+            {
+                cWarning() << "Mismatch: the bus and the linked component "
+                    "must be identical! Skip link between " << compoName
+                    << " and " << busName << ".";
                 continue;
             }
 
+            // -------------------------------------------------------------
+            // Write the link.
+            // -------------------------------------------------------------
 
-            // Write the link 
-            try {
-                jsonSaveGuiLinkNodes(linksArray, compoName, compoPortName, busName, busPortName, compoX, compoY, busX, busY);
+            try
+            {
+                jsonSaveGuiLinkNodes(linksArray, compoName, compoPortName,
+                    busName, busPortName, compoX, compoY, busX, busY);
             }
-            catch (...) {
-                cWarning() << "Failed to serialize link between component " << compoName << " and bus " << busName << "; skipping link.";
+            catch (...)
+            {
+                cWarning()
+                    << "Failed to serialize link between component "
+                    << compoName << " and bus " << busName << "; skipping link.";
                 continue;
             }
         }
@@ -1756,34 +1891,22 @@ void OptimProblem::resetFlags()
 
 void OptimProblem::buildProblem()
 {
-    std::string vStudyFile = std::string(mStudyFile->archFile().c_str());
-
-    int ierr = initSubModelInput();
-    if (ierr < 0) {
-        throw Cairn_Exception("Error in OptimProblem init!", -1);
-    }
-
-    exportRHVariableInModel();
-
-    // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
-    //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()
-
     cInfo() << "  ";
     cInfo() << "Building problem...";
 
-    // Create Constraints
+    // Component constraints
     buildComponentConstraints();
 
-    // Compute PreSimulation TecEco expressions 
-    if (mTecEcoAnalysis) {
+    // TecEco pre-simulation
+    if (mTecEcoAnalysis)
+    {
         try {
             mTecEcoAnalysis->computeTecEcoContribution();
-
-            //TecEcoAnalysis Model Interface at ports
-            MilpComponent* pTecEcoCompo = dynamic_cast<MilpComponent*> (mTecEcoAnalysis->parent());
-            if (pTecEcoCompo) {
-                pTecEcoCompo->setBusFluxPortExpression();       /**  send flux expressions to FlowBalanceBus */
-                pTecEcoCompo->setBusSameValuePortExpression();  /**  publish expression to SameValueBus */
+            MilpComponent* tecEcoCompo = static_cast<MilpComponent*>(mTecEcoAnalysis->parent());
+            if (tecEcoCompo)
+            {
+                tecEcoCompo->setBusFluxPortExpression();      // FlowBalanceBus
+                tecEcoCompo->setBusSameValuePortExpression(); // SameValueBus
             }
         }
         catch (...) {
@@ -1791,20 +1914,21 @@ void OptimProblem::buildProblem()
         }
     }
 
+    // Bus constraints
     buildBusConstraints();
 
-    // Model component behaviour
-    if (mTecEcoAnalysis)  {
-        mTecEcoAnalysis->buildTecEcoModel();             /**  define behaviour model and associated Variables */
-        computeObjectiveFunction(*mExpObjective);  /** set the value of mObjective to the ObjectiveExpression from TecEcoAnalysis */
+    // TecEco model + objective
+    if (mTecEcoAnalysis)
+    {
+        mTecEcoAnalysis->buildTecEcoModel();     // define behaviour model + variables
+        computeObjectiveFunction(*mExpObjective); // set mObjective from TecEcoAnalysis
     }
-
-    return;
 }
+
 
 void OptimProblem::solveProblem(std::string& optimLogFileName,  const int cycle, const std::map<std::string, bool> paramMap, const bool aExportResultsEveryCycle)
 {
-    std::string location = std::string(mStudyFile->getScenarioFile("", 0, false).c_str());
+    std::string location = std::string(mStudyPathManager->getScenarioFile("", 0, false).c_str());
     
     int iCycle = cycle;
     if (iCycle == 0) iCycle = 1;
@@ -1862,11 +1986,21 @@ bool OptimProblem::getIsCheckConflicts()
 
 void OptimProblem::readSolution(int aNsol)
 {
-    for (auto& [key, lptr] : MilpComponents()) {
-    
-        //computeAllIndicators assumes mSolver->getModelType() == GS::MIPMODELER()
-        lptr->compoModel()->computeAllIndicators(mSolver->getOptimalSolution(aNsol));
-        lptr->exportSubmodelIO(mSolver, aNsol);
+    /*
+     NoteL computeAllIndicators assumes mSolver->getModelType() == GS::MIPMODELER()
+    */
+
+    Solver* solver = mSolver;
+
+    // Get the optimal solution pointer once
+    const double* vOptimalSolution = solver->getOptimalSolution(aNsol);
+
+    // Iterate components; cache MilpComponents() result to avoid repeated calls
+    auto compos = MilpComponents();
+    for (auto& kv : compos) {
+        auto* compo = kv.second;
+        compo->compoModel()->computeAllIndicators(vOptimalSolution);
+        compo->exportSubmodelIO(solver, aNsol);
     }
 }
 
@@ -1887,10 +2021,19 @@ void OptimProblem::closeExpressions()
 void OptimProblem::writeSolution(int n, std::map<std::string, std::vector<double>>& resultats)
 {
     resultats.clear();
-    const double* optimalSolution = mSolver->getOptimalSolution(n);    
 
-    for (auto& [key, lptr] : MilpComponents()) {    
-        lptr->compoModel()->writeSolution(optimalSolution, resultats);
+    Solver* solver = mSolver;
+
+    // Cache optimal solution once
+    const double* optimalSolution = solver ? solver->getOptimalSolution(n) : nullptr;
+
+    // Cache MilpComponents() result to avoid repeated calls
+    auto compos = MilpComponents();
+
+    for (auto it = compos.begin(); it != compos.end(); ++it) {
+        auto* compo = it->second;
+        if (compo) 
+            compo->compoModel()->writeSolution(optimalSolution, resultats);
     }
 }
 
@@ -1904,6 +2047,17 @@ int OptimProblem::getNumberOfSolutions()
 
 void OptimProblem::prepareOptim()
 {
+    cInfo() << "  ";
+    cInfo() << "Prepare problem...";
+
+    initSubModelInput();
+
+    exportRHVariableInModel();
+
+    // create output ZEvariable (associated to add IO variables which are published to outside e.g. to Pegase) list by component, and register them at Problem level.
+    //createExportZEVariablesList(); // This causes a problem for Pegase because the variables are exported in ModuleCairn::doInit()
+
+
     // update current absolute timestep and input variables due to TimeShifting
    // mMilpData->prepareOptim();
 
@@ -2070,66 +2224,92 @@ void OptimProblem::exportEnvImpactMassIndicators(const std::string& aFileName, c
     out.close();
 }
 
-void OptimProblem::exportEnvImpactParameters(const std::string& aFileName, const std::string& encoding)
+void OptimProblem::exportEnvImpactParameters(const std::string& aFileName,
+    const std::string& encoding)
 {
-    if (!mTecEcoAnalysis) return;
+    if (!mTecEcoAnalysis)
+        return;
 
     // Determine output filename
-    std::string fileName = aFileName.empty()
-        ? "study_EnvImpactParameters.csv"
-        : aFileName;
+    const std::string fileName =
+        aFileName.empty() ? "study_EnvImpactParameters.csv" : aFileName;
 
-    // Obtain possible impact names 
-    t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
+    // Obtain possible impact names
+    const t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
 
     // -------------------------
     // Build header + values
     // -------------------------
     std::string header;
     std::map<std::string, std::string> valuesMap;
-
     bool firstComponent = true;
 
-    for (auto& [key, comp] : MilpComponents()) {
+    // Reserve space for header to avoid repeated reallocations
+    header.reserve(256);
 
+    for (auto& [key, comp] : MilpComponents())
+    {
         if (!comp->EnvironmentModel())
             continue;
 
-        if (firstComponent) {
+        const auto& model = comp->compoModel();
+        if (!model)
+            continue;
+
+        if (firstComponent)
             header = "Component Name";
-        }
 
         std::string& row = valuesMap[comp->Name()];
-        const auto& paramMap = comp->compoModel()->getInputEnvImpactsParam()->getMapParams();
+        row.reserve(256); // avoid repeated reallocations
 
-        // Iterate impacts in a stable order
-        for (const auto& impact : impactNames) {
+        const auto& envMap = model->getInputEnvImpactsParam()->getMapParams();
+        const auto& cfgMap = model->getInputConfigEnvImpactsParam()->getMapParams();
 
-            // Scan all parameters to find those matching this impact
-            for (const auto& [pkey, param] : paramMap) {
-                const std::string& paramName = param->getName();
+        // Unified lambda to process both maps
+        auto processMap = [&](const auto& paramMap)
+            {
+                for (const auto& [pkey, param] : paramMap)
+                {
+                    if (!param)
+                        continue;
 
-                if (!CairnUtils::contains(paramName, impact))
-                    continue;
+                    const std::string& paramName = param->getName();
 
-                // First component => build header columns
-                if (firstComponent) {
-                    const std::string shortName = mTecEcoAnalysis->EnvImpactShortName(paramName);
-                    header += ";" + shortName;
+                    bool matchesImpact = false;
+                    for (const auto& impact : impactNames)
+                    {
+                        if (CairnUtils::contains(paramName, impact))
+                        {
+                            matchesImpact = true;
+                            break;
+                        }
+                    }
+
+                    if (!matchesImpact)
+                        continue;
+
+                    // First component => build header columns
+                    if (firstComponent)
+                    {
+                        const std::string shortName =
+                            mTecEcoAnalysis->EnvImpactShortName(paramName);
+                        header += ";" + shortName;
+                    }
+
+                    // Append parameter value
+                    row += ";" + param->toString();
                 }
+            };
 
-                // Append parameter value
-                row += ";" + param->toString();
-            }
-        }
+        processMap(envMap);
+        processMap(cfgMap);
 
         firstComponent = false;
     }
 
     // Nothing to export
-    if (header.empty()) {
+    if (header.empty())
         return;
-    }
 
     // -------------------------
     // Open file
@@ -2137,40 +2317,38 @@ void OptimProblem::exportEnvImpactParameters(const std::string& aFileName, const
     std::ios_base::openmode mode = std::ios::out | std::ios::binary;
     std::fstream out;
 
-    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
+    if (!CairnUtils::openFileForWriting(out, fileName, mode))
         return;
-    }
 
     // -------------------------
     // Write BOM if encoding is UTF-8
     // -------------------------
-    if (encoding == "UTF-8") {
+    if (encoding == "UTF-8")
         writeUTF8BOM(out);
-    }
 
     // -------------------------
     // Write table
     // -------------------------
     out << header << "\n";
 
-    for (auto& [name, values] : valuesMap) {
+    for (const auto& [name, values] : valuesMap)
         out << name << values << "\n";
-    }
 
     out.close();
 }
 
-void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, const std::string& encoding)
+void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName,
+    const std::string& encoding)
 {
-    if (!mTecEcoAnalysis) return;
+    if (!mTecEcoAnalysis)
+        return;
 
     // Determine output filename
-    std::string fileName = aFileName.empty()
-        ? "study_PortEnvImpactParameters.csv"
-        : aFileName;
+    const std::string fileName =
+        aFileName.empty() ? "study_PortEnvImpactParameters.csv" : aFileName;
 
-    // Obtain possible impact names 
-    t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
+    // Obtain possible impact names
+    const t_list impactNames = mTecEcoAnalysis->getPossibleImpactNames();
 
     // -------------------------
     // Build header + values
@@ -2178,46 +2356,56 @@ void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, c
     std::string header;
     std::map<std::string, std::string> valuesMap;
 
+    header.reserve(256);
     bool firstPort = true;
 
-    for (auto& [compKey, comp] : MilpComponents()) {
-
+    for (auto& [compKey, comp] : MilpComponents())
+    {
         if (!comp->EnvironmentModel())
             continue;
 
+        const auto& model = comp->compoModel();
+        if (!model)
+            continue;
+
         const auto& ports = comp->PortList();
-        const auto& paramMap = comp->compoModel()->getInputPortImpactsParam()->getMapParams();
 
-        for (MilpPort* port : ports) {
+        const auto& portMap = model->getInputPortImpactsParam()->getMapParams();
+        const auto& cfgPortMap = model->getInputConfigPortImpactsParam()->getMapParams();
 
-            const std::string portName = port->Name();
-            const std::string varName = port->Variable();
-            const std::string fullName = comp->Name() + "." + portName;
-
-            // First port → build header base
-            if (firstPort) {
-                header = "Port Name;Variable";
-            }
-
-            // Initialize row with variable name
-            valuesMap[fullName] = ";" + varName;
-
-            // Iterate impacts in stable order
-            for (const auto& impact : impactNames) {
-
-                // Scan all parameters for this port + impact
-                for (const auto& [pkey, param] : paramMap) {
+        // Unified lambda for processing both maps
+        auto processMap = [&](const auto& paramMap,
+            const std::string& portName,
+            const std::string& fullName)
+            {
+                for (const auto& [pkey, param] : paramMap)
+                {
+                    if (!param)
+                        continue;
 
                     const std::string& paramName = param->getName();
 
-                    // Must match port name AND impact name
+                    // Must match port name
                     if (!CairnUtils::contains(paramName, portName))
                         continue;
-                    if (!CairnUtils::contains(paramName, impact))
+
+                    // Must match at least one impact
+                    bool matchesImpact = false;
+                    for (const auto& impact : impactNames)
+                    {
+                        if (CairnUtils::contains(paramName, impact))
+                        {
+                            matchesImpact = true;
+                            break;
+                        }
+                    }
+
+                    if (!matchesImpact)
                         continue;
 
                     // First port => build header columns
-                    if (firstPort) {
+                    if (firstPort)
+                    {
                         std::string shortName = mTecEcoAnalysis->EnvImpactShortName(paramName);
                         const auto parts = CairnUtils::split(shortName, '.');
                         header += ";" + (parts.size() > 1 ? parts[1] : shortName);
@@ -2226,16 +2414,34 @@ void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, c
                     // Append parameter value
                     valuesMap[fullName] += ";" + param->toString();
                 }
-            }
+            };
+
+        for (MilpPort* port : ports)
+        {
+            const std::string portName = port->Name();
+            const std::string varName = port->Variable();
+            const std::string fullName = comp->Name() + "." + portName;
+
+            // First port -> build header base
+            if (firstPort)
+                header = "Port Name;Variable";
+
+            // Initialize row with variable name
+            std::string& row = valuesMap[fullName];
+            row.reserve(128);
+            row = ";" + varName;
+
+            // Apply on all port impact parameters
+            processMap(portMap, portName, fullName);
+            processMap(cfgPortMap, portName, fullName);
 
             firstPort = false;
         }
     }
 
     // Nothing to export
-    if (header.empty()) {
+    if (header.empty())
         return;
-    }
 
     // -------------------------
     // Open file
@@ -2243,28 +2449,27 @@ void OptimProblem::exportPortEnvImpactParameters(const std::string& aFileName, c
     std::ios_base::openmode mode = std::ios::out | std::ios::binary;
     std::fstream out;
 
-    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
-        return; //error ?!
-    }
+    if (!CairnUtils::openFileForWriting(out, fileName, mode))
+        return;
 
     // -------------------------
     // Write BOM if encoding is UTF-8
     // -------------------------
-    if (encoding == "UTF-8") {
+    if (encoding == "UTF-8")
         writeUTF8BOM(out);
-    }
 
     // -------------------------
     // Write table
     // -------------------------
     out << header << "\n";
 
-    for (auto& [name, values] : valuesMap) {
+    for (const auto& [name, values] : valuesMap)
         out << name << values << "\n";
-    }
 
     out.close();
 }
+
+
 
 ExportParameterRows OptimProblem::collectParameterData(const std::map<std::string, bool>& optionsMap)
 {
@@ -2319,79 +2524,110 @@ ExportParameterRows OptimProblem::collectParameterData(const std::map<std::strin
     return data;
 }
 
-void OptimProblem::exportParameters( 
-    const std::string& aFileName,
-    const std::string& encoding,
-    const std::map<std::string, bool>& optionsMap,
-    const std::map< std::string, std::vector<ExtraParameterData> >& extraData)
+void OptimProblem::exportParameters(const std::string& aFileName, const std::string& encoding,
+    const std::map<std::string, bool>& optionsMap, const std::map<std::string, 
+    std::vector<ExtraParameterData>>& extraData)
 {
-    // Determine output filename
-    std::string fileName = aFileName.empty() ? "study_parameters.csv" : aFileName;
+    // Determine output filename 
+    const std::string fileName = aFileName.empty()
+        ? "study_parameters.csv"
+        : aFileName;
 
-    // Open file
-    std::ios_base::openmode mode = std::ios::out | std::ios::binary;
+    // Open file 
     std::fstream out;
-    if (!CairnUtils::openFileForWriting(out, fileName, mode)) {
-        return;
+    if (!CairnUtils::openFileForWriting(out, fileName,
+        std::ios::out | std::ios::binary))
+    {
+        return; // silent failure behavior
     }
 
-    // Write BOM for UTF-8
+    // Write BOM only when needed
     if (encoding == "UTF-8") {
         writeUTF8BOM(out);
     }
 
-    // Collect data
+    // Collect base parameter rows
     ExportParameterRows data = collectParameterData(optionsMap);
 
-    // ------ Add extra data -------------
+    // ------------------------------------------------------------
+    // Build lookup map using reserve() to avoid rehashing
+    // ------------------------------------------------------------
+    std::unordered_map<std::pair<std::string, std::string>, size_t, PairHash> rowIndex;
+    rowIndex.reserve(data.rows.size());
 
-    // Build a lookup map for efficiency
-    std::map<std::pair<std::string, std::string>, size_t> rowIndex;
     for (size_t i = 0; i < data.rows.size(); ++i) {
-        auto key = std::make_pair(data.rows[i].component, data.rows[i].parameter);
-        rowIndex[key] = i;
+        rowIndex.emplace(std::make_pair(data.rows[i].component, data.rows[i].parameter), i);
     }
 
-    // Process extra data 
-    for (const auto& [columnName, paramDataList] : extraData) {
+    // ------------------------------------------------------------
+    // Process extraData with minimal allocations
+    // ------------------------------------------------------------
+    data.extraHeaders.reserve(data.extraHeaders.size() + extraData.size());
+
+    for (const auto& kv : extraData)
+    {
+        const std::string& columnName = kv.first;
+        const auto& paramDataList = kv.second;
+
+        // Add header once
         data.extraHeaders.push_back(columnName);
 
-        for (const ExtraParameterData& paramData : paramDataList) {
-            auto key = std::make_pair(paramData.component, paramData.parameter);
-            auto it = rowIndex.find(key);
+        // Process each extra parameter
+        for (const ExtraParameterData& paramData : paramDataList)
+        {
+            auto it = rowIndex.find(std::make_pair(paramData.component, paramData.parameter));
 
             if (it != rowIndex.end()) {
-                data.rows[it->second].extraData[columnName] = paramData.value;   
+                // Insert extra data without reallocating the row map
+                data.rows[it->second].extraData.emplace(columnName, paramData.value);
             }
         }
     }
-    // ---------------------------------------
 
-    // Write to file
+    // ------------------------------------------------------------
+    // Write final CSV
+    // ------------------------------------------------------------
     CairnUtils::writeParameterDataToCSV(out, data, optionsMap);
 
     out.close();
 }
 
-void OptimProblem::exportParameters_all_files(std::string aFileName, const std::string& encoding, 
-    const std::map<std::string, bool>& optionsMap, 
-    const std::map< std::string, std::vector<ExtraParameterData> >& extraData)
+void OptimProblem::exportParameters_all_files(std::string aFileName, const std::string& encoding,
+    const std::map<std::string, bool>& optionsMap, const std::map<std::string, 
+    std::vector<ExtraParameterData>>& extraData)
 {
-    try {
-        if (aFileName == "") {
-            aFileName = mStudyFile->getScenarioFile("_Parameters.csv", 0, false);
+    try
+    {
+        if (aFileName.empty()) {
+            aFileName = mStudyPathManager->getScenarioFile("_Parameters.csv", 0, false);
         }
+
+        // Export main parameters
         exportParameters(aFileName, encoding, optionsMap, extraData);
-        //Env Impacts coeff and results - special files
-        const std::string suffix = "_EnvImpact.csv";
-        exportEnvImpactParameters(CairnUtils::replace(aFileName, ".csv", suffix), encoding);
-        exportPortEnvImpactParameters(CairnUtils::replace(aFileName, suffix, "_PortEnvImpact.csv"), encoding);
+
+        // Precompute suffixes 
+        constexpr const char* ENV_SUFFIX = "_EnvImpact.csv";
+        constexpr const char* PORT_SUFFIX = "_PortEnvImpact.csv";
+
+        // Build filenames once using reserved strings to avoid reallocations
+        std::string envFile;
+        envFile.reserve(aFileName.size() + 16);
+        envFile = CairnUtils::replace(aFileName, ".csv", ENV_SUFFIX);
+
+        std::string portEnvFile;
+        portEnvFile.reserve(aFileName.size() + 20);
+        portEnvFile = CairnUtils::replace(aFileName, ENV_SUFFIX, PORT_SUFFIX);
+
+        // Export special files
+        exportEnvImpactParameters(envFile, encoding);
+        exportPortEnvImpactParameters(portEnvFile, encoding);
     }
-    catch (...) {
-        Cairn_Exception error("Error while exporting parameters! ", -1);
-        throw error;
+    catch (...)
+    {
+        throw Cairn_Exception("Error while exporting parameters! ", -1);
     }
 }
+
 
 void OptimProblem::exportMultiObjFile(std::fstream& out, int aNsol, const bool showDescription)
 {
@@ -2492,7 +2728,7 @@ void OptimProblem::exportAllTecEcoEnvAnalysis(const std::string& resultFile, con
 void OptimProblem::exportResultsPLAN(std::string aResultFile, const int& aNsol)
 {
     if (aResultFile == "") {
-        aResultFile = mStudyFile->getScenarioFile("_PLAN.csv", aNsol);
+        aResultFile = mStudyPathManager->getScenarioFile("_PLAN.csv", aNsol);
     }
 
     bool isShowIndicatorDescription = false;
@@ -2605,4 +2841,51 @@ void OptimProblem::addGroup(const std::vector<std::string>& compoNames,
         mainCompo, groupName);
 
     mGroups.push_back(groupData);
+}
+
+
+int OptimProblem::checkVersion() const
+{
+    // --- Validate JSON study version -------------------------------------------------------
+    if (mStudyVersion.empty()) 
+    {
+        cWarning() << "checkVersion() called with no study version loaded; skipping compatibility check.";
+        return 0;
+    }
+
+    // --- Parse JSON study version -------------------------------------------------------
+    const auto jsonParts = parseVersion(mStudyVersion);
+    const int jsonMajor = (jsonParts.size() > 0 ? jsonParts[0] : 0);
+    const int jsonMinor = (jsonParts.size() > 1 ? jsonParts[1] : 0);
+
+    const std::string jsonBaseVersion =
+        std::to_string(jsonMajor) + "." + std::to_string(jsonMinor);
+
+    // --- Parse current Cairn version ----------------------------------------------
+    const std::string currentRaw = CairnUtils::extractVersion(GS::Cairn_Release);
+    const auto currentParts = CairnUtils::parseVersion(currentRaw);
+
+    const int curMajor = (currentParts.size() > 0 ? currentParts[0] : 0);
+    const int curMinor = (currentParts.size() > 1 ? currentParts[1] : 0);
+
+    const std::string currentBaseVersion =
+        std::to_string(curMajor) + "." + std::to_string(curMinor);
+
+    // --- Compare ------------------------------------------------------------
+    const int cmp = compareVersion(jsonParts, currentParts);
+
+    if (cmp < 0)
+    {
+        cWarning() << "Compatibility script may be required: "
+            << "study version " << jsonBaseVersion
+            << " is older than current Cairn version " << currentBaseVersion;
+    }
+    else if (cmp > 0)
+    {
+        cWarning() << "Backward compatibility is not guaranteed: "
+            << "study version " << jsonBaseVersion
+            << " is more recent than current Cairn version " << currentBaseVersion;
+    }
+
+    return cmp;
 }

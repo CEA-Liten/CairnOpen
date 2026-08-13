@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -56,7 +56,7 @@ int main()
 		vSolution = m_Problem.run()
 	)
 
-	TESTAPI2("Compare results",
+	TESTAPIBOOL("Compare results",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 	

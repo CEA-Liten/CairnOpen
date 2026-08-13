@@ -42,23 +42,24 @@ public:
     ~Ramp();
 //----------------------------------------------------------------------------------------------------
     void setTimeData();
+    void paramValueChanged(const std::string& paramName) override;
     void computeInitialData() override;
     void computeModelContribution() override;
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        OperationSubModel::declareDefaultModelConfigurationParameters();
+        OperationSubModel::declareModelConfigurationParameters();
         //bool
-        addParameter("ConstantRamp", &mConstantRamp, true, false, true, "If true: the ramps are definied as a parameter else by dataseries","bool");
-        addParameter("AllowShutDown", &mAddStartUpShutDownVariable,false, false, true, "If true: the variable can break the ramp to jump from MinValue to 0. Else it is not possible.","bool");
-        addParameter("AddRampUpConstraint", &mAddRampUp, true, false, true, "If true: add a constraint on ramp up", "");
-        addParameter("AddRampDownConstraint", &mAddRampDown, true, false, true, "If true: add a constraint on ramp down", "");
-        addParameter("AddRampCost", &mAddRampCost, false, false, true, "If true: add ramp cost", "");
+        addConfigParameter("ConstantRamp", &mConstantRamp, true, false, true, "If true: the ramps are definied as a parameter else by dataseries","bool");
+        addConfigParameter(PARAM_AllowShutDown_NAME, &mAddStartUpShutDownVariable,false, false, true, "If true: the variable can break the ramp to jump from MinValue to 0. Else it is not possible.","bool");
+        addConfigParameter("AddRampUpConstraint", &mAddRampUp, true, false, true, "If true: add a constraint on ramp up", "");
+        addConfigParameter("AddRampDownConstraint", &mAddRampDown, true, false, true, "If true: add a constraint on ramp down", "");
+        addConfigParameter("AddRampCost", &mAddRampCost, false, false, true, "If true: add ramp cost", "");
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        OperationSubModel::declareDefaultModelParameters();
+        OperationSubModel::declareModelParameters();
         //double
         addParameter("MaxVariable", &mMaxWeight, 1., true, true, "Default 1: Maximum of connected variable. If negative optimized between 0 and absolute value and Component Size has to be connected.", mMainCarrier->pFluxUnit());
         addParameter("MinInput", &mMinInput, 0., &mAddStartUpShutDownVariable, &mAddStartUpShutDownVariable,"Min abolute when weight is 1 relative else associated to the variable connected ", "ComponentSize * MaxInput");
@@ -76,9 +77,9 @@ public:
     }
 //----------------------------------------------------------------------------------------------------
 
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        OperationSubModel::declareDefaultModelInterface();
+        OperationSubModel::declareModelInterface();
         
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
         addSizeMaxIO("ComponentSize", &mExpSizeMax, true, mMainCarrier->pFluxUnit()); // multiplier of the size of the ramp
@@ -94,8 +95,8 @@ public:
         addExp(&mExpRampCostVar, &mHorizon);
     }
 
-    void declareModelIndicators() {
-        OperationSubModel::declareDefaultModelIndicators();
+    void declareModelIndicators() override {
+        OperationSubModel::declareModelIndicators();
     }
     void computeAllIndicators(const double* optSol) override;
 //----------------------------------------------------------------------------------------------------
@@ -107,7 +108,7 @@ public:
     void addRampCost();
 //----------------------------------------------------------------------------------------------------
 
-    void initDefaultPorts() {
+    void initDefaultPorts() override {
         mDefaultPorts.clear();
         //PortConnectRamp - bottom
         std::map<std::string, std::string> portConnectRamp;
@@ -124,6 +125,8 @@ public:
     //}
 
 protected:
+    void configureStateFlags();
+
     //MilpPort* mPortConnectRamp; 
 
     MIPModeler::MIPVariable1D mVarInput;

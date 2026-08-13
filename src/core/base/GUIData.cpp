@@ -71,11 +71,7 @@ void GUIData::declareGuiInputParam()
 
 void GUIData::setGuiInputParam(const t_mapParamData& paramMap)
 {
-    int ierr = mGuiInputParam->readParameters(paramMap);
-    if (ierr < 0) {
-        Cairn_Exception error("ERROR readParameters: missing value for a Gui parameter of component " + Name(), -1);
-        throw& error;
-    }
+    mGuiInputParam->readParameters(paramMap);
 
     if (mXpos == 0) {
         if (mGuiComponentType == "SimulationControl") setXpos(50);

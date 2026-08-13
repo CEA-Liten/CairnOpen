@@ -73,6 +73,8 @@ public:
     void initializeSubmodelIO();                                                        /** define default values in case optimization fails */
     virtual void setDefaultsResults();
 
+    void paramValueChanged(const std::string& paramName);
+
     // Utility functions for PEGASE IO management
     virtual bool findFirstCoeff(std::string aVarName, t_mapExchange aList , float &coeff, float &offset) ;
 
@@ -81,7 +83,6 @@ public:
     virtual void redeclareEnvImpactParameters(); /** when selected impacts get modified */
     virtual int initSubModelInput();              /** Read model Input parameters from SettingsFile and Input timeseries from simulation environment */
     int initPorts();                                                                        /** port Milp flux expression init (allocation) */
-    virtual int checkPorts() ;                                                                       /** port Milp flux expression checking and typing (scalar or vector) */
     void setSubModelEnvImpacts();
 
     int initProblem(const bool& readParams=true);                                   /** define Milp Variable of component */
@@ -109,8 +110,6 @@ public:
     /* ------------------------------------- */
     virtual void setMIPModel (MIPModeler::MIPModel* aModel) ;                        /** Set pointer to global Optimization Problem Model */
 
-    virtual int defineDefaultVarNames();
-
     void createOnePort(const std::string& portId, const t_mapParamData & portParams,
         EnergyVector* carrier = nullptr);
 
@@ -136,14 +135,14 @@ std::string getUniquePortID();
 
     virtual void jsonSaveGuiComponent(ojson &componentsArray, const std::string& componentCarrier, 
         const std::vector<std::string>& refLabelList) ;
-    void jsonSaveGUINodePortsData(ojson &nodePortsArray, const std::string & aSide);
-    virtual void jsonSaveGUIlistPortsData(ojson &nodePortArray, const std::string& aSide);
+    void jsonSaveGUINodePortsData(ojson &nodePortsArray, const std::string& aSide, int* busLinkedPortId = nullptr);
+    virtual void jsonSaveGUIlistPortsData(ojson &nodePortArray, const std::string& aSide, int* busLinkedPortId = nullptr);
     void jsonSaveGUITimeSeries(ojson& paramArray, const InputParam* const inputParam);// = nullptr);
     void jsonSaveGUICompoNodePortsData(ojson& nodePortsArray, ojson& nodePortsData);
     virtual std::vector<MilpPort*> listSidePorts(const std::string& aside);
 
-    std::string ModelName() {return mCompoModelName;}
-    std::string ModelClassName() { return mCompoModelClassName; }
+    std::string ModelName() const { return mCompoModelName; }
+    std::string ModelClassName() const { return mCompoModelClassName; }
     void setModelClassName(const std::string& modelClass) { mCompoModelClassName = modelClass; }
     GUIData* getGUIData() {return mGUIData;}
 
@@ -169,9 +168,6 @@ std::string getUniquePortID();
     virtual void defineMainCarrier(); /** set the main carrier of the component **/
     void setMainCarrier(EnergyVector* aptrEnergyVector);  /** Set a pointer to the main carrier of the component */
     EnergyVector* getMainCarrier() const; /** Pointer to the main carrier of the component */
-
-    Cairn_Exception getException() const {return mException;}
-    void setException (const Cairn_Exception &aException) {mException = aException;}
     
     bool createModelTS(const std::string& varName, const std::string& tsName, ModelParam* aParamTS);
 
@@ -206,7 +202,7 @@ std::string getUniquePortID();
 
     MilpPort* mapDefaultPort(const std::string& portId, const std::map<std::string, std::string>& portParams);
 
-    std::string getAbsoluteFileName(const std::string& filename);
+    std::string getAbsoluteFileName(const std::string& filename) const;
 
     virtual void createImportListVars(t_mapExchange& a_Import);
     void createExportListVars(t_mapExchange& a_Export);
@@ -247,7 +243,6 @@ std::string getUniquePortID();
 protected:
     bool mBeingInitialized = false;
 
-    Cairn_Exception mException;
     MIPModeler::MIPModel* mModel;     /** Pointer to global Optimization Problem Model */
     GUIData* mGUIData{ nullptr };      /** Pointer to GUI Data */
 
@@ -262,14 +257,6 @@ protected:
     double mOptimalSize; //Not used anywhere!  /** Optimal size of component, if optimized eg Nominal power, storage capacity...*/
 
     InputParam* mCompoInputParam{ nullptr };      /** COMPONENT Input parameter List from XML File -> Options */
-    InputParam* mInputParam{ nullptr };                           /** Pointer to COMPONENT Input Data List (for link with PEGASE or OUTSIDE) */
-    InputParam* mModelParam{ nullptr };                           /** Pointer to SubModel Input parameter List (constant of the Milp submodel)*/
-    InputParam* mModelEnvImpactParam{ nullptr };                   /** Pointer to SubModel Environmental impacts parameter List */
-    InputParam* mModelPortImpactParam{ nullptr };                   /** Pointer to SubModel Port Environmental impacts parameter List */
-    InputParam* mModelPortImpactParamTS{ nullptr };                 /** Pointer to SubModel Port Environmental impacts time series List (contains only time series) */
-    InputParam* mModelPerfParam{ nullptr };                        /** Pointer to SubModel Input performance parameter List (constant of the Milp submodel)*/
-    InputParam* mModelData{ nullptr };                            /** Pointer to SubModel Input Data List (constant of the Milp submodel) on future horizon only*/
-    InputParam* mModelDataTS{ nullptr };                           /** Pointer to SubModel Input TimeSeries List (constant of the Milp submodel) on future horizon only*/
 
     InputParam* mPlugSubmodelIO{ nullptr };                       /** Pointer to SubModel Output Data List (for link with PEGASE or OUTSIDE) */
     InputParam* mTimeSeriesSubmodel{ nullptr };                   /** Pointer to SubModel TimeSeries List (for link with PEGASE or OUTSIDE) */
@@ -293,13 +280,12 @@ protected:
     std::string mPublishUserVariable;
     std::string mSubmodelFile; //Do we still need this?!
 
-    int initializeModel();
     int readPerfMapFiles();
 
     // Time Series
     typedef std::map<std::string, ModelTS> t_mapTS;
     t_mapTS m_timeSeries = {};
-    void readTSVariables(InputParam* aMapParamTS);
+    void readTSVariables(const InputParam* aMapParamTS);
     void readEnergyVectorTS(const EnergyVector* carrier, const InputParam* aMapParamTS);
 
     // compo model    

@@ -1,7 +1,7 @@
 #include "CairnAPIUtils.h"
 #include "TEST_CairnCore.h"
 #include <iostream>
-#include "UtilsJson.h"
+
 #include "StudyCTest.h"
 #include <iomanip>
 
@@ -75,18 +75,18 @@ int main()
 
 	t_list vEVs = m_Problem.get_EnergyCarriers();
 	t_list vRef = { "H2","ElectricityDistrib" };
-	TESTAPI2("check list Energy Vector", TestUtils::compare_lists(vRef, vEVs))
+	TESTAPIBOOL("check list Energy Vector", TestUtils::compare_lists(vRef, vEVs))
 
 	// Adding a component
 	// -------------------------------------------------------------------
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { }))
+	TESTAPIBOOL("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { }))
 
 	CairnAPI::MilpComponentAPI vELY_PEM(m_Problem, "ELY_PEM", "Electrolyzer");
 
 	t_list vELY_PEM_Ports = vELY_PEM.get_Ports();
 	t_list vELY_PEM_DefaultPorts = vELY_PEM.get_DefaultPorts();
 
-	TESTAPI2("Default ports", TestUtils::compare_lists(vELY_PEM_Ports, vELY_PEM_DefaultPorts));
+	TESTAPIBOOL("Default ports", TestUtils::compare_lists(vELY_PEM_Ports, vELY_PEM_DefaultPorts));
 
 	std::shared_ptr < CairnAPI::MilpPortAPI> vELY_PEM_R0;
 	TESTAPI("get default port PortR0 of ELY_PEM", vELY_PEM_R0 = vELY_PEM.get_Port("PortR0"))
@@ -96,7 +96,7 @@ int main()
 		{"Variable", "H2MassFlowRate"}
 		});
 
-	TESTAPI2("Check if it is possible to delete default port",
+	TESTAPIBOOL("Check if it is possible to delete default port",
 		TestUtils::compare_scalar(vELY_PEM.remove_Port(*vELY_PEM_R0), false, eBool)
 	)
 
@@ -136,7 +136,7 @@ int main()
 	TESTAPI("Change EnergyVector of vELY_PEM", vELY_PEM_L0->set_EnergyCarrier(vElec))
 
 	//Verify Get and Set methods
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
@@ -144,7 +144,7 @@ int main()
 		vELY_PEM.set_SettingValue("Capex", 100000.0);
 	)
 
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM.get_SettingValue("Capex"), 100000.0, eDouble)
 	)
 
@@ -152,14 +152,14 @@ int main()
 
 	vELY_PEM_R0->set_SettingValue("Coeff", 2.0);
 
-	TESTAPI2("Verify the value of ELY_PEM.PortR0.Coeff",
+	TESTAPIBOOL("Verify the value of ELY_PEM.PortR0.Coeff",
 		TestUtils::compare_scalar(vELY_PEM_R0->get_SettingValue("Coeff"), 2.0, eDouble)
 	)
 
 	vELY_PEM_R0->set_SettingValue("Coeff", 1.0);
 
 	//Verify componenet list and port list
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { "ELY_PEM" }))
+	TESTAPIBOOL("check list components", TestUtils::compare_lists(m_Problem.get_Components(), { "ELY_PEM" }))
 
 	// Adding a component
 	// -------------------------------------------------------------------
@@ -343,7 +343,7 @@ int main()
 	TESTAPI("Run",
 		vSolution = m_Problem.run(ScenarioName)
 	)
-	TESTAPI2FALSE("Check Run",
+	TESTAPIBOOL("Check Run",
 		vTest.checkResults("Reference", true, true, false, false, ScenarioName)
 	)	
 
@@ -356,8 +356,8 @@ int main()
 		m_Problem2 = m_Cairn2.read_Study(vFileName_saved)
 	)
 
-	TESTAPI2("check list components", TestUtils::compare_lists(m_Problem2.get_Components(), vComps))
-	TESTAPI2("check list bus", TestUtils::compare_lists(m_Problem2.get_Buses(), vBuses))
+	TESTAPIBOOL("check list components", TestUtils::compare_lists(m_Problem2.get_Components(), vComps))
+	TESTAPIBOOL("check list bus", TestUtils::compare_lists(m_Problem2.get_Buses(), vBuses))
 
 	TESTAPI("Read the Timeseries from the file path: " + vTest.get_TimeseriesFileName(),
 		m_Problem2.add_TimeSeries(vTest.get_TimeseriesFileName())
@@ -366,7 +366,7 @@ int main()
 	TESTAPI("Run", vSolution = m_Problem2.run())
 	vSolution.exportTimeSeries();
 
-	TESTAPI2FALSE("Check Run",
+	TESTAPIBOOL("Check Run",
 		vTest.checkResults("Reference", true, true, false, false, "", "formation_cairn_saved")
 	)
 	

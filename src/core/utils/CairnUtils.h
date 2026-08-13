@@ -107,6 +107,10 @@ namespace  CairnUtils {
 	std::vector<std::string> CAIRNCORESHARED_EXPORT split(const std::string& a_string, const std::string & a_separator);
 	std::vector<std::string> CAIRNCORESHARED_EXPORT toStringVector(const std::string& a_Value);
 
+	std::vector<int> parseVersion(const std::string& version);
+	std::string extractVersion(const std::string& s);
+	int compareVersion(const std::vector<int>& a, const std::vector<int>& b);
+
 	std::string BuildFileName(const std::string& aFileName);
 	std::string BuildFileName_W(const std::wstring &aFileName);
 

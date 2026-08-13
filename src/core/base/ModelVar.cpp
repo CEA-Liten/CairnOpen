@@ -2,35 +2,21 @@
 #include "GlobalSettings.h"
 #include "MilpData.h"
 
-
-ModelVar::ModelVar(const std::string& a_Name, t_unit a_Unit, const std::string& a_Description)
+ModelVar::ModelVar(const std::string& a_Name, t_flag a_IsUsed, 
+    t_unit a_Unit, const std::string& a_Description)
     : m_Name(a_Name),
     m_Description(a_Description)
 {
     m_Unit.set_Value(a_Unit);
+    m_IsUsed.set_Value(a_IsUsed);
 }
-
-ModelVar::~ModelVar()
-{
-}
-
-std::string ModelVar::getUnit() const
-{
-    return m_Unit.get_Value();
-}
-
-void ModelVar::setUnit(t_unit a_Unit)
-{
-    m_Unit.set_Value(a_Unit);
-}
-
 
 /*****************************************************************************************************/
 ControlVar::ControlVar(const std::string& aName,
     double* ap_Value,
     const std::string& a_Description,
     double* ap_DefaultValue, bool a_isMPC)
-    : ModelVar(aName, "", a_Description)
+    : ModelVar(aName, t_flag{}, t_unit{},a_Description)
 {
     m_IsMPC = a_isMPC;
     m_Value = ap_Value;
@@ -42,7 +28,7 @@ ControlVar::ControlVar(const std::string& aName,
     std::vector<double>* ap_Hist,
     const std::string& a_Description,
     double* ap_DefaultValue, bool a_isMPC)
-    : ModelVar(aName, "", a_Description)
+    : ModelVar(aName, t_flag{}, t_unit{},a_Description)
 {
     m_IsMPC = a_isMPC;
     m_Value = nullptr;
@@ -60,7 +46,7 @@ void ControlVar::subscribeMPC(const std::string& a_CompName, t_mapExchange& a_Im
     if (m_IsMPC) {
         std::string exName = a_CompName + "." + m_Prefix + m_Name;
         // TODO: vérif init coeff A et B
-        p_ZEVariable = new ZEVariables(exName, &m_Unit, m_Name, "1", "0", true);
+        p_ZEVariable = new ZEVariables(exName, pIsUsed(), pUnitParam(), m_Name, "1", "0", true);
         a_Import[exName] = p_ZEVariable;
         std::vector<double>& vZEHist = *p_ZEVariable->ptrVariable();
         vZEHist.resize(a_npdtTot, 0.0);       
@@ -184,10 +170,9 @@ void ControlVar::set_Value(size_t i, double a_Value)
 
 /*****************************************************************************************************/
 ModelIO::ModelIO(const std::string& aName, t_flag a_IsUsed, t_unit a_Unit, const std::string& aDescription)
-    : ModelVar(aName, a_Unit, aDescription)
+    : ModelVar(aName, a_IsUsed, a_Unit, aDescription)
 {
     m_Type = EIOModelType::eMIPUndefined;
-    m_IsUsed.set_Value(a_IsUsed);
 }
 
 ModelIO::ModelIO(const std::string& aName,
@@ -210,7 +195,7 @@ ModelIO::ModelIO(const std::string& aName,
     p_Expr = aPtr;
 }
 
-size_t ModelIO::size()
+std::size_t ModelIO::size() const
 {
     size_t vRet = 0;
     switch (m_Type) {

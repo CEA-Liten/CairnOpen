@@ -173,13 +173,13 @@ public:
     //double smallestNonZeroCoefficient(const Eigen::MatrixXd& matrix);
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        ConverterSubModel::declareDefaultModelConfigurationParameters();
+        ConverterSubModel::declareModelConfigurationParameters();
         //int
-        addParameter("NbInputFlux", &mNbInputFlux, 1, true, true, "Number of first Inputs dedicated to Fluxes  <= NbInputPorts declared in component definition");  
-        addParameter("NbOutputFlux", &mNbOutputFlux, 1, true, true, "Number of first outputs dedicated to Fluxes <= NbOutputPorts declared in component definition");  
-        addParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false");
+        addConfigParameter("NbInputFlux", &mNbInputFlux, 1, true, true, "Number of first Inputs dedicated to Fluxes  <= NbInputPorts declared in component definition");
+        addConfigParameter("NbOutputFlux", &mNbOutputFlux, 1, true, true, "Number of first outputs dedicated to Fluxes <= NbOutputPorts declared in component definition");
+        addConfigParameter("Inequality Constraint", &mIsIneqCstr, false, false, true, "Use inequality constraint if true if false");
     }
     
     // Units: use the following, instead of the IS Units leading to "scaling" troubles during solving step
@@ -188,7 +188,7 @@ public:
     // Mass         : kg
     // Energy       : MWh
     // Time         : Hours
-    void declareModelInterface()
+    void declareModelInterface() override
     {
         if (mNbInputFlux < 1) mNbInputFlux = 1;
         if (mNbOutputFlux < 1) mNbOutputFlux = 1;
@@ -197,7 +197,7 @@ public:
         mExpMatrixProduct.resize(mNbInputFlux + mNbOutputFlux);
         mExpMatrixProduct_ineq.resize(mNbInputFlux + mNbOutputFlux);
 
-        ConverterSubModel::declareDefaultModelInterface();
+        ConverterSubModel::declareModelInterface();
 
         addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortINPUTFlux1->pFluxUnit());          /** Sizing W */
         addIO("INPUTFlux1", &mExpInput[0], true, mPortINPUTFlux1->pFluxUnit()); /** Computed input flow at default port PortINPUTFlux1 */
@@ -219,9 +219,9 @@ public:
 
     //----------------------------------------------------------------------------------------------------
 
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        ConverterSubModel::declareDefaultModelParameters();
+        ConverterSubModel::declareModelParameters();
 
         //double
         addParameter("MaxPower", &mMaxPower, INFINITY_VAL, true, true, "Maximum output of OUTPUTFlux1");	 
@@ -235,11 +235,11 @@ public:
         addParameter("UpperBoundsFile", &mUpperBoundsFile, "", false, true, "CSV file of upper bounds on inputs and outpts. The size of the vector must be NbInputFlux + NbOutputFlux", "string");
     }
 
-    void declareModelIndicators() {
-        ConverterSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    void declareModelIndicators() override {
+        ConverterSubModel::declareModelIndicators();
     }
 
-    void initDefaultPorts()
+    void initDefaultPorts() override
     {
         mDefaultPorts.clear();
         //PortINPUTFlux1 - left

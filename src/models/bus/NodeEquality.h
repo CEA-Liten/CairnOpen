@@ -32,32 +32,32 @@ public:
 //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        SubModel::declareDefaultModelConfigurationParameters() ;
+        BusSubModel::declareModelConfigurationParameters() ;
         //bool
-        addParameter("ImposedBusValue", &mImposedBusValue, false, false, true, "If true: enforce ImposedBusValue value to node connected to the bus - Default is false");  
+        addConfigParameter("ImposedBusValue", &mImposedBusValue, false, false, true, "If true: enforce ImposedBusValue value to node connected to the bus - Default is false");
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        declareDefaultModelParameters();
+        BusSubModel::declareModelParameters();
         //double
         addParameter("BusValue", &mBusValue, -1.e33, &mImposedBusValue, &mImposedBusValue, " Optionnal imposed value at ValueNode Bus if ImposedBusValue = true");     
         addParameter("MaxBusValue", &mMaxBusValue, 1.e15, true, true, "Mandatory maximum value at ValueNode Bus n");  
         addParameter("MinBusValue", &mMinBusValue, 0., false, true, "Optional minimal value for the bus potential"); 
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        declareDefaultModelInterface();
+        BusSubModel::declareModelInterface();
         addIO("BusValue", &mExprBusValue, true, "unknown") ;
     }
 
-    void declareModelIndicators() {
+    void declareModelIndicators() override {
         // Supported types are: double
-        BusSubModel::declareDefaultModelIndicators();
+        BusSubModel::declareModelIndicators();
         mInputIndicators->addIndicator("Mean value during time period", &mBusMeanValue, &mExportIndicators, "", "","Mean");
     }
 //----------------------------------------------------------------------------------------------------

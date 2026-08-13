@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -21,7 +21,7 @@ int main()
 	CairnAPI::OptimProblemAPI m_Problem = m_Cairn.get_Study();
 
 	t_list vSubVars = m_Problem.getSubscribedVariables();
-	TESTAPI2FALSE("getSubscribedVariables", vSubVars.size() > 0);
+	TESTAPIBOOL("getSubscribedVariables", vSubVars.size() > 0);
 
 	std::shared_ptr <CairnAPI::MilpComponentAPI> h2Tank = m_Problem.get_Component("H2_Tank");
 	
@@ -61,17 +61,17 @@ int main()
 	)
 
 	t_list vPubVars = m_Problem.getPublishedVariables();
-	TESTAPI2FALSE("getPublishedVariables", vPubVars.size() > 0);
+	TESTAPIBOOL("getPublishedVariables", vPubVars.size() > 0);
 
 	vector<double> vValues = m_Problem.getPublishedVariableValue("Elec_Grid_Inject.GridPrice");
-	TESTAPI2FALSE("getPublishedVariableValue", vValues.size() > 0);
+	TESTAPIBOOL("getPublishedVariableValue", vValues.size() > 0);
 
 	TESTAPIFALSE("error, variable does not exist", m_Problem.getPublishedVariableValue("Nothing"));
 
 	vValues = m_Problem.getPublishedVariableValue("H2_Tank.Estock");
 
 	std::vector<double> histStock = h2Tank->getControlVarHistValues("Estock");
-	TESTAPI2FALSE("getControlVarHistValues size", histStock.size()== 22);
+	TESTAPIBOOL("getControlVarHistValues size", histStock.size()== 22);
 	TESTVALUE(histStock[0], 0.61);
 	TESTVALUE(histStock[9], 0.7)
 

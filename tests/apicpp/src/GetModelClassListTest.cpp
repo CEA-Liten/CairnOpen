@@ -12,15 +12,13 @@ using namespace std;
 int main()
 {
 	//Variables
-	int liRet = 0;
 	CairnAPI m_Cairn;
 	string const lsFilePath = TEST_DATA + (std::string)"/ModelClassListUnitTest.txt";
 	t_list AllModelClassList;
 
 	//Get the Reference Data
-	vector<vector<string>> ReferenceData = TestUtils::ParserTxt(lsFilePath);	
-	liRet = TestUtils::CreateRefrenceList(ReferenceData, AllModelClassList);
-	//TestUtils::Display_list(AllModelClassList);
+	vector<t_list> ReferenceData = TestUtils::ParserTxt(lsFilePath);	
+	TESTAPIBOOL("Create Ref data", TestUtils::CreateReferenceList(ReferenceData, AllModelClassList));
 	
 	TestUtils::Display_list(m_Cairn.get_PossibleModelNames());
 	TestUtils::Display_list(m_Cairn.get_EnergyCarrierTypes());

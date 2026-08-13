@@ -26,6 +26,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/dist_sink.h"
 #include "ErrorSink.h"
+#include "ObjectLogScope.h"
 #include "CairnAPI.h"
 
 namespace CairnLogger {

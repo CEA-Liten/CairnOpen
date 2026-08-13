@@ -18,6 +18,9 @@
 #include "EnvImpact.h"
 #include "ModelVar.h"
 
+#include "Constants.h"
+using namespace CairnConstants;
+
 class MilpPort;
 
 namespace Constants {
@@ -54,7 +57,7 @@ public:
     // ---------------------------------------------------------------------
     // Construction & identity
     // ---------------------------------------------------------------------
-    explicit SubModel(CairnObject* aParent = nullptr);
+    explicit SubModel(CairnObject* aParent);
     virtual ~SubModel();
 
     std::string ModelClassName() const;
@@ -63,64 +66,20 @@ public:
     // ---------------------------------------------------------------------
     // Core virtual interface (to be/can be overridden by derived models)
     // ---------------------------------------------------------------------
-    virtual void declareModelConfigurationParameters() = 0;
-    virtual void declareModelParameters() = 0;      ///< Model input parameters from settings file
-    virtual void declareModelInterface() = 0;       ///< Model IO interface
-    virtual void declareModelIndicators() = 0;      ///< Model indicators to be exported
     virtual void initDefaultPorts() = 0;
 
-    // buildModel is overridden in TechnicalSubModel, BusSubModel, and OperationalSubModel.
-    // Derived models should implement computeModelContribution() instead of redefining buildModel.
-    virtual void buildModel() = 0;                  ///< MILP model description: variables, constraints
-
-    /// Initialize model state and size-related variables.
-    /// Typical responsibilities:
-    /// - Call setMaxValue(...) when mExpSizeMax is declared via addSizeMaxIO(...)
-    /// - Optionally call setMinValue(...)
-    /// - Set flags mAddStateVariable and mAddStartUpShutDownVariable, etc.
-    /// - Pre-compute initial state data for addControlIO(...)
-    virtual void computeInitialData() {}
-
-    virtual int  checkConsistency();
-    virtual void buildControlVariables();
-    virtual void resetHistStoredValues() {}         ///< Reset stored historical values (rolling horizon)
-    virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr) {}
-    virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr) {}
-    virtual void setPortPointers() {}
-    virtual void computeModelContribution() {}      ///< Compute model-specific contribution
-    virtual void computeAllIndicators(const double* optSol);
-    virtual int  defineDefaultVarNames();
-    virtual void setTimeData();
-    virtual void setTypicalPeriods(const bool& useTypicalPeriods, const uint& aTypicalPeriods,
-        const uint& aNDtTypicalPeriods, const std::vector<int>& aVectTypicalPeriods);
-    virtual bool isSizeOptimized();
-    virtual bool isPriceOptimized();                // Only SourceLoad
-    virtual std::string ObjectiveType() { return {}; }
-    virtual uint64_t exprMilpHorizon();             // Technical + Operational
-    virtual uint64_t varMilpHorizon();              // Technical + Operational
-
-    virtual void declareDefaultModelConfigurationParameters()
+    // Can be merged into declareModelParameters now after have created addConfigParameter
+    virtual void declareModelConfigurationParameters()
     {
         // Boolean: export component-specific indicators
-        addParameter("ExportIndicators",
-            &mExportIndicators,
-            true,
-            false,
-            true,
-            "Export component specific indicators",
-            "");
-
-        // String: weight unit (no unit by default)
-        addParameter("WeightUnit",
-            &mWeightUnit,
-            "",
-            false,
-            true,
-            "Unit of weight (no unit by default)",
-            "");
+        addConfigParameter("ExportIndicators",  &mExportIndicators, true,
+            false, true,
+            "Export component specific indicators", "");
     }
 
-    virtual void declareDefaultModelInterface()
+    virtual void declareModelParameters() {}; 
+
+    virtual void declareModelInterface()
     {
         // Register IO expressions to be exported as results.
         // Note: the size of 1D IO expressions is always equal to mHorizon.
@@ -130,20 +89,56 @@ public:
         // Register non-IO 1D expressions (none by default).
     }
 
+    virtual void declareModelIndicators() {};
+
+    /// Initialize model state and size-related variables.
+    /// Typical responsibilities:
+    /// - Call setMaxValue(...) when mExpSizeMax is declared via addSizeMaxIO(...)
+    /// - Optionally call setMinValue(...)
+    /// - Set flags mAddStateVariable and mAddStartUpShutDownVariable, etc.
+    /// - Pre-compute initial state data for addControlIO(...)
+    /// - Any other pre-computation after reading the parameters and before building the model
+    virtual void computeInitialData() {}
+
+    // buildModel is overridden in TechnicalSubModel, BusSubModel, and OperationalSubModel.
+    // Derived models should implement computeModelContribution() instead of redefining buildModel.
+    virtual void buildModel() = 0;                  ///< MILP model description: variables, constraints
+
+    virtual int  checkConsistency() { return 0; }
+    virtual void buildControlVariables();
+    virtual void resetHistStoredValues() {}         ///< Reset stored historical values (rolling horizon)
+    virtual void declareInputFluxIOs(MilpPort* defaultPort = nullptr) {}
+    virtual void declareOutputFluxIOs(MilpPort* defaultPort = nullptr) {}
+    virtual void setPortPointers() {}
+    virtual void computeModelContribution() {}      ///< Compute model-specific contribution
+    virtual void computeAllIndicators(const double* optSol) {};
+    virtual void setTimeData();
+    virtual void setTypicalPeriods(const bool& useTypicalPeriods, const uint& aTypicalPeriods,
+        const uint& aNDtTypicalPeriods, const std::vector<int>& aVectTypicalPeriods);
+    virtual bool isSizeOptimized();
+    virtual bool isPriceOptimized();                // Only SourceLoad
+
+    virtual uint64_t exprMilpHorizon(); 
+    virtual uint64_t varMilpHorizon(); 
+
+    virtual void paramValueChanged(const std::string& paramName) {};
+
     // ---------------------------------------------------------------------
     // Component identity, parent, ports & topology
     // ---------------------------------------------------------------------
-    std::string Name() const { return parent()->objectName(); }
-    virtual double Sens() { return 0.0; }           // To be overridden in Grid and SourceLoad
+    std::string Name() const { return this->objectName(); }
+    virtual double Sens() const { return 0.0; }           // To be overridden in Grid and SourceLoad
 
-    void setParentCompo(MilpComponent* aCompo) { mParentCompo = aCompo; }
+    MilpComponent* parentComponent() const;
+
     void setControlType(const std::string& aControl) { mControl = aControl; }
 
     virtual void  defineMainCarrier() {}             // To be defined in individual models
     void          setMainCarrier(EnergyVector* aEnergyVector) { mMainCarrier = aEnergyVector; }
     EnergyVector* getMainCarrier() const { return mMainCarrier; }
 
-    int  checkPorts();
+    virtual int  checkPortCount();
+    virtual int  checkPorts();
     void setPortList(const std::vector<MilpPort*>& aListPort) { mListPort = aListPort; }
     const std::vector<MilpPort*>& PortList() { return mListPort; }
     void addPort(MilpPort* port) { mListPort.push_back(port); }
@@ -171,11 +166,8 @@ public:
         const bool isRollingHorizon);
 
     // ---------------------------------------------------------------------
-    // Exception & flags
+    // Flags
     // ---------------------------------------------------------------------
-    Cairn_Exception getException() const { return mException; }
-    void            setException(const Cairn_Exception& aException) { mException = aException; }
-
     bool ExportIndicators() const { return mExportIndicators; }
 
     void resetFlags()
@@ -188,6 +180,15 @@ public:
     // ---------------------------------------------------------------------
     virtual void declareInputParams(const std::string& name);
     void         deleteInputParams();
+
+    void addConfigParameter(const std::string& aParamName,
+        const t_pvalue& aPtr,
+        t_value aDefaultValue,
+        t_flag aIsBlocking = true,
+        t_flag aIsUsed = true,
+        const std::string& aDescription = "",
+        const t_unit& aUnit = "",
+        const std::string& aShowConfig = "Base");
 
     void addParameter(const std::string& aParamName,
         const t_pvalue& aPtr,
@@ -279,12 +280,9 @@ public:
 
     ModelIO* getIOExpression(const std::string& aName) const;
     std::vector<ModelIO*> getIOExpressions(const EIOModelType& aIOType = EIOModelType::eMIPExpression1D);
-    MIPModeler::MIPExpression* getMIPExpression(std::string aExpressionName) const;
-    MIPModeler::MIPExpression1D* getMIPExpression1D(std::string aExpressionName) const;
-    MIPModeler::MIPExpression& getMIPExpression1D(uint i, std::string aExpressionName);
-
-    void dumpIOExpressionList() const;
-    void dumpIOExpression1DList() const;
+    MIPModeler::MIPExpression* getMIPExpression(const std::string& aExpressionName) const;
+    MIPModeler::MIPExpression1D* getMIPExpression1D(const std::string& aExpressionName) const;
+    MIPModeler::MIPExpression& getMIPExpression1D(uint i, const std::string& aExpressionName);
 
     // ---------------------------------------------------------------------
     // Model / solver integration
@@ -353,23 +351,20 @@ public:
     // ---------------------------------------------------------------------
     void computeTime(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         double& ret);
 
     void computeTime(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         double& retCharged,
         double& retDischarged);
 
     void computeProduction(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         const double& aCoeff,
         const double& bCoeff,
@@ -378,8 +373,25 @@ public:
 
     void computeProduction(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
+        const double* optSol,
+        const double& aCoeff,
+        const double& bCoeff,
+        double& retCharged,
+        double& retDischarged);
+
+
+    void computeLvlProduction(bool bsetValue,
+        uint aNpdt,
+        const MIPModeler::MIPExpression1D& exp,
+        const double* optSol,
+        const double& aCoeff,
+        const double& bCoeff,
+        double& aProduction);
+
+    void computeLvlProduction(bool bsetValue,
+        uint aNpdt,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         const double& aCoeff,
         const double& bCoeff,
@@ -388,8 +400,7 @@ public:
 
     void computeConsumption(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         const double& aCoeff,
         const double& bCoeff,
@@ -397,44 +408,22 @@ public:
 
     void computeLvlConsumption(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         const double& aCoeff,
         const double& bCoeff,
         double& aConsumption);
 
-    void computeLvlProduction(bool bsetValue,
-        uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
-        const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
-        double& aProduction);
-
-    void computeLvlProduction(bool bsetValue,
-        uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
-        const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
-        double& retCharged,
-        double& retDischarged);
-
     void computeLvlImpact(bool bsetValue,
         uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         const double& aCoeff,
         const double& bCoeff,
         double& aProduction);
 
     void computeDiscounted(uint aNpdt,
-        uint aShift,
-        MIPModeler::MIPExpression1D exp,
+        const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         double& aDiscounted);
 
@@ -452,13 +441,18 @@ public:
     // ---------------------------------------------------------------------
     // Model parameters accessors
     // ---------------------------------------------------------------------
-    InputParam* getInputParam() { return mInputParam; }
-    InputParam* getInputPerfParam() { return mInputPerfParam; }
-    InputParam* getInputTimeSeries() { return mInputTimeSeries; }
-    InputParam* getInputIndicators() { return mInputIndicators; }
-    InputParam* getInputEnvImpactsParam() { return mInputEnvImpacts; }
-    InputParam* getInputPortImpactsParam() { return mInputPortImpacts; }
-    InputParam* getInputPortImpactsParamTS() { return mTSInputPortImpacts; }
+
+    InputParam* getInputConfigParam() const { return mInputConfigParam; }
+    InputParam* getInputParam()       const { return mInputParam; }
+    InputParam* getInputPerfParam()   const { return mInputPerfParam; }
+    InputParam* getInputTimeSeries()  const { return mInputTimeSeries; }
+    InputParam* getInputIndicators()  const { return mInputIndicators; }
+
+    InputParam* getInputConfigEnvImpactsParam()  const { return mInputConfigEnvImpacts; }
+    InputParam* getInputEnvImpactsParam()        const { return mInputEnvImpacts; }
+    InputParam* getInputConfigPortImpactsParam() const { return mInputConfigPortImpacts; }
+    InputParam* getInputPortImpactsParam()       const { return mInputPortImpacts; }
+    InputParam* getInputPortImpactsParamTS()     const { return mTSInputPortImpacts; }
 
     // ---------------------------------------------------------------------
     // Economic & size expressions
@@ -523,7 +517,9 @@ public:
     // ---------------------------------------------------------------------
     // Time step & horizon management
     // ---------------------------------------------------------------------
-    inline double TimeStep(uint i) const { return mTimeSteps[i]; }
+    inline double TimeStep(uint i) const { 
+        return mTimeSteps[i]; 
+    }
     std::vector<double>& timesteps() { return mTimeSteps; }
 
     void setNpdtPast(uint i) { mNpdtPast = i; }
@@ -572,6 +568,7 @@ public:
 
     std::string      ExpUnit(const std::string& aExpressionName);       // unit value of a given expression
     const UnitParam* pExpUnitParam(const std::string& aExpressionName); // a pointer to the UnitParam of a given expression
+    const FlagParam* pExpIsUsed(const std::string& aExpressionName);    // a pointer to the FlagParam of a given expression
 
     std::string getAbsoluteFileName(const std::string& filename) const;
 
@@ -592,30 +589,11 @@ protected:
     // Private helpers
     // ---------------------------------------------------------------------
 
-    // Validate that all bus-connected ports use consistent variable names
-    int checkBusSameValueVarName(MilpPort* port);
-     
-    // Validate flow-balance variable naming for bus-type models
-    virtual int checkBusFlowBalanceVarName(
-        MilpPort* port,
-        int& inumberchange,
-        std::string& varUseCheck
-    );
-    
-    // Assign default variable names for a port when not explicitly provided
-    virtual bool defineDefaultVarNames(MilpPort* port);
-    
     // Ensure a variable name follows model naming conventions
-    int checkVariable(const std::string variable) const;
+    int checkVariable(const std::string& variable) const;
     
-    // Validate that the port unit is consistent with model expectations
-    int checkUnit(MilpPort* port);
-    
-    // ---------------------------------------------------------------------
-    // Exception handling 
-    // ---------------------------------------------------------------------
-
-    Cairn_Exception mException; /** Stores the last exception raised inside the submodel */
+    // dump IO expressions
+    void dumpIOExpressions() const;
 
     // ---------------------------------------------------------------------
     // Model identity & classification 
@@ -628,7 +606,6 @@ protected:
     // ---------------------------------------------------------------------
 
     MIPModeler::MIPModel* mModel;       /** Pointer to the global MILP model */
-    MilpComponent* mParentCompo;        /** Pointer to the parent component that owns this submodel */
     EnergyVector* mMainCarrier;         /** Pointer to the main energy carrier */
 
     // ---------------------------------------------------------------------
@@ -688,11 +665,16 @@ protected:
     // Input parameters (settings, time series, impacts, performance) 
     // ---------------------------------------------------------------------
 
-    InputParam* mInputParam;          /** Constant parameters from settings file */
+    InputParam* mInputConfigParam;    /** Scalar configuration parameters from settings file */
+    InputParam* mInputParam;          /** Scalar parameters from settings file */
     InputParam* mInputTimeSeries;     /** Time-series data from description files */
-    InputParam* mInputEnvImpacts;     /** Environmental impacts selected by the user */
-    InputParam* mInputPortImpacts;    /** Port-level environmental impacts */
-    InputParam* mTSInputPortImpacts;  /** Time-series of port environmental impacts */
+
+    InputParam* mInputConfigEnvImpacts;  /** Environmental impacts configuration parameters */
+    InputParam* mInputEnvImpacts;        /** Environmental impacts parameters */
+    InputParam* mInputConfigPortImpacts;       /** Port-level environmental impacts configuration parameters */
+    InputParam* mInputPortImpacts;       /** Port-level environmental impacts parameters */
+    InputParam* mTSInputPortImpacts;     /** Time-series of port environmental impacts */
+
     InputParam* mInputPerfParam;      /** Performance parameters from CSV data files */
     InputParam* mInputIndicators;     /** Indicators selected for export */
 
@@ -703,7 +685,6 @@ protected:
     double mWeight;                                /** Component weight (used in size optimization) */
     bool   mLPWeightOptimization;                  /** Whether LP sizing is used for weight optimization */
     bool   mLPModelOnly;                           /** Whether only the LP model is used (no MILP) */
-    std::string mWeightUnit;                       /** Unit of the weight parameter */
     std::vector<std::string> mPossibleWeightUnits; /** Allowed units for weight */
     double mMaxValue;                              /** Maximum allowed size value */
     double mMinValue;                              /** Minimum allowed size value */

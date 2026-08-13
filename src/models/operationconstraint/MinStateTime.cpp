@@ -20,6 +20,8 @@ mNbShutDowns(2, 0.),
 mLevStartUpsCost(2, 0.),
 mLevShutDownsCost(2, 0.)
 {
+    mAddStateVariable = true; /* always add state constraints */
+    mAddStartUpShutDownVariable = true; /* always add StartUpShutDown constraints */
 }
 
 MinStateTime::~MinStateTime()
@@ -99,11 +101,7 @@ int MinStateTime::checkConsistency()
 
 void MinStateTime::computeInitialData()
 {
-    mAddStateVariable = true; /* always add state constraints */
-    mAddStartUpShutDownVariable = true; /* always add StartUpShutDown constraints */
 }
-
-
 
 void MinStateTime::computeModelContribution()
 {
@@ -133,17 +131,21 @@ void MinStateTime::computeModelContribution()
 
 void MinStateTime::computeAllIndicators(const double* optSol)
 {
-    OperationSubModel::computeDefaultIndicators(optSol);
+    OperationSubModel::computeAllIndicators(optSol);
 
     mNbStartUps.at(0) = 0.;
     mNbShutDowns.at(0) = 0.;
     mLevStartUpsCost.at(0) = 0.;
     mLevShutDownsCost.at(0) = 0.;
+
+    auto* compo = parentComponent();
+    const double ExtrapolationFactor = compo ? compo->ExtrapolationFactor() : 1.0;
+
     for (uint64_t t = 0; t < mHorizon; ++t) { // PLAN
         mNbStartUps.at(0) += mExpStartUp.at(t).evaluate(optSol);
         mNbShutDowns.at(0) += mExpShutDown.at(t).evaluate(optSol);
-        if (mAddStartUpCost) mLevStartUpsCost.at(0) += mExpStartUp.at(t).evaluate(optSol) * mStartUpCost * mParentCompo->ExtrapolationFactor();
-        if (mAddShutDownCost) mLevShutDownsCost.at(0) += mExpShutDown.at(t).evaluate(optSol) * mShutDownCost * mParentCompo->ExtrapolationFactor();
+        if (mAddStartUpCost) mLevStartUpsCost.at(0) += mExpStartUp.at(t).evaluate(optSol) * mStartUpCost * ExtrapolationFactor;
+        if (mAddShutDownCost) mLevShutDownsCost.at(0) += mExpShutDown.at(t).evaluate(optSol) * mShutDownCost * ExtrapolationFactor;
     }
     for (uint64_t t = 0; t < *mptrTimeshift; ++t) { // HIST
         mNbStartUps.at(1) += mExpStartUp.at(t).evaluate(optSol);

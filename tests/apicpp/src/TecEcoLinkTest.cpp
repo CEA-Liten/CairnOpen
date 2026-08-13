@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -56,10 +56,10 @@ int main()
 	TESTAPI("Run 1", vSolution = m_Problem.run())
 
 	// Check status
-	TESTAPI2("Check status of run 1", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
+	TESTAPIBOOL("Check status of run 1", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
 
 	// Compare results
-	TESTAPI2("Compare results 1",
+	TESTAPIBOOL("Compare results 1",
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 
@@ -73,10 +73,10 @@ int main()
 	TESTAPI("Run 2", vSolution = m_Problem.run(run2Dir))
 
 	// Check status
-	TESTAPI2("Check status of run 2", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
+	TESTAPIBOOL("Check status of run 2", TestUtils::compare_scalar(vSolution.get_Status(), "Optimal", eString))
 
 	// Compare results
-	TESTAPI2("Compare results 2",
+	TESTAPIBOOL("Compare results 2",
 		TestUtils::ComparaisonCsvFile(ResultSize10FileName, ReferenceResultSize10FileName)
 	)
 

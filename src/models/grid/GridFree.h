@@ -36,30 +36,30 @@ public:
 //----------------------------------------------------------------------------------------------------
     void computeEconomicalContribution();
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters() 
+    void declareModelConfigurationParameters() override
     {
-        GridSubModel::declareDefaultModelConfigurationParameters() ;
+        GridSubModel::declareModelConfigurationParameters() ;
         //bool
-        addParameter("UseConstantPrice", &mUseConstantPrice, false, false, true, "If true: override default price in energy carrier and temporal price in timeseries by ConstantBuyPrice and ConstantSellPrice parameters");
-        addParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "", "", "TimeSeriesForecast"); //To be documented
-        addParameter("SeasonalCostsFree", &mSeasonalCostsFree, false, false, true, "", "", "TimeSeriesForecast"); //To be documented       
+        addConfigParameter("UseConstantPrice", &mUseConstantPrice, false, false, true, "If true: override default price in energy carrier and temporal price in timeseries by ConstantBuyPrice and ConstantSellPrice parameters");
+        addConfigParameter("SeasonalCosts", &mSeasonalCosts, false, false, true, "", "", "TimeSeriesForecast"); //To be documented
+        addConfigParameter("SeasonalCostsFree", &mSeasonalCostsFree, false, false, true, "", "", "TimeSeriesForecast"); //To be documented       
     }
     //----------------------------------------------------------------------------------------------------
-    void declareModelInterface() {
-        GridSubModel::declareDefaultModelInterface();
+    void declareModelInterface() override {
+        GridSubModel::declareModelInterface();
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters() {
-        GridSubModel::declareDefaultModelParameters();
+    void declareModelParameters() override {
+        GridSubModel::declareModelParameters();
 
         addParameter("ConstantBuyPrice", &mConstantBuyPrice, 0., SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isExtraction, this }) }), "Constant buy price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
         addParameter("ConstantSellPrice", &mConstantSellPrice, 0., SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), SFunctionFlag({ eFTypeNotAnd, {}, { &mUseConstantPrice}, SExtFunctionFlag({ &isInjection, this }) }), "Constant sell price to override default price in energy carrier and temporal price in timeseries. Only used if UseConstantPrice is True.", SFunctionUnit({ eFTypeDivision, { pCurrency(), mMainCarrier->pStorageUnit()} }));
         addParameter("PriceMultiplier", &mPriceMultiplier, 1., false, true, "Multiplier coefficient on price acting on constant prices or timeseries.", "-");            
     }
 
-    void declareModelIndicators() {
-        GridSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    void declareModelIndicators() override {
+        GridSubModel::declareModelIndicators();
     }
 //----------------------------------------------------------------------------------------------------
 

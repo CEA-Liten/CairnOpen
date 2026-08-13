@@ -3,7 +3,7 @@
 #include <list>
 #include <string>
 #include <vector>
-#include <utility> // for std::pair
+#include <utility> 
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
@@ -20,7 +20,6 @@ namespace fs = std::filesystem;
 
 constexpr auto CSV_SEPARATOR = ';';
 
-
 static bool starts_with(std::string_view str, std::string_view prefix)
 {
     return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
@@ -28,11 +27,11 @@ static bool starts_with(std::string_view str, std::string_view prefix)
 
 enum ECodeError {
     noError = 0,
-    errSize = 1,  //File Size Error(size not equal - empty)
-    errCompare = 2,  // Error in the compare Method - Not Equal
-    noFindCmp = 3,  // composant non trouvé
+    errSize = 1,      // file Size Error(size not equal - empty)
+    errCompare = 2,   // error in the compare Method - Not Equal
+    noFindCmp = 3,    // composant non trouvé
     errSet = 4,
-    errType = 5 //parameter type is not supported
+    errType = 5       // parameter type is not supported
 };
 
 enum EParamType {
@@ -63,31 +62,35 @@ struct tokens : std::ctype<char>
 };
 
 #define TESTAPI(name, code) \
-try { \
-    cout << "--- Test " << name << endl; \
-    code; \
-} \
-catch (std::exception& error) { \
-    cout << "Error test " << name << ", " << error.what() << endl; \
-    return errSet;  \
-} \
+    /* fail in case of error */ \
+    try { \
+        cout << "--- Test " << name << endl; \
+        code; \
+    } \
+    catch (std::exception& error) { \
+        cout << "Error test " << name << ", " << error.what() << endl; \
+        return errSet;  \
+    } \
 
 #define TESTAPIFALSE(name, code) \
-try { \
-    cout << "--- Test " << name << endl; \
-    code; \
-    cout << "Error test " << name << ", must be in error" << endl; \
-    return errSet;  \
-} \
-catch (std::exception& error) {} \
+    /* fail in case of No error */ \
+    try { \
+        cout << "--- Test " << name << endl; \
+        code; \
+        cout << "Error test " << name << ", must be in error" << endl; \
+        return errSet;  \
+    } \
+    catch (std::exception& error) {} \
 
-#define TESTAPI2(name, code) \
+#define TESTAPIBOOL(name, code) \
+    /* fail if false */ \
+    cout << "--- Test " << name << endl; \
+	if (!(code)) { cout << "Error test " << name << endl; return errSet; }
+
+#define TESTAPIBOOLFALSE(name, code) \
+    /* fail if true */ \
     cout << "--- Test " << name << endl; \
 	if (code) { cout << "Error test " << name << endl; return errSet; }
-
-#define TESTAPI2FALSE(name, code) \
-    cout << "--- Test " << name << endl; \
-	if (!code) { cout << "Error test " << name << endl; return errSet; }
 
 #define TESTVALUE(var, ref) \
 		if (fabsf(var - ref)>1e-6) return 1; \
@@ -102,35 +105,28 @@ using namespace std;
 
 class TestUtils {
 public:
-	static void Display_list(const t_list InputList, const string& a_Title = "");
-	static void Display_Vector(vector<vector<string>> InputVector);
-	static vector<vector<string>> ParserTxt(const string& cheminFichier);
-    static int compare_scalar(const t_value& val, const t_value& ref, const EParamType& type);
-	static int compare_lists(const t_list &InputList, const t_list &RefList);
-    static int contains(const t_list& InputList, const std::string& val);
-	static int CreateRefrenceList(const vector<vector<string>>& DataRef, t_list& OutputSolverList);
-	static map<string, string> ParseDictionaryFile(const string& cheminFichier);
-	static string SearchValueInDict(const string& filePath, const string& PortName);
-	static int ComparePortValue(const std::string& a_ComponentName, const std::string& InputPortValue);
-	static void Display_Dict(std::map<std::string, std::string>& dict);
-	static int compare_dict(const t_dict& inputDict, const t_dict& refDict);
+    // --- Comparison helpers (return bool) ---
+    static bool compare_scalar(const t_value& val, const t_value& ref, EParamType type);
+    static bool compare_lists(const t_list& inputList, const t_list& refList);
+    static bool compare_dict(const t_dict& inputDict, const t_dict& refDict);
+    static bool contains(const t_list& inputList, const std::string& val);
+    static bool CreateReferenceList(const std::vector<t_list>& dataRef, t_list& outputSolverList);
+
+    // --- Converters / formatters ---
     static std::string valueToString(const t_value& value);
-	static int ReadNameParamCsvFile(const std::string filename, t_list csvData);
-    static std::vector<std::string> parseLineCSV(const std::string& filename, const char& a_sep = ';');
-	static int Identify_Type(const std::string& str1);
-	static map<string, string> ParsingDictionaryFromFile(const string& cheminFichierDict);
-	static int SearchAndDeleteFromDict(t_dict& TargetDict, const string& TargetKeyToBeDeleted);
-	static void updateElementInDict(map <string, string>& givenMap, const string givenKey, const string newValue);
-	static int CheckTestStatus(t_list gtl_TestStatusList);
-	static int ComparePortValue(const string& ValueToBeCompared, const string& ComponentName, const string& PortName, const string& PortAttribut, vector<vector<string>>& PortValueReferenceList);
-    static std::vector<std::string> readCSV(const std::string& filename);
-    static int ComparaisonCsvFile(string const CsvFilePath1, string const CsvFilePath2);
-    static std::vector<std::string> str_to_vector(const std::string& str);
-    static map<std::string, std::map<std::string, std::string>> ReadDataFileWithIndex(const std::string& filePath);
-    static string GetDataWithIndex(const std::map<std::string, std::map<std::string, std::string>>& data, const std::string& section, const std::string& key);
-    static t_dict PreparePortSettings(const std::map<std::string, std::map<std::string, std::string>>& data, const std::string& section);
+
+    // --- CSV / file helpers ---
+    static t_list readCSV(const std::string& filename);
+    static t_list parseLineCSV(const std::string& a_line, char a_sep = CSV_SEPARATOR);
+    static vector<t_list> ParserTxt(const string& cheminFichier);
+    static bool ComparaisonCsvFile(const std::string& csvFilePath1, const std::string& csvFilePath2);
+
+    // --- Display / utilities ---
+    static void Display_list(const t_list& inputList, const std::string& title = "");
+    static void Display_Vector(const std::vector<t_list>& inputVector);
     static void skipUTF8BOM(std::istream& in);
 };
+
 
 class Logger 
 {

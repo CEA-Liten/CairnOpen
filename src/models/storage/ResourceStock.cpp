@@ -34,6 +34,6 @@ void ResourceStock::computeEconomicalContribution()
 
 void ResourceStock::computeAllIndicators(const double* optSol)
 {
-    StorageSubModel::computeDefaultIndicators(optSol);
+    StorageSubModel::computeAllIndicators(optSol);
 }
 

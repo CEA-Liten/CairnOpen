@@ -1,47 +1,48 @@
-#ifndef BusSubModel_H
-#define BusSubModel_H
+/*
+* \file		BusSubModel.h
+* \brief	BusSubModel is a specialized SubModel implementation representing a bus. 
+* \version	1.0
+* \author	Ali KASSEM
+* \date		13/09/2024
+*/
 
-class BusCompo;
+#ifndef BUSSUBMODEL_H
+#define BUSSUBMODEL_H
+
+#include <string>
+#include <vector>
 
 #include "SubModel.h"
+
+class BusCompo; 
+class MilpPort;
 
 class CAIRNCORESHARED_EXPORT BusSubModel : public SubModel
 {
 public:
-    BusSubModel(CairnObject* aParent = nullptr);
-    ~BusSubModel();
+    explicit BusSubModel(CairnObject* aParent);
 
-    int checkConsistency() override;
+    // --- SubModel interface -------------------------------------------------
+    int  checkPortCount()   override { return 0; }
+    int  checkPorts()       override;
+    int  checkConsistency() override;
+    void buildModel()       override final; /** Sealed - models must not override buildModel() */
 
-    void buildModel() override final; /* prevent models from overriding buildModel() */
-    void computeDefaultIndicators(const double* optSol);
+    void initDefaultPorts() override {}     /** Bus has no default ports */
 
-    void declareDefaultModelConfigurationParameters() { 
-        SubModel::declareDefaultModelConfigurationParameters();
-    }
-    void declareDefaultModelParameters() { }
-
-    void declareDefaultModelInterface()
-    {
-        SubModel::declareDefaultModelInterface();
-    }
-
-    void declareDefaultModelIndicators() { }
-
-    void initDefaultPorts() { }; //Bus doesn't have default ports!
-
-    std::string ObjectiveType() { return mObjectiveType; };
-
-    const std::vector<MilpPort*>& LinkedPorts() const { return mLinkedPorts; }
-    void addLink(MilpPort* linkedPort, BusCompo* parnetBus);
-    void removeLink(MilpPort* linkedPort);
-
+    // --- Bus-specific interface -------------------------------------------------
+    std::string ObjectiveType() const { return mObjectiveType; }
     std::vector<std::string> getPossibleObjectiveTypes() const;
+
+    // --- Linked ports - components connected to this bus ------------------------ 
+    const std::vector<MilpPort*>& LinkedPorts() const { return mLinkedPorts; }
+    void addLink(MilpPort* linkedPort, BusCompo* parentBus);  
+    void removeLink(MilpPort* linkedPort);
+    int  checkConnections();
 
 protected:
     std::string mObjectiveType;
-
-    std::vector<MilpPort*> mLinkedPorts{};      /** List of other component ports that are linked to this bus */
+    std::vector<MilpPort*> mLinkedPorts{}; /** Non-owning: ports from components linked to this bus (represent links) */
 };
 
-#endif // BusSubModel_H
+#endif // BUSSUBMODEL_H

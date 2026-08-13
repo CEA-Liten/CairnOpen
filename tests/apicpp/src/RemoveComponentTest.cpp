@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -94,7 +94,7 @@ int main()
 		)
 		vSolution.exportTimeSeries();
 
-		TESTAPI2("Compare results",
+		TESTAPIBOOL("Compare results",
 			TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 		)
 
@@ -121,7 +121,7 @@ int main()
 		)
 		vSolution2.exportTimeSeries();
 
-		TESTAPI2("Compare results 2",
+		TESTAPIBOOL("Compare results 2",
 			TestUtils::ComparaisonCsvFile(ResultFileNameAfterReAddingComponent, ReferenceResultFileName)
 		)
 	}

@@ -58,6 +58,9 @@ if (BUILD_CAIRN)
     # Generate resources/modelTypes.txt (needed for api)
     file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/modelTypes.txt CONTENT "${list_models}")
     install(FILES ${CMAKE_BINARY_DIR}/modelTypes.txt DESTINATION resources)
+
+    # Add compatibility scripts to resources
+    install(DIRECTORY ${CMAKE_HOME_DIRECTORY}/scripts/version_compatibility DESTINATION resources)
 endif()
 
 # ============= Doc configuration =============
@@ -84,13 +87,16 @@ if (BUILD_DOC)
     endif()
 
     # virtual environment 	
-	python_venv(${PYTHON_VENVDOC} ${Python_EXECUTABLE} REQS ${CAIRNDOC_HOME}/requirements.txt PCK ${CAIRN_WHL} FORCE ON)		
+	python_venv(${PYTHON_VENVDOC} ${Python_EXECUTABLE} REQS ${CAIRNDOC_HOME}/requirements.txt PCK ${CAIRN_WHL})		
 	
     # Extracting RST parts from Cairn source code...   
     set(DOC_CEA FALSE)
     if (${WITH_PRIVATEMODELS})
         set(DOC_CEA TRUE)
     endif()
+
+    execute_process(COMMAND ${Python_EXECUTABLE} apiDocGen.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc)
 
     execute_process(COMMAND ${Python_EXECUTABLE} userDocGenRST.py ${DOC_CEA}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc)

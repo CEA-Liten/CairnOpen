@@ -28,9 +28,9 @@ public:
     void computeAllIndicators(const double* optSol) override;
 
 
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        StorageSubModel::declareDefaultModelInterface();
+        StorageSubModel::declareModelInterface();
 
         // register model expression to be used for Interfacing with global MilpProblem, Bus, other MilpComponent
         // Caution : Flux will be signed wrt to Bus balance impact : >0 if energy source, <0 else.
@@ -38,24 +38,24 @@ public:
     }
     //----------------------------------------------------------------------------------------------------
 
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        StorageSubModel::declareDefaultModelConfigurationParameters();
+        StorageSubModel::declareModelConfigurationParameters();
   }
 
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        StorageSubModel::declareDefaultModelParameters();
+        StorageSubModel::declareModelParameters();
         //double
         addParameter("TotalMaxSize", &mTotalMaxSize, 1., false, true, "Nb of available stocks", "");
     }
 
-    void declareModelIndicators()
+    void declareModelIndicators() override
     {
-        StorageSubModel::declareDefaultModelIndicators(&mExportIndicators);
+        StorageSubModel::declareModelIndicators();
     }
 
-    void initDefaultPorts() {
+    void initDefaultPorts() override {
         mDefaultPorts.clear();
         //PortFlux - left
         std::map<std::string, std::string> portFlux;

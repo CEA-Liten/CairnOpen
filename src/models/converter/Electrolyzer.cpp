@@ -11,6 +11,7 @@ Electrolyzer::Electrolyzer(CairnObject* aParent) :
     mPci_H2(1.)
 {
     mPossibleModelClasses = { "Electrolyzer", "ElectrolyzerDetailed" };
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 Electrolyzer::~Electrolyzer()
@@ -21,7 +22,7 @@ int Electrolyzer::checkConsistency()
 {
     int ier = TechnicalSubModel::checkConsistency();
     if (mPortH2MassFlowRate->useProfileLHV()) {
-        cCritical() << "ERROR: TS for LHV is not allowed for hydrogen ";
+        cError() << "ERROR: TS for LHV is not allowed for hydrogen ";
         return -1;
     }
     return ier;
@@ -32,8 +33,6 @@ void Electrolyzer::computeInitialData()
 {
     setMaxValue(mMaxPower_H2);
     setMinValue(mMinSize);
-
-    mAddStateVariable = true; /* always add state constraints */
 }
 
 void Electrolyzer::computeModelContribution()
@@ -165,5 +164,5 @@ void Electrolyzer::computeEconomicalContribution() {
 //-----------------------------------------------------------------------------
 void Electrolyzer::computeAllIndicators(const double* optSol) // DO NOT SHOW
 {
-    ConverterSubModel::computeDefaultIndicators(optSol);
+    ConverterSubModel::computeAllIndicators(optSol);
 }

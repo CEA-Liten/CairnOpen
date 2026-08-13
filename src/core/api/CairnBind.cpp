@@ -77,7 +77,8 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("all_models", &CairnAPI::get_PossibleModelNames)
         .def_property_readonly("carrier_types", &CairnAPI::get_EnergyCarrierTypes)
         .def_property_readonly("solvers", &CairnAPI::get_Solvers)
-        .def("close_study", &CairnAPI::close_Study, "close the current study");
+        .def("close_study", &CairnAPI::close_Study, "close the current study")
+        .def("apply_compatibility_script", &CairnAPI::apply_Compatibility_Script, "apply forward-compatibility updates to the current study");
 
     py::class_<CairnAPI::OptimProblemAPI>(m, "OptimProblem")
         .def("export_parameters", &CairnAPI::OptimProblemAPI::export_Parameters, py::arg("fileName") = "", py::arg("encoding") = "UTF-8",
@@ -91,7 +92,7 @@ PYBIND11_MODULE(cairn, m) {
         .def("add_timeseries", py::overload_cast<const std::string&>(&CairnAPI::OptimProblemAPI::add_TimeSeries), "adds a given timeseries file")
         .def("add_onetimeseries", py::overload_cast<const t_dict&>(&CairnAPI::OptimProblemAPI::add_TimeSeries), "adds one timeseries in dictionary format")
         .def("run", &CairnAPI::OptimProblemAPI::run, py::arg("resultsPath") = "", py::arg("coSim") = false, "runs the optim problem")
-        .def("run_sensitivity", &CairnAPI::OptimProblemAPI::runSensitivity, py::arg("sampling"), py::arg("max_time"), py::arg("indicators"), "runs sensitivity study")
+        .def("run_sensitivity", &CairnAPI::OptimProblemAPI::runSensitivity, py::arg("sampling"), py::arg("max_time"), py::arg("indicators"), py::arg("on_iter") = py::none(), "runs sensitivity study")
         .def("create_bus", &CairnAPI::OptimProblemAPI::create_Bus, "creates and returns a new bus with a given name, model and energy carrier, e.g., create_bus('H2_Bus', 'NodeLaw', vH2)")
         .def("get_bus", &CairnAPI::OptimProblemAPI::get_Bus, "returns a given bus")
         .def("remove_bus", py::overload_cast<CairnAPI::BusAPI&>(&CairnAPI::OptimProblemAPI::remove_Bus), "removes a given bus")
@@ -105,7 +106,8 @@ PYBIND11_MODULE(cairn, m) {
         .def("get_indicators_values", &CairnAPI::OptimProblemAPI::get_All_IndicatorValues, py::arg("range") = "PLAN", "returns the indicators of all components for a given range, by default PLAN value")
         .def("get_tech_eco_analysis", &CairnAPI::OptimProblemAPI::get_TecEcoAnalysis, "return TecEcoAnalysis")
         .def("get_simulation_control", &CairnAPI::OptimProblemAPI::get_SimulationControl, "return SimulationControl")
-        .def("get_solver", &CairnAPI::OptimProblemAPI::get_Solver, "return Solver")
+        .def("get_solver", &CairnAPI::OptimProblemAPI::get_Solver, "return Solver object")
+        .def("set_solver", &CairnAPI::OptimProblemAPI::set_Solver, "set Solver name")
         .def("add_label", &CairnAPI::OptimProblemAPI::add_Label, "add a label to the problem")
         .def("remove_label", &CairnAPI::OptimProblemAPI::remove_Label, "remove a label from the problem")
         .def_property("labels", &CairnAPI::OptimProblemAPI::get_Labels, &CairnAPI::OptimProblemAPI::set_Labels, "get/set the labels of the problem")

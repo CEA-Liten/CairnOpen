@@ -39,14 +39,14 @@ int main()
 
 	// Get/Set a param comment
 	const std::string fixedOpexComment = "This is FixedOpex"; // Should match the Opex comment in vFileName
-	//TESTAPI2("Verify FixedOpex comment:",
+	//TESTAPIBOOL("Verify FixedOpex comment:",
 	//	TestUtils::compare_scalar(vELY_PEM.get_SettingComment("FixedOpex"), fixedOpexComment, eString)
 	//)
 
 	const std::string capexComment = "This is Capex";
 	TESTAPI("Set Capex comment", vELY_PEM->set_SettingComment("Capex", capexComment))
 
-	TESTAPI2("Verify Capex comment",
+	TESTAPIBOOL("Verify Capex comment",
 		TestUtils::compare_scalar(vELY_PEM->get_SettingComment("Capex"), capexComment, eString)
 	)
 
@@ -57,7 +57,7 @@ int main()
 	t_dictComment vELY_PEMComments;
 	TESTAPI("Get comments of ELY_PEM params", vELY_PEMComments = vELY_PEM->get_SettingComments())
 
-	TESTAPI2("Verify MaxPower comment",
+	TESTAPIBOOL("Verify MaxPower comment",
 		TestUtils::compare_scalar(vELY_PEMComments["MaxPower"], maxPowerComment, eString)
 	)
 

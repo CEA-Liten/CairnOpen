@@ -62,10 +62,10 @@ public:
     void computeEconomicalContribution();
     void computeAllIndicators(const double* optSol) override;
 //----------------------------------------------------------------------------------------------------
-    void declareModelInterface()
+    void declareModelInterface() override
     {   // register expression for model Interface with global MilpProblem, Bus, other MilpComponent
         // Caution : Flux must be signed wrt to Bus balance impact : >0 if energy source, <0 else.
-        ConverterSubModel::declareDefaultModelInterface();
+        ConverterSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
         addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortPowerIn->pFluxUnit()); /* Maximum sizing power, ie optimal power if negative maximum power was given in input */
@@ -74,22 +74,22 @@ public:
     }
 
     //----------------------------------------------------------------------------
-    void declareModelConfigurationParameters() {
-        ConverterSubModel::declareDefaultModelConfigurationParameters();
+    void declareModelConfigurationParameters() override {
+        ConverterSubModel::declareModelConfigurationParameters();
         //bool
-        addParameter("PiecewiseEfficiency", &mPiecewiseEfficiency, false, false, true, "Add optional production piecewise efficiency if true - default = false", "", "PiecewiseEfficiency");
+        addConfigParameter("PiecewiseEfficiency", &mPiecewiseEfficiency, false, false, true, "Add optional production piecewise efficiency if true - default = false", "", "PiecewiseEfficiency");
         //The default value of mTimeSeriesPiecewiseEfficiency should be false. Otherwise, the parameter "NbSetpoints" will become always mandatory. 
         //This is because parameter "NbSetpoints" is declared before reading the value of "TimeSeriesPiecewiseEfficiency" from .json. Maybe we should consider passing isBlocking by reference to addParameter
         //Note, "NbSetpoints" should stay in declareModelConfigurationParameters
-        addParameter("TimeSeriesPiecewiseEfficiency", &mTimeSeriesPiecewiseEfficiency, false, false, true, "", ""); /** Add optional production piecewise efficiency if true - default = false */
+        addConfigParameter("TimeSeriesPiecewiseEfficiency", &mTimeSeriesPiecewiseEfficiency, false, false, true, "", ""); /** Add optional production piecewise efficiency if true - default = false */
         //int
-        addParameter("NbSetpoints", &mNbSetpoints, 0, &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency); /** Number of Setpoints : CompoName.InputSetPoint#1, .., CompoName.InputSetPoint#NbSetpoints and CompoName.OutputSetPoint#1, .., CompoName.OutputSetPoint#NbSetpoints */
+        addConfigParameter("NbSetpoints", &mNbSetpoints, 0, &mTimeSeriesPiecewiseEfficiency, &mTimeSeriesPiecewiseEfficiency); /** Number of Setpoints : CompoName.InputSetPoint#1, .., CompoName.InputSetPoint#NbSetpoints and CompoName.OutputSetPoint#1, .., CompoName.OutputSetPoint#NbSetpoints */
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        ConverterSubModel::declareDefaultModelParameters();
+        ConverterSubModel::declareModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // InputParam instance for input data coming from User File : maximum power, performance maps...
         // InputData instance for input data coming from Persee/PEGASE memory : time series (coming from PEGASE), state variables...
@@ -120,16 +120,17 @@ public:
         addPerfParam("PowerOutSetPoint", &mPowerOutSetPoint, &mPiecewiseEfficiency, &mPiecewiseEfficiency, "x-axis in the 1D-map of efficiency", mMainCarrier->pPowerUnit());
     }
 
-    void declareModelIndicators() {
-        ConverterSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    void declareModelIndicators() override {
+        ConverterSubModel::declareModelIndicators();
     }
 
-//-------------------------------------------------------------------------------------------------
-    void mapEfficiency(std::vector<double> aPowerInSetPoint , std::vector<double> aPowerOutSetPoint, const bool aRelaxedFormSOE);
-    void timeSeriesMapEfficiency(std::vector<std::vector<double>> aPowerInSetPoint, std::vector<std::vector<double>> aPowerOutSetPoint, const bool aRelaxedFormSOE);
-//----------------------------------------------------------------------------------------------------
+    void mapEfficiency(const std::vector<double>& aPowerInSetPoint, 
+        const std::vector<double>& aPowerOutSetPoint, const bool aRelaxedFormSOE);
+
+    void timeSeriesMapEfficiency(const std::vector<std::vector<double>>& aPowerInSetPoint,
+        const std::vector<std::vector<double>>& aPowerOutSetPoint, const bool aRelaxedFormSOE);
   
-    void initDefaultPorts()
+    void initDefaultPorts() override
     {
         mDefaultPorts.clear();
         //PortPowerIn - left

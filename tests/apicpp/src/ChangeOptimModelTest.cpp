@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -49,7 +49,7 @@ int main()
 	CairnAPI::SolutionAPI vSolution;
 	TESTAPI("Run simulation", vSolution = m_Problem.run())
 
-	TESTAPI2("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
+	TESTAPIBOOL("Compare results", TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName))
 	
 	return noError;
 }

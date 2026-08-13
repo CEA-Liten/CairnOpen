@@ -215,3 +215,87 @@ CairnAPI::OptimProblemAPI CairnAPI::get_Study()
 	}
 	return vRet;
 }
+
+CairnAPI::OptimProblemAPI CairnAPI::apply_Compatibility_Script()
+{
+	if (!m_Cairn) 
+		CairnAPIUtils::setError(CairnAPIUtils::errDefault, "No study exists! Read a study first!");
+
+	const std::string scriptsDir =
+		std::string(std::getenv("CAIRN_BIN")) + "/../resources/version_compatibility";
+
+	const std::string studyVersion = m_Cairn->studyVersion();
+	const auto fromVersion = CairnUtils::parseVersion(studyVersion);   // { major, minor, patch }
+
+	const std::string currentRaw = CairnUtils::extractVersion(GS::Cairn_Release);
+	const auto toVersion = CairnUtils::parseVersion(currentRaw);
+
+	std::vector<std::string> scripts;
+
+	// --- Scan directory -------------------------------------------------------
+	for (const auto& entry : std::filesystem::directory_iterator(scriptsDir))
+	{
+		if (!entry.is_regular_file())
+			continue;
+
+		// Only accept .py files
+		const std::filesystem::path p = entry.path();
+		if (p.extension() != ".py")
+			continue;
+
+		const std::string scriptname = entry.path().filename().string();
+
+		auto range = CairnAPIUtils::extractVersionRange(scriptname);
+		if (!range.has_value())
+			continue;
+
+		const auto& [vStart, vEnd] = *range;
+
+		// --- Check if script applies -----------------------------------------
+		const std::pair<int, int> fromMajorMinor = CairnAPIUtils::versionToMajorMinor(fromVersion);
+		const std::pair<int, int> toMajorMinor   = CairnAPIUtils::versionToMajorMinor(toVersion);
+
+		if (CairnAPIUtils::versionRangeIntersects(fromMajorMinor, toMajorMinor, vStart, vEnd))
+			scripts.push_back(entry.path().string());
+	}
+
+	// --- Sort scripts by start version (deterministic order) ------------------
+	std::sort(scripts.begin(), scripts.end(),
+		[&](const std::string& a, const std::string& b)
+		{
+			auto ra = CairnAPIUtils::extractVersionRange(std::filesystem::path(a).filename().string());
+			auto rb = CairnAPIUtils::extractVersionRange(std::filesystem::path(b).filename().string());
+			return ra->first < rb->first;   // compare start version
+		});
+
+	// --- Execute scripts ------------------------------------------------------
+	const std::string archFile = m_Cairn->archFile();
+	for (const auto& script : scripts)
+	{
+		const std::string cmd =
+			"python \"" + script + "\" \"" + archFile + "\"";
+
+		int ret = std::system(cmd.c_str());
+		if (ret != 0)
+			cWarning() << "Compatibility script failed: " + script;
+	}
+
+	// --- Update Json version number --------------------------------------------
+	const std::string script = scriptsDir + "/update_version_number.py";
+	const std::string cmd =
+		"python \"" + script + "\" \"" + archFile + "\" \"" + currentRaw + "\"";
+
+	const int ret = std::system(cmd.c_str());
+	if (ret != 0)
+		cWarning() << "update_version_number script failed: "
+			<< script << " (exit code " << ret << ")";
+
+	// If script fail, the number of version might not updated => infinite loop
+	OptimProblem* problem = m_Cairn->getProblem();
+	if(problem)
+		problem->setStudyVersionMatchesCairn(true);
+
+	// Re-load study
+	close_Study();
+	return read_Study(archFile);
+}

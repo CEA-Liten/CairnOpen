@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -53,7 +53,7 @@ int main()
 
 	ely_pem_PortL0->set_SettingValue("Coeff", 2.0);
 
-	TESTAPI2("Verify the value of ELY_PEM.PortL0.coeff",
+	TESTAPIBOOL("Verify the value of ELY_PEM.PortL0.coeff",
 		TestUtils::compare_scalar(ely_pem_PortL0->get_SettingValue("Coeff"), 2.0, eDouble)
 	)
 
@@ -95,7 +95,7 @@ int main()
 	ely_pem_2->get_IndicatorNames();
 	ely_pem_2->get_IndicatorValues("PLAN");
 
-	TESTAPI2("Compare results", 
+	TESTAPIBOOL("Compare results", 
 		TestUtils::ComparaisonCsvFile(ResultFileName, ReferenceResultFileName)
 	)
 	

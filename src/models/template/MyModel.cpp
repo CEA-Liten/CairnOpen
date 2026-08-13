@@ -52,6 +52,27 @@ MyModel::MyModel(CairnObject* aParent) :
      Time series mStoragePriceTS should be resized to e.g. mHorizon but it cannot be done here because mHorizon
      is not defined yet at this point. The correct place to resize mStoragePriceTS is inside setTimeData()
     */
+
+    /* Enable Stateand StartUp / ShutDown constraints
+
+    To always activate state‑related constraints, set the shared flags :
+
+    mAddStateVariable = true;
+    mAddStartUpShutDownVariable = true;
+
+    Note that, these flags may also be exposed as configuration parameters in
+    declareModelConfigurationParameters() :
+
+    addParameter("AddStateConstrains",
+            &mAddStateVariable,
+            false, false, true,
+            "If true: add State constraints", "bool");
+
+    addParameter("AddStartUpShutDownConstrains",
+            &mAddStartUpShutDownVariable,
+            false, false, true,
+            "If true: add StartUp/ShutDown constraints", "bool");
+    */
 }
 
 // =============================================================================
@@ -507,7 +528,7 @@ void MyModel::computeEconomicalContribution()
 * \brief Post-optimization: extract solution values and populate result
 *        indicators. Typically delegates to the parent class helper:
 *
-*   MyModelSubModel::computeDefaultIndicators(optSol);
+*   MyModelSubModel::computeAllIndicators(optSol);
 *
 * All the indicators defined using addIndicator() are automatically
 * computed in MyModelSubModel::computeDefaultIndicators();
@@ -519,7 +540,7 @@ void MyModel::computeEconomicalContribution()
 void MyModel::computeAllIndicators(const double* optSol)
 {
     // [TODO]: Replace StorageSubModel with your actual base class
-    StorageSubModel::computeDefaultIndicators(optSol);
+    StorageSubModel::computeAllIndicators(optSol);
 
     // [TODO] Add custom post-processing computation here. Example:
     //computeProduction(true, mHorizon, mNpdtPast, mExpLosses, optSol, 1., 0., mInternalLosses.at(0));

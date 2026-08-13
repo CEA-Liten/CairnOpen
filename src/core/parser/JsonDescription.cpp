@@ -32,6 +32,10 @@ void JsonDescription::extractJsonData(const std::string& aJsonFile)
 {
     const json jsonData = readJSONFile(aJsonFile);
 
+    // ---- Cairn version ---------------------------------------------
+    //"Saved with Cairn version": "5.2.11",
+
+
     // ---- Single-page format ----------------------------------------
     if (jsonData.contains("Components"))
     {
@@ -61,6 +65,12 @@ void JsonDescription::extractJsonData(const std::string& aJsonFile)
 
         for (auto& [key, value] : jsonData.items())
         {
+            if (CairnUtils::contains(key, "version")
+                && (CairnUtils::contains(key, "Cairn") || CairnUtils::contains(key, "PERSEE")))
+            {
+                mCairnVersionJson = value.get<std::string>();
+            }
+
             if (!CairnUtils::contains(key, "Page") || key == "numberPages")
                 continue;
 

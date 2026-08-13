@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -20,7 +20,7 @@ int test(StudyCTest &a_Test, CairnAPI& a_Cairn, const std::string& a_SolverName)
 		vSolution = vProblem.run(a_SolverName)
 	)
 
-	TESTAPI2FALSE("Check Run 1",
+	TESTAPIBOOL("Check Run 1",
 		a_Test.checkResults("Reference", true, true)
 	)
 
@@ -38,7 +38,7 @@ int test(StudyCTest &a_Test, CairnAPI& a_Cairn, const std::string& a_SolverName)
 		vProblem.run(a_SolverName)
 	)
 
-	TESTAPI2FALSE("Check Run 2",
+	TESTAPIBOOL("Check Run 2",
 		a_Test.checkResults("Reference_run2")
 	)
 
@@ -46,7 +46,7 @@ int test(StudyCTest &a_Test, CairnAPI& a_Cairn, const std::string& a_SolverName)
 		vSolution = vProblem.run(a_SolverName)
 	)
 
-	TESTAPI2FALSE("Check Run 3",
+	TESTAPIBOOL("Check Run 3",
 		a_Test.checkResults("Reference_run2")
 	)
 	
@@ -69,53 +69,53 @@ int main()
 	//Verify the values of some parameters with static ref values
 
 	std::shared_ptr<CairnAPI::MilpComponentAPI> vELY_PEM = m_Problem.get_Component("ELY_PEM");
-	TESTAPI2("Verify the value of ELY_PEM.Capex.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.Capex.",
 		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Capex"), 480000.0, eDouble)
 	)
 
-	TESTAPI2("Verify the value of ELY_PEM.GWP#EmbodiedCoefficient_A.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.GWP#EmbodiedCoefficient_A.",
 		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("Climate change#Global Warming Potential 100 EmbodiedCoefficient_A"), 100.0, eDouble)
 	)
 
-	TESTAPI2("Verify the value of ELY_PEM.ModelClass.",
+	TESTAPIBOOL("Verify the value of ELY_PEM.ModelClass.",
 		TestUtils::compare_scalar(vELY_PEM->get_SettingValue("ModelClass"), std::string("Electrolyzer"), eString)
 	)
 
 	std::shared_ptr < CairnAPI::MilpPortAPI> ely_pem_PortL0 = vELY_PEM->get_Port("PortL0");
-	TESTAPI2("Verify the value of ELY_PEM.PortL0.coeff",
+	TESTAPIBOOL("Verify the value of ELY_PEM.PortL0.coeff",
 		TestUtils::compare_scalar(ely_pem_PortL0->get_SettingValue("Coeff"), 1.0, eDouble)
 	)
 
-	TESTAPI2("Verify the value of ELY_PEM.PortL0.offset",
+	TESTAPIBOOL("Verify the value of ELY_PEM.PortL0.offset",
 		TestUtils::compare_scalar(ely_pem_PortL0->get_SettingValue("Offset"), 0.0, eDouble)
 	)
 
 	std::shared_ptr<CairnAPI::MilpComponentAPI> elec_grid = m_Problem.get_Component("Elec_Grid");
-	TESTAPI2("Verify the value of Elec_Grid.PortR0.GWP#EnvContentCoefficient_A.",
+	TESTAPIBOOL("Verify the value of Elec_Grid.PortR0.GWP#EnvContentCoefficient_A.",
 		TestUtils::compare_scalar(elec_grid->get_SettingValue("PortR0.Climate change#Global Warming Potential 100 EnvContentCoefficient_A"), 20.0, eDouble)
 	)
 
 	std::shared_ptr<CairnAPI::MilpComponentAPI> h2_tank = m_Problem.get_Component("H2_Tank");
-	TESTAPI2("Verify the value of H2_Tank.MaxFlowCharge.",
+	TESTAPIBOOL("Verify the value of H2_Tank.MaxFlowCharge.",
 		TestUtils::compare_scalar(h2_tank->get_SettingValue("MaxFlowCharge"), 1100.0, eDouble)
 	)
 
 	std::shared_ptr < CairnAPI::EnergyVectorAPI> evH2 = m_Problem.get_EnergyCarrier("H2");
-	TESTAPI2("Verify the value of H2.LHV.",
+	TESTAPIBOOL("Verify the value of H2.LHV.",
 		TestUtils::compare_scalar(evH2->get_SettingValue("LHV"), 0.03332, eDouble)
 	)
 
-	TESTAPI2("Verify the value of H2.RHO.",
+	TESTAPIBOOL("Verify the value of H2.RHO.",
 		TestUtils::compare_scalar(evH2->get_SettingValue("RHO"), 0.0899, eDouble)
 	)
 
 	std::shared_ptr < CairnAPI::SimulationControlAPI> vSimulationControl = m_Problem.get_SimulationControl();
-	TESTAPI2("Verify the value of SimulationControl.UseExtrapolationFactor.",
+	TESTAPIBOOL("Verify the value of SimulationControl.UseExtrapolationFactor.",
 		TestUtils::compare_scalar(vSimulationControl->get_SettingValue("UseExtrapolationFactor"), true, eBool)
 	)//true is the default value. Parameter UseExtrapolationFactor doesn't exist in formation_cairn.json
 
 	std::shared_ptr < CairnAPI::SolverAPI> vSolver = m_Problem.get_Solver();
-	TESTAPI2("Verify the value of Solver.NbSolToKeep.",
+	TESTAPIBOOL("Verify the value of Solver.NbSolToKeep.",
 		TestUtils::compare_scalar(vSolver->get_SettingValue("NbSolToKeep"), 1, eInt)
 	)//1 is the default value. Parameter NbSolToKeep doesn't exist in formation_cairn.json
 
@@ -125,7 +125,7 @@ int main()
 																"Acidification#Accumulated Exceedance" };
 
 	std::shared_ptr < CairnAPI::TecEcoAnalysisAPI> vTecEcoAnalysis = m_Problem.get_TecEcoAnalysis();
-	TESTAPI2("Verify the value of TecEco.ConsideredEnvironmentalImpacts.",
+	TESTAPIBOOL("Verify the value of TecEco.ConsideredEnvironmentalImpacts.",
 		TestUtils::compare_scalar(vTecEcoAnalysis->get_SettingValue("ConsideredEnvironmentalImpacts"), ConsideredEnvironmentalImpacts, eStringList)
 	)
 		
@@ -139,7 +139,7 @@ int main()
 	if (vTestCplexHighs) {
 		// Test Cplex and Highs
 
-		TESTAPI2("Verify the value of Solver.Gap.",
+		TESTAPIBOOL("Verify the value of Solver.Gap.",
 			TestUtils::compare_scalar(vSolver->get_SettingValue("Gap"), 0.001, eDouble)
 		)
 		int vRetTest = test(vTest, m_Cairn, "");

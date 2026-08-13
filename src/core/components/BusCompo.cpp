@@ -44,78 +44,13 @@ std::string BusCompo::CarrierName() const {
     return "";
 }
 
-int BusCompo::checkConnections()
-{
-    const std::vector<MilpPort*>& linkedPorts = LinkedPorts();
-    if (linkedPorts.empty())
-        return 0;
-
-    int iIn = 0, iOut = 0, iData = 0;
-    const std::string& busUnit = (mType != "BusSameValue") ? linkedPorts.front()->FluxUnit() : "";
-
-    for (const MilpPort* port : linkedPorts)
-    {
-        // Verify all connected ports share the same Flux unit
-        if (mType != "BusSameValue")
-        {
-            const std::string& portUnit = port->FluxUnit();
-            if (portUnit != busUnit)
-            {
-                cCritical() << "Unit mismatch on Bus" << Name()
-                    << "- port" << port->Name()
-                    << "has Flux unit" << portUnit
-                    << "but expected" << busUnit;
-                return -1;
-            }
-        }
-
-        // Count port directions
-        const std::string& dir = port->Direction();
-        if (dir == KDATA()) iData++;
-        else if (dir == KCONS()) iIn++;
-        else if (dir == KPROD()) iOut++;
-    }
-
-    if (mCompoModelName == "BusFlowBalance" && iData == 0 && (iIn == 0 || iOut == 0))
-    {
-        cCritical() << "ERROR on component" << Name()
-            << "- input ports:" << iIn
-            << ", output ports:" << iOut
-            << ", data exchange ports:" << iData
-            << ". Expected at least one input and one output port, or a data exchange port!";
-        return -1;
-    }
-
-    return 0;
-}
-
-int BusCompo::checkPorts()
-{
-    if (!getMainCarrier()) {
-        Cairn_Exception error("Critical ERROR : Missing carrier for Bus " + Name(), -1);
-        throw error;
-    }
-
-    // Check Bus own ports
-    if (MilpComponent::checkPorts() < 0) {
-        return -1;
-    }
-
-    // Check conncetions
-    if (checkConnections() < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
 void BusCompo::createPortsExportListVars(t_mapExchange& a_Exchange) 
 {
     /* Bus port variables should not be published because they are a copy of linked component variables */
 }
 
 std::string BusCompo::ObjectiveType() const {
-    return mCompoModel->ObjectiveType(); // TODO: move ObjectiveType() from SubModel to BusSubModel
+    return busModel()->ObjectiveType(); 
 }
 
 std::vector<std::string> BusCompo::getPossibleObjectiveTypes() const
@@ -138,6 +73,7 @@ std::vector<InputParam*> BusCompo::get_InputParams()
 
     // Component model, if available
     if (auto* model = compoModel()) {
+        result.push_back(model->getInputConfigParam());
         result.push_back(model->getInputParam());
         //result.push_back(model->getInputTimeSeries());
     }
@@ -280,19 +216,25 @@ vector<MilpPort*> BusCompo::listSidePorts(const std::string& aside)
     return portList;
 }
 
-void BusCompo::jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide)
+void BusCompo::jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide, int* busLinkedPortId)
 {
     // Own ports
-    for (MilpPort* port : PortList()) {
-        if (port->Position() == aSide) {
-            port->jsonSaveGUIPortsData(nodePortArray);
-        }
+    for (MilpPort* port : PortList()) 
+    {
+        if (!port)
+            continue;
+
+        if (port->Position() == aSide) 
+            port->jsonSaveGUIPortsData(nodePortArray, false, busLinkedPortId);
     }
 
     // Ports used for connections
-    for (MilpPort* linkedPort : LinkedPorts()) {
-        if (linkedPort->BusPortPosition() == aSide) {
-            linkedPort->jsonSaveGUIPortsData(nodePortArray, true);
-        }
+    for (MilpPort* linkedPort : LinkedPorts()) 
+    {
+        if (!linkedPort)
+            continue;
+
+        if (linkedPort->BusPortPosition() == aSide) 
+            linkedPort->jsonSaveGUIPortsData(nodePortArray, true, busLinkedPortId);
     }
 }

@@ -104,13 +104,13 @@ bool ModelParam::readParameter(const t_mapParamData& aSettings)
         }
         else {
             if (IsBlocking()) {
-                cCritical() << "ERROR readParameters: missing value for parameter " << (m_Name);
+                cWarning() << "readParameters: missing value for mandatory parameter " << (m_Name);
                 return false;
             }
         }
     }
     else {
-        cCritical() << "ERROR readParameters: nullptr pointer for component variable name " << (m_Name);
+        cWarning() << "readParameters: nullptr pointer for parameter " << (m_Name);
         return false;
     }
     return true;
@@ -228,7 +228,7 @@ t_value ModelParam::getValue() const
     }
 }
 
-bool ModelParam::getNumValue(double& a_Value)
+bool ModelParam::getNumValue(double& a_Value) const
 {
     bool vRet = false;
     switch (m_Type) {

@@ -84,6 +84,17 @@ namespace CairnAPIUtils {
 
 	std::string valueToString(const t_value& value);
 
+	std::optional<std::pair<std::pair<int, int>, std::pair<int, int>>>
+		extractVersionRange(const std::string& filename);
+
+	bool versionRangeIntersects(
+		const std::pair<int, int>& from,
+		const std::pair<int, int>& to,
+		const std::pair<int, int>& start,
+		const std::pair<int, int>& end);
+
+	std::pair<int, int> versionToMajorMinor(const std::vector<int>& v);
+
 	/* 
 	 * Utilities that perform type-checked access to a t_value variant, 
 	 * returning the stored value only if it matches the requested type T 
@@ -122,7 +133,6 @@ namespace CairnAPIUtils {
 		return std::get<T>(v); // throws std::bad_variant_access if wrong type
 	}
 	/* ---------------------------------------------------------------------- */
-
 }
 
 

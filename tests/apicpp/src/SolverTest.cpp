@@ -1,7 +1,7 @@
 #include "TEST_CairnCore.h"
 #include <iostream>
 #include "StudyCTest.h"
-#include "UtilsJson.h"
+
 
 using namespace std;
 
@@ -19,10 +19,9 @@ int main()
 	string const Study = "formation_cairn_err";
 	string const StudyRoot = TEST_RESULTS + (std::string)"/solverErr/";
 
-
-
 	std::string vFileName = StudyRoot + Study + ".json";
-	
+	std::string vTimeseriesFile = StudyRoot + "formation_cairn_dataseries.csv";
+
 	if (fs::exists(StudyRoot)) {
 		fs::remove_all(StudyRoot);
 	}
@@ -31,11 +30,19 @@ int main()
 	}
 	fs::create_directory(StudyRoot);
 	fs::copy_file(TEST_DATA + (std::string)"/" + Study + ".json", vFileName);
-	
-	TESTAPIFALSE("read study file from the file path: " + vFileName,
+	fs::copy_file(TEST_DATA + (std::string)"/" + "formation_cairn_dataseries.csv", vTimeseriesFile);
+
+	TESTAPI("Read study: " + vFileName, 
 		m_Problem = m_Cairn.read_Study(vFileName)
 	)
 
+	TESTAPI("Read the Timeseries: " + vTimeseriesFile,
+		m_Problem.add_TimeSeries(vTimeseriesFile)
+	)
 
-		return noError;
+	TESTAPIFALSE("Run: ",
+		m_Problem.run()
+	)
+
+	return noError;
 }
