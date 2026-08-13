@@ -1,0 +1,1 @@
+pour générer le FMU : dans private script: fmu Generator

@@ -1,0 +1,5 @@
+ManualObjective_Bus.ObjectiveBalanceSetPoint;ManualObjective_Bus.ObjectiveCostSetPoint
+0.25;1000
+0.5;7000
+1;10000
+1.5;12000

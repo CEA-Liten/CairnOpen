@@ -1,0 +1,68 @@
+﻿Model;Indicator;Value;Unit;Alias
+TecEco;NbYear;20;year;NbYear
+TecEco;Discount Rate;0.07;-;DiscountRate
+TecEco;Impact Discount Rate;0;-;ImpactDiscountRate
+TecEco;NbYears in TS;1;year;NbYearsinTS
+TecEco;Leap Year Position;0;-;LeapYearPosition
+TecEco;Payback period offset;0;-;PaybackPeriodOffset
+TecEco;Discount Factor;11.3356;-;DiscountFactor
+TecEco;Impact Discount Factor;20;-;ImpactDiscountFactor
+TecEco;Extrapolation Factor;584;-;ExtrapolationFactor
+TecEco;OBJECTIVE;1.55187e+07;EUR;Objective
+TecEco;Net Present Value (Levelized Profit);-1.55187e+07;EUR;NPV
+TecEco;Total SubObjective (Type Add);0;EUR;SubObjective
+TecEco;Total CAPEX;150;EUR;CAPEX
+TecEco;Total PenaltyConstraintContribution;0;-;PenaltyPart
+TecEco;Total project discounted operation cost;1.55186e+07;EUR;DiscountedNetOPEX
+TecEco;Total project discounted OPEX;0;EUR;DiscountedPureOPEX
+TecEco;Total project replacement costs;0;EUR;DiscountedReplacement
+TecEco;Total project income;0;EUR;DiscountedSellPart
+TecEco;Total project buying costs;1.55186e+07;EUR;DiscountedBuyPart
+TecEco;Annual operation cost;1.36901e+06;EUR;NetOPEX
+TecEco;Annual OPEX;0;EUR;PureOPEX
+TecEco;Annual replacement costs;0;EUR;ReplacementPart
+TecEco;Annual income;0;EUR;SellPart
+TecEco;Annual buying costs;1.36901e+06;EUR;BuyPart
+GridFree#1;CAPEX;0;EUR;CAPEX
+GridFree#1;is installed;1;-;IsInstalled
+GridFree#1;Annual operation cost;1.36901e+06;EUR;OPEX
+GridFree#1;Annual fixed OPEX;0;EUR;PureOPEX
+GridFree#1;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#1;Annual replacement costs;0;EUR;Replacement
+GridFree#1;Grid extraction time;4088;h;extractionTime
+GridFree#1;Grid extraction ElectricalEnergy GridFlow;13690.1;MWh;TotGridFlow
+GridFree#1;Levelized Grid extraction ElectricalEnergy GridFlow;155186;MWh;LvlzdTotGridFlow
+GridFree#1;Mean extraction ElectricalPower GridFlow;3.34886;MW;MeanGridFlow
+GridFree#2;is installed;1;-;IsInstalled
+GridFree#2;Annual operation cost;0;EUR;OPEX
+GridFree#2;Annual variable OPEX;0;EUR;VariableOPEX
+GridFree#2;Grid injection time;8760;h;injectionTime
+GridFree#2;Grid injection ElectricalEnergy GridFlow (PortR0);-6652.89;MWh;TotGridFlow(PortR0)
+GridFree#2;Levelized Grid injection ElectricalEnergy GridFlow (PortR0);-75414.5;MWh;LvlzdTotGridFlow(PortR0)
+GridFree#2;Mean injection ElectricalPower GridFlow (PortR0);-0.759462;MW;MeanGridFlow(PortR0)
+GridFree#2;Data Port published GridFlow - data computed;6652.89;MWh;DataPortGridFlow
+GridFree#2;Grid injection ElectricalEnergy GridFlow (PortT0);-13305.8;MWh;TotGridFlow(PortT0)
+GridFree#2;Levelized Grid injection ElectricalEnergy GridFlow (PortT0);-150829;MWh;LvlzdTotGridFlow(PortT0)
+GridFree#2;Mean injection ElectricalPower GridFlow (PortT0);-1.51892;MW;MeanGridFlow(PortT0)
+Load;is installed;1;-;IsInstalled
+Load;Annual operation cost;0;EUR;OPEX
+Load;Annual variable OPEX;0;EUR;VariableOPEX
+Load;Component Weight;1;Unit;Weight
+Load;ImposedProfile load time;4672;h;ImposedProfileTime
+Load;ImposedProfile ElectricalEnergy SourceLoadFlow;-18929.3;MWh;TotImposedProfileSourceLoadFlow
+Load;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;-214575;MWh;LvlzdTotImposedProfileSourceLoadFlow
+Load;Mean ElectricalPower SourceLoadFlow;-4.05165;MW;MeanImposedProfileSourceLoadFlow
+ManualObjective_Bus;Integrated bus balance;0;MWh;BusBalance
+NodeLaw_Bus;Integrated bus balance;0;MWh;BusBalance
+WindSource;CAPEX;150;EUR;CAPEX
+WindSource;is installed;1;-;IsInstalled
+WindSource;Annual operation cost;0;EUR;OPEX
+WindSource;Annual fixed OPEX;0;EUR;PureOPEX
+WindSource;Annual variable OPEX;0;EUR;VariableOPEX
+WindSource;Annual replacement costs;0;EUR;Replacement
+WindSource;Component Optimal Weight;1.5;Unit;Weight
+WindSource;ImposedProfile source time;8760;h;ImposedProfileTime
+WindSource;ImposedProfile ElectricalEnergy SourceLoadFlow;25197.8;MWh;TotImposedProfileSourceLoadFlow
+WindSource;Levelized ImposedProfile ElectricalEnergy SourceLoadFlow;285633;MWh;LvlzdTotImposedProfileSourceLoadFlow
+WindSource;Mean ElectricalPower SourceLoadFlow;2.87647;MW;MeanImposedProfileSourceLoadFlow
+ManualObjective_Bus;Subobjective;105330;EUR;Subobjective
