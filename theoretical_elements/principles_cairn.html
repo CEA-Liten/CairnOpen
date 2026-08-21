@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Principles of the Cairn tool &mdash; Cairn 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=00a1018e" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=cb01d673"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Energy Carriers" href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html" />
+    <link rel="prev" title="Principles of Cairn" href="../cairn_open_user_guide_lines/general.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn User Guide Lines</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../cairn_open_user_guide_lines/general.html">Principles of Cairn</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Principles of the <span class="xref std std-term">Cairn</span> tool</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#main-characteristics-of-the-cairn-process">Main characteristics of the <span class="xref std std-term">Cairn</span> process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#methodology-to-define-a-cairn-problem-and-simulation">Methodology to define a <span class="xref std std-term">Cairn</span> problem and simulation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html">Energy Carriers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/time_management/time_management.html">Time management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/input_output_files.html">Input and output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html">Mixed integer Linear optimization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/quick_api.html">Reminder of main functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/notebook.html">Example through a notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/grid.html">Grids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/bus.html">Buses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/converter.html">Converters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/sourceload.html">Source loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/storage.html">Storages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/operationconstraint.html">Operation constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/physicalequation.html">Physical equations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../cairn_open_user_guide_lines/general.html">Principles of Cairn</a></li>
+      <li class="breadcrumb-item active">Principles of the <span class="xref std std-term">Cairn</span> tool</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="principles-of-the-cairn-tool">
+<span id="cairn-principles"></span><h1>Principles of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> tool<a class="headerlink" href="#principles-of-the-cairn-tool" title="Link to this heading"></a></h1>
+<section id="main-characteristics-of-the-cairn-process">
+<h2>Main characteristics of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> process<a class="headerlink" href="#main-characteristics-of-the-cairn-process" title="Link to this heading"></a></h2>
+<p>The optimization problem consists of:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a set of constraints describing the technological, environmental,
+economic features and behaviour of the system components,</p></li>
+<li><p>a set of linked constraints between several components (ensuring
+mass or energy balance for instance) and time or integrated constraints for the system,</p></li>
+<li><p>a set of global parameters for the system (basic, economic and simulation data),</p></li>
+<li><p>the establishment of an objective function.</p></li>
+</ul>
+</div></blockquote>
+<p>This is performed by assembling predefined components available in a model library written in C++ (or <a class="reference internal" href="../glossary.html#term-GAMS"><span class="xref std std-term">GAMS</span></a>, on-going implementation).</p>
+<p>The description of this assembly consists of the following parts:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>The description part of the topology describing the components and their connections, and associated settings.
+The architecture file (using the <a class="reference internal" href="../glossary.html#term-JSON"><span class="xref std std-term">JSON</span></a> syntax) contains the topologies of the system and also the parameters used for the calculation,
+the optimization and the simulation.</p></li>
+<li><p>The time series defining boundary conditions, using the <a class="reference internal" href="../glossary.html#term-CSV"><span class="xref std std-term">CSV</span></a> format.</p></li>
+<li><p>The performance maps defining potential maps for component performances,
+using the <a class="reference internal" href="../glossary.html#term-CSV"><span class="xref std std-term">CSV</span></a> format.</p></li>
+</ol>
+</div></blockquote>
+</section>
+<section id="methodology-to-define-a-cairn-problem-and-simulation">
+<h2>Methodology to define a <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> problem and simulation<a class="headerlink" href="#methodology-to-define-a-cairn-problem-and-simulation" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Define the architecture</strong> of the optimization problem:</p>
+<ol class="loweralpha">
+<li><p>In order to build your optimization problem for an energy system, first identify the <strong>relevant energy carriers</strong>
+and define them in the json architecture file.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<ul class="simple">
+<li><p>Be aware that different voltages, temperatures or pressures for a same material should be considered as
+different energy carriers to allow the modelling of converter from one voltage to another, from one temperature
+to another of one pressure to another.</p></li>
+<li><p>Passing from one energy carrier to another always require an energy converter.</p></li>
+<li><p>For example, a compressor converter to pass from a low pressure to an high pressure hydrogen. In this
+case, the pressure values are given by the pressure input in the hydrogen carriers across the compressor.</p></li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html#setenergyvector"><span class="std std-ref">Energy Carriers</span></a></p></li>
+</ul>
+</div>
+</li>
+<li><p>Then identify <strong>the technological components</strong> and their contribution to mass and energy balance on each energy carriers.
+These components can be of 4 main types (converters, storages, source and load, and grid).
+Each component adds its own internal constraints using the model that is defined by the user.</p></li>
+<li><p>Link these components <strong>through their ports to nodes</strong> (or bus components, using FlowBalance models), to enable mass and energy
+balances checks thanks to dedicated constraints.</p></li>
+</ol>
+</li>
+<li><p><strong>Fill in the settings for each model</strong> added to the architecture. This data will be read before each optimization solving step.</p></li>
+<li><p><strong>Define the input and output time series</strong> in csv file, if any. The input and output time series are used to model loads,
+powers, flowrates, prices used by the technological components and the system. They are given in function of time.</p>
+<blockquote>
+<div><div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../cairn_open_user_guide_lines/time_management/how_to_make_a_cairn_timeseries_file.html#cairn-timeseriesfile"><span class="std std-ref">Cairn timeseries files</span></a></p></li>
+</ul>
+</div>
+</div></blockquote>
+</li>
+<li><p><strong>Define the performance maps</strong> in csv file, if any. Last, add some performance map in several csv files to define some additional
+performance features. This is optional, depending on the model’s fitness.</p>
+<blockquote>
+<div><div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_make_a_performance_map_file.html#cairn-map-file"><span class="std std-ref">Performance maps</span></a></p></li>
+</ul>
+</div>
+</div></blockquote>
+</li>
+<li><p><strong>Define the main characteristics</strong> of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> problem. The main characteristics of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> problem are:
+- the <strong>economic and environemental parameters</strong> of the system,
+- the <strong>objective function</strong>, the <strong>total time and time step calculation</strong>
+- the <strong>solver management</strong>.</p>
+<blockquote>
+<div><div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<ul class="simple">
+<li><p>How to define the economic parameters of the problem?</p></li>
+<li><p><a class="reference internal" href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html#cairn-environmental"><span class="std std-ref">Environmental impacts</span></a></p></li>
+<li><p>How to define the objective function of the problem?</p></li>
+<li><p>How to define the total calculation time and the time step management?</p></li>
+<li><p>How to define the solver management?</p></li>
+</ul>
+</div>
+</div></blockquote>
+</li>
+<li><p><strong>Run</strong> of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> problem.</p></li>
+<li><p><strong>Analyse the results</strong> of the <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> problem:</p>
+<blockquote>
+<div><div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../cairn_open_user_guide_lines/What_are_the_input_and_output_files_of_a_Cairn_simulation.html#cairn-files"><span class="std std-ref">What are the input and output files of a cairn simulation?</span></a></p></li>
+</ul>
+</div>
+</div></blockquote>
+</li>
+<li><p><strong>Perform sensitivity analysis</strong>:</p>
+<blockquote>
+<div><div class="admonition-todo admonition" id="id2">
+<p class="admonition-title">Todo</p>
+<ul class="simple">
+<li><p>How to perform sensitivity analysis?</p></li>
+</ul>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../cairn_open_user_guide_lines/general.html" class="btn btn-neutral float-left" title="Principles of Cairn" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../cairn_open_user_guide_lines/how_to_define_an_energy_carrier.html" class="btn btn-neutral float-right" title="Energy Carriers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

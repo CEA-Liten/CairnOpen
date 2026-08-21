@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Environmental assessment &mdash; Cairn 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=00a1018e" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=cb01d673"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Mixed integer Linear optimization" href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html" />
+    <link rel="prev" title="Environmental impacts" href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn User Guide Lines</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/general.html">Principles of Cairn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/time_management/time_management.html">Time management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/input_output_files.html">Input and output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html">Environmental impacts</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Environmental assessment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction-to-lca">Introduction to <span class="xref std std-term">LCA</span></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-are-the-impact-categories-considered-in-the-ef-method">What are the impact categories considered in the EF method?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html">Mixed integer Linear optimization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/quick_api.html">Reminder of main functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/notebook.html">Example through a notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/grid.html">Grids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/bus.html">Buses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/converter.html">Converters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/sourceload.html">Source loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/storage.html">Storages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/operationconstraint.html">Operation constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/physicalequation.html">Physical equations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a></li>
+      <li class="breadcrumb-item active">Environmental assessment</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="environmental-assessment">
+<span id="lca-intro"></span><h1>Environmental assessment<a class="headerlink" href="#environmental-assessment" title="Link to this heading"></a></h1>
+<section id="introduction-to-lca">
+<h2>Introduction to <a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a><a class="headerlink" href="#introduction-to-lca" title="Link to this heading"></a></h2>
+<p>Life Cycle Assessment (<a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> or E-<a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a>) is a tool to evaluate the environmental performance of products (goods, processes and services).
+The methodology of Life Cycle Assessment is formalised by the International Standards Organisation (ISO).
+According to ISO 14040-44, <a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> is defined as “compilation and evaluation of the inputs, outputs and the potential environmental
+impacts of a product system throughout its life cycle”.
+<a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> can be used in the context of decision-making to support product development, policy-making, strategic planning and so on as it facilitates
+the comparison between different processes studied according to the same parameters with the same methodology.
+<a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> aims to evaluate the sustainability of a process, a product or a service along its life cycle steps.</p>
+<p>The full assessment covers the entire life cycle of the studied product, process or activity from raw material extraction
+through materials processing, manufacturing, distribution, use, maintenance, and disposal or recycling.
+The environmental impacts of all the inputs and outputs flows occurring during these stages are evaluated.</p>
+<p><a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> provides a set of environmental indicators representative of the consequences of an activity on several aspects of
+the environment (climate change, resource use, air and water quality, human health, etc.). The interpretation of <a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> study all
+along life cycle stages enables the identification of major contributions to the environmental burdens and avoids potential
+issues of impacts shifting.</p>
+<p>The standardised <a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> framework encompasses four steps:</p>
+<ol class="arabic simple">
+<li><p><strong>Goal and Scope definition</strong>: First, the objectives and intended applications of the <a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> study are explained.
+The system under study is defined, including its boundaries (conceptual, geographical and temporal), the life cycle stages considered,
+the quality of data and the main hypothesis applied. This step also include the description of the functional unit,
+a reference representation of the service provided by the system studied, for which the environmental impacts will be assessed or compared.</p></li>
+<li><p><strong>Life Cycle Inventory (LCI)</strong> analysis: This phase is a technical process of data collection, in order to quantify the inputs of
+energy and raw material, and outputs of products, co-products, waste and emissions related to the system, as defined in the
+scope of the study.</p></li>
+<li><p><strong>Life Cycle Impact Assessment (LCIA)</strong>: Potential environmental impacts are calculated from the inventory using a selected assessment
+method to characterize the impacts of each elementary flow. Dedicated software (SimaPro, GaBi, etc.) and databases (Ecoinvent)
+can be used for this purpose. The choice of impacts assessment method is adapted according to the goal and scope of the study.
+The Environmental Footprint (EF 3.0) method proposed be the European Commission (<a class="reference external" href="https://eplca.jrc.ec.europa.eu/">https://eplca.jrc.ec.europa.eu/</a>)
+is currently one more widely used solution.</p></li>
+<li><p><strong>Interpretation</strong>: Results are presented and analysed to highlight the main sources of environmental impacts and potential
+comparison with reference system. Consistency of the results is evaluated through sensitivity analysis of modelling choices.
+<a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a> is an iterative process and the conclusions can lead to a revision of the aforementioned steps, for instance
+to evaluate a modification of the reference system, correct a modelling assumption or compensate low-quality or missing data.</p></li>
+</ol>
+<div class="cadre docutils container">
+<figure class="align-center" id="workflowlca">
+<a class="reference internal image-reference" href="../_images/WorkflowLCA.png"><img alt="" src="../_images/WorkflowLCA.png" style="width: 600px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 26 </span><span class="caption-text">Generic workflow and applications of an <a class="reference internal" href="../glossary.html#term-LCA"><span class="xref std std-term">LCA</span></a></span><a class="headerlink" href="#workflowlca" title="Link to this image"></a></p>
+<div class="legend">
+<p>[European Commission, 2021, “Understanding Product Environmental Footprint and Organisation Environmental Footprint methods”,
+<a class="reference external" href="https://op.europa.eu/en/publication-detail/-/publication/c43b9684-4521-11ed-92ed-01aa75ed71a1/language-en">https://op.europa.eu/en/publication-detail/-/publication/c43b9684-4521-11ed-92ed-01aa75ed71a1/language-en</a>
+]</p>
+</div>
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="what-are-the-impact-categories-considered-in-the-ef-method">
+<span id="lca-ef"></span><h2>What are the impact categories considered in the EF method?<a class="headerlink" href="#what-are-the-impact-categories-considered-in-the-ef-method" title="Link to this heading"></a></h2>
+<table class="longtable docutils align-center" id="lca">
+<caption><span class="caption-number">Table. 11 </span><span class="caption-text">Impact categories considered in the EF method</span><a class="headerlink" href="#lca" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 2.2%" />
+<col style="width: 8.9%" />
+<col style="width: 88.9%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"><p>Parameters</p></th>
+<th class="head"><p>Definition</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>Climate change (CC)</p></td>
+<td><p>This indicator refers to the increase in the average global temperatures as result of greenhouse gas (GHG) emissions. The greatest contributor is generally the combustion of fossil fuels such as coal, oil, and natural gas. The global warming potential of all GHG emissions is measured in kilogram of carbon dioxide equivalent (kg CO2 eq), namely all GHG are compared to the amount of the global warming potential of 1 kg of CO2.</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>Ozone depletion (ODP)</p></td>
+<td><p>The stratospheric ozone (O3) layer protects us from hazardous ultraviolet radiation (UV-B). Its depletion increases skin cancer cases in humans and damage to plants. The potential impacts of all relevant substances for ozone depletion are converted to their equivalent of kilograms of trichlorofluoromethane (also called Freon-11 and R-11), hence the unit of measurement is in kilogram of CFC-11 equivalent (kg CFC-11 eq).</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>Human toxicity, cancer effects (HTOX_c)</p></td>
+<td><p>This indicator refers to potential impacts, via the environment, on human health caused by absorbing substances from the air, water and soil. Direct effects of products on human health are currently not measured. The unit of measurement is Comparative Toxic Unit for humans (CTUh). This is based on a model called USEtox.</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>Human toxicity, non-cancer effects (HTOX_nc)</p></td>
+<td><p>This indicator refers to potential impacts, via the environment, on human health caused by absorbing substances from the air, water, and soil. Direct effects of products on human health are currently not measured. The unit of measurement is Comparative Toxic Unit for humans (CTUh). This is based on a model called USEtox.</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>Particulate matter (PM)</p></td>
+<td><p>This indicator measures the adverse impacts on human health caused by emissions of Particulate Matter (PM) and its precursors (e.g. NOx, SO2). Usually, the smaller the particles, the more dangerous they are, as they can go deeper into the lungs. The potential impact of is measured as the change in mortality due to PM emissions, expressed as disease incidence per kg of PM2.5 emitted.</p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>Ionising radiation (IR)</p></td>
+<td><p>The exposure to ionising radiation (radioactivity) can have impacts on human health. The Environmental Footprint only considers emissions under normal operating conditions (no accidents in nuclear plants are considered). The potential impact on human health of different ionising radiations is converted to the equivalent of kilobequerels of Uranium 235 (kg U235 eq).</p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>Photochemical ozone formation (POF)</p></td>
+<td><p>Ozone (O3) on the ground (in the troposphere) is harmful.  it attacks organic compounds in animals and plants, it increases the frequency of respiratory problems when photochemical smog (summer smog) is present in cities. The potential impact of substances contributing to photochemical ozone formation is converted into the equivalent of kilograms of NonMethane Volatile Organic Compounds (e.g. alcohols, aromatics, etc. kg NMVOC eq).</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>Acidification (AC)</p></td>
+<td><p>Acidification has contributed to a decline of coniferous forests and an increase in fish mortality. Acidification can be caused by emissions to the air and deposition of emissions in water and soil. The most significant sources are combustion processes in electricity, heat production, and transport. The more sulphur the fuels contain the greater their contribution to acidification. The potential impact of substances contributing to acidification is converted to the equivalent of moles of hydron (general name for a cationic form of atomic hydrogen, mol H+ eq).</p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>Eutrophication, terrestrial (TEU)</p></td>
+<td><p>Eutrophication arises when substances containing nitrogen (N) or phosphorus (P) are released to ecosystems. These nutrients cause a growth of algae or specific plants and thus limit growth in the original ecosystem. The potential impact of substances contributing to terrestrial eutrophication is converted to the equivalent of moles of nitrogen (mol N eq).</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>Eutrophication, freshwater (FEU)</p></td>
+<td><p>Eutrophication in ecosystems happens when substances containing nitrogen (N) or phosphorus (P) are released to the ecosystem. As a rule, the availability of one of these nutrients will be a limiting factor for growth in the ecosystem, and if this nutrient is added, the growth of algae or specific plants will increase. If algae grow too rapidly, it can leave water without enough oxygen for fish to survive. Nitrogen emissions into the aquatic environment are caused by fertilisers used in agriculture, but also by combustion processes. The most significant sources of phosphorus emissions are sewage treatment plants for urban and industrial effluents and leaching from agricultural land. The potential impact of substances contributing to freshwater eutrophication is converted to the equivalent of kilograms of phosphorus (kg P eq).</p></td>
+</tr>
+<tr class="row-even"><td><p>11</p></td>
+<td><p>Eutrophication, marine (MEU)</p></td>
+<td><p>Eutrophication in ecosystems happens when substances containing nitrogen (N) or phosphorus (P) are released to the ecosystem. As a rule, the availability of one of these nutrients will be a limiting factor for growth in the ecosystem, and if this nutrient is added, the growth of algae or specific plants will increase. If algae grow too rapidly, it can leave water without enough oxygen for fish to survive. For the marine environment this will be mainly due to an increase of nitrogen (N). Nitrogen emissions are caused largely by the agricultural use of fertilisers, but also by combustion processes. The potential impact of substances contributing to marine eutrophication is converted to the equivalent of kilograms of nitrogen (kg N eq).</p></td>
+</tr>
+<tr class="row-odd"><td><p>12</p></td>
+<td><p>Ecotoxicity, freshwater (ECOTOX)</p></td>
+<td><p>This indicator refers to potential toxic impacts on an ecosystem, which may damage individual species as well as the functioning of the ecosystem. Some substances tend to accumulate in living organisms. The unit of measurement is Comparative Toxic Unit for ecosystems (CTUe). This is based on a model called USEtox.</p></td>
+</tr>
+<tr class="row-even"><td><p>13</p></td>
+<td><p>Land use (LU)</p></td>
+<td><p>Use and transformation of land for agriculture, roads, housing, mining or other purposes. The impacts can vary and include loss of species, of the organic matter content of soil, or loss of the soil itself (erosion). This is a composite indicator measuring impacts on four soil properties (biotic production, erosion resistance, groundwater regeneration and mechanical filtration), expressed in points (Pts).</p></td>
+</tr>
+<tr class="row-odd"><td><p>14</p></td>
+<td><p>Water use (WU)</p></td>
+<td><p>The abstraction of water from lakes, rivers or groundwater can contribute to the depletion of available water. The impact category considers the availability or scarcity of water in the regions where the activity takes place, if this information is known. The potential impact is expressed in cubic metres (m3) of water use related to the local scarcity of water.</p></td>
+</tr>
+<tr class="row-even"><td><p>15</p></td>
+<td><p>Resource use, fossils (FRD)</p></td>
+<td><p>The earth contains a finite amount of non-renewable resources, such as fossil fuels like coal, oil and gas. The basic idea behind this impact category is that extracting resources today will force future generations to extract less or different resources. For example, the depletion of fossil fuels may lead to the non-availability of fossil fuels for future generations. The amount of materials contributing to resource use, fossils, are converted into MJ.</p></td>
+</tr>
+<tr class="row-odd"><td><p>16</p></td>
+<td><p>Resource use, minerals and metals (MRD)</p></td>
+<td><p>This impact category has the same underlying basic idea as the impact category resource use, fossils (namely, extracting a high concentration of resources today will force future generations to extract lower concentration or lower value resources). The amount of materials contributing to resource depletion are converted into equivalents of kilograms of antimony (kg Sb eq).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../cairn_open_user_guide_lines/How_to_take_into_account_the_environmental_impacts.html" class="btn btn-neutral float-left" title="Environmental impacts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html" class="btn btn-neutral float-right" title="Mixed integer Linear optimization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

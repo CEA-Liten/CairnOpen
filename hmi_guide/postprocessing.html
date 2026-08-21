@@ -1,0 +1,527 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post-processing &mdash; Cairn 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=00a1018e" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=cb01d673"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reminder of main functions" href="../api_guide/quick_api.html" />
+    <link rel="prev" title="Setting new indicators" href="How_to_build_a_UDI.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/general.html">Principles of Cairn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/time_management/time_management.html">Time management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/input_output_files.html">Input and output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html">Mixed integer Linear optimization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Post-processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-configuration-files">The configuration files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#config-extract-xml">config_extract.xml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-common-colors">Set common colors</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#global-graphs">Global graphs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tablediff">TableDiff</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#npv">NPV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#resolcplex">ResolCplex</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#graphs-to-analyse-global-results">Graphs to analyse global results</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sankeygraph">SankeyGraph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#piechart">PieChart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multipiechart">MultiPieChart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stackbargraph">StackBarGraph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#xygraphmultistudy">XYGraphMultiStudy</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#graphs-to-analyse-timeseries">Graphs to analyse timeseries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#areagraph">AreaGraph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distributiongraph">DistributionGraph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monotonicloadgraph">MonotonicLoadGraph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">MonotonicLoadGraph</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/quick_api.html">Reminder of main functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/notebook.html">Example through a notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/grid.html">Grids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/bus.html">Buses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/converter.html">Converters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/sourceload.html">Source loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/storage.html">Storages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/operationconstraint.html">Operation constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/physicalequation.html">Physical equations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Post-processing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="post-processing">
+<span id="id1"></span><h1>Post-processing<a class="headerlink" href="#post-processing" title="Link to this heading"></a></h1>
+<p>It is possible to produce automatic HTML reports with graphs to compare <a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> studies.</p>
+<p>The reports are generated automatically to generate graphs that compare studies.</p>
+<p>To use it, follow this steps:</p>
+<ol class="arabic simple">
+<li><p>Run at least one scenario (this creates one subfolder <cite>Report_yourscenario</cite>)</p></li>
+<li><p>Click on post-processing , Generate interactive report</p></li>
+<li><p>This will generate your first HTML report by default, and create tree files, that you can modify to personalize your post processing: <cite>config_extract.xml</cite>, <cite>config_color.csv</cite>, and if needed, <cite>sankey.xml</cite>.</p></li>
+</ol>
+<p>An example of a full report can be found here: <a class="reference external" href="../_static/report_example.html">click here</a></p>
+<section id="the-configuration-files">
+<h2>The configuration files<a class="headerlink" href="#the-configuration-files" title="Link to this heading"></a></h2>
+<section id="config-extract-xml">
+<h3>config_extract.xml<a class="headerlink" href="#config-extract-xml" title="Link to this heading"></a></h3>
+<p>This file contains the list of all the graphs you want to find in the report.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph_list&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>PieChart<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Cost<span class="w"> </span>structure<span class="w"> </span>[EUR]<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Total<span class="w"> </span>Cost<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1.00E+03<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>StackBarGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Balance<span class="w"> </span>of<span class="w"> </span>costs<span class="w"> </span>and<span class="w"> </span>incomes<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Total<span class="w"> </span>Cost<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>BarGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Installed<span class="w"> </span>Optimal<span class="w"> </span>Size<span class="w"> </span>for<span class="w"> </span>Converters<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Installed<span class="w"> </span>Optimal<span class="w"> </span>Size<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>DynamicGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Thermal<span class="w"> </span>Utility<span class="w"> </span>loads<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plotted_variables&gt;</span>LNG180_Load.SourceLoadFlow<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>Thermal<span class="w"> </span>Utility<span class="w"> </span>loads<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>It<span class="w"> </span>shows<span class="w"> </span>thermal<span class="w"> </span>power<span class="w"> </span>loads<span class="w"> </span>imposed<span class="w"> </span>by<span class="w"> </span>plant<span class="w"> </span>utilities.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>MonotonicLoadGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Number<span class="w"> </span>of<span class="w"> </span>hours<span class="w"> </span>at<span class="w"> </span>given<span class="w"> </span>RES<span class="w"> </span>powers<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plotted_variables&gt;</span>PV_Field1.SourceLoadFlow,WT_OnShore.SourceLoadFlow,Solar_Tower.SourceLoadFlow,Solar_CSP.SourceLoadFlow<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>RES<span class="w"> </span>available<span class="w"> </span>powers<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>It<span class="w"> </span>represents<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>hours<span class="w"> </span>at<span class="w"> </span>given<span class="w"> </span>available<span class="w"> </span>RES<span class="w"> </span>powers.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+<span class="nt">&lt;/graph_list&gt;</span>
+</pre></div>
+</div>
+<p>To add a graph, simply add another block among the one presented in the following part.</p>
+</section>
+<section id="set-common-colors">
+<h3>Set common colors<a class="headerlink" href="#set-common-colors" title="Link to this heading"></a></h3>
+<p>Graphs are more simple to understand if the colors remain the same for each component.</p>
+<p>To set colors, add a file in the same folder than config_extract file. <strong>Note that the name has to be exactly `config_Colors.csv`</strong>.</p>
+<table class="table1 docutils align-center" id="config-color-csv">
+<caption><span class="caption-number">Table. 14 </span><span class="caption-text"><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> setting file config_Colors.csv</span><a class="headerlink" href="#config-color-csv" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Element_name</p></th>
+<th class="head"><p>Color xkcd:colorname according to https://xkcd.com/color/rgb/</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Wind</p></td>
+<td><p>xkcd:blue</p></td>
+</tr>
+<tr class="row-odd"><td><p>Solar</p></td>
+<td><p>xkcd:dark yellow</p></td>
+</tr>
+<tr class="row-even"><td><p>Electricity#1</p></td>
+<td><p>xkcd:lime green</p></td>
+</tr>
+<tr class="row-odd"><td><p>StorageGen#1</p></td>
+<td><p>xkcd:baby blue</p></td>
+</tr>
+<tr class="row-even"><td><p>Demande_H2</p></td>
+<td><p>xkcd:sea blue</p></td>
+</tr>
+<tr class="row-odd"><td><p>H2Vector#1</p></td>
+<td><p>xkcd:azure</p></td>
+</tr>
+<tr class="row-even"><td><p>Electrolyzer#1</p></td>
+<td><p>xkcd:teal</p></td>
+</tr>
+<tr class="row-odd"><td><p>GridFree#4</p></td>
+<td><p>xkcd:greyish green</p></td>
+</tr>
+<tr class="row-even"><td><p>GridFree#5</p></td>
+<td><p>xkcd:deep red</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="global-graphs">
+<h2>Global graphs<a class="headerlink" href="#global-graphs" title="Link to this heading"></a></h2>
+<p>Here are the exisiting graph list with the parameters available.</p>
+<section id="tablediff">
+<h3>TableDiff<a class="headerlink" href="#tablediff" title="Link to this heading"></a></h3>
+<p>Produces a table of all the parameter that changes between scenarios.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">        </span><span class="nt">&lt;type&gt;</span>TableDiff<span class="nt">&lt;/type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;title&gt;</span>Differences<span class="w"> </span>between<span class="w"> </span>parameters<span class="nt">&lt;/title&gt;</span>
+<span class="w">        </span><span class="nt">&lt;comment&gt;</span>test<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<p>Here is an example.</p>
+<iframe src="../_static/postprocessing/TableDiff.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="npv">
+<h3>NPV<a class="headerlink" href="#npv" title="Link to this heading"></a></h3>
+<p>Produces the graph of the evolution of NPV through years.</p>
+<ul class="simple">
+<li><p>type: NPV</p></li>
+<li><p>title: <em>Title</em></p></li>
+</ul>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">            </span><span class="nt">&lt;type&gt;</span>NPV<span class="nt">&lt;/type&gt;</span>
+<span class="w">            </span><span class="nt">&lt;title&gt;</span>NPV<span class="w"> </span>over<span class="w"> </span>years<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<p>Here is an example.</p>
+<iframe src="../_static/postprocessing/NPV.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="resolcplex">
+<h3>ResolCplex<a class="headerlink" href="#resolcplex" title="Link to this heading"></a></h3>
+<p>Produces a table and a graph of the times of resolutions, and the gaps.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">        </span><span class="nt">&lt;type&gt;</span>ResolCplex<span class="nt">&lt;/type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;title&gt;</span>Statistics<span class="w"> </span>about<span class="w"> </span>resolution<span class="w"> </span>times<span class="nt">&lt;/title&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<p>Here is an example.</p>
+<iframe src="../_static/postprocessing/cplex_stats.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+</section>
+<section id="graphs-to-analyse-global-results">
+<h2>Graphs to analyse global results<a class="headerlink" href="#graphs-to-analyse-global-results" title="Link to this heading"></a></h2>
+<p>These graphs are based on the PLAN files. Some of them are plotted for each study (BarGraph, PieChart, Sankey), others are plotted to compare
+studies (StackBarGraph, MultiPieChart).</p>
+<p>To select a variable in PLAN file, you need to put the corresponding Alias string in <cite>search_strings</cite> and if needed remove other with <cite>excluded_strings</cite>. If several variables are needed, separate the string with a comma, and without spaces.</p>
+<section id="sankeygraph">
+<h3>SankeyGraph<a class="headerlink" href="#sankeygraph" title="Link to this heading"></a></h3>
+<p>Produces a graph of sankey of the energy vectors used in the project.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">        </span><span class="nt">&lt;type&gt;</span>SankeyGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;title&gt;</span>Sankey<span class="w"> </span>graph<span class="nt">&lt;/title&gt;</span>
+<span class="w">        </span><span class="nt">&lt;overwrite&gt;</span>True<span class="nt">&lt;/overwrite&gt;</span>
+<span class="w">        </span><span class="nt">&lt;file_path&gt;</span>.\sankey_graph.xml<span class="nt">&lt;/file_path&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<p>If the option <cite>overwrite</cite> is set on <cite>true</cite>, the file describing Cairn</p>
+<iframe src="../_static/postprocessing/Sankey.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe><div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If the option <cite>overwrite</cite> is set on true, the file <cite>sankey_graph.xml</cite> is generated automatically from the json study file. It is possible then to modify by hand this file to change the appearance of the sankey. Don’t forget then to set <cite>overwrite</cite> on false to avoid to re-generate the file the next time.</p>
+</div>
+</section>
+<section id="piechart">
+<h3>PieChart<a class="headerlink" href="#piechart" title="Link to this heading"></a></h3>
+<p>Produces pie chart a wanted variables in PLAN file.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>PieChart<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>CAPEX<span class="w"> </span>repartition<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;color&gt;</span>True<span class="nt">&lt;/color&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>CAPEX<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;excluded_strings&gt;</span>TecEco<span class="nt">&lt;/excluded_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1.00E+03<span class="nt">&lt;/threshold&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/pieChart.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="multipiechart">
+<h3>MultiPieChart<a class="headerlink" href="#multipiechart" title="Link to this heading"></a></h3>
+<p>Produces pie chart a wanted variables in PLAN file. Each size is proportionnal to the total of each case.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>MultiPieChart<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Electricity<span class="w"> </span>consumption<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>TotGridFlow,TotImposedProfileSourceLoadFlow
+<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;excluded_strings&gt;</span>GridFree#5,Demande_H2<span class="nt">&lt;/excluded_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1.00E+03<span class="nt">&lt;/threshold&gt;</span>
+<span class="w">    </span><span class="nt">&lt;color&gt;</span>True<span class="nt">&lt;/color&gt;</span>
+<span class="w">    </span><span class="nt">&lt;nbcol&gt;</span>2<span class="nt">&lt;/nbcol&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/multiPieChart.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="stackbargraph">
+<h3>StackBarGraph<a class="headerlink" href="#stackbargraph" title="Link to this heading"></a></h3>
+<p>Produces a stack bar graph of a given variable, grouped by case.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>StackBarGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Electrical<span class="w"> </span>Power<span class="w"> </span>produced<span class="w"> </span>and<span class="w"> </span>consumed<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>TotGridFlow,TotImposedProfileSourceLoadFlow<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;excluded_strings&gt;</span>Demande_H2,Lvlz<span class="nt">&lt;/excluded_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;threshold&gt;</span>1<span class="nt">&lt;/threshold&gt;</span>
+<span class="w">    </span><span class="nt">&lt;color&gt;</span>True<span class="nt">&lt;/color&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/stackBarGraph.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="xygraphmultistudy">
+<h3>XYGraphMultiStudy<a class="headerlink" href="#xygraphmultistudy" title="Link to this heading"></a></h3>
+<p>Produces a graph of xy variables issued from PLAN file (one point for one study).</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>XYGraphMultiStudy<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Wind<span class="w"> </span>and<span class="w"> </span>storage<span class="w"> </span>optimal<span class="w"> </span>sizes<span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;unit&gt;</span>MW<span class="nt">&lt;/unit&gt;</span>
+<span class="w">    </span><span class="nt">&lt;xlabel&gt;</span>StorageGen#1.Storage<span class="w"> </span>Optimal<span class="w"> </span>Capacity<span class="w"> </span>kgMaxEsto<span class="w"> </span><span class="nt">&lt;/xlabel&gt;</span>
+<span class="w">    </span><span class="nt">&lt;xvar&gt;</span>StorageGen#1.Capacity<span class="nt">&lt;/xvar&gt;</span>
+<span class="w">    </span><span class="nt">&lt;ylabel&gt;</span>MW<span class="nt">&lt;/ylabel&gt;</span>
+<span class="w">    </span><span class="nt">&lt;yvar&gt;</span>Wind.Weight<span class="nt">&lt;/yvar&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series:<span class="w"> </span>Electrical<span class="w"> </span>Power<span class="w"> </span>Provenance<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;search_strings&gt;</span>Capacity,Weight<span class="nt">&lt;/search_strings&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/xymulti.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+</section>
+<section id="graphs-to-analyse-timeseries">
+<h2>Graphs to analyse timeseries<a class="headerlink" href="#graphs-to-analyse-timeseries" title="Link to this heading"></a></h2>
+<p>These graphs are base on the _Results files. Use the names of the columns in “plotted_variables” options.</p>
+<section id="areagraph">
+<h3>AreaGraph<a class="headerlink" href="#areagraph" title="Link to this heading"></a></h3>
+<p>Produces a stacked graph of a given energy vectors producers and consumers. The graph is generated from the sankey graph file. The positive part is produced and negative is consumed.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">        </span><span class="nt">&lt;type&gt;</span>AreaGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;vector&gt;</span>H2Vector#1<span class="nt">&lt;/vector&gt;</span>
+<span class="w">        </span><span class="nt">&lt;title&gt;</span>H2<span class="w"> </span>balance<span class="nt">&lt;/title&gt;</span>
+<span class="w">        </span><span class="nt">&lt;unit&gt;</span>MW<span class="nt">&lt;/unit&gt;</span>
+<span class="w">        </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>Electrical<span class="w"> </span>Power<span class="w"> </span>Provenance<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">        </span><span class="nt">&lt;file_path&gt;</span>.\sankey_graph.xml<span class="nt">&lt;/file_path&gt;</span>
+<span class="w">        </span><span class="nt">&lt;comment&gt;</span>Positive<span class="w"> </span>:<span class="w"> </span>produced,<span class="w"> </span>negative:<span class="w"> </span>consumed<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<p>If the option <cite>overwrite</cite> is set on <cite>true</cite>, the file describing Cairn</p>
+<iframe src="../_static/postprocessing/areaGraph.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="distributiongraph">
+<h3>DistributionGraph<a class="headerlink" href="#distributiongraph" title="Link to this heading"></a></h3>
+<p>Produces a graph of DistributionGraph of several variables.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">        </span><span class="nt">&lt;type&gt;</span>DistributionGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">        </span><span class="nt">&lt;title&gt;</span>Distribution<span class="w"> </span>graph<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>SOEC<span class="w"> </span>use<span class="nt">&lt;/title&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ylabel&gt;</span>Number<span class="w"> </span>of<span class="w"> </span>hours<span class="nt">&lt;/ylabel&gt;</span>
+<span class="w">        </span><span class="nt">&lt;xlabel&gt;</span>MW<span class="nt">&lt;/xlabel&gt;</span>
+<span class="w">        </span><span class="nt">&lt;plotted_variables&gt;</span>Electrolyzer#1.UsedPower<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/distributionGraph.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="monotonicloadgraph">
+<h3>MonotonicLoadGraph<a class="headerlink" href="#monotonicloadgraph" title="Link to this heading"></a></h3>
+<p>Produces a graph of monotonic graph of several variables.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>MonotonicLoadGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Electrical<span class="w"> </span>Power<span class="w"> </span>produced<span class="w"> </span><span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;unit&gt;</span>MW<span class="nt">&lt;/unit&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plotted_variables&gt;</span>Wind.SourceLoadFlow,Solar.SourceLoadFlow<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>Electrical<span class="w"> </span>Power<span class="w"> </span>Provenance<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/Monotonic.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+<section id="id2">
+<h3>MonotonicLoadGraph<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Produces a graph of a variable x in function of y. Possibility to respect the color code if color is set on True. Otherwise the colors are set in a random order.</p>
+<div class="highlight-XML notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;graph&gt;</span>
+<span class="w">    </span><span class="nt">&lt;type&gt;</span>XYGraph<span class="nt">&lt;/type&gt;</span>
+<span class="w">    </span><span class="nt">&lt;title&gt;</span>Electrical<span class="w"> </span>Power<span class="w"> </span>produced<span class="w"> </span>(XYGraph)<span class="w"> </span><span class="nt">&lt;/title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;unit&gt;</span>MW<span class="nt">&lt;/unit&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plotted_variables&gt;</span>Wind.SourceLoadFlow,Solar.SourceLoadFlow,GridFree#4.GridFlow<span class="nt">&lt;/plotted_variables&gt;</span>
+<span class="w">    </span><span class="nt">&lt;xvar&gt;</span>Wind.SourceLoadFlow<span class="nt">&lt;/xvar&gt;</span>
+<span class="w">    </span><span class="nt">&lt;xlabel&gt;</span>Wind.SourceLoadFlow(MW)<span class="nt">&lt;/xlabel&gt;</span>
+<span class="w">    </span><span class="nt">&lt;ylabel&gt;</span>(MW)<span class="nt">&lt;/ylabel&gt;</span>
+<span class="w">    </span><span class="nt">&lt;yvar&gt;</span>Solar.SourceLoadFlow,GridFree#4.GridFlow<span class="nt">&lt;/yvar&gt;</span>
+<span class="w">    </span><span class="nt">&lt;section_title&gt;</span>Time<span class="w"> </span>series<span class="w"> </span>:<span class="w"> </span>Electrical<span class="w"> </span>Power<span class="w"> </span>Provenance<span class="nt">&lt;/section_title&gt;</span>
+<span class="w">    </span><span class="nt">&lt;color&gt;</span>True<span class="nt">&lt;/color&gt;</span>
+<span class="w">    </span><span class="nt">&lt;comment&gt;</span>.<span class="nt">&lt;/comment&gt;</span>
+<span class="nt">&lt;/graph&gt;</span>
+</pre></div>
+</div>
+<iframe src="../_static/postprocessing/xyGraph.html"
+        width="100%"
+        height="600"
+        style="border:none;">
+</iframe></section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="How_to_build_a_UDI.html" class="btn btn-neutral float-left" title="Setting new indicators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api_guide/quick_api.html" class="btn btn-neutral float-right" title="Reminder of main functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

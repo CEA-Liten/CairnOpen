@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investment decision &mdash; Cairn 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=00a1018e" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=cb01d673"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Environmental" href="../cairn_open_user_guide_lines/environmental_aspects.html" />
+    <link rel="prev" title="Economic modelling guidelines" href="../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn User Guide Lines</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/general.html">Principles of Cairn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/time_management/time_management.html">Time management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/input_output_files.html">Input and output files</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html">Economic modelling guidelines</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Investment decision</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-short-introduction">A short introduction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html">Mixed integer Linear optimization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/quick_api.html">Reminder of main functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_guide/notebook.html">Example through a notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/grid.html">Grids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/bus.html">Buses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/converter.html">Converters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/sourceload.html">Source loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/storage.html">Storages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/operationconstraint.html">Operation constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/physicalequation.html">Physical equations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a></li>
+      <li class="breadcrumb-item active">Investment decision</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="investment-decision">
+<span id="investmentdecision"></span><h1>Investment decision<a class="headerlink" href="#investment-decision" title="Link to this heading"></a></h1>
+<section id="a-short-introduction">
+<h2>A short introduction<a class="headerlink" href="#a-short-introduction" title="Link to this heading"></a></h2>
+<p>The objective function is divided between short term and long term objectives :</p>
+<ul class="simple">
+<li><p>Economic function: should we buy something more expensive but that makes us save money later ?</p></li>
+<li><p>Environmental function: should we invest in a big battery that makes us save CO<sub>2</sub> later if its construction causes many CO<sub>2</sub> gases ?</p></li>
+</ul>
+<p>The answer is often a compromise! It depends on how we model the future…</p>
+<p>A project is defined with a start date and a duration. Through this period, there are cash outflows (<a class="reference internal" href="../glossary.html#term-CAPEX"><span class="xref std std-term">CAPEX</span></a>, <a class="reference internal" href="../glossary.html#term-OPEX"><span class="xref std std-term">OPEX</span></a>) and inflows (incomes).
+A cash flow of <strong>year i</strong> is defined as the difference between cash inflow of <strong>year i</strong> and cash outflow of <strong>year i</strong>.</p>
+<figure class="align-center" id="investdecision1">
+<a class="reference internal image-reference" href="../_images/Investment_Decision1.png"><img alt="../_images/Investment_Decision1.png" src="../_images/Investment_Decision1.png" style="width: 500px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 19 </span><span class="caption-text">Cash flows of a project</span><a class="headerlink" href="#investdecision1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>Often, the fact that the value of money is not constant is taken into account to check whether a project is profitable or not.</p>
+<p><strong>Money value through time</strong></p>
+<p>Principle :</p>
+<p>Two amounts of money are not equivalent if they are not available at the same time.
+Levelization and capitalisation allow to compare two amount of money available at different times.</p>
+<figure class="align-center" id="investdecision2">
+<a class="reference internal image-reference" href="../_images/Investment_Decision2.png"><img alt="../_images/Investment_Decision2.png" src="../_images/Investment_Decision2.png" style="width: 500px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 20 </span><span class="caption-text">Money through time</span><a class="headerlink" href="#investdecision2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>Either none of the cash flow is levelized and it is like ‘technical costs’ are considered either all the cash flows must be levelized.</p>
+<p>The discount rate is linked to capital costs that are incurred by the project owner and to the risk of the project.</p>
+<p>Several indicators can be used to evaluate the profitability of a project :</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../glossary.html#term-NPV"><span class="xref std std-term">NPV</span></a> which is positive if the project is profitable</p></li>
+<li><p><a class="reference internal" href="../glossary.html#term-IRR"><span class="xref std std-term">IRR</span></a> which is the estimated annual yield that the compagny expects from the project</p></li>
+<li><p><a class="reference internal" href="../glossary.html#term-LCOE"><span class="xref std std-term">LCOE</span></a> to know the minimum selling cost of the energy produced to have a profitable project</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../cairn_open_user_guide_lines/how_to_take_into_account_economic_aspects.html" class="btn btn-neutral float-left" title="Economic modelling guidelines" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../cairn_open_user_guide_lines/environmental_aspects.html" class="btn btn-neutral float-right" title="Environmental" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

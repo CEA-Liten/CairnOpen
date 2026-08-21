@@ -1,0 +1,1287 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cairn API documentation &mdash; Cairn 6.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=00a1018e" />
+
+  
+    <link rel="shortcut icon" href="../_static/cairn_logo.png"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=cb01d673"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Example through a notebook" href="notebook.html" />
+    <link rel="prev" title="Reminder of main functions" href="quick_api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/general.html">Principles of Cairn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/time_management/time_management.html">Time management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/input_output_files.html">Input and output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html">Mixed integer Linear optimization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick_api.html">Reminder of main functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cairnapi">CairnAPI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.CairnAPI"><code class="docutils literal notranslate"><span class="pre">CairnAPI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.ESettingsLimited"><code class="docutils literal notranslate"><span class="pre">CairnAPI.ESettingsLimited</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.close_study"><code class="docutils literal notranslate"><span class="pre">CairnAPI.close_study()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.component_type"><code class="docutils literal notranslate"><span class="pre">CairnAPI.component_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.create_study"><code class="docutils literal notranslate"><span class="pre">CairnAPI.create_study()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.get_study"><code class="docutils literal notranslate"><span class="pre">CairnAPI.get_study()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.read_study"><code class="docutils literal notranslate"><span class="pre">CairnAPI.read_study()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.all"><code class="docutils literal notranslate"><span class="pre">CairnAPI.all</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.all_models"><code class="docutils literal notranslate"><span class="pre">CairnAPI.all_models</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.carrier_types"><code class="docutils literal notranslate"><span class="pre">CairnAPI.carrier_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.component_types"><code class="docutils literal notranslate"><span class="pre">CairnAPI.component_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.mandatory"><code class="docutils literal notranslate"><span class="pre">CairnAPI.mandatory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.optional"><code class="docutils literal notranslate"><span class="pre">CairnAPI.optional</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.solvers"><code class="docutils literal notranslate"><span class="pre">CairnAPI.solvers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnAPI.used"><code class="docutils literal notranslate"><span class="pre">CairnAPI.used</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#optimproblem">OptimProblem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.OptimProblem"><code class="docutils literal notranslate"><span class="pre">OptimProblem</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.add_label"><code class="docutils literal notranslate"><span class="pre">OptimProblem.add_label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.add_link"><code class="docutils literal notranslate"><span class="pre">OptimProblem.add_link()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.add_onetimeseries"><code class="docutils literal notranslate"><span class="pre">OptimProblem.add_onetimeseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.add_timeseries"><code class="docutils literal notranslate"><span class="pre">OptimProblem.add_timeseries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.copy_component"><code class="docutils literal notranslate"><span class="pre">OptimProblem.copy_component()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.create_bus"><code class="docutils literal notranslate"><span class="pre">OptimProblem.create_bus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.create_component"><code class="docutils literal notranslate"><span class="pre">OptimProblem.create_component()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.create_energy_carrier"><code class="docutils literal notranslate"><span class="pre">OptimProblem.create_energy_carrier()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.export_parameters"><code class="docutils literal notranslate"><span class="pre">OptimProblem.export_parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.export_plan"><code class="docutils literal notranslate"><span class="pre">OptimProblem.export_plan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_bus"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_bus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_component"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_component()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_components"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_components()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_energy_carrier"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_energy_carrier()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_indicators_values"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_indicators_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_object"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_published_variable_value"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_published_variable_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_published_variables"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_published_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_simulation_control"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_simulation_control()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_solver"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_solver()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_subscribed_variables"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_subscribed_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.get_tech_eco_analysis"><code class="docutils literal notranslate"><span class="pre">OptimProblem.get_tech_eco_analysis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.import_group"><code class="docutils literal notranslate"><span class="pre">OptimProblem.import_group()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.remove_bus"><code class="docutils literal notranslate"><span class="pre">OptimProblem.remove_bus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.remove_component"><code class="docutils literal notranslate"><span class="pre">OptimProblem.remove_component()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.remove_energy_carrier"><code class="docutils literal notranslate"><span class="pre">OptimProblem.remove_energy_carrier()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.remove_label"><code class="docutils literal notranslate"><span class="pre">OptimProblem.remove_label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.remove_link"><code class="docutils literal notranslate"><span class="pre">OptimProblem.remove_link()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.run"><code class="docutils literal notranslate"><span class="pre">OptimProblem.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.run_sensitivity"><code class="docutils literal notranslate"><span class="pre">OptimProblem.run_sensitivity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.save_study"><code class="docutils literal notranslate"><span class="pre">OptimProblem.save_study()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.set_subscribed_variable_value"><code class="docutils literal notranslate"><span class="pre">OptimProblem.set_subscribed_variable_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.buses"><code class="docutils literal notranslate"><span class="pre">OptimProblem.buses</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.components"><code class="docutils literal notranslate"><span class="pre">OptimProblem.components</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.energy_carriers"><code class="docutils literal notranslate"><span class="pre">OptimProblem.energy_carriers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.labels"><code class="docutils literal notranslate"><span class="pre">OptimProblem.labels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.links"><code class="docutils literal notranslate"><span class="pre">OptimProblem.links</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.objects"><code class="docutils literal notranslate"><span class="pre">OptimProblem.objects</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.OptimProblem.optimized_components"><code class="docutils literal notranslate"><span class="pre">OptimProblem.optimized_components</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cairnobject">CairnObject</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.CairnObject"><code class="docutils literal notranslate"><span class="pre">CairnObject</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.get_setting"><code class="docutils literal notranslate"><span class="pre">CairnObject.get_setting()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.get_setting_comment"><code class="docutils literal notranslate"><span class="pre">CairnObject.get_setting_comment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.get_setting_value"><code class="docutils literal notranslate"><span class="pre">CairnObject.get_setting_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.get_settings"><code class="docutils literal notranslate"><span class="pre">CairnObject.get_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.rename"><code class="docutils literal notranslate"><span class="pre">CairnObject.rename()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.set_setting_comment"><code class="docutils literal notranslate"><span class="pre">CairnObject.set_setting_comment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.set_setting_value"><code class="docutils literal notranslate"><span class="pre">CairnObject.set_setting_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.name"><code class="docutils literal notranslate"><span class="pre">CairnObject.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.objectType"><code class="docutils literal notranslate"><span class="pre">CairnObject.objectType</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.performance_map_params"><code class="docutils literal notranslate"><span class="pre">CairnObject.performance_map_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.setting_comments"><code class="docutils literal notranslate"><span class="pre">CairnObject.setting_comments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.setting_values"><code class="docutils literal notranslate"><span class="pre">CairnObject.setting_values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.settings"><code class="docutils literal notranslate"><span class="pre">CairnObject.settings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.show_config"><code class="docutils literal notranslate"><span class="pre">CairnObject.show_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.CairnObject.show_configs"><code class="docutils literal notranslate"><span class="pre">CairnObject.show_configs</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#energyvector">EnergyVector</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.EnergyVector"><code class="docutils literal notranslate"><span class="pre">EnergyVector</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.EnergyVector.techno_type"><code class="docutils literal notranslate"><span class="pre">EnergyVector.techno_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.EnergyVector.type"><code class="docutils literal notranslate"><span class="pre">EnergyVector.type</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#bus">Bus</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.Bus"><code class="docutils literal notranslate"><span class="pre">Bus</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.add_port"><code class="docutils literal notranslate"><span class="pre">Bus.add_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.get_indicator_value"><code class="docutils literal notranslate"><span class="pre">Bus.get_indicator_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.get_indicators_values"><code class="docutils literal notranslate"><span class="pre">Bus.get_indicators_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.get_label_value"><code class="docutils literal notranslate"><span class="pre">Bus.get_label_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.get_port"><code class="docutils literal notranslate"><span class="pre">Bus.get_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.get_var_value"><code class="docutils literal notranslate"><span class="pre">Bus.get_var_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.get_var_values"><code class="docutils literal notranslate"><span class="pre">Bus.get_var_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.remove_port"><code class="docutils literal notranslate"><span class="pre">Bus.remove_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.set_label_value"><code class="docutils literal notranslate"><span class="pre">Bus.set_label_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.carrier"><code class="docutils literal notranslate"><span class="pre">Bus.carrier</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.default_ports"><code class="docutils literal notranslate"><span class="pre">Bus.default_ports</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.indicators"><code class="docutils literal notranslate"><span class="pre">Bus.indicators</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.indicators_shortnames"><code class="docutils literal notranslate"><span class="pre">Bus.indicators_shortnames</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.indicators_units"><code class="docutils literal notranslate"><span class="pre">Bus.indicators_units</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.label_values"><code class="docutils literal notranslate"><span class="pre">Bus.label_values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.model_class"><code class="docutils literal notranslate"><span class="pre">Bus.model_class</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.ports"><code class="docutils literal notranslate"><span class="pre">Bus.ports</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.possible_control_types"><code class="docutils literal notranslate"><span class="pre">Bus.possible_control_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.possible_model_classes"><code class="docutils literal notranslate"><span class="pre">Bus.possible_model_classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.possible_objective_types"><code class="docutils literal notranslate"><span class="pre">Bus.possible_objective_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.type"><code class="docutils literal notranslate"><span class="pre">Bus.type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Bus.variables"><code class="docutils literal notranslate"><span class="pre">Bus.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#component">Component</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.Component"><code class="docutils literal notranslate"><span class="pre">Component</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.add_port"><code class="docutils literal notranslate"><span class="pre">Component.add_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.get_indicator_value"><code class="docutils literal notranslate"><span class="pre">Component.get_indicator_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.get_indicators_values"><code class="docutils literal notranslate"><span class="pre">Component.get_indicators_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.get_label_value"><code class="docutils literal notranslate"><span class="pre">Component.get_label_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.get_port"><code class="docutils literal notranslate"><span class="pre">Component.get_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.get_var_value"><code class="docutils literal notranslate"><span class="pre">Component.get_var_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.get_var_values"><code class="docutils literal notranslate"><span class="pre">Component.get_var_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.remove_port"><code class="docutils literal notranslate"><span class="pre">Component.remove_port()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.set_label_value"><code class="docutils literal notranslate"><span class="pre">Component.set_label_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.default_ports"><code class="docutils literal notranslate"><span class="pre">Component.default_ports</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.dim_param"><code class="docutils literal notranslate"><span class="pre">Component.dim_param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.direction"><code class="docutils literal notranslate"><span class="pre">Component.direction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.indicators"><code class="docutils literal notranslate"><span class="pre">Component.indicators</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.indicators_shortnames"><code class="docutils literal notranslate"><span class="pre">Component.indicators_shortnames</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.indicators_units"><code class="docutils literal notranslate"><span class="pre">Component.indicators_units</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.is_optimized"><code class="docutils literal notranslate"><span class="pre">Component.is_optimized</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.label_values"><code class="docutils literal notranslate"><span class="pre">Component.label_values</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.model_class"><code class="docutils literal notranslate"><span class="pre">Component.model_class</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.optimal_size_expression"><code class="docutils literal notranslate"><span class="pre">Component.optimal_size_expression</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.ports"><code class="docutils literal notranslate"><span class="pre">Component.ports</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.possible_control_types"><code class="docutils literal notranslate"><span class="pre">Component.possible_control_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.possible_model_classes"><code class="docutils literal notranslate"><span class="pre">Component.possible_model_classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.type"><code class="docutils literal notranslate"><span class="pre">Component.type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Component.variables"><code class="docutils literal notranslate"><span class="pre">Component.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#port">Port</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.Port"><code class="docutils literal notranslate"><span class="pre">Port</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Port.set_carrier"><code class="docutils literal notranslate"><span class="pre">Port.set_carrier()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Port.carrier_name"><code class="docutils literal notranslate"><span class="pre">Port.carrier_name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#param">Param</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.Param"><code class="docutils literal notranslate"><span class="pre">Param</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.comment"><code class="docutils literal notranslate"><span class="pre">Param.comment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.defaultValue"><code class="docutils literal notranslate"><span class="pre">Param.defaultValue</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.description"><code class="docutils literal notranslate"><span class="pre">Param.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.isDependent"><code class="docutils literal notranslate"><span class="pre">Param.isDependent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.isMandatory"><code class="docutils literal notranslate"><span class="pre">Param.isMandatory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.max"><code class="docutils literal notranslate"><span class="pre">Param.max</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.min"><code class="docutils literal notranslate"><span class="pre">Param.min</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.name"><code class="docutils literal notranslate"><span class="pre">Param.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.show_config"><code class="docutils literal notranslate"><span class="pre">Param.show_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.unit"><code class="docutils literal notranslate"><span class="pre">Param.unit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Param.value"><code class="docutils literal notranslate"><span class="pre">Param.value</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#variable">Variable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solution">Solution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.Solution"><code class="docutils literal notranslate"><span class="pre">Solution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Solution.get_ts_results"><code class="docutils literal notranslate"><span class="pre">Solution.get_ts_results()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Solution.nb_solutions"><code class="docutils literal notranslate"><span class="pre">Solution.nb_solutions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cairnopen.Solution.status"><code class="docutils literal notranslate"><span class="pre">Solution.status</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cairn-toolbox">cairn toolbox</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.run_sensitivity"><code class="docutils literal notranslate"><span class="pre">run_sensitivity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.add_df_timeseries"><code class="docutils literal notranslate"><span class="pre">add_df_timeseries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cairnopen.copy_component"><code class="docutils literal notranslate"><span class="pre">copy_component()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebook.html">Example through a notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models/models.html">Cairn Open SubModels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/grid.html">Grids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/bus.html">Buses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/converter.html">Converters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/sourceload.html">Source loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/storage.html">Storages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/operationconstraint.html">Operation constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models/physicalequation.html">Physical equations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cairn-api-documentation">
+<h1><a class="reference internal" href="../glossary.html#term-Cairn"><span class="xref std std-term">Cairn</span></a> <a class="reference internal" href="../glossary.html#term-API"><span class="xref std std-term">API</span></a> documentation<a class="headerlink" href="#cairn-api-documentation" title="Link to this heading"></a></h1>
+<section id="cairnapi">
+<h2>CairnAPI<a class="headerlink" href="#cairnapi" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">CairnAPI</span></span><a class="headerlink" href="#cairnopen.CairnAPI" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ESettingsLimited</span></span><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Members:</p>
+<p>all</p>
+<p>mandatory</p>
+<p>optional</p>
+<p>used</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited.all">
+<span class="sig-name descname"><span class="pre">all</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.all:</span> <span class="pre">0&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited.all" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited.mandatory">
+<span class="sig-name descname"><span class="pre">mandatory</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.mandatory:</span> <span class="pre">1&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited.mandatory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited.optional">
+<span class="sig-name descname"><span class="pre">optional</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.optional:</span> <span class="pre">2&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited.optional" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited.used">
+<span class="sig-name descname"><span class="pre">used</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.used:</span> <span class="pre">3&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited.used" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.ESettingsLimited.value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#cairnopen.CairnAPI.ESettingsLimited.value" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.close_study">
+<span class="sig-name descname"><span class="pre">close_study</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnAPI" title="cairnopen.bin.cairn.CairnAPI"><span class="pre">cairnopen.bin.cairn.CairnAPI</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.CairnAPI.close_study" title="Link to this definition"></a></dt>
+<dd><p>close the current study</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.component_type">
+<span class="sig-name descname"><span class="pre">component_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnAPI" title="cairnopen.bin.cairn.CairnAPI"><span class="pre">cairnopen.bin.cairn.CairnAPI</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#cairnopen.CairnAPI.component_type" title="Link to this definition"></a></dt>
+<dd><p>returns the type of a given model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.create_study">
+<span class="sig-name descname"><span class="pre">create_study</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnAPI" title="cairnopen.bin.cairn.CairnAPI"><span class="pre">cairnopen.bin.cairn.CairnAPI</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::OptimProblemAPI</span></span></span><a class="headerlink" href="#cairnopen.CairnAPI.create_study" title="Link to this definition"></a></dt>
+<dd><p>creates study with a given name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.get_study">
+<span class="sig-name descname"><span class="pre">get_study</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnAPI" title="cairnopen.bin.cairn.CairnAPI"><span class="pre">cairnopen.bin.cairn.CairnAPI</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::OptimProblemAPI</span></span></span><a class="headerlink" href="#cairnopen.CairnAPI.get_study" title="Link to this definition"></a></dt>
+<dd><p>get the current study</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.read_study">
+<span class="sig-name descname"><span class="pre">read_study</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnAPI" title="cairnopen.bin.cairn.CairnAPI"><span class="pre">cairnopen.bin.cairn.CairnAPI</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fileName</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::OptimProblemAPI</span></span></span><a class="headerlink" href="#cairnopen.CairnAPI.read_study" title="Link to this definition"></a></dt>
+<dd><p>reads a study from file</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.all">
+<span class="sig-name descname"><span class="pre">all</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.all:</span> <span class="pre">0&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.all" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.all_models">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">all_models</span></span><a class="headerlink" href="#cairnopen.CairnAPI.all_models" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.carrier_types">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">carrier_types</span></span><a class="headerlink" href="#cairnopen.CairnAPI.carrier_types" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.component_types">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">component_types</span></span><a class="headerlink" href="#cairnopen.CairnAPI.component_types" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.mandatory">
+<span class="sig-name descname"><span class="pre">mandatory</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.mandatory:</span> <span class="pre">1&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.mandatory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.optional">
+<span class="sig-name descname"><span class="pre">optional</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.optional:</span> <span class="pre">2&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.optional" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.solvers">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">solvers</span></span><a class="headerlink" href="#cairnopen.CairnAPI.solvers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cairnopen.CairnAPI.used">
+<span class="sig-name descname"><span class="pre">used</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ESettingsLimited.used:</span> <span class="pre">3&gt;</span></em><a class="headerlink" href="#cairnopen.CairnAPI.used" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="optimproblem">
+<h2>OptimProblem<a class="headerlink" href="#optimproblem" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">OptimProblem</span></span><a class="headerlink" href="#cairnopen.OptimProblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>OptimProblem class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.add_label">
+<span class="sig-name descname"><span class="pre">add_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.add_label" title="Link to this definition"></a></dt>
+<dd><p>add a label to the problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.add_link">
+<span class="sig-name descname"><span class="pre">add_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0:</span> <span class="pre">CairnAPI::MilpPortAPI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1:</span> <span class="pre">CairnAPI::BusAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.add_link" title="Link to this definition"></a></dt>
+<dd><p>adds a link between two given ports</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.add_onetimeseries">
+<span class="sig-name descname"><span class="pre">add_onetimeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.add_onetimeseries" title="Link to this definition"></a></dt>
+<dd><p>adds one timeseries in dictionary format</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.add_timeseries">
+<span class="sig-name descname"><span class="pre">add_timeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.add_timeseries" title="Link to this definition"></a></dt>
+<dd><p>adds a given timeseries file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.copy_component">
+<span class="sig-name descname"><span class="pre">copy_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newName</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copyLinks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::MilpComponentAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.copy_component" title="Link to this definition"></a></dt>
+<dd><p>copy a MilpComponent</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.create_bus">
+<span class="sig-name descname"><span class="pre">create_bus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg2:</span> <span class="pre">CairnAPI::EnergyVectorAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::BusAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.create_bus" title="Link to this definition"></a></dt>
+<dd><p>creates and returns a new bus with a given name, model and energy carrier, e.g., create_bus(‘H2_Bus’, ‘NodeLaw’, vH2)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.create_component">
+<span class="sig-name descname"><span class="pre">create_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::MilpComponentAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.create_component" title="Link to this definition"></a></dt>
+<dd><p>creates and returns a new component with a given name and model, e.g., create_component(‘Elec_Grid’, ‘GridFree’)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.create_energy_carrier">
+<span class="sig-name descname"><span class="pre">create_energy_carrier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'MaterialCarrier'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">technoType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Material'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::EnergyVectorAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.create_energy_carrier" title="Link to this definition"></a></dt>
+<dd><p>creates and returns a new energy carrier with a given name and type, e.g., create_energy_carrier(‘H2’, ‘MaterialCarrier’, ‘H2Vector’)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.export_parameters">
+<span class="sig-name descname"><span class="pre">export_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fileName</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'UTF-8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optionsMap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extraData</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ExtraParameterData</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.export_parameters" title="Link to this definition"></a></dt>
+<dd><p>exports the study parameters to a csv file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.export_plan">
+<span class="sig-name descname"><span class="pre">export_plan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solNb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.export_plan" title="Link to this definition"></a></dt>
+<dd><p>exports PLAN results to a csv file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_bus">
+<span class="sig-name descname"><span class="pre">get_bus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::BusAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_bus" title="Link to this definition"></a></dt>
+<dd><p>returns a given bus</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_component">
+<span class="sig-name descname"><span class="pre">get_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::MilpComponentAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_component" title="Link to this definition"></a></dt>
+<dd><p>returns a given component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_components">
+<span class="sig-name descname"><span class="pre">get_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_components" title="Link to this definition"></a></dt>
+<dd><p>returns all the components of the optim problem specifying the category if needed</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_energy_carrier">
+<span class="sig-name descname"><span class="pre">get_energy_carrier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::EnergyVectorAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_energy_carrier" title="Link to this definition"></a></dt>
+<dd><p>returns a given energy carrier</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_indicators_values">
+<span class="sig-name descname"><span class="pre">get_indicators_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PLAN'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_indicators_values" title="Link to this definition"></a></dt>
+<dd><p>returns the indicators of all components for a given range, by default PLAN value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_object">
+<span class="sig-name descname"><span class="pre">get_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::ObjectAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_object" title="Link to this definition"></a></dt>
+<dd><p>returns a given object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_published_variable_value">
+<span class="sig-name descname"><span class="pre">get_published_variable_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_published_variable_value" title="Link to this definition"></a></dt>
+<dd><p>get the values for a given published variable of the problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_published_variables">
+<span class="sig-name descname"><span class="pre">get_published_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_published_variables" title="Link to this definition"></a></dt>
+<dd><p>returns the list of the published variables of the problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_simulation_control">
+<span class="sig-name descname"><span class="pre">get_simulation_control</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::SimulationControlAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_simulation_control" title="Link to this definition"></a></dt>
+<dd><p>return SimulationControl</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_solver">
+<span class="sig-name descname"><span class="pre">get_solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::SolverAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_solver" title="Link to this definition"></a></dt>
+<dd><p>return Solver</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_subscribed_variables">
+<span class="sig-name descname"><span class="pre">get_subscribed_variables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_subscribed_variables" title="Link to this definition"></a></dt>
+<dd><p>returns the list of the subscribed variables of the problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.get_tech_eco_analysis">
+<span class="sig-name descname"><span class="pre">get_tech_eco_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::TecEcoAnalysisAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.get_tech_eco_analysis" title="Link to this definition"></a></dt>
+<dd><p>return TecEcoAnalysis</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.import_group">
+<span class="sig-name descname"><span class="pre">import_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.import_group" title="Link to this definition"></a></dt>
+<dd><p>import a group as json file; returns list of components and buses</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.remove_bus">
+<span class="sig-name descname"><span class="pre">remove_bus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0:</span> <span class="pre">CairnAPI::BusAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.remove_bus" title="Link to this definition"></a></dt>
+<dd><p>removes a given bus</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.remove_component">
+<span class="sig-name descname"><span class="pre">remove_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0:</span> <span class="pre">CairnAPI::MilpComponentAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.remove_component" title="Link to this definition"></a></dt>
+<dd><p>removes a geiven component from the optim problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.remove_energy_carrier">
+<span class="sig-name descname"><span class="pre">remove_energy_carrier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0:</span> <span class="pre">CairnAPI::EnergyVectorAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.remove_energy_carrier" title="Link to this definition"></a></dt>
+<dd><p>removes a given energy carrier from the optim problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.remove_label">
+<span class="sig-name descname"><span class="pre">remove_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.remove_label" title="Link to this definition"></a></dt>
+<dd><p>remove a label from the problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.remove_link">
+<span class="sig-name descname"><span class="pre">remove_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0:</span> <span class="pre">CairnAPI::MilpPortAPI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1:</span> <span class="pre">CairnAPI::BusAPI</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.remove_link" title="Link to this definition"></a></dt>
+<dd><p>removes a given link</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">resultsPath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coSim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CairnAPI::SolutionAPI</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.run" title="Link to this definition"></a></dt>
+<dd><p>runs the optim problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.run_sensitivity">
+<span class="sig-name descname"><span class="pre">run_sensitivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.OptimProblem,</span> <span class="pre">sampling:</span> <span class="pre">collections.abc.Sequence[collections.abc.Sequence[collections.abc.Mapping[str,</span> <span class="pre">typing.SupportsFloat</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex</span> <span class="pre">|</span> <span class="pre">typing.SupportsInt</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">collections.abc.Sequence[str]</span> <span class="pre">|</span> <span class="pre">collections.abc.Sequence[typing.SupportsFloat</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex]</span> <span class="pre">|</span> <span class="pre">collections.abc.Sequence[typing.SupportsInt</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex]]]],</span> <span class="pre">max_time:</span> <span class="pre">typing.SupportsInt</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex,</span> <span class="pre">indicators:</span> <span class="pre">collections.abc.Sequence[collections.abc.Mapping[str,</span> <span class="pre">typing.SupportsFloat</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex</span> <span class="pre">|</span> <span class="pre">typing.SupportsInt</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex</span> <span class="pre">|</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">collections.abc.Sequence[str]</span> <span class="pre">|</span> <span class="pre">collections.abc.Sequence[typing.SupportsFloat</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex]</span> <span class="pre">|</span> <span class="pre">collections.abc.Sequence[typing.SupportsInt</span> <span class="pre">|</span> <span class="pre">typing.SupportsIndex]]],</span> <span class="pre">on_iter:</span> <span class="pre">std::function&lt;void</span> <span class="pre">__cdecl(int)&gt;</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.run_sensitivity" title="Link to this definition"></a></dt>
+<dd><p>runs sensitivity study</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.save_study">
+<span class="sig-name descname"><span class="pre">save_study</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.save_study" title="Link to this definition"></a></dt>
+<dd><p>saves a study with a given name, relative or absolute path (it can also take a mode to position the components e.g. gradient)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.set_subscribed_variable_value">
+<span class="sig-name descname"><span class="pre">set_subscribed_variable_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">cairnopen.bin.cairn.OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.OptimProblem.set_subscribed_variable_value" title="Link to this definition"></a></dt>
+<dd><p>set the values for a given subscribed variable of the problem</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.buses">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">buses</span></span><a class="headerlink" href="#cairnopen.OptimProblem.buses" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.components">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">components</span></span><a class="headerlink" href="#cairnopen.OptimProblem.components" title="Link to this definition"></a></dt>
+<dd><p>returns all the components of the optim problem</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.energy_carriers">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">energy_carriers</span></span><a class="headerlink" href="#cairnopen.OptimProblem.energy_carriers" title="Link to this definition"></a></dt>
+<dd><p>returns all the energy carriers of the optim problem</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.labels">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labels</span></span><a class="headerlink" href="#cairnopen.OptimProblem.labels" title="Link to this definition"></a></dt>
+<dd><p>get/set the labels of the problem</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.links">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">links</span></span><a class="headerlink" href="#cairnopen.OptimProblem.links" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.objects">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">objects</span></span><a class="headerlink" href="#cairnopen.OptimProblem.objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.OptimProblem.optimized_components">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimized_components</span></span><a class="headerlink" href="#cairnopen.OptimProblem.optimized_components" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="cairnobject">
+<h2>CairnObject<a class="headerlink" href="#cairnobject" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.CairnObject">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">CairnObject</span></span><a class="headerlink" href="#cairnopen.CairnObject" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Object class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.get_setting">
+<span class="sig-name descname"><span class="pre">get_setting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><span class="pre">cairnopen.bin.cairn.CairnObject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#cairnopen.Param" title="cairnopen.bin.cairn.Param"><span class="pre">cairnopen.bin.cairn.Param</span></a></span></span><a class="headerlink" href="#cairnopen.CairnObject.get_setting" title="Link to this definition"></a></dt>
+<dd><p>returns the class Param of a given parameter</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.get_setting_comment">
+<span class="sig-name descname"><span class="pre">get_setting_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><span class="pre">cairnopen.bin.cairn.CairnObject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#cairnopen.CairnObject.get_setting_comment" title="Link to this definition"></a></dt>
+<dd><p>returns the comment of a given parameter</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.get_setting_value">
+<span class="sig-name descname"><span class="pre">get_setting_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><span class="pre">cairnopen.bin.cairn.CairnObject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.CairnObject.get_setting_value" title="Link to this definition"></a></dt>
+<dd><p>returns the value of a given parameter</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.get_settings">
+<span class="sig-name descname"><span class="pre">get_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.CairnObject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setLimited:</span> <span class="pre">cairnopen.bin.cairn.CairnAPI.ESettingsLimited</span> <span class="pre">=</span> <span class="pre">&lt;ESettingsLimited.all:</span> <span class="pre">0&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.CairnObject.get_settings" title="Link to this definition"></a></dt>
+<dd><p>returns a list of all (by default), used, optional or mandatory parameter names</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.rename">
+<span class="sig-name descname"><span class="pre">rename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><span class="pre">cairnopen.bin.cairn.CairnObject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.CairnObject.rename" title="Link to this definition"></a></dt>
+<dd><p>rename EnergyVector component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.set_setting_comment">
+<span class="sig-name descname"><span class="pre">set_setting_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><span class="pre">cairnopen.bin.cairn.CairnObject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.CairnObject.set_setting_comment" title="Link to this definition"></a></dt>
+<dd><p>sets the comment of a given parameter</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.set_setting_value">
+<span class="sig-name descname"><span class="pre">set_setting_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><span class="pre">cairnopen.bin.cairn.CairnObject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">SupportsFloat</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">collections.abc.Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.CairnObject.set_setting_value" title="Link to this definition"></a></dt>
+<dd><p>sets the value of a given parameter</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#cairnopen.CairnObject.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.objectType">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">objectType</span></span><a class="headerlink" href="#cairnopen.CairnObject.objectType" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.performance_map_params">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">performance_map_params</span></span><a class="headerlink" href="#cairnopen.CairnObject.performance_map_params" title="Link to this definition"></a></dt>
+<dd><p>returns a list of all performance parameters</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.setting_comments">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">setting_comments</span></span><a class="headerlink" href="#cairnopen.CairnObject.setting_comments" title="Link to this definition"></a></dt>
+<dd><p>get/set all parameter comments as a dictionary</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.setting_values">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">setting_values</span></span><a class="headerlink" href="#cairnopen.CairnObject.setting_values" title="Link to this definition"></a></dt>
+<dd><p>get/set all parameter values as a dictionary</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.settings">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">settings</span></span><a class="headerlink" href="#cairnopen.CairnObject.settings" title="Link to this definition"></a></dt>
+<dd><p>returns a list of all parameter names</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.show_config">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">show_config</span></span><a class="headerlink" href="#cairnopen.CairnObject.show_config" title="Link to this definition"></a></dt>
+<dd><p>returns ShowConfig of a given parameter. The parameter is displayed in the GUI when this ShowConfig is selected in the DataFilter</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.CairnObject.show_configs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">show_configs</span></span><a class="headerlink" href="#cairnopen.CairnObject.show_configs" title="Link to this definition"></a></dt>
+<dd><p>returns a list of all ShowConfigs which is used in the GUI DataFilter</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="energyvector">
+<h2>EnergyVector<a class="headerlink" href="#energyvector" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.EnergyVector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">EnergyVector</span></span><a class="headerlink" href="#cairnopen.EnergyVector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">CairnObject</span></code></a></p>
+<p>EnergyCarrier class. The constructor takes several arguments:         arg1: OptimProblemAPI aProblem, the study where the EnergyVector will be added          arg2: string aName to give the name of the energy vector         arg3: string aType to give the type of the energy vector (list available thanks to property carrier_types of CairnAPI)</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.EnergyVector.techno_type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">techno_type</span></span><a class="headerlink" href="#cairnopen.EnergyVector.techno_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.EnergyVector.type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#cairnopen.EnergyVector.type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="bus">
+<h2>Bus<a class="headerlink" href="#bus" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.Bus">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">Bus</span></span><a class="headerlink" href="#cairnopen.Bus" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">CairnObject</span></code></a></p>
+<p>Bus class. The constructor takes several arguments:         arg1: OptimProblemAPI aProblem, the study where the Bus will be added          arg2: string aName to give the name of the bus         arg3: string aModelName to give the model. Available Bus models are NodeLaw, NodeEquality and ManualObjective         arg4: string aEnergyVector to give the energy vector of the bus</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.add_port">
+<span class="sig-name descname"><span class="pre">add_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self:</span> <span class="pre">cairnopen.bin.cairn.Bus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carrier:</span> <span class="pre">cairnopen.bin.cairn.EnergyVector</span> <span class="pre">=</span> <span class="pre">&lt;cairnopen.bin.cairn.EnergyVector</span> <span class="pre">object</span> <span class="pre">at</span> <span class="pre">0x00000242427FB170&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'DATAEXCHANGE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></span><a class="headerlink" href="#cairnopen.Bus.add_port" title="Link to this definition"></a></dt>
+<dd><p>creates a new port for the bus</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.get_indicator_value">
+<span class="sig-name descname"><span class="pre">get_indicator_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PLAN'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#cairnopen.Bus.get_indicator_value" title="Link to this definition"></a></dt>
+<dd><p>returns the result of a given indicator for a given range, by default PLAN value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.get_indicators_values">
+<span class="sig-name descname"><span class="pre">get_indicators_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PLAN'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Bus.get_indicators_values" title="Link to this definition"></a></dt>
+<dd><p>returns the  indicators for a given range, by default PLAN value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.get_label_value">
+<span class="sig-name descname"><span class="pre">get_label_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#cairnopen.Bus.get_label_value" title="Link to this definition"></a></dt>
+<dd><p>return the value of a given label</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.get_port">
+<span class="sig-name descname"><span class="pre">get_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></span><a class="headerlink" href="#cairnopen.Bus.get_port" title="Link to this definition"></a></dt>
+<dd><p>returns a given port from the component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.get_var_value">
+<span class="sig-name descname"><span class="pre">get_var_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Bus.get_var_value" title="Link to this definition"></a></dt>
+<dd><p>returns the result of a given IO for the optimal solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.get_var_values">
+<span class="sig-name descname"><span class="pre">get_var_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Bus.get_var_values" title="Link to this definition"></a></dt>
+<dd><p>returns the result of all IOs for the optimal solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.remove_port">
+<span class="sig-name descname"><span class="pre">remove_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">isDelCompoFlag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#cairnopen.Bus.remove_port" title="Link to this definition"></a></dt>
+<dd><p>removes a given port from the bus</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Bus.set_label_value">
+<span class="sig-name descname"><span class="pre">set_label_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Bus" title="cairnopen.bin.cairn.Bus"><span class="pre">cairnopen.bin.cairn.Bus</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.Bus.set_label_value" title="Link to this definition"></a></dt>
+<dd><p>sets the value of a given label</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.carrier">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">carrier</span></span><a class="headerlink" href="#cairnopen.Bus.carrier" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.default_ports">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">default_ports</span></span><a class="headerlink" href="#cairnopen.Bus.default_ports" title="Link to this definition"></a></dt>
+<dd><p>returns the list of default port names</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.indicators">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indicators</span></span><a class="headerlink" href="#cairnopen.Bus.indicators" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.indicators_shortnames">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indicators_shortnames</span></span><a class="headerlink" href="#cairnopen.Bus.indicators_shortnames" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.indicators_units">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indicators_units</span></span><a class="headerlink" href="#cairnopen.Bus.indicators_units" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.label_values">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">label_values</span></span><a class="headerlink" href="#cairnopen.Bus.label_values" title="Link to this definition"></a></dt>
+<dd><p>get/set all label values as a dictionary</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.model_class">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_class</span></span><a class="headerlink" href="#cairnopen.Bus.model_class" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.ports">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ports</span></span><a class="headerlink" href="#cairnopen.Bus.ports" title="Link to this definition"></a></dt>
+<dd><p>returns the list of all port names</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.possible_control_types">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">possible_control_types</span></span><a class="headerlink" href="#cairnopen.Bus.possible_control_types" title="Link to this definition"></a></dt>
+<dd><p>returns a list of possible time control types for this component.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.possible_model_classes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">possible_model_classes</span></span><a class="headerlink" href="#cairnopen.Bus.possible_model_classes" title="Link to this definition"></a></dt>
+<dd><p>returns a list of model classes possible for this component.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.possible_objective_types">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">possible_objective_types</span></span><a class="headerlink" href="#cairnopen.Bus.possible_objective_types" title="Link to this definition"></a></dt>
+<dd><p>returns a list of possible time objective types. Only valid for ManualObjective.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#cairnopen.Bus.type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Bus.variables">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variables</span></span><a class="headerlink" href="#cairnopen.Bus.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="component">
+<h2>Component<a class="headerlink" href="#component" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.Component">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">Component</span></span><a class="headerlink" href="#cairnopen.Component" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">CairnObject</span></code></a></p>
+<p>Component class. The constructor takes several arguments:         arg1: OptimProblemAPI aProblem, the study where the component will be added          arg2: string aName to give the name of the component         arg3: string aModelName to give the model (list available thanks to property all_models of CairnAPI).               Note that, to create componenets NodeLaw, NodeEquality and ManualObjective use BusAPI</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.add_port">
+<span class="sig-name descname"><span class="pre">add_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carrier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.EnergyVector" title="cairnopen.bin.cairn.EnergyVector"><span class="pre">cairnopen.bin.cairn.EnergyVector</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'DATAEXCHANGE'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reinitializeCompo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></span><a class="headerlink" href="#cairnopen.Component.add_port" title="Link to this definition"></a></dt>
+<dd><p>creates a new port for the component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.get_indicator_value">
+<span class="sig-name descname"><span class="pre">get_indicator_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PLAN'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#cairnopen.Component.get_indicator_value" title="Link to this definition"></a></dt>
+<dd><p>returns the result of a given indicator for a given range, by default PLAN value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.get_indicators_values">
+<span class="sig-name descname"><span class="pre">get_indicators_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'PLAN'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Component.get_indicators_values" title="Link to this definition"></a></dt>
+<dd><p>returns the  indicators for a given range, by default PLAN value</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.get_label_value">
+<span class="sig-name descname"><span class="pre">get_label_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#cairnopen.Component.get_label_value" title="Link to this definition"></a></dt>
+<dd><p>return the value of a given label</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.get_port">
+<span class="sig-name descname"><span class="pre">get_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></span><a class="headerlink" href="#cairnopen.Component.get_port" title="Link to this definition"></a></dt>
+<dd><p>returns a given port from the component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.get_var_value">
+<span class="sig-name descname"><span class="pre">get_var_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Component.get_var_value" title="Link to this definition"></a></dt>
+<dd><p>returns the result of a given IO for the optimal solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.get_var_values">
+<span class="sig-name descname"><span class="pre">get_var_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Component.get_var_values" title="Link to this definition"></a></dt>
+<dd><p>returns the result of all IOs for the optimal solution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.remove_port">
+<span class="sig-name descname"><span class="pre">remove_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">isDelCompoFlag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#cairnopen.Component.remove_port" title="Link to this definition"></a></dt>
+<dd><p>removes a given port from the component</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Component.set_label_value">
+<span class="sig-name descname"><span class="pre">set_label_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component"><span class="pre">cairnopen.bin.cairn.Component</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#cairnopen.Component.set_label_value" title="Link to this definition"></a></dt>
+<dd><p>sets the value of a given label</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.default_ports">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">default_ports</span></span><a class="headerlink" href="#cairnopen.Component.default_ports" title="Link to this definition"></a></dt>
+<dd><p>returns the list of default port names</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.dim_param">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dim_param</span></span><a class="headerlink" href="#cairnopen.Component.dim_param" title="Link to this definition"></a></dt>
+<dd><p>returns the parameter used for dimensionning</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.direction">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">direction</span></span><a class="headerlink" href="#cairnopen.Component.direction" title="Link to this definition"></a></dt>
+<dd><p>returns the direction based on the default port. Valid only for components of types Grid and SourceLoad.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.indicators">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indicators</span></span><a class="headerlink" href="#cairnopen.Component.indicators" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.indicators_shortnames">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indicators_shortnames</span></span><a class="headerlink" href="#cairnopen.Component.indicators_shortnames" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.indicators_units">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">indicators_units</span></span><a class="headerlink" href="#cairnopen.Component.indicators_units" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.is_optimized">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_optimized</span></span><a class="headerlink" href="#cairnopen.Component.is_optimized" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.label_values">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">label_values</span></span><a class="headerlink" href="#cairnopen.Component.label_values" title="Link to this definition"></a></dt>
+<dd><p>get/set all label values as a dictionary</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.model_class">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_class</span></span><a class="headerlink" href="#cairnopen.Component.model_class" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.optimal_size_expression">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_size_expression</span></span><a class="headerlink" href="#cairnopen.Component.optimal_size_expression" title="Link to this definition"></a></dt>
+<dd><p>returns the name of optimal size (MaxSize) variable. Note, it works only after configuring the carriers of default ports.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.ports">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ports</span></span><a class="headerlink" href="#cairnopen.Component.ports" title="Link to this definition"></a></dt>
+<dd><p>returns the list of all port names</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.possible_control_types">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">possible_control_types</span></span><a class="headerlink" href="#cairnopen.Component.possible_control_types" title="Link to this definition"></a></dt>
+<dd><p>returns a list of possible time control types for this component.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.possible_model_classes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">possible_model_classes</span></span><a class="headerlink" href="#cairnopen.Component.possible_model_classes" title="Link to this definition"></a></dt>
+<dd><p>returns a list of model classes possible for this component.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.type">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">type</span></span><a class="headerlink" href="#cairnopen.Component.type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Component.variables">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variables</span></span><a class="headerlink" href="#cairnopen.Component.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="port">
+<h2>Port<a class="headerlink" href="#port" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.Port">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">Port</span></span><a class="headerlink" href="#cairnopen.Port" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cairnopen.CairnObject" title="cairnopen.bin.cairn.CairnObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">CairnObject</span></code></a></p>
+<p>Port class. The constructor takes several arguments:         arg1: MilpComponentAPI aComponent which will own the port         arg2: string aName to give the name of the port         arg3: EnergyVectorAPI aEnergyVector to give the energy vector of the port         arg3 (optional): string aDirection (Input, Output or DataExchange) to set the direction of the port        arg3 (optional): string aVariable to set the variable of the port</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Port.set_carrier">
+<span class="sig-name descname"><span class="pre">set_carrier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Port" title="cairnopen.bin.cairn.Port"><span class="pre">cairnopen.bin.cairn.Port</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.EnergyVector" title="cairnopen.bin.cairn.EnergyVector"><span class="pre">cairnopen.bin.cairn.EnergyVector</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#cairnopen.Port.set_carrier" title="Link to this definition"></a></dt>
+<dd><p>sets the energy carrier of the port (takes componenet not name)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Port.carrier_name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">carrier_name</span></span><a class="headerlink" href="#cairnopen.Port.carrier_name" title="Link to this definition"></a></dt>
+<dd><p>return the name of energy carrier</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="param">
+<h2>Param<a class="headerlink" href="#param" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.Param">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">Param</span></span><a class="headerlink" href="#cairnopen.Param" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Param class.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.comment">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">comment</span></span><a class="headerlink" href="#cairnopen.Param.comment" title="Link to this definition"></a></dt>
+<dd><p>get/set comment</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.defaultValue">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">defaultValue</span></span><a class="headerlink" href="#cairnopen.Param.defaultValue" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.description">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">description</span></span><a class="headerlink" href="#cairnopen.Param.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.isDependent">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">isDependent</span></span><a class="headerlink" href="#cairnopen.Param.isDependent" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.isMandatory">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">isMandatory</span></span><a class="headerlink" href="#cairnopen.Param.isMandatory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.max">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max</span></span><a class="headerlink" href="#cairnopen.Param.max" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.min">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min</span></span><a class="headerlink" href="#cairnopen.Param.min" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#cairnopen.Param.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.show_config">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">show_config</span></span><a class="headerlink" href="#cairnopen.Param.show_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.unit">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unit</span></span><a class="headerlink" href="#cairnopen.Param.unit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Param.value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#cairnopen.Param.value" title="Link to this definition"></a></dt>
+<dd><p>get/set value</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="variable">
+<h2>Variable<a class="headerlink" href="#variable" title="Link to this heading"></a></h2>
+</section>
+<section id="solution">
+<h2>Solution<a class="headerlink" href="#solution" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cairnopen.Solution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">Solution</span></span><a class="headerlink" href="#cairnopen.Solution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Solution class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cairnopen.Solution.get_ts_results">
+<span class="sig-name descname"><span class="pre">get_ts_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.Solution" title="cairnopen.bin.cairn.Solution"><span class="pre">cairnopen.bin.cairn.Solution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SupportsInt</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsIndex</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#cairnopen.Solution.get_ts_results" title="Link to this definition"></a></dt>
+<dd><p>returns the output ts results</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Solution.nb_solutions">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nb_solutions</span></span><a class="headerlink" href="#cairnopen.Solution.nb_solutions" title="Link to this definition"></a></dt>
+<dd><p>returns the number of solutions found</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cairnopen.Solution.status">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">status</span></span><a class="headerlink" href="#cairnopen.Solution.status" title="Link to this definition"></a></dt>
+<dd><p>returns the status of the run</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="cairn-toolbox">
+<h2>cairn toolbox<a class="headerlink" href="#cairn-toolbox" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="cairnopen.run_sensitivity">
+<span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">run_sensitivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_sens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_time=-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indicators=Empty</span> <span class="pre">DataFrame</span> <span class="pre">Columns:</span> <span class="pre">[]</span> <span class="pre">Index:</span> <span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cairnopen.run_sensitivity" title="Link to this definition"></a></dt>
+<dd><p>runs sensitivity study of a given problem with a given input dataframe (2 header rows: 1st row: name of the component,
+2nd row: name of the parameter and one sensitivity study per row) for an optional maximal duration of each run.
+arg1: cairn problem
+arg2: dataframe containing sensitivity studies to be conducted
+arg3: maximal duration of each sensitivity study (optional)
+arg4: pandas dataframe of two colums Model and Indicator of KPI to save during sensitivity (file PLAN)
+:meta public:</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cairnopen.add_df_timeseries">
+<span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">add_df_timeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><span class="pre">OptimProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeSeries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cairnopen.add_df_timeseries" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>timeSeries<span class="classifier">DataFrame with an header of 4 rows of string</span></dt><dd><ul class="simple">
+<li><p>Names</p></li>
+<li><p>Description</p></li>
+<li><p>Unit</p></li>
+<li><p>??</p></li>
+</ul>
+<p>The next rows are the values</p>
+</dd>
+</dl>
+<p>One column is one timeSeries</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cairnopen.copy_component">
+<span class="sig-prename descclassname"><span class="pre">cairnopen.</span></span><span class="sig-name descname"><span class="pre">copy_component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connexions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cairnopen.copy_component" title="Link to this definition"></a></dt>
+<dd><p>Make a copy of a component, with its parameters and connexions (optional).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>problem</strong> (<a class="reference internal" href="#cairnopen.OptimProblem" title="cairnopen.bin.cairn.OptimProblem"><em>cairn.OptimProblem</em></a>) – The problem that will be modified</p></li>
+<li><p><strong>component</strong> (<em>str</em>) – The name of component to duplicate</p></li>
+<li><p><strong>new_name</strong> (<em>str</em>) – The name of the duplicated component</p></li>
+<li><p><strong>connexions</strong> (<em>bool</em>) – If true, the ports and links are also duplicated.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>compo2</strong> – The new component.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#cairnopen.Component" title="cairnopen.bin.cairn.Component">cairn.Component</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quick_api.html" class="btn btn-neutral float-left" title="Reminder of main functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebook.html" class="btn btn-neutral float-right" title="Example through a notebook" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
