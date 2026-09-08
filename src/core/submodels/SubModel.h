@@ -350,51 +350,51 @@ public:
     // Computation helpers
     // ---------------------------------------------------------------------
     void computeTime(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         double& ret);
 
     void computeTime(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
         double& retCharged,
         double& retDischarged);
 
     void computeProduction(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
-        double& aProduction,
-        const bool& aTimeIntegration = true);
+        double aCoeff,
+        double bCoeff,
+        double& production,
+        bool timeIntegration = true);
 
     void computeProduction(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
+        double aCoeff,
+        double bCoeff,
         double& retCharged,
         double& retDischarged);
 
 
     void computeLvlProduction(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
-        double& aProduction);
+        double aCoeff,
+        double bCoeff,
+        double& production);
 
     void computeLvlProduction(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
+        double aCoeff,
+        double bCoeff,
         double& retCharged,
         double& retDischarged);
 
@@ -402,37 +402,37 @@ public:
         uint aNpdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
+        double aCoeff,
+        double bCoeff,
         double& aConsumption);
 
     void computeLvlConsumption(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
-        double& aConsumption);
+        double aCoeff,
+        double bCoeff,
+        double& consumption);
 
     void computeLvlImpact(bool bsetValue,
-        uint aNpdt,
+        uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        const double& aCoeff,
-        const double& bCoeff,
-        double& aProduction);
+        double aCoeff,
+        double bCoeff,
+        double& ret);
 
-    void computeDiscounted(uint aNpdt,
+    void computeDiscounted(uint Npdt,
         const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        double& aDiscounted);
+        double& discounted);
 
     void computeIndicator(const MIPModeler::MIPExpression1D& exp,
         const double* optSol,
-        double& aUnDiscounted,
-        double& aDiscounted,
-        double& aHistUnDiscounted,
-        double& aHistDiscounted,
+        double& undiscounted,
+        double& discounted,
+        double& histUnDiscounted,
+        double& histDiscounted,
         bool isEnvImpact = false);
 
     void writeSolution(const double* optimalSolution,

@@ -132,6 +132,7 @@ std::string getUniquePortID();
 
     virtual std::vector<std::string> get_IOVarNames() const;
     virtual std::string get_IOVarDescription(const std::string& varName) const;
+    virtual class ModelIO* get_IOVar(const std::string& varName) const;
 
     virtual void jsonSaveGuiComponent(ojson &componentsArray, const std::string& componentCarrier, 
         const std::vector<std::string>& refLabelList) ;

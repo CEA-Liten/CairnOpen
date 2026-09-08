@@ -3,6 +3,7 @@
 #include "CairnAPIUtils.h"
 #include "InputParam.h"
 #include "ModelParam.h"
+#include "ModelVar.h"
 using namespace CairnAPIUtils;
 
 CairnAPI::ObjectAPI::ObjectAPI(CairnObject* ap_Object)
@@ -121,6 +122,18 @@ t_list CairnAPI::ObjectAPI::get_VarList() const
 		return {};
 
 	return m_Object->get_IOVarNames();
+}
+
+CairnAPI::VariableAPI CairnAPI::ObjectAPI::get_Variable(const std::string& a_Name)
+{
+	VariableAPI vRet;
+	if (m_Object) {
+		ModelIO* vIO = m_Object->get_IOVar(a_Name);
+		if (vIO) {
+			vRet = VariableAPI(shared_from_this(), vIO);
+		}
+	}
+	return vRet;
 }
 
 std::string CairnAPI::ObjectAPI::get_VarDescription(const std::string& varName) const

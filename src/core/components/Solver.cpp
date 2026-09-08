@@ -95,7 +95,8 @@ void Solver::declareCompoInputParam()
     mCompoInputParam->addParameter("Model", &mModelType, "MIPModeler", true, true, "Model used: MIPModeler, GAMS, etc.");
     mCompoInputParam->addParameter(PARAM_SOLVER_NAME, &mSolverName, vDefaultSolver, true, true, "Solver name: Cbc, Cplex, Highs, etc.");
     mCompoInputParam->addParameter("Category", &mProblemType, "MIP", true, true, "Problem type: MIP, LP, etc. Swich to LP with Cplex to get faster optimization if the problem has no integer values.");
-    mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default NO");
+    mCompoInputParam->addParameter("WriteLp", &mWriteLp, "YES", false, true, "Writing of Optimization problem in LP format is YES - default YES");
+    mCompoInputParam->addParameter("WriteSol", &mWriteSol, "NO", false, true, "Writing of Optimization solution in SOL format is YES - default NO");
     mCompoInputParam->addParameter("ReadParamFile", &mReadParamFile, "NO", false, true, "Read a study_cplexParam.prm file to parameter cplex solving");
     mCompoInputParam->addParameter("WriteMipStart", &mWriteMipStart, "NO", false, true, "Write mst cplex file");
     mCompoInputParam->addParameter("FileMipStart", &mFileMipStart, "", false, true, "Give a .mst file to start for a full solution");
@@ -207,6 +208,7 @@ void Solver::SolveProblem(MIPModeler::MIPModel* aModel, const std::string &locat
             vParams.addParam("SolverPrint", 1);
                         
             if (mWriteLp == "YES") vParams.addParam("WriteLp", 1);
+            if (mWriteSol == "YES") vParams.addParam("WriteSol", 1);
             vParams.addParam("WriteLpCycle", cycle);
             if(mReadParamFile=="YES") vParams.addParam("ReadParamFile", 1); 
             if (mWriteMipStart == "YES") vParams.addParam("WriteMipStart", 1); 

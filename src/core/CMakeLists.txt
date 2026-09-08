@@ -217,25 +217,29 @@ if(WITH_TESTING)
 	include(CTestTools)
 	set(CAIRN_SCRIPTS ${CMAKE_SOURCE_DIR}/tests/scripts)
 	# Install Python environement for tests (useful to compare tests results)
-	find_package(Python REQUIRED COMPONENTS Interpreter Development)		
-	python_venv2(${PYTHON_VENV_PROJECT} ${Python_EXECUTABLE} ${CAIRNTESTS_HOME}/scripts/reqs_tests.txt)	
+	find_package(Python REQUIRED COMPONENTS Interpreter Development)			
+	if (WITH_PRIVATEMODELS)
+		python_venv2(${PYTHON_VENV_PROJECT} ${Python_EXECUTABLE} ${CAIRNTESTS_HOME}/scripts/reqs_tests.txt REQS2 ${CAIRNTESTS_HOME}/privateTests/advanced_scripts/reqs_tests.txt)	
+	else()
+		python_venv2(${PYTHON_VENV_PROJECT} ${Python_EXECUTABLE} ${CAIRNTESTS_HOME}/scripts/reqs_tests.txt)	
+	endif()
 
 	# CTests : API Python
 	if (INSTALL_WHEEL)
-		#add_test (NAME cairn.python.python-tests
-		#	COMMAND ${Python_EXECUTABLE} -m pytest ${CAIRNTESTS_HOME}/apipython
-		#	WORKING_DIRECTORY ${CAIRN_SCRIPTS}
-		#)
-		#list(APPEND CMAKE_MODULE_PATH ${PYTHON_VENV_PROJECT}/share/Pytest/cmake) 	
-		#set(Pytest_ROOT ${Python_BIN})
-		#find_package(Pytest)	
-		#if (${Pytest_FOUND})
-		#	pytest_discover_tests( python			
-		#		WORKING_DIRECTORY ${CAIRNTESTS_HOME}/apipython
-		#		PYTHON_PATH_PREPEND ${CAIRN_SCRIPTS}		
-		#		INCLUDE_FILE_PATH
-		#	)
-		#endif()
+		add_test (NAME ${COMPONENT}.python.python-tests
+			COMMAND ${Python_EXECUTABLE} -m pytest ${CAIRNTESTS_HOME}/apipython
+			WORKING_DIRECTORY ${CAIRN_SCRIPTS}
+		)
+		list(APPEND CMAKE_MODULE_PATH ${PYTHON_VENV_PROJECT}/share/Pytest/cmake) 	
+		set(Pytest_ROOT ${Python_BIN})
+		find_package(Pytest)	
+		if (${Pytest_FOUND})
+			pytest_discover_tests( python			
+				WORKING_DIRECTORY ${CAIRNTESTS_HOME}/apipython
+				PYTHON_PATH_PREPEND ${CAIRN_SCRIPTS}		
+				INCLUDE_FILE_PATH
+			)
+		endif()
 	endif()
 	
 	# CTests : API C

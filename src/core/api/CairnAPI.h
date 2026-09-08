@@ -140,6 +140,23 @@ public:
 		class ModelParam* m_Param{ nullptr };
 		std::shared_ptr<ObjectAPI> m_Parent{ nullptr };
 	};
+	// --------------------------------------------------------------------------------	
+	class DECLSPEC VariableAPI {
+	public:
+		VariableAPI(std::shared_ptr <class ObjectAPI> ap_Parent = nullptr, class ModelIO* ap_Var = nullptr);
+
+		std::string get_Name() const;
+		std::string get_Type() const;
+		std::string get_Description() const;
+		std::string get_Unit() const;
+
+		t_value get_Value() const;				
+		bool isUsed() const;		
+		
+	protected:
+		class ModelIO* m_Variable{ nullptr };
+		std::shared_ptr<ObjectAPI> m_Parent{ nullptr };
+	};
 	// --------------------------------------------------------------------------------
 	class DECLSPEC ObjectAPI : public std::enable_shared_from_this<ObjectAPI> {
 	public:
@@ -176,6 +193,7 @@ public:
 		virtual t_list get_PerfParamList() const;
 
 		virtual t_list get_VarList() const; // IO vars
+		VariableAPI get_Variable(const std::string& a_Name);
 		std::string get_VarDescription(const std::string& varName) const;
 
 		virtual t_list get_ShowConfigList();

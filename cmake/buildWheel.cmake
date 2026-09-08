@@ -3,8 +3,25 @@
 #================================================================
 include(GNUInstallDirs)
 
-if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)        
-  
+if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)   
+    # find python
+    set(Python_DIR ${PYTHON_HOME})
+    set(Python_ROOT_DIR ${PYTHON_HOME})
+    message(STATUS "Python: ${Python_EXECUTABLE}")
+    message(STATUS "Python_ROOT_DIR: ${Python_ROOT_DIR}")
+    unset(Python_EXECUTABLE)   
+	find_package(Python COMPONENTS Interpreter Development REQUIRED)
+    message(STATUS "Python: ${Python_EXECUTABLE}")
+
+    # set PYTHON_PACKAGES
+    message(STATUS "Python site: ${Python_SITEARCH}")
+
+    cmake_path(GET Python_LIBRARY_DIRS PARENT_PATH  PYTHON_HOME)        
+    cmake_path(RELATIVE_PATH Python_SITEARCH BASE_DIRECTORY ${PYTHON_HOME} OUTPUT_VARIABLE PYTHON_PACKAGES)
+    message(STATUS "PYTHON_PACKAGES: ${PYTHON_PACKAGES}")
+        
+    set(pybind11_DIR ${PYTHON_VENV}/${PYTHON_PACKAGES}/pybind11/share/cmake/pybind11)
+
     string(JOIN , PROJECT_OPTIONS                       
             "'-DPRESETNAME:STRING=${PRESETNAME}'"
             "'-DWITH_PRIVATEMODELS:BOOL=${WITH_PRIVATEMODELS}'"        
@@ -35,18 +52,7 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/cmake/__init__.py.in)
     set(PYTHON_INSTALL_PACKAGE ${PYTHON_PACKAGES}/${WHEEL_NAME})    
 	configure_file(${CMAKE_SOURCE_DIR}/cmake/setup.py.in ${CMAKE_HOME_DIRECTORY}/setup.py @ONLY)    
 	configure_file(${CMAKE_SOURCE_DIR}/cmake/pyproject.toml.in ${CMAKE_HOME_DIRECTORY}/pyproject.toml @ONLY)      
-	   
-    set(Python_DIR ${PYTHON_HOME})
-    set(Python_ROOT_DIR ${PYTHON_HOME})
-    message(STATUS "Python: ${Python_EXECUTABLE}")
-    message(STATUS "Python_ROOT_DIR: ${Python_ROOT_DIR}")
-
-    unset(Python_EXECUTABLE)
-   
-	find_package(Python COMPONENTS Interpreter Development REQUIRED)
-    message(STATUS "Python: ${Python_EXECUTABLE}")
-    message(STATUS "Python libs: ${Python_LIBRARIES}")
-
+	       
     file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/_skbuild/)
     message("-- Build Wheel in ${CMAKE_HOME_DIRECTORY}/${CMAKE_INSTALL_BINDIR}")           
     set(COMPONENT buildWheel)

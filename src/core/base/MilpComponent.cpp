@@ -505,6 +505,19 @@ std::vector<std::string> MilpComponent::get_IOVarNames() const
     return vRet;
 }
 
+ModelIO *MilpComponent::get_IOVar(const std::string& varName) const
+{
+    ModelIO* vRet = nullptr;
+    if (mCompoModel) {
+        const SubModel::t_mapIOs& vIOMap = mCompoModel->getMapIOExpression();
+        SubModel::t_mapIOs::const_iterator vIter = vIOMap.find(varName);
+        if (vIter != vIOMap.end()) {
+            vRet = vIter->second;
+        }
+    }
+    return vRet;
+}
+
 std::string MilpComponent::get_IOVarDescription(const std::string& varName) const
 {
     if (mCompoModel) {

@@ -139,6 +139,14 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("show_config", &CairnAPI::ParamAPI::getShowConfig)
         .doc() = "Param class.";
 
+    py::class_<CairnAPI::VariableAPI>(m, "Variable")
+        .def(py::init())
+        .def_property_readonly("name", &CairnAPI::VariableAPI::get_Name)
+        .def_property_readonly("description", &CairnAPI::VariableAPI::get_Description)
+        .def_property_readonly("unit", &CairnAPI::VariableAPI::get_Unit)
+        .def_property_readonly("value", &CairnAPI::VariableAPI::get_Value)        
+        .doc() = "Variable class.";
+
     py::class_<CairnAPI::ObjectAPI, std::shared_ptr<CairnAPI::ObjectAPI>> (m, "CairnObject")
         .def(py::init())
         .def_property_readonly("name", &CairnAPI::ObjectAPI::get_Name)
@@ -201,7 +209,8 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("ports", &CairnAPI::BusAPI::get_Ports, "returns the list of all port names")
         .def_property_readonly("default_ports", &CairnAPI::BusAPI::get_DefaultPorts, "returns the list of default port names")
         .def_property("label_values", &CairnAPI::BusAPI::get_LabelValues, &CairnAPI::BusAPI::set_LabelValues, "get/set all label values as a dictionary")
-        .def_property_readonly("variables", &CairnAPI::BusAPI::get_VarList)
+        .def_property_readonly("variables", &CairnAPI::BusAPI::get_VarList, "returns a list of all variable names")
+        .def("get_variable", &CairnAPI::ObjectAPI::get_Variable, "returns the class Variable of a given variable")
         .def_property_readonly("indicators", &CairnAPI::BusAPI::get_IndicatorNames)
         .def_property_readonly("indicators_shortnames", &CairnAPI::BusAPI::get_IndicatorShortNames)
         .def_property_readonly("indicators_units", &CairnAPI::BusAPI::get_IndicatorUnits)
@@ -235,7 +244,8 @@ PYBIND11_MODULE(cairn, m) {
         .def_property_readonly("ports", &CairnAPI::MilpComponentAPI::get_Ports, "returns the list of all port names")
         .def_property_readonly("default_ports", &CairnAPI::MilpComponentAPI::get_DefaultPorts, "returns the list of default port names")                
         .def_property("label_values", &CairnAPI::MilpComponentAPI::get_LabelValues, &CairnAPI::MilpComponentAPI::set_LabelValues, "get/set all label values as a dictionary")
-        .def_property_readonly("variables", &CairnAPI::MilpComponentAPI::get_VarList)
+        .def_property_readonly("variables", &CairnAPI::MilpComponentAPI::get_VarList, "returns a list of all variable names")
+        .def("get_variable", &CairnAPI::ObjectAPI::get_Variable, "returns the class Variable of a given variable")
         .def_property_readonly("indicators", &CairnAPI::MilpComponentAPI::get_IndicatorNames)
         .def_property_readonly("indicators_shortnames", &CairnAPI::MilpComponentAPI::get_IndicatorShortNames)
         .def_property_readonly("indicators_units", &CairnAPI::MilpComponentAPI::get_IndicatorUnits)

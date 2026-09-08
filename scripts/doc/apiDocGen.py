@@ -14,7 +14,7 @@ except:
     
 
 PortTable = [ "name"]
-VarTable = [ "name"]
+VarTable = [ "name", "description"]
 ParamTable = [ "name", "description", "isMandatory"]
 
 def addResults(resTable : pd.DataFrame, values : list)->pd.DataFrame:
@@ -46,12 +46,11 @@ def writeVars(destPath : str, component , defTable : list, suffix : str=''):
     params = component.variables.copy()
     params.sort(reverse=True)
 
-    for param in params:       
-        pvalues = param
-        # pparam = component.get_setting(param)    
-        # pvalues = []
-        # for pt in defTable:                    
-        #     pvalues.append(getattr(pparam,pt))
+    for param in params:               
+        pparam = component.get_variable(param)    
+        pvalues = []
+        for pt in defTable:                    
+             pvalues.append(getattr(pparam,pt))
         resTable = addResults(resTable, pvalues)
     resPath = os.path.join(destPath, component.name+suffix+'.csv')
     resTable.to_csv(resPath, index=False)

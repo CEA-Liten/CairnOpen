@@ -96,6 +96,7 @@ private:
     std::string mProblemType;
 
     std::string mWriteLp;
+    std::string mWriteSol;
     std::string mFileMipStart;
     std::string mWriteMipStart;
     std::string mReadParamFile;

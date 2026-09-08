@@ -181,6 +181,7 @@
             "cacheVariables": {
                 "BUILD_DEVDOC": "ON",
                 "CAIRNDEVDOC_HOME": "${sourceDir}/doc/devDocCairn",
+                "BUILD_DEVDOC_SPHINX": "OFF",
                 "BUILD_WHEEL": "OFF",
                 "INSTALL_WHEEL": "OFF",
                 "BUILD_MIPMODELER": "OFF",

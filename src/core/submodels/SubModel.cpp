@@ -863,7 +863,7 @@ void SubModel::closeExpressions()
  * Internal helper: resolve the year index for a given time step t.
  */
 
-void SubModel::computeTime(bool bsetValue, uint aNpdt,
+void SubModel::computeTime(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol, 
     double& ret)
@@ -875,11 +875,11 @@ void SubModel::computeTime(bool bsetValue, uint aNpdt,
         factor = compo ? compo->ExtrapolationFactor() : 1.0;
     }
 
-    runLoop(this, aNpdt, exp, optSol,
+    runLoop(Npdt, exp, optSol,
         makeTimeAccumulator(this, ret, factor));
 }
 
-void SubModel::computeTime(bool bsetValue, uint aNpdt,
+void SubModel::computeTime(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
     double& retCharged,
@@ -894,36 +894,36 @@ void SubModel::computeTime(bool bsetValue, uint aNpdt,
         factor = compo ? compo->ExtrapolationFactor() : 1.0;
     }
 
-    runLoop(this, aNpdt, exp, optSol,
+    runLoop(Npdt, exp, optSol,
         makeTimeCDAccumulator(this, retCharged, retDischarged, factor));
 }
 
-void SubModel::computeProduction(bool bsetValue, uint aNpdt,
+void SubModel::computeProduction(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
-    double& ret,
-    const bool& integrate)
+    double aCoeff,
+    double bCoeff,
+    double& production,
+    bool timeIntegration)
 {
     double factor = 1.0;
     if (bsetValue) {
-        ret = 0.0;
+        production = 0.0;
         auto* compo = parentComponent();
         factor = compo ? compo->ExtrapolationFactor() : 1.0;
     }
 
-    runLoop(this, aNpdt, exp, optSol,
-        makeProdAccumulator(this, ret, factor, aCoeff, bCoeff, integrate));
+    runLoop(Npdt, exp, optSol,
+        makeProdAccumulator(this, production, factor, aCoeff, bCoeff, timeIntegration));
 }
 
 void SubModel::computeProduction(
     bool bsetValue,
-    uint aNpdt,
+    uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
+    double aCoeff,
+    double bCoeff,
     double& retCharged,
     double& retDischarged)
 {
@@ -936,162 +936,141 @@ void SubModel::computeProduction(
         factor = compo ? compo->ExtrapolationFactor() : 1.0;
     }
 
-    runLoop(this, aNpdt, exp, optSol,
+    runLoop(Npdt, exp, optSol,
         makeProdCDAccumulator(this, retCharged, retDischarged,
             factor, aCoeff, bCoeff));
 }
 
-void SubModel::computeLvlProduction(bool bsetValue, uint aNpdt,
+void SubModel::computeLvlProduction(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
-    double& ret)
+    double aCoeff,
+    double bCoeff,
+    double& production)
 {
-    auto* compo = parentComponent();
-    double factor = compo ? (1.0 / compo->ExtrapolationFactor()) : 1.0;
+    double factor = 1.0;
 
     if (bsetValue) {
-        ret = 0.0;
-        factor = 1.0;
+        production = 0.0;
+    }
+    else {
+        auto* compo = parentComponent();
+        factor = (1.0 / compo->ExtrapolationFactor());
     }
 
-    runLoop(this, aNpdt, exp, optSol,
-        makeLvlAccumulator(this, ret, aCoeff, bCoeff, factor, false));
+    runLoop(Npdt, exp, optSol,
+        makeLvlAccumulator(this, production, aCoeff, bCoeff, factor, false));
 }
 
-void SubModel::computeLvlProduction(bool bsetValue, uint aNpdt,
+void SubModel::computeLvlProduction(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
+    double aCoeff,
+    double bCoeff,
     double& retCharged,
     double& retDischarged)
 {
-    auto* compo = parentComponent();
-
-    // HIST: extrapolation already embedded in LevelizationTable
-    double factor = compo ? (1.0 / compo->ExtrapolationFactor()) : 1.0;
+    double factor = 1.0;
 
     if (bsetValue)
     {
         retCharged = retDischarged = 0.0;
-        factor = 1.0;   // PLAN: no extrapolation needed
+        // PLAN: no extrapolation needed
+    }
+    else {
+        // HIST: extrapolation already embedded in LevelizationTable
+        auto* compo = parentComponent();
+        factor = (1.0 / compo->ExtrapolationFactor());
     }
 
-    runLoop(this, aNpdt, exp, optSol,
-        [&](uint t, double val)
-        {
-            static int year = 0;
-            year = resolveYear(
-                t,
-                TimeStep(t),
-                compo->HistNbHours(),
-                year,
-                compo->TableYearsHours()
-            );
-
-            // Levelization factor
-            const double lvl = compo->LevelizationTable().at(year);
-
-            // Contribution
-            const double contrib =
-                (aCoeff * val + bCoeff) *
-                TimeStep(t) *
-                lvl *
-                factor;
-
-            // Charged/discharged split
-            if (val > kEpsilon) retDischarged += contrib;
-            if (val < -kEpsilon) retCharged += contrib;
-        }
-    );
+    runLoop(Npdt, exp, optSol,
+        makeLvlCDAccumulator(this, retCharged, retDischarged, aCoeff, bCoeff, factor));
 }
 
 void SubModel::computeConsumption(
     bool bsetValue,
-    uint aNpdt,
+    uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
-    double& aConsumption)
+    double aCoeff,
+    double bCoeff,
+    double& consumption)
 {
     double factor = 1.0;
 
     if (bsetValue)   // PLAN: extrapolate; HIST: accumulate without extrapolation
     {
-        aConsumption = 0.0;
+        consumption = 0.0;
         auto* compo = parentComponent();
         factor = compo ? compo->ExtrapolationFactor() : 1.0;
     }
 
-    runLoop(this, aNpdt, exp, optSol,
+    runLoop(Npdt, exp, optSol,
         [&](uint t, double val)
         {
             const double ts = TimeStep(t);
-            aConsumption -= (aCoeff * val + bCoeff) * ts * factor;
+            consumption -= (aCoeff * val + bCoeff) * ts * factor;
         }
     );
 }
 
-void SubModel::computeLvlConsumption(bool bsetValue, uint aNpdt,
+void SubModel::computeLvlConsumption(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
-    double& aConsumption)
+    double aCoeff,
+    double bCoeff,
+    double& consumption)
 {
     auto* compo = parentComponent();
-
-    // HIST: extrapolation already embedded in LevelizationTable
-    double factor = compo ? (1.0 / compo->ExtrapolationFactor()) : 1.0;
-
+    double factor = 1.0;
+    
     if (bsetValue)
     {
-        aConsumption = 0.0;
-        factor = 1.0;   // PLAN: no extrapolation needed
+        consumption = 0.0;
+        // PLAN: no extrapolation needed
     }
+    else {
+        // HIST: extrapolation already embedded in LevelizationTable
+        factor = (1.0 / compo->ExtrapolationFactor());
+    }
+
+    const auto& levelTable = compo->LevelizationTable();
+    const auto& tableYearsHours = compo->TableYearsHours();
+    const uint histHours =  compo->HistNbHours();
 
     int year = 0;
 
-    runLoop(this, aNpdt, exp, optSol,
-        [&](uint t, double val)
+    runLoop(Npdt, exp, optSol,
+        [&consumption, aCoeff, bCoeff, factor, compo, &levelTable, 
+            &tableYearsHours, histHours, year](uint t, double val) mutable
         {
-            year = resolveYear(
-                t,
-                TimeStep(t),
-                compo->HistNbHours(),
-                year,
-                compo->TableYearsHours()
-            );
+            const double ts = compo->TimeStep(t);
+            year = resolveYear(t, ts, histHours, year, tableYearsHours);
 
             // Levelization factor
-            const double lvl = compo->LevelizationTable().at(year);
+            const double level = levelTable[year];
 
             // Contribution (negative for consumption)
-            aConsumption -= (aCoeff * val + bCoeff)
-                * TimeStep(t)
-                * lvl
-                * factor;
+            const double contribution = (aCoeff * val + bCoeff) * ts *  level * factor;
+            consumption -= contribution;
         }
     );
 }
 
-void SubModel::computeLvlImpact(bool bsetValue, uint aNpdt,
+void SubModel::computeLvlImpact(bool bsetValue, uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    const double& aCoeff,
-    const double& bCoeff,
-    double& aProduction)
+    double aCoeff,
+    double bCoeff,
+    double& ret)
 {
     if (bsetValue)
-        aProduction = 0.0;
+        ret = 0.0;
 
     auto* compo = parentComponent();
     int year = 0;
 
-    runLoop(this, aNpdt, exp, optSol,
+    runLoop(Npdt, exp, optSol,
         [&](uint t, double val)
         {
             year = resolveYear(
@@ -1106,22 +1085,22 @@ void SubModel::computeLvlImpact(bool bsetValue, uint aNpdt,
             const double lvl = compo->ImpactLevelizationTable().at(year);
 
             // Contribution
-            aProduction += (aCoeff * val + bCoeff)
+            ret += (aCoeff * val + bCoeff)
                 * TimeStep(t)
                 * lvl;
         }
     );
 }
 
-void SubModel::computeDiscounted(uint aNpdt,
+void SubModel::computeDiscounted(uint Npdt,
     const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    double& aDiscounted)
+    double& discounted)
 {
     auto* compo = parentComponent();
     int year = 0;
 
-    runLoop(this, aNpdt, exp, optSol,
+    runLoop(Npdt, exp, optSol,
         [&](uint t, double val)
         {
             year = resolveYear(
@@ -1136,44 +1115,48 @@ void SubModel::computeDiscounted(uint aNpdt,
             const double lvl = compo->LevelizationTable().at(year);
 
             // Contribution
-            aDiscounted += val * lvl;
+            discounted += val * lvl;
         }
     );
 }
 
 void SubModel::computeIndicator(const MIPModeler::MIPExpression1D& exp,
     const double* optSol,
-    double& unDisc,
-    double& disc,
-    double& histUnDisc,
-    double& histDisc,
-    bool isEnv)
+    double& unDiscounted,
+    double& discounted,
+    double& histUnDiscounted,
+    double& histDiscounted,
+    bool isEnvImpact)
 {
-    unDisc = disc = 0.0;
+    unDiscounted = discounted = 0.0;
 
     auto* compo = parentComponent();
     const double extrap = compo ? compo->ExtrapolationFactor() : 1.0;
     const uint histHours = compo ? compo->HistNbHours() : 0;
+
+    const auto& levelTable = isEnvImpact 
+        ? compo->ImpactLevelizationTable()  
+        : compo->LevelizationTable();
+    const auto& tableYearsHours = compo->TableYearsHours();
 
     int year = 0;
 
     for (uint t = 0; t < mTimeSteps.size(); ++t)
     {
         const double val = exp[t].evaluate(optSol);
-        year = resolveYear(t, TimeStep(t), histHours, year, compo->TableYearsHours());
+        year = resolveYear(t, TimeStep(t), histHours, year, tableYearsHours);
 
-        const double lvl = levelFactor(this, year, isEnv);
+        const double level = levelTable[year];
 
-        unDisc += val * extrap;
-        disc += val * lvl;
+        unDiscounted += val * extrap;
+        discounted += val * level;
 
         if (t < *mptrTimeshift) {
-            histUnDisc += val;
-            histDisc += (val * lvl) / extrap;
+            histUnDiscounted += val;
+            histDiscounted += (val * level) / extrap;
         }
     }
 }
-
 
 void SubModel::writeSolution(const double* optimalSolution,
     std::map<std::string, std::vector<double>>& resultats)

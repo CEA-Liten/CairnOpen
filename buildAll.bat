@@ -2,7 +2,7 @@
 rem =========================================================
 rem
 rem buildAll [<empty>=release|debug|fullrelease|fulldebug|nothing] 
-rem	 		 [<empty>=all|open]					: all=with private models, open=without
+rem	 		 [<empty>=open|all]					: all=with private models, open=without
 rem			 [<empty>|wheel|wheel-noinstall]	: wheel=build and install wheel, wheel-noinstall=build but no install
 rem			 [<empty>|deps]			: deps=use dependencies installed in the directory D:/Tools/DepsCairn
 rem			 [<empty>|envCairn]		: envCairn=use env python enCairn<Number> else use defaultoption
@@ -31,7 +31,7 @@ rem Input parameter: all, open
 set OPTION=%2
 set OPTION_PRIVATE=
 if "%OPTION%"=="" (
-	set OPTION=all
+	set OPTION=open
 )
 if "%OPTION%"=="all" ( 
 	set OPTION_PRIVATE=-DWITH_PRIVATEMODELS=ON
@@ -55,7 +55,7 @@ rem Input parameter: deps
 set INSTALLDEPS=%4
 set OPTION_DEPS=
 if "%INSTALLDEPS%"=="deps" (
-	set OPTION_DEPS=-DDEPS_INSTALL=ON -DDEPS_ROOT:STRING=D:/Tools/DepsCairn
+	set OPTION_DEPS=-DDEPS_INSTALL=ON -DDEPS_ROOT:STRING=D:/Tools/externDepsCairn
 )
 echo Deps: %OPTION_DEPS%
 

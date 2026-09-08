@@ -197,7 +197,15 @@ def test_set_get_Param(problem):
     assert P2.unit == 'EUR/MW'
     assert P2.show_config == 'EcoInvestModel'
 
-   
+@pytest.mark.Cairn
+@pytest.mark.PythonAPI
+@pytest.mark.xdist_group("PythonAPI")
+def test_get_Variable(problem):
+        
+    ely_pem = problem.get_component("ELY_PEM")
+    P2 = ely_pem.get_variable("MaxPower")    
+    assert P2.unit == 'MW'
+    
 
 
 @pytest.mark.Cairn
@@ -252,6 +260,10 @@ def test_set_get_Solvers(problem):
     assert solver.get_setting_value('WriteLp') == "YES"
     solver.set_setting_value('WriteLp', "NO")
     assert solver.get_setting_value('WriteLp') == "NO"
+    assert solver.get_setting_value('Solver') == "Cplex"
+    problem.set_solver("Highs")
+    solver.set_setting_value("Solver","Highs")
+    assert solver.get_setting_value('Solver') == "Highs"
 
 @pytest.mark.Cairn
 @pytest.mark.PythonAPI

@@ -62,6 +62,7 @@ public:
 
     virtual std::vector<std::string> get_IOVarNames() const { return {}; } //t_list
     virtual std::string get_IOVarDescription(const std::string& varName) const { return {}; };
+    virtual class ModelIO *get_IOVar(const std::string& varName) const { return nullptr; };
 
 private:
 	CairnObject* p_Parent{ nullptr };
