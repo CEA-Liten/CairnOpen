@@ -105,13 +105,13 @@ jobs:
       - name: (docs) Sphinx build
         run: |
           sphinx-build -M html ./doc/user/ ./doc/user/_build
-      - name: (docs) Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./doc/user/_build/html
-          force_orphan: true
+      #- name: (docs) Deploy to GitHub Pages
+      #  uses: peaceiris/actions-gh-pages@v3
+      #  with:
+      #    publish_branch: gh-pages
+      #    github_token: ${{ secrets.GITHUB_TOKEN }}
+      #    publish_dir: ./doc/user/_build/html
+      #    force_orphan: true
 
   #job3: upload wheel
   uploads:
