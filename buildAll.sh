@@ -112,7 +112,7 @@ if [ "$BUILD_TYPE" != "nothing" ]; then
 fi
 
 if [ "$BUILD_DOC" = "buildDoc" ]; then
-	cmake --preset=linux-doc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
+	cmake --preset=linux-doc --prefix ${INSTALL_PATH} -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
 fi
 
 
