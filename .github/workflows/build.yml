@@ -107,12 +107,10 @@ jobs:
         run: |
           set -e
           python --version
-          pip install bin/$WHL_FILENAME
-          pip install -r ./doc/user/requirements.txt
-          python ./scripts/doc/userDocGenRST.py
+          pip install bin/$WHL_FILENAME         
       - name: (docs) Sphinx build
-        run: |
-          sphinx-build -M html ./doc/user/ ./doc/user/_build
+        run: bash ./buildAll.sh nothing open no-deps no-cov nothing default_options.cmake buildDoc
+          
       #- name: (docs) Deploy to GitHub Pages
       #  uses: peaceiris/actions-gh-pages@v3
       #  with:

@@ -79,6 +79,8 @@ if [ "$OPTIONS_FILE" = "" ]; then
     export OPTIONS_FILE=linux_options.cmake
 fi;
 
+export BUILD_DOC=$7
+
 
 echo -e "\t | BUILD_TYPE set to ${BUILD_TYPE}"
 echo -e "\t | OPTION_PRIVATE set to ${OPTION_PRIVATE}"
@@ -86,27 +88,32 @@ echo -e "\t | OPTION_DEPS set to ${OPTION_DEPS}"
 echo -e "\t | OPTION_WHEEL set to ${OPTION_WHEEL}"
 echo -e "\t | OPTION_INSTALLWHEEL set to ${OPTION_INSTALLWHEEL}"
 echo -e "\t | OPTIONS_FILE set to ${OPTIONS_FILE}"
+echo -e "\t | BUILD_DOC set to ${BUILD_DOC}"
 
+if [ "$BUILD_TYPE" != "nothing" ]; then 
+	export BUILD_PATH=out/${BUILD_TYPE}
+	if [ -d "${BUILD_PATH}" ]; then
+	  rm -r "${BUILD_PATH}"
+	fi
+	mkdir -p "${BUILD_PATH}"
+	echo -e "\t | BUILD_PATH is ${BUILD_PATH}"
 
-export BUILD_PATH=out/${BUILD_TYPE}
-if [ -d "${BUILD_PATH}" ]; then
-  rm -r "${BUILD_PATH}"
+	export INSTALL_PATH=bin/${BUILD_TYPE}
+	if [ -d "${INSTALL_PATH}" ]; then
+		rm -r "${INSTALL_PATH}"
+	fi
+	echo -e "\t | INSTALL_PATH is ${INSTALL_PATH}"
+
+	cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} -DPRESETNAME=${BUILD_TYPE} ${OPTION_PRIVATE} ${OPTION_DEPS} ${OPTION_COV} ${OPTION_WHEEL} ${OPTION_INSTALLWHEEL} -S . -B ${BUILD_PATH}
+
+	cmake --build ${BUILD_PATH}  --config ${BUILD_TYPE} -j $(nproc)
+
+	cmake --install ${BUILD_PATH} --config ${BUILD_TYPE} --prefix ${INSTALL_PATH}
 fi
-mkdir -p "${BUILD_PATH}"
-echo -e "\t | BUILD_PATH is ${BUILD_PATH}"
 
-export INSTALL_PATH=bin/${BUILD_TYPE}
-if [ -d "${INSTALL_PATH}" ]; then
-    rm -r "${INSTALL_PATH}"
+if [ "$BUILD_DOC" != "buildDoc" ]; then
+	cmake --preset=buildDoc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
 fi
-echo -e "\t | INSTALL_PATH is ${INSTALL_PATH}"
-
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} -DPRESETNAME=${BUILD_TYPE} ${OPTION_PRIVATE} ${OPTION_DEPS} ${OPTION_COV} ${OPTION_WHEEL} ${OPTION_INSTALLWHEEL} -S . -B ${BUILD_PATH}
-
-cmake --build ${BUILD_PATH}  --config ${BUILD_TYPE} -j $(nproc)
-
-cmake --install ${BUILD_PATH} --config ${BUILD_TYPE} --prefix ${INSTALL_PATH}
-
 
 
 
