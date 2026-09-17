@@ -116,7 +116,7 @@ if [ "$BUILD_DOC" = "buildDoc" ]; then
 	if [ "$CAIRN_WHL" = "" ]; then
 		cmake --preset=linux-doc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
 	else
-		echo -e "\t | $CAIRN_WHL set to ${$CAIRN_WHL}"
+		echo -e "\t | CAIRN_WHL set to ${CAIRN_WHL}"
 		cmake --preset=linux-doc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -DCAIRN_WHL=${CAIRN_WHL} -S .
 	fi
 fi
