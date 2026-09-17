@@ -50,8 +50,16 @@ jobs:
         id: extract #mandatory for $GITHUB_OUTPUT
         run: |
           set -e
-          CAIRN_VERSION=$(tail -n 1 resources/officialVersions.txt)
-          WHL_FILENAME="cairn-${CAIRN_VERSION}-cp313-cp313-linux_x86_64.whl"
+
+          major=$(sed -n 's/^[[:space:]]*set(MAJOR_VERSION[[:space:]]\+\([0-9]\+\)).*/\1/p' "./cmake/CairnVersion.cmake")
+          minor=$(sed -n 's/^[[:space:]]*set(MINOR_VERSION[[:space:]]\+\([0-9]\+\)).*/\1/p' "./cmake/CairnVersion.cmake")
+          patch=$(sed -n 's/^[[:space:]]*set(PATCH_VERSION[[:space:]]\+\([0-9]\+\)).*/\1/p' "./cmake/CairnVersion.cmake")
+
+          CAIRN_VERSION="${major}.${minor}.${patch}"
+
+          echo "$CAIRN_VERSION"
+
+          WHL_FILENAME="cairnopen-${CAIRN_VERSION}-cp313-cp313-linux_x86_64.whl"
           echo "cairn_version=$CAIRN_VERSION" >> $GITHUB_OUTPUT
           echo "whl_filename=$WHL_FILENAME" >> $GITHUB_OUTPUT
 
@@ -175,7 +183,7 @@ jobs:
       - name: set vars
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME=cairn-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
+          echo "WHL_FILENAME=cairnopen-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
 
       - name: Build wheel via pypa/cibuildwheel
         uses: pypa/cibuildwheel@v3.3.1
