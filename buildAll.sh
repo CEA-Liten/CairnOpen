@@ -111,7 +111,7 @@ if [ "$BUILD_TYPE" != "nothing" ]; then
 	cmake --install ${BUILD_PATH} --config ${BUILD_TYPE} --prefix ${INSTALL_PATH}
 fi
 
-if [ "$BUILD_DOC" != "buildDoc" ]; then
+if [ "$BUILD_DOC" = "buildDoc" ]; then
 	cmake --preset=buildDoc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
 fi
 
