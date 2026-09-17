@@ -80,6 +80,7 @@ if [ "$OPTIONS_FILE" = "" ]; then
 fi;
 
 export BUILD_DOC=$7
+export CAIRN_WHL=$8
 
 
 echo -e "\t | BUILD_TYPE set to ${BUILD_TYPE}"
@@ -112,7 +113,12 @@ if [ "$BUILD_TYPE" != "nothing" ]; then
 fi
 
 if [ "$BUILD_DOC" = "buildDoc" ]; then
-	cmake --preset=linux-doc --prefix ${INSTALL_PATH} -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
+	if [ "$CAIRN_WHL" = "" ]; then
+		cmake --preset=linux-doc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -S .
+	else
+		echo -e "\t | $CAIRN_WHL set to ${$CAIRN_WHL}"
+		cmake --preset=linux-doc -DUSER_OPTIONS_FILE=cmake/${OPTIONS_FILE} ${OPTION_PRIVATE} -DCAIRN_WHL=${CAIRN_WHL} -S .
+	fi
 fi
 
 

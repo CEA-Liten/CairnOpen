@@ -102,14 +102,9 @@ jobs:
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
           echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
-          echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-      - name: (docs) Install wheel dependencies
-        run: |
-          set -e
-          python --version
-          pip install bin/$WHL_FILENAME         
+          echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV             
       - name: (docs) Sphinx build
-        run:  bash ./buildAll.sh nothing open no-deps no-cov nothing default_options.cmake buildDoc          
+        run:  bash ./buildAll.sh nothing open no-deps no-cov nothing default_options.cmake buildDoc bin/$WHL_FILENAME
       #- name: (docs) Deploy to GitHub Pages
       #  uses: peaceiris/actions-gh-pages@v3
       #  with:

@@ -69,21 +69,29 @@ if (BUILD_DOC)
 	set(Python_DIR ${Python_ROOT_DIR})
 	find_package(Python REQUIRED COMPONENTS Interpreter Development)	
 	
-    # get whl file   
-    if (WITH_PRIVATEMODELS)
-        set(WHEEL_NAME ${PROJECT_NAME})
+    if (DEFINED CAIRN_WHL)
+        if (EXISTS ${CAIRN_WHL})
+            message(STATUS "find ${CAIRN_WHL}")
+        else()
+            message(FATAL_ERROR "Cannot find ${CAIRN_WHL}, build it before.")
+        endif()
     else()
-        set(WHEEL_NAME ${PROJECT_NAME}open)
-    endif()
-    file(GLOB FILES_LIST ${CMAKE_INSTALL_PREFIX}/../${WHEEL_NAME}-${PROJECT_VERSION}*.whl)
+        # get whl file   
+        if (WITH_PRIVATEMODELS)
+            set(WHEEL_NAME ${PROJECT_NAME})
+        else()
+            set(WHEEL_NAME ${PROJECT_NAME}open)
+        endif()
+        file(GLOB FILES_LIST ${CMAKE_INSTALL_PREFIX}/../${WHEEL_NAME}-${PROJECT_VERSION}*.whl)
 
-    # install cairn with the wheel file
-    list(LENGTH FILES_LIST nbWhl)
-    if (nbWhl GREATER 0)
-	    # take the first elem
-	    list(GET FILES_LIST 0 CAIRN_WHL)	    
-    else()
-        message(FATAL_ERROR "Cannot find ${WHEEL_NAME}-${PROJECT_VERSION} wheel, build it before.")
+        # install cairn with the wheel file
+        list(LENGTH FILES_LIST nbWhl)
+        if (nbWhl GREATER 0)
+	        # take the first elem
+	        list(GET FILES_LIST 0 CAIRN_WHL)	    
+        else()
+            message(FATAL_ERROR "Cannot find ${WHEEL_NAME}-${PROJECT_VERSION} wheel, build it before.")
+        endif()
     endif()
 
     # virtual environment 	
