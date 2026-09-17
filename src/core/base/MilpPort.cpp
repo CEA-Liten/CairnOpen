@@ -12,6 +12,7 @@ MilpPort::MilpPort(CairnObject* aParent, const std::string& aID, const std::stri
     mCarrierType(CairnUtils::getParamValue(aPort,"CarrierType")),
     mIsDefaultPort(false), 
     mIsEnabled(CairnUtils::getParamValue(aPort,"Enabled")),
+    mIsLocked(CairnUtils::getParamValue(aPort, "Locked")),
     mBusType(""), //BusFlowBalance, BusSameValue, or MultiObjCompo 
     mBusPortName(CairnUtils::getParamValue(aPort,"BusPortName")), //The name of the linked Bus port  
     mBusPortPosition(""), //The position of the linked Bus port  
@@ -128,6 +129,10 @@ void MilpPort::setAttributes(const t_mapParamData& portParams)
     // TODO: use bool for  mIsEnabled ?!
     if (mIsEnabled.empty()) { 
         mIsEnabled = "true";
+    }
+
+    if (mIsLocked.empty()) {
+        mIsLocked = mIsDefaultPort ? Yes() : No();
     }
 
     if (mCarrierType != "Fluid"
@@ -356,7 +361,7 @@ void MilpPort::setFlux(const unsigned int &aTime, const double &aSignedCoeff, MI
 
 void MilpPort::setFlux0D(const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
 {
-    mFlux0D = aSignedCoeff * mVarCoeff * aFluxExpression;
+    mFlux0D = aSignedCoeff * (mVarCoeff * aFluxExpression + mVarOffset);
     mIsTimeDependant = false;
 }
 
@@ -401,7 +406,8 @@ void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinke
             {"offset", mVarOffset},
             {"checkunit", mVarCheckUnit},
             {"defaultport", defaultport},
-            {"enabled", mIsEnabled}
+            {"enabled", mIsEnabled},
+            {"locked", mIsLocked}
     };
 
     // Parameters

@@ -1644,7 +1644,14 @@ void CairnAPI::OptimProblemAPI::runSensitivityCSV(const std::string& a_samplingF
 	CairnAPIUtils::setError(vErr, vErrMsg);
 }
 
-t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_sampling, int a_max_time, 
+t_dicts CairnAPI::OptimProblemAPI::runSensitivity(const t_dictsValues& a_sampling, int a_max_time,
+	const t_dicts& a_indicators)
+{
+	return runSensitivityCB(a_sampling, a_max_time, a_indicators, nullptr);
+}
+
+
+t_dicts CairnAPI::OptimProblemAPI::runSensitivityCB(const t_dictsValues& a_sampling, int a_max_time, 
 	const t_dicts& a_indicators, std::function<void(int)> on_iter)
 {
 	/* a_sampling: table: one line = one case, 

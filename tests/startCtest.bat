@@ -3,7 +3,7 @@ rem =========================================================
 rem
 rem startCTest [<empty>=release|debug|fullrelease|fulldebug] 
 rem	 		 [<empty>=level]			: if not empty run test in parallel, level : limit of parallelism
-rem			 [<empty>|tests path]		 
+rem			 [<empty>=all tests|jsonTestFile]		 
 rem		
 rem ========================================================= 
 
@@ -22,20 +22,35 @@ if "%CONFIGURATION%"=="" (
 )
 echo Configuration: %CONFIGURATION%
 
-set PARALLEL=%2
-
-set TESTDIR=%3
-if "%TESTDIR%"=="" (
- 	set TESTDIR=out/%CONFIGURATION%
-)
-
 rem ---------------------------------
 set WORKSPACE=%~dp0
 set REPORT=%WORKSPACE%\reports\CairnCtest-TNR
 rem !! Warning: current dir must be Cairn root
-call GenericAppEnv.bat %CONFIGURATION%
+rem init CAIRN_BIN and CAIRN_APP
+if EXIST GenericAppEnv.bat (
+	call GenericAppEnv.bat %CONFIGURATION%
+) else (
+	call ..\GenericAppEnv.bat %CONFIGURATION%
+)
+set TESTDIR=out/%CONFIGURATION%
 
-rem "%CMAKEPATH%/ctest.exe" -I 7,7 -C release --test-dir out/release -V
+set PARALLEL=%2
+
+set FILETEST=%3
+if "%FILETEST%"=="" (
+	goto allTests
+)
+if NOT EXIST %FILETEST% (
+	echo test Not found!
+	exit /B 0
+)
+
+call %CAIRN_APP%\out\%CONFIGURATION%\bin\GenericTests.exe "--case:%FILETEST%"
+
+goto endTests
+
+
+:allTests
 
 if "%PARALLEL%"=="" (
 	"%CMAKEPATH%/ctest.exe" --preset %CONFIGURATION% --test-dir %TESTDIR% --output-junit %REPORT%.xml
@@ -50,5 +65,4 @@ junit2html %REPORT%.xml %REPORT%.html
 rem temp
 copy %REPORT%.html %REPORT%-log.html
 
-rem force script to return code 0
-rem exit /B 0
+:endTests

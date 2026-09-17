@@ -98,15 +98,20 @@ void Ramp::computeModelContribution()
 
 void Ramp::addRampCost() 
 {
-    addVariable(mRampCostVar, "RampCost", 0, getMaxBound() * mRampCost, MIPModeler::MIP_FLOAT, varMilpHorizon());
-
+    addVariable(mRampCostVar, "RampCost", 0.0, getMaxBound() * mRampCost, MIPModeler::MIP_FLOAT, varMilpHorizon());
     fillExpression(mExpRampCostVar, mRampCostVar);
-    for (uint64_t t = 0; t < mHorizon; t++) {
+
+    const bool isFirstCycle = mAllocate;
+    const bool isAcceptedControl = (mControl == "MPC" || mControl == "RollingHorizon");
+
+    for (uint64_t t = 0; t < mHorizon; t++) 
+    {
         if (t > 0) {
             addConstraint((mExpRampCostVar[t] >= mRampCost * (mExpInput[t] - mExpInput[t - 1])), "RampCostVar", t);
             addConstraint((mExpRampCostVar[t] >= mRampCost * (mExpInput[t - 1] - mExpInput[t])), "RampCostVar", t);
         }
-        else if (!mAllocate) {
+        else if (!isFirstCycle && isAcceptedControl)
+        {
             addConstraint((mExpRampCostVar[t] >= mRampCost * (mExpInput[t] - mHistInput)), "RampCostVar", t);
             addConstraint((mExpRampCostVar[t] >= mRampCost * (mHistInput - mExpInput[t])), "RampCostVar", t);
         }
@@ -115,17 +120,28 @@ void Ramp::addRampCost()
 
 void Ramp::addRelativeRamp()
 {
-    for (uint64_t t = 0; t < mHorizon; t++) {
-        if (t > 0) {
-            if (mAddRampUp) addConstraint((mExpInput)[t] - (mExpInput)[t-1] <= mRampUpLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampUp");
-            if (mAddRampDown) addConstraint((mExpInput)[t-1] - (mExpInput)[t] <= mRampDownLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampDown");
+    const bool isFirstCycle = mAllocate;
+    const bool isAcceptedControl = (mControl == "MPC" || mControl == "RollingHorizon");
+
+    for (uint64_t t = 0; t < mHorizon; t++) 
+    {
+        if (t > 0) 
+        {
+            if (mAddRampUp) 
+                addConstraint((mExpInput)[t] - (mExpInput)[t-1] <= mRampUpLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampUp");
+            if (mAddRampDown) 
+                addConstraint((mExpInput)[t-1] - (mExpInput)[t] <= mRampDownLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampDown");
         }
-        else if (!mAllocate) {
-            if (mAddRampUp) addConstraint((mExpInput)[t] - mHistInput <= mRampUpLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampUpCycle");
-            if (mAddRampDown) addConstraint(mHistInput - (mExpInput)[t] <= mRampDownLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampDownCycle");
+        else if (!isFirstCycle && isAcceptedControl)
+        {
+            if (mAddRampUp) 
+                addConstraint((mExpInput)[t] - mHistInput <= mRampUpLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampUpCycle");
+            if (mAddRampDown) 
+                addConstraint(mHistInput - (mExpInput)[t] <= mRampDownLimit[t] * TimeStep(t) * (mVarSizeMax), "RelRampDownCycle");
         }
     }
 }
+
 //-------------------------------------------------------------------------------------------
 void Ramp::addRelativeRampWithMinPower(){
     for (int i=0; i < (mHorizon-1); i++){

@@ -92,7 +92,7 @@ PYBIND11_MODULE(cairn, m) {
         .def("add_timeseries", py::overload_cast<const std::string&>(&CairnAPI::OptimProblemAPI::add_TimeSeries), "adds a given timeseries file")
         .def("add_onetimeseries", py::overload_cast<const t_dict&>(&CairnAPI::OptimProblemAPI::add_TimeSeries), "adds one timeseries in dictionary format")
         .def("run", &CairnAPI::OptimProblemAPI::run, py::arg("resultsPath") = "", py::arg("coSim") = false, "runs the optim problem")
-        .def("run_sensitivity", &CairnAPI::OptimProblemAPI::runSensitivity, py::arg("sampling"), py::arg("max_time"), py::arg("indicators"), py::arg("on_iter") = py::none(), "runs sensitivity study")
+        .def("run_sensitivity", &CairnAPI::OptimProblemAPI::runSensitivity, py::arg("sampling"), py::arg("max_time"), py::arg("indicators"), "runs sensitivity study")
         .def("create_bus", &CairnAPI::OptimProblemAPI::create_Bus, "creates and returns a new bus with a given name, model and energy carrier, e.g., create_bus('H2_Bus', 'NodeLaw', vH2)")
         .def("get_bus", &CairnAPI::OptimProblemAPI::get_Bus, "returns a given bus")
         .def("remove_bus", py::overload_cast<CairnAPI::BusAPI&>(&CairnAPI::OptimProblemAPI::remove_Bus), "removes a given bus")

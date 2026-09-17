@@ -103,17 +103,17 @@ void EnvImpact::addPerfParameters() {
 void EnvImpact::addIOExpressions()
 {
     mParentModel->
-        addIO(mName + " Env impact mass", &mExpOpEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit); /** "mName Env impact mass" */
+        addIO(mName + " Env impact mass", &mExpOpEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit, "Environmental impact mass"); 
     mParentModel->
-        addIO(mName + " Env impact flow", &mExpFlowEnvImpact, mParentModel->pEnvironmentModel(), SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "h" })); /** "mName Env impact flow" */
+        addIO(mName + " Env impact flow", &mExpFlowEnvImpact, mParentModel->pEnvironmentModel(), SFunctionUnit({ eFTypeDivision, {&mImpactUnit}, "h" }), "Environmental impact flow");
     mParentModel->
-        addIO(mName + " Env impact cost", &mExpOpEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency()); /** "mName Env impact cost" */
+        addIO(mName + " Env impact cost", &mExpOpEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency(), "Environmental impact cost"); 
     mParentModel->
-        addIO(mName + " Env embodied impact mass", &mExpEmbodiedEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit); /** "mName Env embodied impact mass" */
+        addIO(mName + " Env embodied impact mass", &mExpEmbodiedEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit, "Environmental embodied impact mass"); 
     mParentModel->
-        addIO(mName + " Env embodied impact cost", &mExpEmbodiedEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency()); /** "mName Env embodied impact cost" */
+        addIO(mName + " Env embodied impact cost", &mExpEmbodiedEnvImpactCost, mParentModel->pEnvironmentModel(), mParentModel->pCurrency(), "Environmental embodied impact cost"); 
     mParentModel->
-        addIO(mName + " Env impact replacement", &mExpReplacementEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit);
+        addIO(mName + " Env impact replacement", &mExpReplacementEnvImpact, mParentModel->pEnvironmentModel(), &mImpactUnit, "Environmental impact replacement");
 }
 
 void EnvImpact::addIndicators()

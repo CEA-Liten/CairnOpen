@@ -392,6 +392,7 @@ JsonDescription::extractPortParamData(const std::string& compoName) const
             const std::string carrierType = read(port, "carrierType");
             const std::string carrier = read(port, "carrier");
             const std::string direction = CairnUtils::toUpper(read(port, "direction"));
+            const std::string locked = read(port, "locked");
             const std::string coeff = read(port, "coeff");
             const std::string offset = read(port, "offset");
             const std::string checkUnit = read(port, "checkunit");
@@ -404,6 +405,7 @@ JsonDescription::extractPortParamData(const std::string& compoName) const
             CairnUtils::setParamValue(portMap, "CarrierType", carrierType);
             CairnUtils::setParamValue(portMap, "Carrier", carrier);
             CairnUtils::setParamValue(portMap, "Direction", direction);
+            CairnUtils::setParamValue(portMap, "Locked", locked);
             CairnUtils::setParamValue(portMap, "Variable", portVariable);
             CairnUtils::setParamValue(portMap, "Coeff", coeff);
             CairnUtils::setParamValue(portMap, "Offset", offset);

@@ -46,10 +46,10 @@ void NodeLaw::computeModelContribution()
         mPortVarDirection.push_back(aSign);
 
         if(port->IsTimeDependant()){
-            addExpressionToBalance(port->Flux()) ;
+            addExpressionToBalance1D(port->Flux()) ;
         }
         else{
-            addExpressionToBalance(port->Flux0D()) ;
+            addExpressionToBalance0D(port->Flux0D()) ;
         }
 	}
     
@@ -67,20 +67,16 @@ void NodeLaw::computeInitialData()
     mStrictConstraintBusValue *= scale;
 }
 
-void NodeLaw::addExpressionToBalance(MIPModeler::MIPExpression1D& aFluxExpression)
+void NodeLaw::addExpressionToBalance1D(MIPModeler::MIPExpression1D& aFluxExpression)
 {
 	for (unsigned int t = 0; t < mHorizon ; ++t)
-	{
-	   mBusBalance[t] += aFluxExpression[t] ;
-	}
+	   mBusBalance[t] += aFluxExpression[t];
 }
 
-void NodeLaw::addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression)
+void NodeLaw::addExpressionToBalance0D(MIPModeler::MIPExpression &aFluxExpression)
 {
     for (unsigned int t = 0; t < mHorizon ; ++t)
-    {
-       mBusBalance[t] += aFluxExpression ;
-    }
+       mBusBalance[t] += aFluxExpression;
 }
 
 void NodeLaw::addStrictConstraint()

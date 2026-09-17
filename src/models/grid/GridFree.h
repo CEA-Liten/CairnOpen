@@ -70,7 +70,8 @@ public:
         portGridFlow["Name"] = "PortR0"; //Needed only old versions
         portGridFlow["Position"] = "right";
         portGridFlow["CarrierType"] = ANY_TYPE();
-        portGridFlow["Direction"] = KPROD(); //OUTPUT but should be able to be changed
+        portGridFlow["Direction"] = KPROD(); 
+        portGridFlow["Locked"] = No();   
         portGridFlow["Variable"] = "GridFlow";
         mDefaultPorts["PortGridFlow"] = portGridFlow;  //ID, paramMap
     }

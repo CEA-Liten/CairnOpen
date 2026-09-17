@@ -111,10 +111,10 @@ void ManualObjective::computeModelContribution()
         /** Constraint related the bus connections */
         for (auto& port : mLinkedPorts) {
             if (port->IsTimeDependant()) {
-                addExpressionToBalance(port->Flux());
+                addExpressionToBalance1D(port->Flux());
             }
             else {
-                addExpressionToBalance(port->Flux0D());
+                addExpressionToBalance0D(port->Flux0D());
             }
         }
 
@@ -206,14 +206,13 @@ void ManualObjective::initBalance()
 {
 }
 
-void ManualObjective::addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression)
+void ManualObjective::addExpressionToBalance1D(MIPModeler::MIPExpression1D &aFluxExpression)
 {
 	for (unsigned int t = 0; t < mHorizon ; ++t)
-	{
        mBusBalance1D[t] += aFluxExpression[t] * mObjectiveCoeffTS[t];
-	}
 }
-void ManualObjective::addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression)
+
+void ManualObjective::addExpressionToBalance0D(MIPModeler::MIPExpression &aFluxExpression)
 {
     mBusBalance += aFluxExpression ;
 }

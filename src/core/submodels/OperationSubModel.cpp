@@ -55,13 +55,15 @@ void OperationSubModel::declareModelInterface()
         &mExpStartUp,
         &mAddStartUpShutDownVariable,
         "bool",
-        &mHistStartUp);                     /** Startup event variable */
+        &mHistStartUp, 
+        nullptr, true, "Startup event variable: 0 or 1");
 
     addControlIO("ShutDown", 
         &mExpShutDown,
         &mAddStartUpShutDownVariable,
         "bool",
-        &mHistShutDown);                    /** Shutdown event variable */
+        &mHistShutDown, 
+        nullptr, true, "Shutdown event variable: 0 or 1");
 }
 
 void OperationSubModel::declareModelIndicators()

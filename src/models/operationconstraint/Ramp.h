@@ -82,7 +82,7 @@ public:
         OperationSubModel::declareModelInterface();
         
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("ComponentSize", &mExpSizeMax, true, mMainCarrier->pFluxUnit()); // multiplier of the size of the ramp
+        addSizeMaxIO("ComponentSize", &mExpSizeMax, true, mMainCarrier->pFluxUnit(), "Multiplier of the size of the ramp");
         addControlIO("ConnectRamp", &mExpInput, true, mMainCarrier->pFluxUnit(), &mHistInput, &mInitialValue);
 
         // over-write the "State" in OperationSubModel to bind IsUsed to parameter mAddStartUpShutDownVariable (instead of mAddStateVariable)

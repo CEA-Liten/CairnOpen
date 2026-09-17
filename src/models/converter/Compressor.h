@@ -116,16 +116,16 @@ public:
         ConverterSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit());        /** Maximal power used by the compressor */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit(), "Maximal power used by the compressor");
 
-        addIO("UsedPower", &mExpUsedPower, true, mPortUsedPower->pFluxUnit());       /** Computed power used by the compressor */
-        addIO("InMassFlowRate", &mExpInMassFlow, true, mPortInMassFlowRate->pFluxUnit());         /** input flow compressed by the compressor */
-        addIO("OutMassFlowRate", &mExpOutMassFlow, true, mPortOutMassFlowRate->pFluxUnit());         /** output flow compressed by the compressor, can be different from input flow if losses are considered */
-        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pQuantity("PressureUnit"));        /** Pressure at the exit of the compressor */
+        addIO("UsedPower", &mExpUsedPower, true, mPortUsedPower->pFluxUnit(), "Computed power used by the compressor");
+        addIO("InMassFlowRate", &mExpInMassFlow, true, mPortInMassFlowRate->pFluxUnit(), "input flow compressed by the compressor");
+        addIO("OutMassFlowRate", &mExpOutMassFlow, true, mPortOutMassFlowRate->pFluxUnit(), "output flow compressed by the compressor, can be different from input flow if losses are considered");
+        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pQuantity("PressureUnit"), "Pressure at the exit of the compressor");
 
-        addIO("Steam", &mExpSteam, &mUseSteamMap, mPortInMassFlowRate->pFluxUnit());    /** quantity of steam input in the compressor*/
-        addIO("TemperatureIn", &mExpTIn, &mUseVariableTIn, "degC"); /** Temperature before compression */
-    
+        addIO("Steam", &mExpSteam, &mUseSteamMap, mPortInMassFlowRate->pFluxUnit(), "quantity of steam input in the compressor");
+        addIO("TemperatureIn", &mExpTIn, &mUseVariableTIn, "degC", "Temperature before compression");
+
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         addExp(&mExpTOutlet);
 

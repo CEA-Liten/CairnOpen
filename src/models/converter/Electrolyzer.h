@@ -51,10 +51,10 @@ public:
         ConverterSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit());				    /** Computed sizing electrolysis system power */
-        addIO("MaxUsablePower", &mExpUsablePower, true, mPortUsedPower->pFluxUnit());        	/** Computed allowed power available to electrolysis system */
-        addIO("UsedPower", &mExpTotalPower, true, mPortUsedPower->pFluxUnit());					/** Computed electrolysis system power */
-        addIO("H2MassFlowRate", &mExpFlow_H2, true, mPortH2MassFlowRate->pFluxUnit());  /** Computed electrolysis H2 flowrate production */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit(), "Computed sizing electrolysis system power");
+        addIO("MaxUsablePower", &mExpUsablePower, true, mPortUsedPower->pFluxUnit(), "Computed allowed power available to electrolysis system");
+        addIO("UsedPower", &mExpTotalPower, true, mPortUsedPower->pFluxUnit(), "Computed electrolysis system power");
+        addIO("H2MassFlowRate", &mExpFlow_H2, true, mPortH2MassFlowRate->pFluxUnit(), "Computed electrolysis H2 flowrate production");
 
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         // no 0D expression needs to be declared here

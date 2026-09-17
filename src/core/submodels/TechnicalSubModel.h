@@ -179,19 +179,18 @@ public:
         declareEnvImpactInterface();
 
         //GeometryModel
-        addIO("Area", &mExpArea, &mGeometryModel, "m2");
-        addIO("Volume", &mExpVolume, &mGeometryModel, "m3");
-        addIO("Mass", &mExpMass, &mGeometryModel, "kg");
+        addIO("Area", &mExpArea, &mGeometryModel, "m2", "Geometric area");
+        addIO("Volume", &mExpVolume, &mGeometryModel, "m3", "Geometric volume");
+        addIO("Mass", &mExpMass, &mGeometryModel, "kg", "Geometric mass");
 
         //State
-        addControlIO("State", &mExpState, &mAddStateVariable, "bool", &mHistState, nullptr, true, "state of the component : 1 if on 0 if off");  
+        addControlIO("State", &mExpState, &mAddStateVariable, "bool", &mHistState, nullptr, true, "State of the component : 1 if on 0 if off");  
         /* Note: ProductionUC uses ControlIO for StartUp and ShutDown */
-        addIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool");
-        addIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool");
+        addIO("StartUp", &mExpStartUp, &mAddStartUpShutDownVariable, "bool", "Startup event variable: 0 or 1");
+        addIO("ShutDown", &mExpShutDown, &mAddStartUpShutDownVariable, "bool", "ShutDown event variable: 0 or 1");
 
         /* Register non-IO 1D-expressions in order to automatically allocate and close them */
         addExp(&mExpVariableOpex, &mHorizon);
-
     }
 
     void declareEnvImpactInterface() {

@@ -86,10 +86,10 @@ public:
     {
         BusSubModel::declareModelInterface();
 
-        addIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit()) ; //FluxUnit of First Port
-        addIO("BusBalance0D", &mBusBalance0D, true, mMainCarrier->pFluxUnit()) ;
-        addIO("BusBalance1D", &mBusBalance1D, true, mMainCarrier->pFluxUnit()) ;
-        addIO("SubObjectiveExpression", &mSubObjective, true, "-");
+        addIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), "Bus balance"); //FluxUnit of First Port
+        addIO("BusBalance0D", &mBusBalance0D, true, mMainCarrier->pFluxUnit(), "Bus balance of time-independent variables (0D)");
+        addIO("BusBalance1D", &mBusBalance1D, true, mMainCarrier->pFluxUnit(), "Bus balance of time-dependent variables (1D)");
+        addIO("SubObjectiveExpression", &mSubObjective, true, "-", "Sub-objective");
         addIO("MinVar", &mExpCommonMinVariable, true, mMainCarrier->pFluxUnit());
         addIO("MaxVar", &mExpCommonMaxVariable, true, mMainCarrier->pFluxUnit());
 
@@ -106,8 +106,8 @@ public:
 //----------------------------------------------------------------------------------------------------
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance1D;}
     void initBalance() ;
-    void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression) ;
-    void addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression) ;
+    void addExpressionToBalance1D(MIPModeler::MIPExpression1D &aFluxExpression) ;
+    void addExpressionToBalance0D(MIPModeler::MIPExpression &aFluxExpression) ;
     void addStrictConstraint() ;
     void addMinConstraint() ;
     void addMaxConstraint() ;

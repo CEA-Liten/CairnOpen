@@ -160,10 +160,11 @@ void MaterialCarrier::initEnergyVector()
 		// Energy
 		mStorageName = "MaterialEnergy";
 		mFluxName    = "Power";
-		mEnergyUnit  = mPowerUnit + "h";
 		mFluxUnit    = mPowerUnit;
 		mStorageUnit = mEnergyUnit;
 	}
+
+	mEnergyUnit = mPowerUnit + "h";
 }
 
 double MaterialCarrier::computeCp(double a_temp_C)

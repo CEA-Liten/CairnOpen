@@ -197,34 +197,35 @@ public:
         */
         
         if (mComputeOptimalPrice) {
-            addSizeMaxIO("OptimalPrice", &mExpSizeMax, true, pCurrency());	/** Computed optimal price used by component, if optimized else equals input weight */
+            addSizeMaxIO("OptimalPrice", &mExpSizeMax, true, pCurrency(), "Computed optimal price used by component, if optimized else equals input weight");
         }
         else {
-            addSizeMaxIO("Weight", &mExpSizeMax, true, "Unit");	/** Computed weight of identical component, if optimized else equals input weight */
+            addSizeMaxIO("Weight", &mExpSizeMax, true, "Unit", "Computed weight of identical component, if optimized else equals input weight");
         }
 
         //UseWeightedFlux
-        addIO("FluxWeight", &mExpFluxWeight, &mUseWeightedFlux, "Unit");       /** Input expression for flux weighting if mUseWeightedFlux=true */
+        addIO("FluxWeight", &mExpFluxWeight, &mUseWeightedFlux, "Unit", "Input expression for flux weighting if mUseWeightedFlux=true");
 
-        addIO("SourceLoadFlow", &mExpFlux, true, mMainCarrier->pFluxUnit()); /** Computed or Controlled Imposed flow injected (source) or extracted (sink) - Positive value means injection for Source field and extraction for Sink field */
-        addIO("WeightedImposedFlux", &mExpImposedFlux, true, mMainCarrier->pFluxUnit());
-        
+        addIO("SourceLoadFlow", &mExpFlux, true, mMainCarrier->pFluxUnit(), "Computed or Controlled Imposed flow injected (source) or extracted (sink) - Positive value means injection for Source field and extraction for Sink field");
+        addIO("WeightedImposedFlux", &mExpImposedFlux, true, mMainCarrier->pFluxUnit(), "");
+
         //AddHeatConsumerModel
-        addIO("OUTPUTFlux1", &mExpPowerOut, true, mMainCarrier->pFluxUnit()); /** Computed output power output port 1 */
-        addIO("INPUTFlux1", &mExpPowerIn, &mAddHeatConsumerModel, mMainCarrier->pFluxUnit()); /** Computed output power output port 1 */
-        
+        addIO("OUTPUTFlux1", &mExpPowerOut, true, mMainCarrier->pFluxUnit(), "Computed output power output port 1");
+        addIO("INPUTFlux1", &mExpPowerIn, &mAddHeatConsumerModel, mMainCarrier->pFluxUnit(), "Computed output power output port 1");
+
         //AddStaticCompensation
-        addIO("ReactivePower", &mExpReactivePower, &mAddStaticCompensation, mMainCarrier->pFluxUnit()); /** Reactive power associated to the production of the source load. If  static compensation is not given it is an optimized factor*/
-        
+        addIO("ReactivePower", &mExpReactivePower, &mAddStaticCompensation, mMainCarrier->pFluxUnit(), "Reactive power associated to the production of the source load. If static compensation is not given it is an optimized factor");
+
         //AddPeakShaving
-        addIO("PowerPeakShaving", &mExpPowerPeakShaving, &mAddPeakShavingDetailed, mMainCarrier->pPowerUnit()); /* Peak shaving power */
+        addIO("PowerPeakShaving", &mExpPowerPeakShaving, &mAddPeakShavingDetailed, mMainCarrier->pPowerUnit(), "Peak shaving power");
 
         //AddSheddingDetailed)
-        addIO("PowerShedding", &mExpPowerShedding, &mAddSheddingDetailed, mMainCarrier->pPowerUnit()); /* Shedded power */
-        addIO("CostShedding", &mExpCostShedding, &mAddSheddingDetailed, SFunctionUnit({ eFTypeDivision, { mMainCarrier->pPowerUnit(), pCurrency() } })); /* Shedding penalty cost */
-        addControlIO("OnShedding", &mExpShedOn, &mAddSheddingDetailed, "bool", &mExpHistOn, &mOnIni); /** Shedding activation, 1 if shedding is activated, 0 otherwise */
-        addControlIO("OffShedding", &mExpShedOff, &mAddSheddingDetailed, "bool", &mExpHistOff, &mOffIni); /** Shedding deactivation, 1 if shedding is deactivated, 0 otherwise */
-        addControlIO("StateShedding", &mExpShedState, &mAddSheddingDetailed, "bool", &mShedStateIni, &mStateIni); /** Load shedding state, 1 if shedding, 0 otherwise */
+        addIO("PowerShedding", &mExpPowerShedding, &mAddSheddingDetailed, mMainCarrier->pPowerUnit(), "Shedded power");
+        addIO("CostShedding", &mExpCostShedding, &mAddSheddingDetailed, SFunctionUnit({ eFTypeDivision, { mMainCarrier->pPowerUnit(), pCurrency() } }), "Shedding penalty cost");
+       
+        addControlIO("OnShedding", &mExpShedOn, &mAddSheddingDetailed, "bool", &mExpHistOn, &mOnIni, true, "Shedding activation, 1 if shedding is activated, 0 otherwise"); 
+        addControlIO("OffShedding", &mExpShedOff, &mAddSheddingDetailed, "bool", &mExpHistOff, &mOffIni, true, "Shedding deactivation, 1 if shedding is deactivated, 0 otherwise"); 
+        addControlIO("StateShedding", &mExpShedState, &mAddSheddingDetailed, "bool", &mShedStateIni, &mStateIni, true, "Load shedding state, 1 if shedding, 0 otherwise ");
    
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         addExp(&mExpStaticCompensation);
@@ -256,6 +257,7 @@ public:
         portSourceLoadFlow["CarrierType"] = ANY_TYPE();
         portSourceLoadFlow["Direction"] = KCONS();
         portSourceLoadFlow["Variable"] = "SourceLoadFlow";
+        portSourceLoadFlow["Locked"] = No();
         mDefaultPorts["PortSourceLoadFlow"] = portSourceLoadFlow;
     }
 

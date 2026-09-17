@@ -68,9 +68,9 @@ public:
         ConverterSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortPowerIn->pFluxUnit()); /* Maximum sizing power, ie optimal power if negative maximum power was given in input */
-        addIO("PowerIn", &mExpPower_In, true, mPortPowerIn->pFluxUnit()); /* Input power at voltage1 */
-        addIO("PowerOut", &mExpPower_Out, true, mPortPowerOut->pFluxUnit()); /* Output power */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortPowerIn->pFluxUnit(), "Maximum sizing power, ie optimal power if negative maximum power was given in input");
+        addIO("PowerIn", &mExpPower_In, true, mPortPowerIn->pFluxUnit(), "Input power at voltage1");
+        addIO("PowerOut", &mExpPower_Out, true, mPortPowerOut->pFluxUnit(), "Output power");
     }
 
     //----------------------------------------------------------------------------

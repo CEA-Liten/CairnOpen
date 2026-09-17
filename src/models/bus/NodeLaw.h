@@ -52,7 +52,7 @@ public:
     {
         BusSubModel::declareModelInterface();
 
-        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
+        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue, true, "Bus balance");
     }
 
     void declareModelIndicators() override  {
@@ -64,8 +64,8 @@ public:
     void computeInitialData() override;
 
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance;}
-    void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression);
-    void addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression);
+    void addExpressionToBalance1D(MIPModeler::MIPExpression1D &aFluxExpression);
+    void addExpressionToBalance0D(MIPModeler::MIPExpression &aFluxExpression);
 
     void addStrictConstraint() ;
 

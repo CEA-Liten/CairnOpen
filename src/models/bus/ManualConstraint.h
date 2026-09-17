@@ -59,11 +59,11 @@ public:
     {
         BusSubModel::declareModelInterface();
 
-        addIO("PenaltyConstraintCosts", &mExpPenaltyConstraintCosts, true, pCurrency());    /** Computed penalty costs */
+        addIO("PenaltyConstraintCosts", &mExpPenaltyConstraintCosts, true, pCurrency(), "Computed penalty costs"); 
         setPenaltyConstraintExpression("PenaltyConstraintCosts");
        
-        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
-        addIO("BusConstraintGap", &mExpConstraintGap, true, mMainCarrier->pFluxUnit());
+        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue, true, "Bus balance");
+        addIO("BusConstraintGap", &mExpConstraintGap, true, mMainCarrier->pFluxUnit(), "Bus constraint gap");
 
         addIO("Integration", &mExprIntegrate, SFunctionFlag({ eFTypeOrNot, { &mMaxIntegrateConstraint, &mMinIntegrateConstraint, &mMinIntegrateSeparateConstraint, &mMaxIntegrateSeparateConstraint} }), mMainCarrier->pStorageUnit());
     }

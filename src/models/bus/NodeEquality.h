@@ -52,7 +52,7 @@ public:
     void declareModelInterface() override
     {
         BusSubModel::declareModelInterface();
-        addIO("BusValue", &mExprBusValue, true, "unknown") ;
+        addIO("BusValue", &mExprBusValue, true, "-", "Bus value");
     }
 
     void declareModelIndicators() override {

@@ -199,9 +199,9 @@ public:
 
         ConverterSubModel::declareModelInterface();
 
-        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortINPUTFlux1->pFluxUnit());          /** Sizing W */
-        addIO("INPUTFlux1", &mExpInput[0], true, mPortINPUTFlux1->pFluxUnit()); /** Computed input flow at default port PortINPUTFlux1 */
-        addIO("OUTPUTFlux1", &mExpOutput[0], true, mPortOUTPUTFlux1->pFluxUnit()); /** Computed output flow at default port PortOUTPUTFlux1 */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortINPUTFlux1->pFluxUnit(), "Max power (sizing variable)"); 
+        addIO("INPUTFlux1", &mExpInput[0], true, mPortINPUTFlux1->pFluxUnit(), "Computed input flow at default input port");
+        addIO("OUTPUTFlux1", &mExpOutput[0], true, mPortOUTPUTFlux1->pFluxUnit(), "Computed output flow at default output port");
 
         ConverterSubModel::declareInputFluxIOs(mPortINPUTFlux1);
         ConverterSubModel::declareOutputFluxIOs(mPortOUTPUTFlux1);

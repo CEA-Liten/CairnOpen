@@ -1171,13 +1171,7 @@ void MilpComponent::assignFluxToPort(MilpPort* port, double sign)
     MIPModeler::MIPExpression*  exp0D = mCompoModel ? mCompoModel->getMIPExpression(var) : nullptr;
 
     if (exp0D) {
-        if (port->PortType() == "MultiObjCompo") {
-            port->setFlux0D(sign, *exp0D);
-        }
-        else {
-            for (unsigned int t = 0; t < npdt(); ++t)
-                port->setFlux(t, sign, *exp0D);
-        }
+        port->setFlux0D(sign, *exp0D);
         return;
     }
 

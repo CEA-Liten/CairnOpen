@@ -254,7 +254,7 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
 
         if (matchedPort) {
             // Use the port's unit (dynamic)
-            addIO(name, &mExpInput[i], true, matchedPort->pFluxUnit());
+            addIO(name, &mExpInput[i], true, matchedPort->pFluxUnit(), "Input flux");
         }
         else {
             // Use OUTPUTFlux1's port unit
@@ -262,7 +262,7 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
             if (defaultPort)
                 unit = defaultPort->FluxUnit();
 
-            addIO(name, &mExpInput[i], true, unit);
+            addIO(name, &mExpInput[i], true, unit, "Input flux");
         }
     }
 }
@@ -295,7 +295,7 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
 
         if (matchedPort) {
             // Use the port's unit (dynamic)
-            addIO(name, &mExpOutput[i], true, matchedPort->pFluxUnit());
+            addIO(name, &mExpOutput[i], true, matchedPort->pFluxUnit(), "Output flux");
         }
         else {
             // Use OUTPUTFlux1's port unit
@@ -303,7 +303,7 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
             if (defaultPort && defaultPort->getCarrier())
                 unit = defaultPort->getCarrier()->FluxUnit();
 
-            addIO(name, &mExpOutput[i], true, unit);
+            addIO(name, &mExpOutput[i], true, unit, "Output flux");
         }
     }
 }

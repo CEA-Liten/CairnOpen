@@ -161,10 +161,11 @@ private:
     const std::string* mCurrency;
 
     //Attributes
-    std::string mID;              /** Port unique Id */
-    std::string mPosition;       /** Used for port position on GUI */
-    std::string mCarrierType;   /** Possible Carrier Type */
-    std::string mIsEnabled;     /** The port is enabled in the GUI only when the value is true */
+    std::string mID;                /** Port unique Id */
+    std::string mPosition;          /** Used for port position on GUI */
+    std::string mCarrierType;       /** Possible Carrier Type */
+    std::string mIsEnabled;         /** The port is enabled in the GUI only when the value is "true" */
+    std::string mIsLocked; /** The port direction is locked in the GUI only when the value is "true" */
     bool mIsDefaultPort;
 
     //Parameters

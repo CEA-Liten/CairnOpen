@@ -104,15 +104,15 @@ public:
         StorageSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxEsto", &mExpSizeMax, true, mMainCarrier->pStorageUnit());	    /** Computed Storage Unit maximum content, in energy (MWh electrical or thermal carriers) or mass (kg fluids), ie optimized value if maximum content was given negative value as input data */
-        addIO("Flow", &mExpFlowBank, true, mMainCarrier->pFluxUnit());		/** Storage balance of flows (including CapcityMuliplier) = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
-        addIO("DischargeFlow", &mExpFlowDischargeBank, true, mMainCarrier->pFluxUnit());	/** Storage discharged flow (including CapcityMuliplier) */
-        addIO("ChargeFlow", &mExpFlowChargeBank, true, mMainCarrier->pFluxUnit());			/** Storage charged flow (including CapcityMuliplier) */
-        addIO("InternalLosses", &mExpLosses, true, mMainCarrier->pFluxUnit());	/** Storage discharged flow (including CapcityMuliplier) */
-        addIO("EnergyVariation", &mExpEnergyBank, true, mMainCarrier->pStorageUnit());			/** Computed current Storage content variation (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
-        addControlIO("Estock", &mExpEstoBank, true, mMainCarrier->pStorageUnit(), &mInitialSoe, &mInitialSoe_Def);		/** Computed current Storage content (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
-        addIO("EstockUnit", &mExpEsto, true, mMainCarrier->pStorageUnit());		/** Computed current Storage Unit content, in energy (MWh electrical or thermal carriers) or mass (kg fluids) */
-        addIO("FlowUnit", &mExpFlow, true, mMainCarrier->pFluxUnit());		/** Storage Unit balance of flows = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging */
+        addSizeMaxIO("MaxEsto", &mExpSizeMax, true, mMainCarrier->pStorageUnit(), "Computed Storage Unit maximum content, in energy (MWh electrical or thermal carriers) or mass (kg fluids), ie optimized value if maximum content was given negative value as input data");
+        addIO("Flow", &mExpFlowBank, true, mMainCarrier->pFluxUnit(), "Storage balance of flows (including CapcityMuliplier) = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging");
+        addIO("DischargeFlow", &mExpFlowDischargeBank, true, mMainCarrier->pFluxUnit(), "Storage discharged flow (including CapcityMuliplier)");
+        addIO("ChargeFlow", &mExpFlowChargeBank, true, mMainCarrier->pFluxUnit(), "Storage charged flow (including CapcityMuliplier)");
+        addIO("InternalLosses", &mExpLosses, true, mMainCarrier->pFluxUnit(), "Storage discharged flow (including CapcityMuliplier)");
+        addIO("EnergyVariation", &mExpEnergyBank, true, mMainCarrier->pStorageUnit(), "Computed current Storage content variation (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids)");
+        addControlIO("Estock", &mExpEstoBank, true, mMainCarrier->pStorageUnit(), &mInitialSoe, &mInitialSoe_Def, true, "Computed current Storage content (including CapcityMuliplier), in energy (MWh electrical or thermal carriers) or mass (kg fluids)");
+        addIO("EstockUnit", &mExpEsto, true, mMainCarrier->pStorageUnit(), "Computed current Storage Unit content, in energy (MWh electrical or thermal carriers) or mass (kg fluids)");
+        addIO("FlowUnit", &mExpFlow, true, mMainCarrier->pFluxUnit(), "Storage Unit balance of flows = Discharge Flow - Charge Flow, ie negative if charging, positive if discharging");
 
         addIO("Charging", &mExpCharging, &mAddChargeDischargeStates, "bool", "1 if charging and 0 if discharging");
         addIO("Discharging", &mExpDischarging, &mAddChargeDischargeStates, "bool", "1 if discharging and 0 if charging");
@@ -120,7 +120,7 @@ public:
         //PressureModel
         MilpPort* portFluid = getPortByType("MaterialCarrier");
         if (portFluid != nullptr) {
-            addIO("PressureIn", &mExpPressure, &mAddPressureModel, portFluid->pFluxUnit()); /** Inlet Pressure if pressure mode used {"Bar/Pa"}*/
+            addIO("PressureIn", &mExpPressure, &mAddPressureModel, portFluid->pFluxUnit(), "Inlet Pressure if pressure mode used {\"Bar/Pa\"}");
         }
         else if (mAddPressureModel) {
             throw Cairn_Exception("Error: a port with MaterialCarrier is expected for StorageGen when AddPressureModel is used (componenet " + Name() + ")", -1);
