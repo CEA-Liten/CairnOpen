@@ -124,18 +124,17 @@ jobs:
           echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
 
     #upload wheel file
-      - name: upload wheel on workflow 
-        uses: actions/upload-artifact@v4
-        with:
-          name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
-          path: bin/${{ env.WHL_FILENAME }}
+      # - name: upload wheel on workflow 
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
+      #     path: bin/${{ env.WHL_FILENAME }}
       
       - name: Upload on release 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls
-          gh release upload ${{ env.CAIRN_VERSION }} ${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
+          gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
   
   #job4 build wheel on other platforms (windows)
   build-wheels:
@@ -171,6 +170,7 @@ jobs:
           echo "WHL_FILENAME=cairnopen-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
 
       - name: build wheel
+        shell: cmd
         run: |
           buildAll.bat release open wheel-noinstall 
       - uses: actions/upload-artifact@v4
