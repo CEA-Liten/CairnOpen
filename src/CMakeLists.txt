@@ -39,7 +39,9 @@ endif()
 # extra files
 if (WITH_GENERICAPPENV)    
     if(CMAKE_SYSTEM_NAME MATCHES Windows)
-        msys_to_win_path( ${Qt5_HOME} Qt5_HOME)
+        if (DEFINED Qt5_HOME)
+            msys_to_win_path( ${Qt5_HOME} Qt5_HOME)
+        endif()
         configure_file(${CMAKE_SOURCE_DIR}/cmake/GenericAppEnv.in ${CMAKE_BINARY_DIR}/GenericAppEnv.bat @ONLY)
         install(
           FILES ${CMAKE_BINARY_DIR}/GenericAppEnv.bat

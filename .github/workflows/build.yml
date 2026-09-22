@@ -24,15 +24,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
-      - name: Update submodules
-        run: git submodule update --init --recursive --remote
-      
+          submodules: recursive     
       - name: Set CAIRN_HOME
         run: echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: buildALL
-        run: bash ./buildAll.sh Release open no-deps no-cov wheel-noinstall default_options.cmake
-      
+        run: bash ./buildAll.sh Release open no-deps no-cov wheel-noinstall default_options.cmake      
       - name: TNR PyTest
         run: bash ./tests/scripts/startPytest.sh
         continue-on-error: true
