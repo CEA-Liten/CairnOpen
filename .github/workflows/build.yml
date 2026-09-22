@@ -134,7 +134,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
+          gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --clobber 
   
   #job4 build wheel on other platforms (windows)
   build-wheels:
