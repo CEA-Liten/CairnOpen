@@ -134,6 +134,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          ls
+          ls ../
+          ls ../../
+          ls bin/
           gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --repo ${{ github.repository }} --clobber 
   
   #job4 build wheel on other platforms (windows)
@@ -178,7 +182,7 @@ jobs:
           output-dir: cibuildwheel
       - uses: actions/upload-artifact@v4
         with:
-          name: cairn-wheel-${{ matrix.os }}-${{ env.CAIRN_VERSION }}
+          name: cairnopen-wheel-${{ matrix.os }}-${{ env.CAIRN_VERSION }}
           path: ./cibuildwheel/*.whl
       - name: Upload on release 
         env:
