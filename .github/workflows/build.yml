@@ -127,7 +127,7 @@ jobs:
       - name: upload wheel on workflow 
         uses: actions/upload-artifact@v4
         with:
-          name: cairn-wheel-linux-${{ env.CAIRN_VERSION }}
+          name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
           path: bin/${{ env.WHL_FILENAME }}
       
       - name: Upload on release 
