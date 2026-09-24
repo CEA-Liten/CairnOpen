@@ -68,7 +68,7 @@ jobs:
       - name: upload wheel on workflow 
         uses: actions/upload-artifact@v4
         with:
-          name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
+          name: cairn-wheel-linux
           path: bin/${{ env.WHL_FILENAME }}
       - name: upload wheel setup files 
         uses: actions/upload-artifact@v4
@@ -156,8 +156,8 @@ jobs:
     - name: Download all the dists
       uses: actions/download-artifact@v6
       with:
-        name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
-        path: bin/${{ env.WHL_FILENAME }}
+        name: cairn-wheel-linux
+        path: bin/${{ needs.cairn-build.outputs.whl_filename }}
     - name: Publish to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
