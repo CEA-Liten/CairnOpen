@@ -158,6 +158,10 @@ jobs:
       with:
         name: cairn-wheel-linux
         path: bin/${{ needs.cairn-build.outputs.whl_filename }}
+    - name: set vars
+      run: |
+          mkdir -p dist/
+          mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/
     - name: Publish to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
