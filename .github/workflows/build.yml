@@ -130,12 +130,34 @@ jobs:
       #     name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
       #     path: bin/${{ env.WHL_FILENAME }}
       
-      - name: Upload on release 
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --clobber 
-  
+      # - name: Upload on release 
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --clobber 
+
+  publish-to-testpypi:
+    name: Publish Python  to TestPyPI
+    runs-on: ubuntu-latest
+    needs: cairn-build
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/cairnopen
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v6
+      with:
+        name: cairn-wheel-linux-${{ needs.cairn-build.outputs.cairn_version }}
+        path: bin/${{ env.WHL_FILENAME }}
+    - name: Publish to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+
   #job4 build wheel on other platforms (windows)
   build-wheels:
     name: Build wheel on ${{ matrix.os }}
