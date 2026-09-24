@@ -162,7 +162,7 @@ jobs:
       run: |
           mkdir -p dist/
           mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/${{ needs.cairn-build.outputs.whl_filename }}
-          ls -la dist/
+          ls -lap dist/
     - name: Publish to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
