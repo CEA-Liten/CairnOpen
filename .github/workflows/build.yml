@@ -163,16 +163,15 @@ jobs:
           mkdir -p dist/
           mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp313-cp313-manylinux_2_24_x86_64.whl
           ls -lap dist/
-    - name: Publish to TestPyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+    # - name: Publish to PyPI
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     password: ${{ secrets.PYPI_API_TOKEN }}
 
   #job4 build wheel on other platforms (windows)
   build-wheels:
     name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.runs-on }}
-    needs: cairn-build
     strategy:
       matrix:
         include:
@@ -199,24 +198,18 @@ jobs:
       - name: set vars
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME=cairnopen-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
+          echo "WHL_FILENAME_WIN=cairnopen-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
       - uses: ilammy/msvc-dev-cmd@v1
       - name: build wheel
         shell: cmd
         run: |
           cmake --version
           buildAll.bat release open wheel-noinstall 
-      - uses: actions/upload-artifact@v4
+          move bin/$WHL_FILENAME_WIN" dist/
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          name: cairnopen-wheel-${{ matrix.os }}-${{ env.CAIRN_VERSION }}
-          path: ./cibuildwheel/*.whl
-      - name: Upload on release 
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          WHEEL_FILENAME=""
-          gh release upload ${{ env.CAIRN_VERSION }} cibuildwheel/$WHEEL_FILENAME --repo ${{ github.repository }} --clobber 
-  
+          password: ${{ secrets.PYPI_API_TOKEN }}
 
   #job5: upload on pypi.org (TODO)
 
