@@ -116,9 +116,13 @@ if (WITH_PYBIND)
 		set(CAIRN_INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR})
 	else()
 		set(CAIRN_INSTALL_BINDIR ${CMAKE_INSTALL_LIBDIR})
+		set_property(TARGET ${COMPONENT} PROPERTY BUILD_RPATH_USE_ORIGIN TRUE)
+		set(CAIRN_INSTALL_LIBDIR "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}") 
+		set_property(TARGET ${COMPONENT} PROPERTY INSTALL_RPATH ${CAIRN_INSTALL_LIBDIR})
+		set_property(TARGET ${COMPONENT} PROPERTY BUILD_WITH_INSTALL_RPATH TRUE)
 	endif()
 	configure_file(${CMAKE_SOURCE_DIR}/cmake/__init__.py.in ${CMAKE_BINARY_DIR}/__init__.py @ONLY)
-
+	
 	# --- install package for python	
 	component_install_setup(${COMPONENT})
 	

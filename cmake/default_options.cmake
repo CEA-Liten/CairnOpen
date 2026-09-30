@@ -39,6 +39,6 @@ set(CAIRN_APP ${CMAKE_SOURCE_DIR} CACHE INTERNAL "Cairn installation path")
 
 # user documentation
 option(BUILD_DOC "Build documentation" OFF)
-set(CAIRNDOC_HOME ${CMAKE_SOURCE_DIR}/doc/user CACHE INTERNAL "Cairn doc path")
-set(PYTHON_VENVDOC ${CMAKE_SOURCE_DIR}/venvs/docCairn CACHE STRING "Python virtual environment")
+set(CAIRNDOC_HOME ${CMAKE_SOURCE_DIR}/doc/user CACHE INTERNAL "Cairn documentation path")
+set(PYTHON_VENVDOC ${CMAKE_SOURCE_DIR}/venvs/docCairn CACHE STRING "Python virtual environment for generate documentation")
 

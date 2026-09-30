@@ -84,7 +84,8 @@ if (BUILD_DOC)
         else()
             set(WHEEL_NAME ${PROJECT_NAME}open)
         endif()
-        file(GLOB FILES_LIST ${CMAKE_INSTALL_PREFIX}/../${WHEEL_NAME}-${PROJECT_VERSION}*.whl)
+        message(STATUS "search ${CMAKE_INSTALL_PREFIX}/../${WHEEL_NAME}-${PROJECT_VERSION}*.whl")
+        file(GLOB FILES_LIST "${CMAKE_INSTALL_PREFIX}/../${WHEEL_NAME}-${PROJECT_VERSION}*.whl")
 
         # install cairn with the wheel file
         list(LENGTH FILES_LIST nbWhl)
