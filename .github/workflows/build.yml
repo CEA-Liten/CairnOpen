@@ -122,18 +122,9 @@ jobs:
   #job4 build wheel on other platforms (windows)
   build-wheels:
     name: Build wheel on ${{ matrix.os }}
-    runs-on: ${{ matrix.runs-on }}
+    runs-on: windows-latest
     outputs: #vars used on next jobs
       whl_filename_win: ${{ steps.extract.outputs.whl_filename_win }}
-    strategy:
-      matrix:
-        include:
-          - os: windows
-            runs-on: windows-latest
-            platform: win_amd64
-          #- os: linux
-          #  runs-on: ubuntu-latest
-          #  platform: linux_x86_64
 
     steps:
       - name: Checkout code
@@ -160,7 +151,7 @@ jobs:
           echo "whl_filename_win=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> $GITHUB_OUTPUT
       - name : test output
         run : |
-          echo "$${{ steps.extract.outputs.whl_filename_win }}"
+          echo "${{ steps.extract.outputs.whl_filename_win }}"
       - uses: ilammy/msvc-dev-cmd@v1
       - name: build wheel
         shell: cmd
