@@ -147,14 +147,14 @@ jobs:
       - name: set vars
         id: extract
         run: |
-          major=$(sed -n 's/^[[:space:]]*set(MAJOR_VERSION[[:space:]]\+\([0-9]\+\)).*/\1/p' "./cmake/CairnVersion.cmake")
-          minor=$(sed -n 's/^[[:space:]]*set(MINOR_VERSION[[:space:]]\+\([0-9]\+\)).*/\1/p' "./cmake/CairnVersion.cmake")
-          patch=$(sed -n 's/^[[:space:]]*set(PATCH_VERSION[[:space:]]\+\([0-9]\+\)).*/\1/p' "./cmake/CairnVersion.cmake")
+          for /f "tokens=2" %%A in ('findstr /r /c:"set(MAJOR_VERSION" ".\cmake\CairnVersion.cmake"') do set "major=%%A"
+          for /f "tokens=2" %%A in ('findstr /r /c:"set(MINOR_VERSION" ".\cmake\CairnVersion.cmake"') do set "minor=%%A"
+          for /f "tokens=2" %%A in ('findstr /r /c:"set(PATCH_VERSION" ".\cmake\CairnVersion.cmake"') do set "patch=%%A"
 
-          CAIRN_VERSION="${major}.${minor}.${patch}"
+          set "VERSION=%major%.%minor%.%patch%
 
-          echo "$CAIRN_VERSION"
-          WHL_FILENAME="cairnopen-${CAIRN_VERSION}-cp312-cp312-${{ matrix.platform }}.whl"
+          echo "%CAIRN_VERSION%"
+          set WHL_FILENAME="cairnopen-%CAIRN_VERSION%-cp312-cp312-${{ matrix.platform }}.whl"
           echo "whl_filename_win=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> $GITHUB_OUTPUT
       - name : test output
         run : |
