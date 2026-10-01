@@ -199,7 +199,7 @@ jobs:
           mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp312-cp312-manylinux_2_24_x86_64.whl
           mv bin/${{ needs.build-wheels.outputs.whl_filename_win }} dist/
           ls -lap dist/
-    # - name: Publish to PyPI
-    #   uses: pypa/gh-action-pypi-publish@release/v1
-    #   with:
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
