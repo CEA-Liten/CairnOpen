@@ -146,7 +146,7 @@ jobs:
           $minor = [regex]::Match($content, 'set\(MINOR_VERSION\s+(\d+)\)').Groups[1].Value
           $patch = [regex]::Match($content, 'set\(PATCH_VERSION\s+(\d+)\)').Groups[1].Value
 
-          $VERSION = "$major.$minor.$patch"
+          $CAIRN_VERSION = "$major.$minor.$patch"
 
           echo "$CAIRN_VERSION"
 
