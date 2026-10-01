@@ -149,8 +149,8 @@ jobs:
           $VERSION = "$major.$minor.$patch"
 
           echo "$CAIRN_VERSION"
-          set WHL_FILENAME="cairnopen-${CAIRN_VERSION}-cp312-cp312-win.whl"
-          "whl_filename_win=${WHL_FILENAME}" >> $env:GITHUB_OUTPUT
+          
+          "whl_filename_win=$"cairnopen-${CAIRN_VERSION}-cp312-cp312-win.whl" >> $env:GITHUB_OUTPUT
       - name : test output
         run : |
           echo "${{ steps.extract.outputs.whl_filename_win }}"
