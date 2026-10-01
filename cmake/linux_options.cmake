@@ -50,4 +50,10 @@ set(CAIRN_DEFAULTSOLVER Highs CACHE INTERNAL "Cairn default solver")
 set(CAIRN_APP ${CMAKE_SOURCE_DIR} CACHE INTERNAL "Cairn installation path")
 
 option(INSTALL_WHEEL "build python wheel of cairn" ON)
-set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/virtualPy CACHE INTERNAL "Cairn wheel installation path")
+set(INSTALL_WHEEL_VENV ${CMAKE_SOURCE_DIR}/venvs/testCairn CACHE INTERNAL "Cairn wheel installation path")
+
+# user documentation
+option(BUILD_DOC "Build documentation" OFF)
+set(CAIRNDOC_HOME ${CMAKE_SOURCE_DIR}/doc/user CACHE INTERNAL "Cairn doc path")
+set(PYTHON_VENVDOC ${CMAKE_SOURCE_DIR}/venvs/docCairn CACHE STRING "Python virtual environment")
+
