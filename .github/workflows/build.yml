@@ -123,7 +123,7 @@ jobs:
 
   #job4 build wheel on other platforms (windows)
   build-wheels:
-    name: Build wheel on ${{ matrix.os }}
+    name: Build wheel on windows
     runs-on: windows-latest
     outputs: #vars used on next jobs
       whl_filename_win: ${{ steps.extract.outputs.whl_filename_win }}
@@ -149,8 +149,8 @@ jobs:
           $VERSION = "$major.$minor.$patch"
 
           echo "$CAIRN_VERSION"
-          
-          "whl_filename_win=$"cairnopen-${CAIRN_VERSION}-cp312-cp312-win.whl" >> $env:GITHUB_OUTPUT
+
+          "whl_filename_win="cairnopen-${CAIRN_VERSION}-cp312-cp312-win.whl" >> $env:GITHUB_OUTPUT
       - name : test output
         run : |
           echo "${{ steps.extract.outputs.whl_filename_win }}"
