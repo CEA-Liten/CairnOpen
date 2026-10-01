@@ -104,6 +104,12 @@ jobs:
           echo "CAIRN_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV             
       - name: (docs) Sphinx build
         run:  bash ./buildAll.sh nothing open no-deps no-cov nothing default_options.cmake buildDoc bin/$WHL_FILENAME
+      - name: upload html folder 
+        uses: actions/upload-artifact@v4
+        with:
+          name: cairn-html
+          path: ./doc/user/_build/html
+          retention-days: 1
       #- name: (docs) Deploy to GitHub Pages
       #  uses: peaceiris/actions-gh-pages@v3
       #  with:
@@ -171,7 +177,7 @@ jobs:
         id: extract
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME_WIN=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> "$GITHUB_OUTPUT"
+          echo "whl_filename=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> "$GITHUB_OUTPUT"
       - uses: ilammy/msvc-dev-cmd@v1
       - name: build wheel
         shell: cmd
@@ -215,7 +221,7 @@ jobs:
           mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp312-cp312-manylinux_2_24_x86_64.whl
           mv bin/${{ needs.build-wheels.outputs.whl_filename }} dist/
           ls -lap dist/
-    # - name: Publish to PyPI
-    #   uses: pypa/gh-action-pypi-publish@release/v1
-    #   with:
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
