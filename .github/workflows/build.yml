@@ -58,7 +58,9 @@ jobs:
           WHL_FILENAME="cairnopen-${CAIRN_VERSION}-cp313-cp313-linux_x86_64.whl"
           echo "cairn_version=$CAIRN_VERSION" >> $GITHUB_OUTPUT
           echo "whl_filename=$WHL_FILENAME" >> $GITHUB_OUTPUT
-
+      - name : test output
+        run : |
+          echo "${{ steps.extract.outputs.whl_filename }}"
       - name: upload bin folder 
         uses: actions/upload-artifact@v4
         with:
@@ -147,8 +149,8 @@ jobs:
           $VERSION = "$major.$minor.$patch"
 
           echo "$CAIRN_VERSION"
-          set WHL_FILENAME="cairnopen-${CAIRN_VERSION}-cp312-cp312-${{ matrix.platform }}.whl"
-          echo "whl_filename_win=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> $GITHUB_OUTPUT
+          set WHL_FILENAME="cairnopen-${CAIRN_VERSION}-cp312-cp312-win.whl"
+          "whl_filename_win=${WHL_FILENAME}" >> $env:GITHUB_OUTPUT
       - name : test output
         run : |
           echo "${{ steps.extract.outputs.whl_filename_win }}"
