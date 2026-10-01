@@ -150,7 +150,7 @@ jobs:
 
           echo "$CAIRN_VERSION"
 
-          "whl_filename_win=cairnopen-${CAIRN_VERSION}-cp312-cp312-win_amd64.whl" >> $env:GITHUB_OUTPUT
+          "whl_filename_win=cairnopen-${CAIRN_VERSION}-cp313-cp313-win_amd64.whl" >> $env:GITHUB_OUTPUT
       - name : test output
         run : |
           echo "${{ steps.extract.outputs.whl_filename_win }}"
