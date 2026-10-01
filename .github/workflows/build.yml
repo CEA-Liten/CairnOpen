@@ -112,21 +112,21 @@ jobs:
       #    publish_dir: ./doc/user/_build/html
       #    force_orphan: true
 
-  #job3: upload wheel
-  uploads:
-    runs-on: ubuntu-latest
-    needs: cairn-build
+  # #job3: upload wheel
+  # uploads:
+  #   runs-on: ubuntu-latest
+  #   needs: cairn-build
 
-    steps:
-      - name: download bin folder
-        uses: actions/download-artifact@v4
-        with:
-          name: cairn-bin
-          path: bin/
-      - name: set vars
-        run: |
-          echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
+  #   steps:
+  #     - name: download bin folder
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: cairn-bin
+  #         path: bin/
+  #     - name: set vars
+  #       run: |
+  #         echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
+  #         echo "WHL_FILENAME=${{ needs.cairn-build.outputs.whl_filename }}" >> $GITHUB_ENV
 
     #upload wheel file
       # - name: upload wheel on workflow 
@@ -141,37 +141,13 @@ jobs:
       #   run: |
       #     gh release upload ${{ env.CAIRN_VERSION }} bin/${{ env.WHL_FILENAME }} --clobber 
 
-  publish-to-testpypi:
-    name: Publish Python  to TestPyPI
-    runs-on: ubuntu-latest
-    needs: cairn-build
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/cairnopen
-
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-    - name: Download wheel
-      uses: actions/download-artifact@v6
-      with:
-        name: cairn-wheel-linux
-        path: bin/
-    - name: set vars
-      run: |
-          mkdir -p dist/
-          mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp313-cp313-manylinux_2_24_x86_64.whl
-          ls -lap dist/
-    # - name: Publish to PyPI
-    #   uses: pypa/gh-action-pypi-publish@release/v1
-    #   with:
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
 
   #job4 build wheel on other platforms (windows)
   build-wheels:
     name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.runs-on }}
+    outputs: #vars used on next jobs
+      whl_filename: ${{ steps.extract.outputs.whl_filename }}
     strategy:
       matrix:
         include:
@@ -194,19 +170,51 @@ jobs:
       - name: set vars
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME_WIN=cairnopen-${{ env.CAIRN_VERSION }}-cp313-cp313-${{ matrix.platform }}.whl" >> $GITHUB_ENV
+          echo "WHL_FILENAME_WIN=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> $GITHUB_OUTPUT
       - uses: ilammy/msvc-dev-cmd@v1
       - name: build wheel
         shell: cmd
         run: |
           cmake --version
           buildAll.bat release open wheel-noinstall 
-          move bin/$WHL_FILENAME_WIN" dist/
-      - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: upload wheel on workflow 
+        uses: actions/upload-artifact@v4
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          name: cairn-wheel-win
+          path: bin/
 
   #job5: upload on pypi.org (TODO)
 
       
+  publish-to-testpypi:
+    name: Publish Python  to TestPyPI
+    runs-on: ubuntu-latest
+    needs: cairn-build
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/cairnopen
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download wheel
+      uses: actions/download-artifact@v6
+      with:
+        name: cairn-wheel-linux
+        path: bin/
+    - name: Download wheel
+      uses: actions/download-artifact@v6
+      with:
+        name: cairn-wheel-win
+        path: bin/
+    - name: set vars
+      run: |
+          mkdir -p dist/
+          mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp312-cp312-manylinux_2_24_x86_64.whl
+           mv bin/${{ needs.build-wheels.outputs.whl_filename }} dist/
+          ls -lap dist/
+    # - name: Publish to PyPI
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     password: ${{ secrets.PYPI_API_TOKEN }}
