@@ -150,7 +150,7 @@ jobs:
 
           echo "$CAIRN_VERSION"
 
-          "whl_filename_win=cairnopen-${CAIRN_VERSION}-cp312-cp312-win.whl" >> $env:GITHUB_OUTPUT
+          "whl_filename_win=cairnopen-${CAIRN_VERSION}-cp312-cp312-win_amd64.whl" >> $env:GITHUB_OUTPUT
       - name : test output
         run : |
           echo "${{ steps.extract.outputs.whl_filename_win }}"
@@ -195,6 +195,7 @@ jobs:
     - name: set vars
       run: |
           mkdir -p dist/
+          ls bin/
           mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp312-cp312-manylinux_2_24_x86_64.whl
           mv bin/${{ needs.build-wheels.outputs.whl_filename_win }} dist/
           ls -lap dist/
