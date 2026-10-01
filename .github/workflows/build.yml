@@ -168,15 +168,16 @@ jobs:
           python-version: '3.13'
 
       - name: set vars
+        id: extract
         run: |
           echo "CAIRN_VERSION=${{ needs.cairn-build.outputs.cairn_version }}" >> $GITHUB_ENV
-          echo "WHL_FILENAME_WIN=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> $GITHUB_OUTPUT
+          echo "WHL_FILENAME_WIN=cairnopen-${{ env.CAIRN_VERSION }}-cp312-cp312-${{ matrix.platform }}.whl" >> "$GITHUB_OUTPUT"
       - uses: ilammy/msvc-dev-cmd@v1
       - name: build wheel
         shell: cmd
         run: |
           cmake --version
-          buildAll.bat release open wheel-noinstall 
+          buildAll.bat release open wheel-noinstall
       - name: upload wheel on workflow 
         uses: actions/upload-artifact@v4
         with:
@@ -198,12 +199,12 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
-    - name: Download wheel
+    - name: Download wheel linux
       uses: actions/download-artifact@v6
       with:
         name: cairn-wheel-linux
         path: bin/
-    - name: Download wheel
+    - name: Download wheel win
       uses: actions/download-artifact@v6
       with:
         name: cairn-wheel-win
@@ -212,7 +213,7 @@ jobs:
       run: |
           mkdir -p dist/
           mv bin/${{ needs.cairn-build.outputs.whl_filename }} dist/cairnopen-6.0.70-cp312-cp312-manylinux_2_24_x86_64.whl
-           mv bin/${{ needs.build-wheels.outputs.whl_filename }} dist/
+          mv bin/${{ needs.build-wheels.outputs.whl_filename }} dist/
           ls -lap dist/
     # - name: Publish to PyPI
     #   uses: pypa/gh-action-pypi-publish@release/v1
