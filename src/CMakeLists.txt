@@ -107,16 +107,16 @@ if (BUILD_DOC)
     endif()
 
     execute_process(COMMAND ${Python_EXECUTABLE} apiDocGen.py
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc)
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc COMMAND_ERROR_IS_FATAL ANY)
 
     execute_process(COMMAND ${Python_EXECUTABLE} userDocGenRST.py ${DOC_CEA}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc)
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/scripts/doc COMMAND_ERROR_IS_FATAL ANY)
           
     # Build htmlSphinx   
     configure_file(${CAIRNDOC_HOME}/confDoc.py.in ${CAIRNDOC_HOME}/conf.py @ONLY)
-
-    execute_process(COMMAND ${PYTHON_VENVDOC}/scripts/sphinx-build -M html . ./_build
-        WORKING_DIRECTORY ${CAIRNDOC_HOME})
+    
+    execute_process(COMMAND ${Python_BIN}/sphinx-build -M html . ./_build
+        WORKING_DIRECTORY ${CAIRNDOC_HOME} COMMAND_ERROR_IS_FATAL ANY)
 endif()
 
 # ============= Package configuration =============

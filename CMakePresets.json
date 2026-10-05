@@ -59,7 +59,7 @@
                     "rsyncCommandArgs": [ "-t", "--delete" ],
                     "copySourcesOptions": {
                         "method": "rsync",
-                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "gui", "deps", "_skbuild", "virtualPy", "lib/PegaseInstall", "lib/ModuleCairn", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h", "tests/privateTests/Tests_Base_National", "tests/privateTests/pegase", "tests/toolbox", "lib/MIPModeler/core/MIPModelerVersion.h", "src/core/CairnDefine.h", "src/core/CairnVersion.h" ]
+                        "exclusionList": [ "GenericAppEnv.sh", ".*", "bin", "out", "gui", "deps", "_skbuild", "venvs", "lib/PegaseInstall", "lib/ModuleCairn", "tests/apicpp/results", "tests/apicpp/src/TEST_CairnCore.h", "tests/privateTests/Tests_Base_National", "tests/privateTests/pegase", "tests/toolbox", "lib/MIPModeler/core/MIPModelerVersion.h", "src/core/CairnDefine.h", "src/core/CairnVersion.h" ]
                     },
                     "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
                 }
