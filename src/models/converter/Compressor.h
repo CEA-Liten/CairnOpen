@@ -62,22 +62,22 @@ public:
     // Mass         : kg
     // Energy       : MWh
     // Time         : Hours
-    void declareModelConfigurationParameters() {
-        ConverterSubModel::declareDefaultModelConfigurationParameters();
+    void declareModelConfigurationParameters() override {
+        ConverterSubModel::declareModelConfigurationParameters();
         //bool
-        addParameter("UsePolytropicModel",&mUsePolytropicModel, false, false, true, "If true: use optional model of Polytropic compression of Ideal Gaz - default = false","", "PolytropicModel");
-        addParameter("UseVariablePOut", &mUseVariablePOut, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","", "VariablePout");
-        addParameter("UseVariableTIn", &mUseVariableTIn, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false","", "VariableTin");
-        addParameter("UseSteamMap", &mUseSteamMap, false, false, true, "If true: add a map of performance SteamMap which uses steam, pressure out to compute the power used - works in the case of a constant volume in the compressor - see bouin_7_cont for an example of use","", "SteamInput");
-        addParameter("AddLosses", &mAddLosses, false, false, true, "If true: consider losses during compression");
+        addConfigParameter("UsePolytropicModel", &mUsePolytropicModel, false, false, true, "If true: use optional model of Polytropic compression of Ideal Gaz - default = false", "", "PolytropicModel");
+        addConfigParameter("UseVariablePOut", &mUseVariablePOut, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false", "", "VariablePout");
+        addConfigParameter("UseVariableTIn", &mUseVariableTIn, false, false, true, "If true: the power consumption of compressor depends on the pressure out - default = false", "", "VariableTin");
+        addConfigParameter("UseSteamMap", &mUseSteamMap, false, false, true, "If true: add a map of performance SteamMap which uses steam, pressure out to compute the power used - works in the case of a constant volume in the compressor - see bouin_7_cont for an example of use", "", "SteamInput");
+        addConfigParameter("AddLosses", &mAddLosses, false, false, true, "If true: consider losses during compression");
 
-        addParameter("SetManualPowerConsumption", &mSetManualPowerConsumption, false, false, true, "If true: the user must provide the power consumption. If false: it is computed automatically.", "", "PowerConsumption");
+        addConfigParameter("SetManualPowerConsumption", &mSetManualPowerConsumption, false, false, true, "If true: the user must provide the power consumption. If false: it is computed automatically.", "", "PowerConsumption");
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        ConverterSubModel::declareDefaultModelParameters();
+        ConverterSubModel::declareModelParameters();
         // Supported types are: double, int, std::vector<double> or std::vector<int>
         // addParameter to InputParam instance for input data coming from User File : maximum power, performance maps...
         
@@ -111,21 +111,21 @@ public:
     }
 
 
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        ConverterSubModel::declareDefaultModelInterface();
+        ConverterSubModel::declareModelInterface();
 
         /* Register IO expressions to be exported (published) as results (to the external, e.g., Pegase) */
-        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit());        /** Maximal power used by the compressor */
+        addSizeMaxIO("MaxPower", &mExpSizeMax, true, mPortUsedPower->pFluxUnit(), "Maximal power used by the compressor");
 
-        addIO("UsedPower", &mExpUsedPower, true, mPortUsedPower->pFluxUnit());       /** Computed power used by the compressor */
-        addIO("InMassFlowRate", &mExpInMassFlow, true, mPortInMassFlowRate->pFluxUnit());         /** input flow compressed by the compressor */
-        addIO("OutMassFlowRate", &mExpOutMassFlow, true, mPortOutMassFlowRate->pFluxUnit());         /** output flow compressed by the compressor, can be different from input flow if losses are considered */
-        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pQuantity("PressureUnit"));        /** Pressure at the exit of the compressor */
+        addIO("UsedPower", &mExpUsedPower, true, mPortUsedPower->pFluxUnit(), "Computed power used by the compressor");
+        addIO("InMassFlowRate", &mExpInMassFlow, true, mPortInMassFlowRate->pFluxUnit(), "input flow compressed by the compressor");
+        addIO("OutMassFlowRate", &mExpOutMassFlow, true, mPortOutMassFlowRate->pFluxUnit(), "output flow compressed by the compressor, can be different from input flow if losses are considered");
+        addIO("Pressure_out", &mExpPOut, true, mPortOutMassFlowRate->pQuantity("PressureUnit"), "Pressure at the exit of the compressor");
 
-        addIO("Steam", &mExpSteam, &mUseSteamMap, mPortInMassFlowRate->pFluxUnit());    /** quantity of steam input in the compressor*/
-        addIO("TemperatureIn", &mExpTIn, &mUseVariableTIn, "degC"); /** Temperature before compression */
-    
+        addIO("Steam", &mExpSteam, &mUseSteamMap, mPortInMassFlowRate->pFluxUnit(), "quantity of steam input in the compressor");
+        addIO("TemperatureIn", &mExpTIn, &mUseVariableTIn, "degC", "Temperature before compression");
+
         /* Register non-IO 0D-expressions in order to automatically allocate and close them */
         addExp(&mExpTOutlet);
 
@@ -133,8 +133,8 @@ public:
         //....
     }
 
-    void declareModelIndicators() {
-        ConverterSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    void declareModelIndicators() override {
+        ConverterSubModel::declareModelIndicators();
         mInputIndicators->addIndicator("Max MassFlowRate", &mMaxMFR, &mExportIndicators, "Maximal mass flow rate", SFunctionUnit({ eFTypeDivision, { mPortOutMassFlowRate->pQuantity("MassUnit")}, "h"}), "MaxMFR");
     }
 

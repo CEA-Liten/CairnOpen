@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Cairn_Exception::Cairn_Exception(const std::string& message, const int& level)
+Cairn_Exception::Cairn_Exception(const std::string& message, int level)
     : mMessage(message), mError(level) 
 {
     if (!message.empty() && level != 0) {
@@ -11,7 +11,7 @@ Cairn_Exception::Cairn_Exception(const std::string& message, const int& level)
     }
 }
 
-Cairn_Exception::Cairn_Exception(const char* message, const int& level)
+Cairn_Exception::Cairn_Exception(const char* message, int level)
     : Cairn_Exception(std::string(message), level)
 { }
 

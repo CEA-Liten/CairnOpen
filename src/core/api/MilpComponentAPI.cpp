@@ -185,33 +185,56 @@ void CairnAPI::MilpComponentAPI::checkDefaultPortCarriers() const
 	}
 }
 
-
 bool CairnAPI::MilpComponentAPI::isTimeSeriesParam(const std::string& a_TimeSeriesName)
 {
 	checkDefaultPortCarriers();
 
+	MilpComponent* compo = get_MilpComponent();
+	if (!compo)
+		return false;
+
+	auto* model = compo->compoModel();
+	if (!model)
+		return false;
+
 	t_value tsValue;
-	MilpComponent* pComponent = get_MilpComponent();
-	if (pComponent) {
-		if (pComponent->compoModel()->getInputTimeSeries()->getParameterValue(std::string(a_TimeSeriesName.c_str()), tsValue)
-			|| pComponent->compoModel()->getInputPortImpactsParamTS()->getParameterValue(std::string(a_TimeSeriesName.c_str()), tsValue))
-		{
+
+	// Check component-level time series
+	if (auto* ts = model->getInputTimeSeries()) {
+		if (ts->getParameterValue(a_TimeSeriesName, tsValue))
 			return true;
-		}
 	}
+
+	// Check port-impact time series
+	if (auto* tsPort = model->getInputPortImpactsParamTS()) {
+		if (tsPort->getParameterValue(a_TimeSeriesName, tsValue))
+			return true;
+	}
+
 	return false;
 }
 
-t_value CairnAPI::MilpComponentAPI::get_OptimalSizeExpression()
+std::string CairnAPI::MilpComponentAPI::get_OptimalSizeExpression()
 {
 	checkDefaultPortCarriers();
 
-	t_value vRet = "";
 	MilpComponent* pComponent = get_MilpComponent();
-	if (pComponent) {
-		vRet = pComponent->compoModel()->getOptimalSizeExpression();
-	}
-	return vRet;
+	if (!pComponent)
+		return {};
+
+	t_value v = pComponent->compoModel()->getOptimalSizeExpression();
+
+	// Convert t_value -> std::string
+	return std::visit([](auto&& arg) -> std::string {
+		using T = std::decay_t<decltype(arg)>;
+
+		if constexpr (std::is_same_v<T, std::string>) {
+			return arg;
+		}
+		else {
+			return {};
+		}
+	}, v);
 }
 
 t_value CairnAPI::MilpComponentAPI::get_SettingValue(const std::string& a_SettingName)
@@ -248,20 +271,35 @@ t_dict CairnAPI::MilpComponentAPI::get_SettingValues()
 	return vRet;
 }
 
-t_value CairnAPI::MilpComponentAPI::get_TimeSeriesVector(const std::string& a_SettingName)
+t_value CairnAPI::MilpComponentAPI::get_TimeSeriesVector(const std::string& a_TimeSeriesName)
 {
 	checkDefaultPortCarriers();
-	MilpComponent* pComponent = get_MilpComponent();
-	if (pComponent) {
-		t_value vRet;
-		if (pComponent->compoModel()->getInputTimeSeries()->getParameterValue(std::string(a_SettingName.c_str()), vRet)
-			|| pComponent->compoModel()->getInputPortImpactsParamTS()->getParameterValue(std::string(a_SettingName.c_str()), vRet))
-		{
-			return vRet;
-		}
+
+	MilpComponent* compo = get_MilpComponent();
+	if (!compo)
+		return {};
+
+	auto* model = compo->compoModel();
+	if (!model)
+		return {};
+
+	t_value result;
+
+	// Component-level time series
+	if (auto* ts = model->getInputTimeSeries()) {
+		if (ts->getParameterValue(a_TimeSeriesName, result))
+			return result;
 	}
+
+	// Port-impact time series
+	if (auto* tsPort = model->getInputPortImpactsParamTS()) {
+		if (tsPort->getParameterValue(a_TimeSeriesName, result))
+			return result;
+	}
+
 	return {};
 }
+
 
 void CairnAPI::MilpComponentAPI::modify_ModelClass(const std::string& a_prevModelClass, const std::string& a_newModelClass)
 {
@@ -480,6 +518,7 @@ void CairnAPI::MilpComponentAPI::set_SettingValue(const std::string& a_SettingNa
 		/* Update MilpComponent::mComponent as it is used to re-initialize the component parameters on run() */
 		const std::string value = CairnAPIUtils::getParamValue(a_SettingValue);
 		pComponent->updateCompoParamMap(a_SettingName, "value", value);
+		pComponent->paramValueChanged(a_SettingName);
 
 		vRet = (vOk || !checkExistance) ? noError : errParam;
 	}
@@ -815,7 +854,7 @@ void CairnAPI::MilpComponentAPI::redeclarePortImpactParameters()
 
 	//Only add the parameters related to new port?! => results in a problem due to reallocation!
 	for (const auto& impact : pTechnicalModel->getEnvImpacts()) {
-		impact->resizeCoeffs(pTechnicalModel->PortList().size()); //results in vectors reallocation!!
+		impact->initPortCoefficients(pTechnicalModel->PortList().size()); //results in vectors reallocation!!
 		std::size_t j = 0;
 		for (const auto& port : pTechnicalModel->PortList()) {
 			impact->addConfigParameters(port->Name(), j);
@@ -830,53 +869,59 @@ bool CairnAPI::MilpComponentAPI::remove_Port(MilpPortAPI& a_Port, const bool isD
 {
 	ECodeError vErr = noError;
 	std::string vErrMsg = "";
-	MilpComponent* pComponent = get_MilpComponent();
-	if (pComponent) {		
-		std::string vPortName(a_Port.get_Name());
-		MilpPort* pMilpPort = pComponent->getPortByName(vPortName);
-		if (pMilpPort) {
-			//check if it is a default port
-			if (!isDeleteCompo && pMilpPort->IsDefaultPort()) {
-				cInfo() << "Port "+ vPortName + " of component " + pComponent->Name() + " is a default port."
-					+ " It is not possible to delete default ports!";
-				return false;
-			}
-			else {
-				//check if there is a link or Not
-				BusCompo* vBus = pMilpPort->getLinkedBus();
-				if (vBus) {
-					vBus->removeLink(pComponent, pMilpPort);
-				}
-				pComponent->removePort(pMilpPort);
-				if (!isDeleteCompo) {
-					removePortImpactParameters(vPortName);
-					pComponent->declareIndicators(); // improve ?!
-				}
-			}
-		}
-		else {
-			vErr = errNotFound;
-			vErrMsg = a_Port.get_Name();
-		}
+
+	MilpComponent* comp = get_MilpComponent();
+	if (!comp) {
+		CairnAPIUtils::setError(errDefault, "The component doesn't exist!");
+		return false;
 	}
-	else {
-		vErr = errDefault;
-		vErrMsg = "The component doesn't exist!";
+
+	const std::string portName = a_Port.get_Name();
+	MilpPort* port = comp->getPortByName(portName);
+	
+	if (!port) {
+		CairnAPIUtils::setError(errNotFound, portName);
+		return false;
 	}
-	CairnAPIUtils::setError(vErr, vErrMsg);
-	return true;
+
+	// Default ports cannot be removed unless deleting the whole component
+	if (!isDeleteCompo && port->IsDefaultPort()) {
+		cInfo() << "Port " << portName << " of component " << comp->Name()
+			<< " is a default port. It is not possible to delete default ports!";
+		return false;
+	}
+
+	// Unlink from bus if needed
+	if (BusCompo* bus = port->getLinkedBus()) {
+		bus->removeLink(comp, port);
+	}
+
+	// Remove port from component
+	comp->removePort(port);
+
+	// Remove impacts + refresh indicators only when not deleting the whole component
+	if (!isDeleteCompo) {
+		removePortImpactParameters(portName);
+		comp->declareIndicators();   // still needed 
+	}
+
+	CairnAPIUtils::setError(noError, "");
+	return false;
 }
 
 void CairnAPI::MilpComponentAPI::removePortImpactParameters(const std::string& portName)
 {
-	MilpComponent* pComponent = get_MilpComponent();
-	if (!pComponent) return;
+	MilpComponent* compo = get_MilpComponent();
+	if (!compo)
+		return;
 
-	TechnicalSubModel* pTechnicalModel = dynamic_cast<TechnicalSubModel*> (pComponent->compoModel());
-	if (pTechnicalModel) {
-		pTechnicalModel->getInputPortImpactsParam()->removePortImpactParameters(portName);
-		pTechnicalModel->getInputPortImpactsParamTS()->removePortImpactParameters(portName);
-	}
+	TechnicalSubModel* model = dynamic_cast<TechnicalSubModel*> (compo->compoModel());
+	if (!model)
+		return;
+
+	model->getInputConfigPortImpactsParam()->removePortImpactParameters(portName);
+	model->getInputPortImpactsParam()->removePortImpactParameters(portName);
+	model->getInputPortImpactsParamTS()->removePortImpactParameters(portName);
 }
 
 bool CairnAPI::MilpComponentAPI::useEnergyVector(const std::string& a_EnergyCarrierName)

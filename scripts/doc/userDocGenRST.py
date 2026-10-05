@@ -40,10 +40,10 @@ def write_anchor(title):
 def filter_lines_rst(f, modelname,folder_csv,list_param): # filtre le fichier .cpp
     lines = f.readlines()
     varDico, exprList, lines_to_ignore = getVariables(lines)
-    var_table = pd.DataFrame.from_dict(varDico, orient = 'index', columns = ["dimension","Associated Expr" ,"size", "varMin", "varMax", "varType"])
+    #var_table = pd.DataFrame.from_dict(varDico, orient = 'index', columns = ["dimension","Associated Expr" ,"size", "varMin", "varMax", "varType"])
     modelnameUsed=modelname#.replace("\_","")
-    os.makedirs(folder_csv,exist_ok=True)
-    var_table.to_csv(folder_csv+modelnameUsed+"varList.csv",sep=",",index_label="Variable name")
+    #os.makedirs(folder_csv,exist_ok=True)
+    #var_table.to_csv(folder_csv+modelnameUsed+"varList.csv",sep=",",index_label="Variable name")
     
     
     yield write_title("Model variables of "+ modelnameUsed, "^")
@@ -180,28 +180,20 @@ def h_filter_lines(f, start_delete, stop_delete, modelname,folder_csv):
 
 
 
-def write_table(tableName, table_description, modelnameUsed, list_Head, list_table,folder_csv, description = ""):
-    print("write ", tableName, " of ", modelnameUsed)
-    print(list_table, list_Head)
-    # try:
-    if len(list_table)>0:
-        paramConfig_table = pd.DataFrame(list_table, columns = list_Head)
-        paramConfig_location = folder_csv+modelnameUsed+tableName+".csv"
-        os.makedirs(folder_csv,exist_ok=True)
-        paramConfig_table.to_csv(paramConfig_location,sep=",", index=False)
-        
+def write_table(tableName, table_description, modelnameUsed, isPrivate, description = ""):
+    
+    fileTable = modelnameUsed +tableName+".csv"
+    if os.path.exists(os.path.join(cairn_path, "doc/user/models/csv", fileTable)):
+        if isPrivate:
+            fileTable = "../../../models/csv/"+fileTable
+        else:
+            fileTable = "../csv/"+fileTable
 
         yield write_title(table_description + " of "+ modelnameUsed,'^')
-
         yield description + "\n\n"
-
         # "See also :ref:`"+table_description + " of TechnicalSubModel"+"` for generic options\n\n"
-
         yield ".. csv-table:: " + modelnameUsed +"\n"
-        if modelnameUsed in ["TechnicalSubModel"]:
-            yield "    :file: csv/"+modelnameUsed +tableName+".csv\n"
-        else:
-            yield "    :file: ../csv/"+modelnameUsed +tableName+".csv\n"
+        yield "    :file: " + fileTable +"\n"        
         yield "    :header-rows: 1"+"\n\n"
 
 
@@ -262,6 +254,8 @@ def redact_files(perseegui_dir, directory_name0, dest_folder, private=""):
     Write a documentation of all the models from the code .cpp and .h.
     """
     global deleted_lines, total_lines
+    isPrivate='private' in dest_folder
+
     start_delete="str1"
     stop_delete="str2"
     total_files = 0
@@ -305,20 +299,25 @@ def redact_files(perseegui_dir, directory_name0, dest_folder, private=""):
                                                                                                                        stop_delete,subsection ,
                                                                                                                        dest_folder_path + "/models/csv/")
                         #  todo : a refaire avec l'API plus tard.
-                        filtered = list(write_table("paramConfig", "Parameters of configuration ", subsection, 
-                                                    ["Parameter name","Unit","Mandatory","Description"], 
-                                                    list_paramConfig, dest_folder+ "/models/csv/", 
-                                                    description=""))
-                        filtered += list(write_table("paramList", "Parameter table ", subsection, 
-                                                    ["Expression name","Unit","Mandatory","Description"], list_param, dest_folder_path+ "/models/csv/"))
-                        filtered += list(write_table("listIO", "Expressions table ", subsection, 
-                                                   ["Expression name","Unit","Mandatory","Description"], list_IO, dest_folder_path+ "/models/csv/"))                        
-                        filtered += list(write_table("listTS", "Time series table ", subsection, 
-                                                    ["Input time series name","Unit","Mandatory","Description"], list_TS, dest_folder_path+ "/models/csv/"))
-                        filtered += list(write_table("list_RH", "Rolling horizon expressions ", subsection, 
-                                                    ["Expression name","Unit","Mandatory","Description"], list_RH, dest_folder_path+ "/models/csv/"))
-                        filtered += list(write_table("list_Data", "Additionnal data needed by the model ", subsection, 
-                                                    ["Data name","Unit","Mandatory","Description"], list_Data, dest_folder_path+ "/models/csv/"))
+                        filtered = list(write_table("paramList", "Parameter table ", subsection, isPrivate))
+         
+                        filtered += list(write_table("Ports", "Ports table ", subsection, isPrivate))
+         
+                        filtered += list(write_table("listIO", "Expressions table ", subsection, isPrivate))
+                                                    
+                        # filtered = list(write_table("paramConfig", "Parameters of configuration ", subsection, 
+                        #                             ["Parameter name","Unit","Mandatory","Description"], 
+                        #                             list_paramConfig, dest_folder+ "/models/csv/", 
+                        #                             description=""))
+                        # filtered += list(write_table("paramList", "Parameter table ", subsection, 
+                        #                             ["Expression name","Unit","Mandatory","Description"], list_param, dest_folder_path+ "/models/csv/"))
+                        
+                        # filtered += list(write_table("listTS", "Time series table ", subsection, 
+                        #                             ["Input time series name","Unit","Mandatory","Description"], list_TS, dest_folder_path+ "/models/csv/"))
+                        # filtered += list(write_table("list_RH", "Rolling horizon expressions ", subsection, 
+                        #                             ["Expression name","Unit","Mandatory","Description"], list_RH, dest_folder_path+ "/models/csv/"))
+                        # filtered += list(write_table("list_Data", "Additionnal data needed by the model ", subsection, 
+                        #                             ["Data name","Unit","Mandatory","Description"], list_Data, dest_folder_path+ "/models/csv/"))
                         
                         print ("- Writing filtered file : ",hfile)
                         nb_files = nb_files + 1
@@ -329,13 +328,13 @@ def redact_files(perseegui_dir, directory_name0, dest_folder, private=""):
                     total_files = total_files + 1
                     list_param_and_conf = ["m"+i[0] for i in list_param] + ["m"+i[0] for i in list_paramConfig] + ["m"+i[0] for i in list_TS]
                     #  read the .cpp files
-                    with open(os.path.join(dirpath, cfile), 'r+') as f:
-                        total_lines=total_lines+nb_lines(f)
-                        filtered = list(filter_lines_rst(f, subsection,dest_folder_path+ "/models/csv/", list_param_and_conf))
-                        print ("- Writing filtered file : ",cfile)
-                        nb_files = nb_files + 1
-                        o.writelines(filtered)
-                        o.flush()
+                    # with open(os.path.join(dirpath, cfile), 'r+') as f:
+                    #     total_lines=total_lines+nb_lines(f)
+                    #     #filtered = list(filter_lines_rst(f, subsection,dest_folder_path+ "/models/csv/", list_param_and_conf))
+                    #     print ("- Writing filtered file : ",cfile)
+                    #     nb_files = nb_files + 1
+                    #     o.writelines(filtered)
+                    #     o.flush()
     make_toc(dest_folder_path + "/models/",models_list, private)
     if (total_files >0):
         print (" Handled ",nb_files," files over ", total_files, " total files exmined, that is ",100*nb_files/total_files,"%")

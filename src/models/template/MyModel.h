@@ -108,9 +108,13 @@ public:
     *        study input file before any other parameter.
     *
     * Always call the parent method first:
-    *   MyModelSubModel::declareDefaultModelConfigurationParameters();
+    *   MyModelSubModel::declareModelConfigurationParameters();
     *
     * Then register your own parameters with:
+    * 
+    *   addConfigParameter("MyParam", &mMyParam, defaultValue,
+    *                isMandatory, isUsed, "Description", unit, "Category");
+    * 
     *   addParameter("MyParam", &mMyParam, defaultValue,
     *                isMandatory, isUsed, "Description", unit, "Category");
     *
@@ -270,7 +274,7 @@ public:
     *  The rule is simple:
     *    If ParamA controls the isMandatory or isUsed of ParamB,
     *    then ParamA is a configuration parameter (declared here 
-    *    in declareDefaultModelConfigurationParameters()),
+    *    in declareModelConfigurationParameters()),
     *    and  ParamB is a non-configuration parameter (declared in
     *    declareModelParameters()).
     * 
@@ -285,7 +289,7 @@ public:
     * --- Example ---------------------------------------------------------------
     *
     *  // In declareModelConfigurationParameters():
-    *  addParameter("UseStoragePriceTimeSeries", &mUseStoragePriceTS, false,
+    *  addConfigParameter("UseStoragePriceTimeSeries", &mUseStoragePriceTS, false,
     *               true, true,
     *               "If true, use StoragePriceTimeSeries; otherwise use StoragePrice",
     *               "bool", "EcoInvestModel");
@@ -313,21 +317,21 @@ public:
     void declareModelConfigurationParameters() override
     {
         // [TODO] Replace StorageSubModel with your actual base class
-        StorageSubModel::declareDefaultModelConfigurationParameters();
+        StorageSubModel::declareModelConfigurationParameters();
 
         // --- Boolean configuration parameters ---
         // [TODO] Add your configuration parameters here. Example:
-        addParameter("UseStoragePriceTimeSeries", &mUseStoragePriceTS, false,
+        addConfigParameter("UseStoragePriceTimeSeries", &mUseStoragePriceTS, false,
                     true, true,
                     "If true, use StoragePriceTimeSeries; otherwise use StoragePrice",
                     "bool", "EcoInvestModel");
 
-        addParameter("EnableDegradationCost", &mEnableDegradationCost, false,
+        addConfigParameter("EnableDegradationCost", &mEnableDegradationCost, false,
                     true, true,
                     "If true, a degradation cost is added to the objective",
                     "bool", "CostOptions");
 
-        addParameter("AddSocConstraints", &mAddSocConstraints, false, 
+        addConfigParameter("AddSocConstraints", &mAddSocConstraints, false,
                     false, true, 
                     "Use min and max constraints on the state of charge", 
                     "bool", "EcoInvestModel");
@@ -337,7 +341,7 @@ public:
     * \brief Declares non-configuration parameters, time series, and performance maps.
     *
     * Always call the parent method first:
-    *   MyModelSubModel::declareDefaultModelParameters();
+    *   MyModelSubModel::declareModelParameters();
     *
     * --- Non-configuration parameters -----------------------------------------
     *
@@ -472,7 +476,7 @@ public:
     void declareModelParameters() override
     {
         // [TODO] Replace StorageSubModel with your actual base class
-        StorageSubModel::declareDefaultModelParameters();
+        StorageSubModel::declareModelParameters();
 
         // --- Parameters (scalars, usually doubles or integers) ---
         // [TODO] Add your non-configuration parameters here. Example:
@@ -544,7 +548,7 @@ public:
     *        framework allocates and closes them properly.
     *
     * Always call the parent defaults first:
-    *   MyModelSubModel::declareDefaultModelInterface();
+    *   MyModelSubModel::declareModelInterface();
     *
     * --- Published IO Expressions ---------------------------------------------------
     *
@@ -695,7 +699,7 @@ public:
     void declareModelInterface() override
     {
         // [TODO] Replace StorageSubModel with your actual base class
-        StorageSubModel::declareDefaultModelInterface();
+        StorageSubModel::declareModelInterface();
 
         // [TODO] Add your IO expressions here. Example:
          
@@ -736,7 +740,7 @@ public:
     * --- declareModelIndicators() ---------------------------------------------
     *
     *  Always call the parent method first:
-    *    MyModelSubModel::declareDefaultModelIndicators(&mExportIndicators);
+    *    MyModelSubModel::declareModelIndicators();
     *
     *  This registers all standard indicators inherited from the base class.
     *  Additional model-specific indicators are declared with addIndicator():
@@ -776,7 +780,7 @@ public:
     {
         // Shared indicators for all models of type Storage 
         // [TODO] Replace StorageSubModel with your actual base class
-        StorageSubModel::declareDefaultModelIndicators(&mExportIndicators);
+        StorageSubModel::declareModelIndicators();
 
         // An additional indicator tracking the cumulated energy losses
         mInputIndicators->addIndicator(
@@ -988,33 +992,7 @@ public:
     *        setMinValue(mMinSize);
     *        setMaxValue(mMaxEsto);
     *
-    *
-    * 2) Enable State and StartUp/ShutDown constraints
-    *    ---------------------------------------------
-    *    To activate state‑related constraints, set the shared flags:
-    *
-    *        mAddStateVariable = true;
-    *        mAddStartUpShutDownVariable = true;
-    *
-    *    or conditionally:
-    *
-    *        mAddStateVariable = (mParam1 || mParam2);
-    *
-    *    These flags may also be exposed as configuration parameters in
-    *    declareModelConfigurationParameters():
-    *
-    *        addParameter("AddStateConstrains",
-    *                     &mAddStateVariable,
-    *                     false, false, true,
-    *                     "If true: add State constraints", "bool");
-    *
-    *        addParameter("AddStartUpShutDownConstrains",
-    *                     &mAddStartUpShutDownVariable,
-    *                     false, false, true,
-    *                     "If true: add StartUp/ShutDown constraints", "bool");
-    *
-    *
-    * 3) Set initial state for ControlledIO
+    * 2) Set initial state for ControlledIO
     *    ----------------------------------
     *    Unless provided as a parameter, the initial state (e.g., SOE/SOC)
     *    should be initialized here:
@@ -1170,7 +1148,7 @@ public:
     * \brief Post-optimization: extract solution values and populate result
     *        indicators. Typically delegates to the parent class helper:
     *
-    *   MyModelSubModel::computeDefaultIndicators(optSol);
+    *   MyModelSubModel::computeAllIndicators(optSol);
     * 
     * All the indicators defined using addIndicator() are automatically 
     * computed in MyModelSubModel::computeDefaultIndicators();

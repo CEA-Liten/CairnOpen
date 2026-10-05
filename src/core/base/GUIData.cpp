@@ -71,25 +71,36 @@ void GUIData::declareGuiInputParam()
 
 void GUIData::setGuiInputParam(const t_mapParamData& paramMap)
 {
-    int ierr = mGuiInputParam->readParameters(paramMap);
-    if (ierr < 0) {
-        Cairn_Exception error("ERROR readParameters: missing value for a Gui parameter of component " + Name(), -1);
-        throw& error;
-    }
+    mGuiInputParam->readParameters(paramMap);
+
+    const double X0 = 50;
+    const double DELTA = 100;
+    
+    double X_Carrier = X0 + 3 * DELTA;
 
     if (mXpos == 0) {
-        if (mGuiComponentType == "SimulationControl") setXpos(50);
-        else if (mGuiComponentType == "TecEcoAnalysis") setXpos(150);
-        else if (mGuiComponentType == "Solver") setXpos(250);
-        else if (mGuiComponentType == "Electrical" || mGuiComponentType == "Material") setXpos(0.5 * mId);
+        if (mGuiComponentType == "SimulationControl") 
+            setXpos(X0);
+        else if (mGuiComponentType == "TecEcoAnalysis") 
+            setXpos(X0 + DELTA);
+        else if (mGuiComponentType == "Solver") 
+            setXpos(X0 + 2 * DELTA);
+        else if (mGuiComponentType == "ElectricalCarrier"
+            || mGuiComponentType == "MaterialCarrier"
+            || mGuiComponentType == "EnergyVector") 
+        {
+                setXpos(std::max<int>(X_Carrier, mId));
+        }            
     }
     if (mYpos == 0) {
         if (mGuiComponentType == "SimulationControl"
             || mGuiComponentType == "TecEcoAnalysis"
             || mGuiComponentType == "Solver"
-            || mGuiComponentType == "Electrical"
-            || mGuiComponentType == "Material")
-            setXpos(10);
+            || mGuiComponentType == "ElectricalCarrier"
+            || mGuiComponentType == "MaterialCarrier"
+            || mGuiComponentType == "EnergyVector")
+
+            setYpos(10);
     }
 }
 

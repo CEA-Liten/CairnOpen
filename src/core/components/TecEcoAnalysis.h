@@ -61,27 +61,27 @@ public:
     int getImpactIndex(const std::string& impactName); 
 
     //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
     }
 
-    void declareModelParameters()
+    void declareModelParameters() override
     {
     }
 
-    void declareModelInterface()
+    void declareModelInterface() override
     {
         //TecEco total values
         if (mMainCarrier) {
-            addIO("Total Capex", &mExpCapex, true, mMainCarrier->pFluxUnit()); /** Computed initial investment costs Total Capex */
-            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, mMainCarrier->pStorageUnit());     /** Computed operational cost Total Undiscounted Net Opex */
+            addIO("Total Capex", &mExpCapex, true, mMainCarrier->pFluxUnit(), "Computed initial investment costs Total Capex");
+            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, mMainCarrier->pStorageUnit(), "Computed operational cost Total Undiscounted Net Opex");
         }
         else {
-            addIO("Total Capex", &mExpCapex, true, "FluxUnit");             /** Computed initial investment costs Total Capex */
-            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, "StorageUnit");     /** Computed operational cost Total Undiscounted Net Opex */
+            addIO("Total Capex", &mExpCapex, true, "FluxUnit", "Computed initial investment costs Total Capex");
+            addIO("Total Undiscounted Opex", &mExpOpexUndiscounted, true, "StorageUnit", "Computed operational cost Total Undiscounted Net Opex");
         }
 
-        addIO("Total Undiscounted VariableCosts", &mExpVariableCostsUndiscounted, true, &mCurrency); /** Computed Total undiscounted variable costs resulting from material/fuel consumption */
+        addIO("Total Undiscounted VariableCosts", &mExpVariableCostsUndiscounted, true, &mCurrency, "Computed Total undiscounted variable costs resulting from material/fuel consumption");
 
         /*
             mExpPenaltyConstraintCosts should not be exported because PenaltyConstraintCosts is a Bus expression
@@ -94,12 +94,12 @@ public:
         for (std::size_t i = 0; i < mSelectedEnvImpacts.size(); ++i) { //mSelectedEnvImpacts == SubModel::mEnvImpactsList
             const auto& impact = mSelectedEnvImpacts[i];
             const auto unit = EnvImpactUnit(impact);
-            addIO("Total Undiscounted " + impact + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env impact  mass" */
-            addIO("Total Undiscounted " + impact + " Embodied EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit); /** "TecEco undiscounted impactName Env grey impact mass" */
+            addIO("Total Undiscounted " + impact + " EnvImpact Mass", &mExpEnvImpactMassUndiscountedVec[i], true, unit, "TecEco undiscounted impactName Env impact mass");
+            addIO("Total Undiscounted " + impact + " Embodied EnvImpact Mass", &mExpEnvImpactEmbodiedUndiscountedVec[i], true, unit, "TecEco undiscounted impactName Env grey impact mass");
         }
     }
 
-    void declareModelIndicators()
+    void declareModelIndicators() override
     {
         mInputIndicators->addIndicator("NbYear", &mNbYearIndicator, &mExportIndicators, "NbYear", "year", "NbYear");
         mInputIndicators->addIndicator("Discount Rate", &mDiscountRateIndicator, &mExportIndicators, "Discount Rate", "-", "DiscountRate");

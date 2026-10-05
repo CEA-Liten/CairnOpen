@@ -3,14 +3,18 @@
 
 #include "CairnAPIUtils.h"
 
-
+struct testParams
+{
+	bool update{ false };
+	std::string refSuffix;
+};
 
 // Lancement et vérification d'un seul cas test
 // ce test peut contenir un fichier sampling permettant de lancer une étude sensibilité
 // a_casepath : chemin complet du cas à tester
 // a_case : nom du cas (nom du fichier json sans l'extension .json)
 // a_update: si vrai, copie le résultat après simulation dans la référence
-int testCase(const fs::path& a_casepath, const fs::path& a_case, bool a_update)
+int testCase(const fs::path& a_casepath, const fs::path& a_case, const testParams& a_params)
 {
 	bool a_checkLP = true; // TODO : parametre?
 	int vRet = noError;
@@ -42,13 +46,13 @@ int testCase(const fs::path& a_casepath, const fs::path& a_case, bool a_update)
 	}
 
 	bool vCheckResults = true;
-	if (!a_update) {		
+	if (!a_params.update) {
 		// vérificaiton des résultats
 		bool vCheckLP = a_checkLP;
 		if (vStatusLP == "")
 			vCheckLP = false;
 
-		vCheckResults = vTest.checkResults("Ref", true, true, vCheckLP, isRollingHorizon);
+		vCheckResults = vTest.checkResults(a_params.refSuffix, true, true, vCheckLP, isRollingHorizon);
 
 		vTest.writeResult({
 			{"OPTIM", vSolution.get_Status()},
@@ -62,7 +66,7 @@ int testCase(const fs::path& a_casepath, const fs::path& a_case, bool a_update)
 	bool vCheckSampling = vTest.runSensitivity(m_Cairn);
 	
 	// update
-	if (a_update) {
+	if (a_params.update) {
 		// mise à jour de la réfarence, pas de vérification
 		vTest.updateResults("Ref", isRollingHorizon);
 	}
@@ -73,7 +77,7 @@ int testCase(const fs::path& a_casepath, const fs::path& a_case, bool a_update)
 // Lancement et vérification de tous les tests contenus dans le répertoire a_testpath
 // Un test correspond à un fichier json de projet 
 // Un test est un sous-répertoire commencant par TEST_FUNCPREFIX et contenant un fichier projet json
-int test(const fs::path& a_testpath, bool a_update)
+int test(const fs::path& a_testpath, const testParams& a_params)
 {
 	int vRet = noError;
 
@@ -82,7 +86,7 @@ int test(const fs::path& a_testpath, bool a_update)
 		if (!f.is_directory()) {
 			// un fichier json = un test
 			if (f.path().extension() == ".json") {
-				int vTest = testCase(a_testpath, f.path().stem(), a_update);
+				int vTest = testCase(a_testpath, f.path().stem(), a_params);
 				if (vTest != noError) vRet = vTest;
 			}
 		}
@@ -90,7 +94,7 @@ int test(const fs::path& a_testpath, bool a_update)
 			std::string vPath = f.path().stem().string();
 			// un répertoire commencant par TEST_FUNCPREFIX = un test
 			if (starts_with(f.path().stem().string(), TEST_FUNCPREFIX)) {
-				int vTest = test(f.path(), a_update);
+				int vTest = test(f.path(), a_params);
 				if (vTest != noError) vRet = vTest;
 			}
 		}
@@ -99,14 +103,14 @@ int test(const fs::path& a_testpath, bool a_update)
 	return vRet;
 }
 
-int tests(const fs::path& a_rootpath, bool a_update)
+int tests(const fs::path& a_rootpath, const testParams &a_params)
 {
 	int vRet = noError;
 	
 	// loop on directories
 	for (auto const& dir_entry : fs::directory_iterator{ a_rootpath }) {
 		if (dir_entry.is_directory()) {
-			int vTest = test(dir_entry, a_update);
+			int vTest = test(dir_entry, a_params);
 			if (vTest != noError) vRet = vTest;
 		}
 	}
@@ -133,7 +137,7 @@ int main(int argc, char* argv[])
 	std::vector < std::string > vPaths;
 	std::vector < std::string > vPathCases;
 	std::vector < std::string > vCases;
-	bool vUpdate = false;
+	testParams vParams = { false, "Ref" };	
 	if (argc == 1) {
 		getAllPaths(vPaths);
 	}
@@ -154,24 +158,27 @@ int main(int argc, char* argv[])
 				vCases.push_back(s.substr(7));
 			}
 			else if (s.rfind("--update", 0) == 0) {
-				vUpdate = true;
+				vParams.update = true;
+			}
+			else if (s.rfind("--refsuffix:", 0) == 0) {
+				vParams.refSuffix = s.substr(12);
 			}
 		}
 	}
 
 	for (auto& vPath : vPaths) {
-		int vTest = tests(vPath, vUpdate);
+		int vTest = tests(vPath, vParams);
 		if (vTest != noError) vRet = vTest;
 	}
 
 	for (auto& vPath : vPathCases) {
-		int vTest = test(vPath, vUpdate);
+		int vTest = test(vPath, vParams);
 		if (vTest != noError) vRet = vTest;
 	}
 
 	for (auto& vCase : vCases) {
 		fs::path vPath = vCase;
-		int vTest = testCase(vPath.parent_path(), vPath.stem(), vUpdate);
+		int vTest = testCase(vPath.parent_path(), vPath.stem(), vParams);
 		if (vTest != noError) vRet = vTest;
 	}
 

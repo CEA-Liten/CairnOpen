@@ -27,9 +27,32 @@ int StorageGen::checkConsistency()
     int ier = TechnicalSubModel::checkConsistency();
 
     if ((mInitSOC < 0. && mInitSOC != -1.) || mInitSOC > 1.) {
-        cCritical() << "ERROR : Storage " << parent()->objectName() << " expects an initial state of charge in the range [0,1] or -1 to use coupling within PEGASE. ";
+        cCritical() << "ERROR : Storage " << Name() << " expects an initial state of charge in the range [0,1] or -1 to use coupling within PEGASE. ";
         return -1;
     }
+
+    // Charge/discharge flow must be strictly > 0 when states are enabled, 
+    // and >= 0 when states are disabled.
+    auto checkFlow = [&](double value, const std::string& label)
+    {
+        const bool ok = mAddChargeDischargeStates ? (value > kEpsilon)
+            : (value >= 0.0);
+
+        if (!ok) {
+            const std::string msg = mAddChargeDischargeStates
+                ? (label + " must be strictly greater than 0")
+                : (label + " must be greater or equal to 0");
+
+            cWarning() << Name() << " " << msg;
+            return false;
+        }
+        return true;
+    };
+
+    if (!checkFlow(mMinFlowCharge, "MinFlowCharge"))    
+        return -1;
+    if (!checkFlow(mMinFlowDischarge, "MinFlowDischarge")) 
+        return -1;
 
     return ier;
 }
@@ -44,12 +67,39 @@ void StorageGen::computeInitialData()
     cDebug() << "StorageGen mInitialSoe_Def : " << mInitialSoe_Def;
 }
 
+void StorageGen::addChargeDischargeStates()
+{
+    if (!mAddChargeDischargeStates)
+        return;
+
+    addVariable(mCharging, "IsCharging", 0, 1, MIPModeler::MIP_INT);
+    addVariable(mDischarging, "IsDischarging", 0, 1, MIPModeler::MIP_INT);
+
+    fillExpression(mExpCharging, mCharging);
+    fillExpression(mExpDischarging, mDischarging);
+
+    for (uint64_t t = 0; t < mHorizon; ++t) {
+        // Charging : IsCharging = 0 -> QC = 0 AND IsCharging = 1 -> MinChargeFlow <= QC <= MaxChargeFlow
+        addConstraint(mExpFlowCharge[t] - mMaxFlowCharge * mExpCharging[t] <= 0, "Charging", t);
+        addConstraint(mExpFlowCharge[t] - mMinFlowCharge * mExpCharging[t] >= 0, "NotCharging", t);
+
+        // Discharging : IsDischarging = 0 -> QD = 0 AND IsDischarging = 1 -> MinDischargeFlow <= QD <= MaxDischargeFlow
+        addConstraint(mExpFlowDischarge[t] - mMaxFlowDischarge * mExpDischarging[t] <= 0, "Discharging", t);
+        addConstraint(mExpFlowDischarge[t] - mMinFlowDischarge * mExpDischarging[t] >= 0, "NotDischarging", t);
+
+        // Charging OR Discharging
+        if (mFlowDirection) {
+            addConstraint(mExpCharging[t] + mExpDischarging[t] <= 1, "ChargingOrDischarging", t);
+        }
+    }
+}
+
 void StorageGen::computeModelContribution()
-{    
-    addVariable(mVarEsto,"E", 0., fabs(getMaxBound()));
-    addVariable(mVarFlowCharge,"QC", mMinFlowCharge, mMaxFlowCharge);
-    addVariable(mVarFlowDischarge,"QD", mMinFlowDischarge, mMaxFlowDischarge);
-    addVariable(mVarStoIni,"StoIni", 0., fabs(getMaxBound()));
+{   
+    addVariable(mVarEsto, "E", 0., fabs(getMaxBound()));
+    addVariable(mVarFlowCharge, "QC", mMinFlowCharge, mMaxFlowCharge);
+    addVariable(mVarFlowDischarge, "QD", mMinFlowDischarge, mMaxFlowDischarge);
+    addVariable(mVarStoIni, "StoIni", 0., fabs(getMaxBound()));
 
     //variables exprimed as expressions on horizon (optional)
     mExpStoIni += mVarStoIni;
@@ -57,6 +107,9 @@ void StorageGen::computeModelContribution()
     fillExpression(mExpEsto, mVarEsto);
     fillExpression(mExpFlowCharge, mVarFlowCharge);
     fillExpression(mExpFlowDischarge, mVarFlowDischarge);
+
+    // Add charge discharge states, if needed
+    addChargeDischargeStates();
 
     for (uint64_t t = 0; t < mHorizon; ++t) {
         mExpFlow[t] += mExpFlowDischarge[t] - mExpFlowCharge[t];
@@ -222,9 +275,9 @@ void StorageGen::computeEconomicalContribution()
 
 void StorageGen::computeAllIndicators(const double* optSol)
 {
-    StorageSubModel::computeDefaultIndicators(optSol);
+    StorageSubModel::computeAllIndicators(optSol);
 
-    computeProduction(true,mHorizon, mNpdtPast, mExpLosses, optSol, 1., 0., mInternalLosses.at(0));
-    computeProduction(false, *mptrTimeshift, mNpdtPast, mExpLosses, optSol, 1., 0., mInternalLosses.at(1));
+    computeProduction(true, mHorizon, mExpLosses, optSol, 1., 0., mInternalLosses.at(0));
+    computeProduction(false, *mptrTimeshift, mExpLosses, optSol, 1., 0., mInternalLosses.at(1));
 }
 

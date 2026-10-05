@@ -11,7 +11,6 @@ SimulationControl::SimulationControl(CairnObject* ap_Parent,
     mCompoInputParam(nullptr),
     mCompoInputSettings(nullptr),
     mGUIData(nullptr)
-    //TODO: create mException
 {
     this->setObjectType("SimulationControl");
     setName(aSimulationControlName);
@@ -71,6 +70,8 @@ void SimulationControl::setCompoInputParam(const t_mapParamData& aComponent)
 
 void SimulationControl::doInit(const t_mapParamData& aComponent)
 {
+    CAIRN_LOG_SCOPE(Name());
+
     delete mGUIData;
 
     mGUIData = new GUIData(this);

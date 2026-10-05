@@ -12,6 +12,7 @@ MilpPort::MilpPort(CairnObject* aParent, const std::string& aID, const std::stri
     mCarrierType(CairnUtils::getParamValue(aPort,"CarrierType")),
     mIsDefaultPort(false), 
     mIsEnabled(CairnUtils::getParamValue(aPort,"Enabled")),
+    mIsLocked(CairnUtils::getParamValue(aPort, "Locked")),
     mBusType(""), //BusFlowBalance, BusSameValue, or MultiObjCompo 
     mBusPortName(CairnUtils::getParamValue(aPort,"BusPortName")), //The name of the linked Bus port  
     mBusPortPosition(""), //The position of the linked Bus port  
@@ -128,6 +129,10 @@ void MilpPort::setAttributes(const t_mapParamData& portParams)
     // TODO: use bool for  mIsEnabled ?!
     if (mIsEnabled.empty()) { 
         mIsEnabled = "true";
+    }
+
+    if (mIsLocked.empty()) {
+        mIsLocked = mIsDefaultPort ? Yes() : No();
     }
 
     if (mCarrierType != "Fluid"
@@ -351,12 +356,13 @@ void MilpPort::unlinkBus()
 void MilpPort::setFlux(const unsigned int &aTime, const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
 {
     mFlux[aTime] = aSignedCoeff * (mVarCoeff * aFluxExpression + mVarOffset);
-    mTimeDependant = 1;
+    mIsTimeDependant = true;
 }
+
 void MilpPort::setFlux0D(const double &aSignedCoeff, MIPModeler::MIPExpression &aFluxExpression)
 {
-    mFlux0D = aSignedCoeff * mVarCoeff * aFluxExpression;
-    mTimeDependant = 0;
+    mFlux0D = aSignedCoeff * (mVarCoeff * aFluxExpression + mVarOffset);
+    mIsTimeDependant = false;
 }
 
 void MilpPort::setPotential(const unsigned int &aTime, MIPModeler::MIPExpression &aFluxExpression)
@@ -364,7 +370,7 @@ void MilpPort::setPotential(const unsigned int &aTime, MIPModeler::MIPExpression
     mPotential[aTime] = mVarCoeff * aFluxExpression + mVarOffset ;
 }
 
-void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinkedPort)
+void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinkedPort, int* busLinkedPortId)
 {  
     std::string portId = mID;
     std::string portName = Name();
@@ -380,7 +386,7 @@ void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinke
         *    - set variable to empty
         *    - define it as a non-default port
         */
-        portId = "port" + std::to_string(nodePortArray.size() + 1);
+        portId = "port" + std::to_string((*busLinkedPortId)++);
         portName = mBusPortName;
         position = mBusPortPosition;
         variable = "";
@@ -397,10 +403,11 @@ void MilpPort::jsonSaveGUIPortsData(ojson &nodePortArray, const bool& isBusLinke
             {"direction", mDirection},
             {"variable", variable},
             {"coeff", mVarCoeff},
-            {"offset",mVarOffset},
-            {"checkunit",mVarCheckUnit},
+            {"offset", mVarOffset},
+            {"checkunit", mVarCheckUnit},
             {"defaultport", defaultport},
-            {"enabled", mIsEnabled}
+            {"enabled", mIsEnabled},
+            {"locked", mIsLocked}
     };
 
     // Parameters

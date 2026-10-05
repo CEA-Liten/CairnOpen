@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <regex>
 
 class ModelParam;
 
@@ -432,6 +433,55 @@ namespace CairnAPIUtils {
 			}
 			return "unknown";
 			}, value);
+	}
+
+	std::optional<std::pair<std::pair<int, int>, std::pair<int, int>>>
+		extractVersionRange(const std::string& filename)
+	{
+		// Find all version-like substrings
+		std::regex re(R"((\d+)\.(\d+))");
+		std::smatch m;
+
+		std::vector<std::pair<int, int>> versions;
+
+		std::string s = filename;
+		while (std::regex_search(s, m, re))
+		{
+			int major = std::stoi(m[1].str());
+			int minor = std::stoi(m[2].str());
+			versions.emplace_back(major, minor);
+			s = m.suffix();
+		}
+
+		if (versions.size() < 2)
+			return std::nullopt;
+
+		return std::make_pair(versions[0], versions[1]);
+	}
+
+	bool versionRangeIntersects(
+		const std::pair<int, int>& from,
+		const std::pair<int, int>& to,
+		const std::pair<int, int>& start,
+		const std::pair<int, int>& end)
+	{
+		// Convert to comparable integers: major*1000 + minor
+		auto encode = [](auto v) { return v.first * 1000 + v.second; };
+
+		int f = encode(from);
+		int t = encode(to);
+		int s = encode(start);
+		int e = encode(end);
+
+		// Intersection test: [s,e] intersects [f,t]
+		return !(e < f || s > t);
+	}
+
+	std::pair<int, int> versionToMajorMinor(const std::vector<int>& v)
+	{
+		if (v.size() >= 2) return { v[0], v[1] };
+		if (v.size() == 1) return { v[0], 0 };
+		return { 0, 0 };
 	}
 }
 

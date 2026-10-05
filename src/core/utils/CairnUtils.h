@@ -107,6 +107,10 @@ namespace  CairnUtils {
 	std::vector<std::string> CAIRNCORESHARED_EXPORT split(const std::string& a_string, const std::string & a_separator);
 	std::vector<std::string> CAIRNCORESHARED_EXPORT toStringVector(const std::string& a_Value);
 
+	std::vector<int> parseVersion(const std::string& version);
+	std::string extractVersion(const std::string& s);
+	int compareVersion(const std::vector<int>& a, const std::vector<int>& b);
+
 	std::string BuildFileName(const std::string& aFileName);
 	std::string BuildFileName_W(const std::wstring &aFileName);
 
@@ -226,6 +230,18 @@ namespace  CairnUtils {
 		s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
 			return !std::isspace(ch);
 			}).base(), s.end());
+	}
+
+	inline void remove_control_whitespace(std::string& s) {
+		s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char ch) {
+			return ch == '\t' || ch == '\n' || ch == '\v' || ch == '\f' || ch == '\r';
+			}), s.end());
+	}
+
+	inline void clean_whitespace(std::string& s) {
+		remove_control_whitespace(s); // remove \t, \n, \v, \f, and \r
+		ltrim(s);                     // trim left spaces
+		rtrim(s);                     // trim right spaces
 	}
 
     /* Methods related to the levelization and discount factor computations */

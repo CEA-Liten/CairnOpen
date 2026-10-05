@@ -26,7 +26,7 @@ def saveStudyFiles(projectsPath, TestCase, folder_report, UseCopyMode=True, Name
                   "_model.lp", ".xml", ".json", "_cplex.log", 
                   "_to_change.csv", "_optim.log", "_Results.csv", "_results_SAVE.csv","_results_rollinghorizon.csv", 
                   "_results_EnvImpactMass.csv", "_PortEnvImpactParameters.csv", "_EnvImpactParameters.csv", "_Parameters.csv", 
-                  "_optimalSize.csv", "profiling_results.csv", "profiling_summary.txt"]
+                  "_optimalSize.csv", "profiling.csv", "profiling_summary.txt"]
     if dataseries_name == "":
         list_files.append("_dataseries.csv")
     else:

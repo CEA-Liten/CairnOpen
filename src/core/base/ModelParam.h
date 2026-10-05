@@ -75,7 +75,7 @@ public:
     virtual bool setValue(const std::string& a_Value);
     virtual bool setValue(const t_value& a_Value);
     virtual t_value getValue() const;
-    bool getNumValue(double& a_Value); // return if possible a double value
+    bool getNumValue(double& a_Value) const; // return if possible a double value
     bool copyValues(const ModelParam& aSrc, size_t aOffset = 0);
     bool copyValues(const std::vector<double>& aSrc, size_t aOffset = 0);
     bool setValues(const double& aValue, size_t aSize);

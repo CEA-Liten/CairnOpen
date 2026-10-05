@@ -73,6 +73,7 @@ std::vector<InputParam*> BusCompo::get_InputParams()
 
     // Component model, if available
     if (auto* model = compoModel()) {
+        result.push_back(model->getInputConfigParam());
         result.push_back(model->getInputParam());
         //result.push_back(model->getInputTimeSeries());
     }
@@ -215,19 +216,25 @@ vector<MilpPort*> BusCompo::listSidePorts(const std::string& aside)
     return portList;
 }
 
-void BusCompo::jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide)
+void BusCompo::jsonSaveGUIlistPortsData(ojson& nodePortArray, const std::string& aSide, int* busLinkedPortId)
 {
     // Own ports
-    for (MilpPort* port : PortList()) {
-        if (port->Position() == aSide) {
-            port->jsonSaveGUIPortsData(nodePortArray);
-        }
+    for (MilpPort* port : PortList()) 
+    {
+        if (!port)
+            continue;
+
+        if (port->Position() == aSide) 
+            port->jsonSaveGUIPortsData(nodePortArray, false, busLinkedPortId);
     }
 
     // Ports used for connections
-    for (MilpPort* linkedPort : LinkedPorts()) {
-        if (linkedPort->BusPortPosition() == aSide) {
-            linkedPort->jsonSaveGUIPortsData(nodePortArray, true);
-        }
+    for (MilpPort* linkedPort : LinkedPorts()) 
+    {
+        if (!linkedPort)
+            continue;
+
+        if (linkedPort->BusPortPosition() == aSide) 
+            linkedPort->jsonSaveGUIPortsData(nodePortArray, true, busLinkedPortId);
     }
 }

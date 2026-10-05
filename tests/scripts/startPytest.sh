@@ -21,7 +21,7 @@ fi;
 
 export TESTDIR=$2
 if [ "$TESTDIR" == "" ]; then
-    export TESTDIR=tests/
+    export TESTDIR=tests/apipython
 fi;
 
 source GenericAppEnv.sh $OPTION

@@ -90,16 +90,21 @@ void ConverterSubModel::setMinPower(MIPModeler::MIPExpression1D aPower, double a
     setMinPower(aPower, aMinPowerTS, aNomPower);
 }
 
-void ConverterSubModel::computeDefaultIndicators(const double* optSol)
+void ConverterSubModel::computeAllIndicators(const double* optSol)
 {
-    TechnicalSubModel::computeDefaultIndicators(optSol);
+    TechnicalSubModel::computeAllIndicators(optSol);
+
+    auto* compo = parentComponent();
+    const uint startingAbsoluteTimeStep = compo ? compo->startingAbsoluteTimeStep() : 0;
+    const double ExtrapolationFactor = compo ? compo->ExtrapolationFactor() : 1.0;
 
     mRunningTime.at(0) = 0.;
-    mSumUp.at(0) = mSumUp.at(1) = mParentCompo->startingAbsoluteTimeStep();
+    mSumUp.at(0) = mSumUp.at(1) = startingAbsoluteTimeStep;
 
     std::vector<double> meanValue = std::vector<double>(2, 0.);
     mMaxRunningTime.at(0) = 0;
-    for (uint64_t t = 0; t < mHorizon; ++t) mMaxRunningTime.at(0) += TimeStep(t) * mParentCompo->ExtrapolationFactor(); // fichier plan: extrapolé
+    for (uint64_t t = 0; t < mHorizon; ++t) 
+        mMaxRunningTime.at(0) += TimeStep(t) * ExtrapolationFactor; // fichier plan: extrapolé
     mMaxRunningTime.at(1) += mNpdtPast * TimeStep(0); // fichier hist, cumulé 
 
     if (mUseAgeing) {
@@ -120,8 +125,8 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
             if (firstPort && port->Direction() == GS::KPROD()) 
             {
                 memRunningTime = mRunningTime.at(0);
-                computeTime(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, mRunningTime.at(0));
-                computeTime(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, mRunningTime.at(1));
+                computeTime(true, mHorizon, *ptrExp1D, optSol, mRunningTime.at(0));
+                computeTime(false, *mptrTimeshift, *ptrExp1D, optSol, mRunningTime.at(1));
                 if (mRunningTime.at(0) > memRunningTime) {
                     firstPort = false;
                 }
@@ -143,20 +148,20 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
         if (ptrExp1D) {
             if (port->Direction() == GS::KPROD()) 
             {
-                computeProduction(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProductionMap[portId].at(0));
-                computeProduction(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProductionMap[portId].at(1));
-                computeLvlProduction(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProdLvlTotMap[portId].at(0));
-                computeLvlProduction(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mProdLvlTotMap[portId].at(1));
+                computeProduction(true, mHorizon, *ptrExp1D, optSol, aPort, bPort, mProductionMap[portId].at(0));
+                computeProduction(false, *mptrTimeshift, *ptrExp1D, optSol, aPort, bPort, mProductionMap[portId].at(1));
+                computeLvlProduction(true, mHorizon, *ptrExp1D, optSol, aPort, bPort, mProdLvlTotMap[portId].at(0));
+                computeLvlProduction(false, *mptrTimeshift, *ptrExp1D, optSol, aPort, bPort, mProdLvlTotMap[portId].at(1));
 
                 for (int i = 0; i < 2; ++i) mRunningTimeAvlblt.at(i) = mRunningTime.at(i) / mMaxRunningTime.at(i); // non
                 for (int i = 0; i < 2; ++i) if (mRunningTime.at(i) > 1.e-20) mProdMeanMap[portId].at(i) = mProductionMap[portId].at(i) / mRunningTime.at(i);
             }
             else if (port->Direction() == GS::KCONS()) 
             {
-                computeConsumption(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsumptionMap[portId].at(0)); // plan
-                computeConsumption(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsumptionMap[portId].at(1));
-                computeLvlConsumption(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsLvlTotMap[portId].at(0));
-                computeLvlConsumption(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mConsLvlTotMap[portId].at(1));
+                computeConsumption(true, mHorizon, *ptrExp1D, optSol, aPort, bPort, mConsumptionMap[portId].at(0)); // plan
+                computeConsumption(false, *mptrTimeshift, *ptrExp1D, optSol, aPort, bPort, mConsumptionMap[portId].at(1));
+                computeLvlConsumption(true, mHorizon, *ptrExp1D, optSol, aPort, bPort, mConsLvlTotMap[portId].at(0));
+                computeLvlConsumption(false, *mptrTimeshift, *ptrExp1D, optSol, aPort, bPort, mConsLvlTotMap[portId].at(1));
 
                 for (int i = 0; i < 2; ++i) if (mRunningTime.at(i) > 1.e-20) mConsMeanMap[portId].at(i) = mConsumptionMap[portId].at(i) / mRunningTime.at(i);
                 for (int i = 0; i < 2; ++i) if (mOptimalSize.at(i) > 1.e-20) mConsPFMap[portId].at(i) = -mConsMeanMap[portId].at(i) / mOptimalSize.at(i);
@@ -164,8 +169,8 @@ void ConverterSubModel::computeDefaultIndicators(const double* optSol)
             }
             else if (port->Direction() == GS::KDATA()) 
             {
-                computeConsumption(true, mHorizon, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mExpEchData[portId].at(0));
-                computeConsumption(false, *mptrTimeshift, mNpdtPast, *ptrExp1D, optSol, aPort, bPort, mExpEchData[portId].at(1));
+                computeConsumption(true, mHorizon, *ptrExp1D, optSol, aPort, bPort, mExpEchData[portId].at(0));
+                computeConsumption(false, *mptrTimeshift, *ptrExp1D, optSol, aPort, bPort, mExpEchData[portId].at(1));
             }
         }
     } 
@@ -249,7 +254,7 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
 
         if (matchedPort) {
             // Use the port's unit (dynamic)
-            addIO(name, &mExpInput[i], true, matchedPort->pFluxUnit());
+            addIO(name, &mExpInput[i], true, matchedPort->pFluxUnit(), "Input flux");
         }
         else {
             // Use OUTPUTFlux1's port unit
@@ -257,7 +262,7 @@ void ConverterSubModel::declareInputFluxIOs(MilpPort* defaultPort)
             if (defaultPort)
                 unit = defaultPort->FluxUnit();
 
-            addIO(name, &mExpInput[i], true, unit);
+            addIO(name, &mExpInput[i], true, unit, "Input flux");
         }
     }
 }
@@ -290,7 +295,7 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
 
         if (matchedPort) {
             // Use the port's unit (dynamic)
-            addIO(name, &mExpOutput[i], true, matchedPort->pFluxUnit());
+            addIO(name, &mExpOutput[i], true, matchedPort->pFluxUnit(), "Output flux");
         }
         else {
             // Use OUTPUTFlux1's port unit
@@ -298,7 +303,7 @@ void ConverterSubModel::declareOutputFluxIOs(MilpPort* defaultPort)
             if (defaultPort && defaultPort->getCarrier())
                 unit = defaultPort->getCarrier()->FluxUnit();
 
-            addIO(name, &mExpOutput[i], true, unit);
+            addIO(name, &mExpOutput[i], true, unit, "Output flux");
         }
     }
 }

@@ -203,7 +203,7 @@ bool ModelTS::checkProfile()
                 }
                 if (vMax < m_min || vMax > m_max || vMin < m_min || vMin > m_max)
                 {
-                    cCritical() << "ERROR in profile " << m_Name
+                    cError() << "ERROR in profile " << m_Name
                         << " values should be in the range [" << m_min << ";" << m_max << "] "
                         << " instead of [" << vMin << ";" << vMax << "] ";
                     vRet = false;

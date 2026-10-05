@@ -9,7 +9,7 @@
 #include "AgeingRunningHours.h"
 //-------------------------------------------------------------------------------------------
 AgeingRunningHours::AgeingRunningHours(InputParam *aInputParam, bool* aUseAgeing)
-    : OperationSubModel(),
+    : OperationSubModel(nullptr),
     mHistRunningTime(0.),
     mHistRunningTime_save(0.),
     mLastReplacementTime(0.),

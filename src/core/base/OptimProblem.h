@@ -34,7 +34,6 @@ class OptimProblem;
 #include "StudyPathManager.h"
 #include "ModelVar.h"
 
-#include "ErrorCollector.h"
 #include "CairnAPI.h"
 
 /**
@@ -49,6 +48,15 @@ struct CompoData {
     std::string name;
     std::string type;
 };
+
+struct PairHash {
+    std::size_t operator()(const std::pair<std::string, std::string>& p) const noexcept {
+        std::size_t h1 = std::hash<std::string>{}(p.first);
+        std::size_t h2 = std::hash<std::string>{}(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
 
 class CAIRNCORESHARED_EXPORT OptimProblem : public CairnObject
 {
@@ -79,7 +87,7 @@ public:
     bool createSimulationControl(const std::string& aName = "Cairn", 
         const t_mapParamData& paramMap = {});
 
-    bool createSolver(const std::string& aName = "Solver", 
+    void createSolver(const std::string& aName = "Solver",
         const t_mapParamData& paramMap = {});
 
     bool createEnergyVector(const std::string& aName, const std::string& aType, 
@@ -176,7 +184,9 @@ public:
     void computeObjectiveFunction(MIPModeler::MIPExpression& objective);
     void resetFlags();
 
-    std::string projectDir() const { return mStudyFile->projectDir().c_str(); }
+    const StudyPathManager* studyManager() const { return mStudyPathManager;}
+
+    std::string projectDir() const { return mStudyPathManager->projectDir().c_str(); }
     std::string getAbsoluteFileName(const std::string& filename);
 
     MilpData* getMilpData() { return mMilpData; }
@@ -186,33 +196,18 @@ public:
     void addGroup(const std::vector<std::string>& compoNames, 
         const std::string& mainCompo = "", const std::string& groupName = "");
 
-    // ------------------------------------------------------------------------ //
+    /** Returns the study version extracted from the last loaded JSON, or empty if none loaded. */
+    std::string studyVersion() const { return mStudyVersion; }
 
-    /** Returns all collected errors since last flush and clears the list */
-    std::vector<CairnLogger::ErrorEntry> flushErrors()
-    {
-        return CairnLogger::ErrorCollector::flushErrors();
-    }
+    /** Checks mStudyVersion against the current Cairn version. No operation if mStudyVersion is empty. */
+    int checkVersion() const;
 
-    /** Returns true if any errors occurred since last flush */
-    bool hasErrors() const
-    {
-        return CairnLogger::ErrorCollector::hasErrors();
-    }
-
-    /** Returns number of errors since last flush */
-    int errorCount() const
-    {
-        return CairnLogger::ErrorCollector::errorCount();
-    }
-
-    /** Clears errors without returning them */
-    void clearErrors()
-    {
-        CairnLogger::ErrorCollector::clear();
-    }
-
+    bool studyVersionMatchesCairn() const { return mStudyVersionMatchesCairn; }
+    void setStudyVersionMatchesCairn(bool value) { mStudyVersionMatchesCairn = value; }
 private:    
+    std::string mStudyVersion;   /** version string extracted from the last loaded JSON study; empty if none loaded */
+    bool mStudyVersionMatchesCairn = true;
+
     MilpData* mMilpData{ nullptr };  /** Pointer to Milp Time Data */
     MIPModeler::MIPModel* mModel;    /** Pointer to global Optimization Problem Model */
 
@@ -221,7 +216,7 @@ private:
     TecEcoAnalysis* mTecEcoAnalysis;  
     SimulationControl* mSimulationControl;
     
-    const StudyPathManager* mStudyFile{ nullptr };   // the architecture of study file
+    const StudyPathManager* mStudyPathManager{ nullptr };   // the architecture of study file
 
     bool mStdAloneMode;  // true indicates no link with Pegase
 

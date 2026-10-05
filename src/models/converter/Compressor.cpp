@@ -35,6 +35,8 @@ Compressor::Compressor(CairnObject* aParent)
     std::string rsc = std::getenv("CAIRN_BIN") + (std::string)"/../resources/DefUnits.json";
     UnitsConverter::Load(rsc);
     CarrierTypes::Load(rsc);
+
+    mAddStateVariable = true; /* always add state constraints */
 }
 
 Compressor::~Compressor() {}
@@ -294,8 +296,6 @@ void Compressor::computeInitialData()
 
     setMinValue(mMinSize);
     setMaxValue(mMaxPower);
-
-    mAddStateVariable = true; /* always add state constraints */
 }
 
 
@@ -389,7 +389,7 @@ void Compressor::computeEconomicalContribution()
 
 void Compressor::computeAllIndicators(const double* optSol)
 {
-    ConverterSubModel::computeDefaultIndicators(optSol);
+    ConverterSubModel::computeAllIndicators(optSol);
     mMaxMFR.at(0) = mOptimalSize.at(0) / std::get<double>(mInputParam->getParameter("PowerConsumption")->getValue());
     mMaxMFR.at(1) = mOptimalSize.at(1) / std::get<double>(mInputParam->getParameter("PowerConsumption")->getValue());
 }

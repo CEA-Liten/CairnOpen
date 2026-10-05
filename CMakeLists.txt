@@ -56,7 +56,7 @@ endif()
 # ============= The project =============
 # Set project name and project languages
 include(ProjectSetup)
-if (BUILD_CAIRN)
+if (BUILD_CAIRN OR BUILD_LICENSEEDITOR)
     project(${PROJECT_NAME} LANGUAGES CXX C  VERSION ${${PROJECT_NAME}_VERSION}) 
     set(CMAKE_CXX_STANDARD 17)  
 else()

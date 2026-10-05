@@ -146,22 +146,25 @@ void MaterialCarrier::initEnergyVector()
 	if (mFluxType == "Mass") {
 		// Mass
 		mStorageName = "MaterialMass";
-		mFluxName =  "Flowrate";
+		mFluxName    =  "Flowrate";
+
 		if (ends_with(mMassUnit, "h"))
 			mFlowrateUnit = mMassUnit.substr(0, mMassUnit.size()-1);
 		else
 			mFlowrateUnit = mMassUnit + "/h";
-		mFluxUnit = mFlowrateUnit;
+
+		mFluxUnit    = mFlowrateUnit;
 		mStorageUnit = mMassUnit;
 	}
 	else {
 		// Energy
 		mStorageName = "MaterialEnergy";
-		mFluxName = "Power";
-		mEnergyUnit = mPowerUnit + "h";
-		mFluxUnit = mPowerUnit;
+		mFluxName    = "Power";
+		mFluxUnit    = mPowerUnit;
 		mStorageUnit = mEnergyUnit;
 	}
+
+	mEnergyUnit = mPowerUnit + "h";
 }
 
 double MaterialCarrier::computeCp(double a_temp_C)

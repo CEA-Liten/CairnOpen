@@ -210,16 +210,17 @@ void ProfilerManager::flush(const std::string& outputDir, const std::string&  st
     mStudyName = studyName;
 
     const std::string prefix = studyName.empty() ? "" : studyName + "_";
-    const std::string csvPath = (fs::path(outputDir) / (prefix + "profiling_results.csv")).string();
+    const std::string csvPath = (fs::path(outputDir) / (prefix + "profiling.csv")).string();
     const std::string summaryPath = (fs::path(outputDir) / (prefix + "profiling_summary.txt")).string();
+
+    try { writeSummary(summaryPath); }
+    catch (const std::exception& e) {
+        std::cerr << "[CairnProfiling] Failed to write summary: " << e.what() << "\n";
+    }
 
     try { writeCSV(csvPath); }
     catch (const std::exception& e) {
         std::cerr << "[CairnProfiling] Failed to write CSV: " << e.what() << "\n";
-    }
-    try { writeSummary(summaryPath); }
-    catch (const std::exception& e) {
-        std::cerr << "[CairnProfiling] Failed to write summary: " << e.what() << "\n";
     }
 }
 
@@ -386,7 +387,6 @@ void ProfilerManager::writeSummary(const std::string& path) const
     out << "\n";
 
     out << "======================================================\n";
-    out << "  Full data: profiling_results.csv\n";
     out << "======================================================\n";
 }
 
@@ -395,15 +395,18 @@ void ProfilerManager::writeSummary(const std::string& path) const
 // -----------------------------------------------------------------------------
 
 ScopedProfiler::ScopedProfiler(std::string phaseName, int iterationId) noexcept
+#if ENABLE_PROFILING
     : mPhaseName(std::move(phaseName)), 
       mIterationId(iterationId), 
       mTimer(), 
       mBefore(MemorySampler::sample()), 
       mStartISO(wallClockISO())
-{}
+#endif 
+{ }
 
 ScopedProfiler::~ScopedProfiler() noexcept
 {
+#if ENABLE_PROFILING
     try {
         MemorySnapshot after = MemorySampler::sample();
 
@@ -423,6 +426,7 @@ ScopedProfiler::~ScopedProfiler() noexcept
     catch (...) {
         // Never throw from destructor
     }
+#endif 
 }
 
 }  // namespace CairnProfiling

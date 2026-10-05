@@ -64,10 +64,11 @@ public:
 
     void setPosition();
 
-    double  FluxDim() const {return mTimeDependant;}
-    MIPModeler::MIPExpression1D & Flux(){return mFlux ;}
-    MIPModeler::MIPExpression & Flux0D(){return mFlux0D ;}
-    MIPModeler::MIPExpression1D & ExpPotential(){return mPotential ;}
+    bool IsTimeDependant() const {return mIsTimeDependant;}
+
+    MIPModeler::MIPExpression1D& Flux(){return mFlux ;}
+    MIPModeler::MIPExpression&   Flux0D(){return mFlux0D ;}
+    MIPModeler::MIPExpression1D& ExpPotential(){return mPotential ;}
 
     void setName(const std::string& name) { this->setObjectName(name); }
     void setPortType(std::string aPortType);
@@ -127,7 +128,7 @@ public:
 
     double GHV() const;
 
-    void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusLinkedPort = false);
+    void jsonSaveGUIPortsData(ojson& nodePortArray, const bool& isBusLinkedPort = false, int* busLinkedPortId = nullptr);
 
     std::vector<InputParam*> get_InputParams();
 
@@ -160,10 +161,11 @@ private:
     const std::string* mCurrency;
 
     //Attributes
-    std::string mID;              /** Port unique Id */
-    std::string mPosition;       /** Used for port position on GUI */
-    std::string mCarrierType;   /** Possible Carrier Type */
-    std::string mIsEnabled;     /** The port is enabled in the GUI only when the value is true */
+    std::string mID;                /** Port unique Id */
+    std::string mPosition;          /** Used for port position on GUI */
+    std::string mCarrierType;       /** Possible Carrier Type */
+    std::string mIsEnabled;         /** The port is enabled in the GUI only when the value is "true" */
+    std::string mIsLocked; /** The port direction is locked in the GUI only when the value is "true" */
     bool mIsDefaultPort;
 
     //Parameters
@@ -181,7 +183,7 @@ private:
     MIPModeler::MIPExpression1D mFlux;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression mFlux0D;       /** MIP expression of flux based on Variable mFluxVarName */
     MIPModeler::MIPExpression1D mPotential;  /** MIP expression of potential based on Variable mPotentialVarName */
-    double mTimeDependant;               /** 0 if not timeDependant, 1 else*/
+    bool mIsTimeDependant = false;                  /** true if time-dependant, false otherwise */
 
     const std::vector<double>* getTimeSeries(const std::string& tsName) const;
 };

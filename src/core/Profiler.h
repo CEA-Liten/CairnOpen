@@ -34,6 +34,8 @@
 #include <cstddef>
 #include <memory>
 
+#include "CairnCore_global.h"
+
 namespace CairnProfiling {
 
 // -----------------------------------------------------------------------------
@@ -99,7 +101,7 @@ public:
     // Clear all records, timestamps, ...
     void reset() noexcept;
 
-    // Write profiling_results.csv and profiling_summary.txt.
+    // Write profiling.csv and profiling_summary.txt.
     // Called automatically from destructor; may also be called manually.
     void flush(const std::string& outputDir = ".", const std::string& studyName = "");
 
@@ -162,7 +164,7 @@ private:
  * RAII helper. Construct at the top of a scope; the destructor records
  * timing + memory and deposits the ProfileRecord into ProfilerManager.
  */
-class ScopedProfiler
+class CAIRNCORESHARED_EXPORT ScopedProfiler
 {
 public:
     explicit ScopedProfiler(std::string phaseName, int iterationId = -1) noexcept;
@@ -173,11 +175,13 @@ public:
     ScopedProfiler& operator=(const ScopedProfiler&) = delete;
 
 private:
+#if ENABLE_PROFILING
     std::string mPhaseName;
-    int mIterationId;
+    int mIterationId{ -1 };
     ScopedTimer mTimer;
     MemorySnapshot mBefore;
     std::string mStartISO;
+#endif
 };
 
 // ----------------------------------------------------------------------------

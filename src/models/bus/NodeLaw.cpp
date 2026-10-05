@@ -40,18 +40,16 @@ void NodeLaw::computeModelContribution()
         Constraint linked to mLinkedPorts (ports of the componenets connected to this Bus) */
     for (auto& port : mLinkedPorts) {
         double aSign = (port->Direction() == GS::KCONS())? -1.: 1.;
-        double portVarTimeDepend = (port->FluxDim()==1) ? 1 : 0;
         mPortVarSet.push_back(port->GAMSVarName());
         mPortVarCoeff.push_back(port->VarCoeff());
         mPortVarOffSet.push_back(port->VarOffset());
         mPortVarDirection.push_back(aSign);
-        mPortVarTimeDepend.push_back(portVarTimeDepend);
 
-        if(port->FluxDim()==1.){
-            addExpressionToBalance(port->Flux()) ;
+        if(port->IsTimeDependant()){
+            addExpressionToBalance1D(port->Flux()) ;
         }
         else{
-            addExpressionToBalance(port->Flux0D()) ;
+            addExpressionToBalance0D(port->Flux0D()) ;
         }
 	}
     
@@ -61,28 +59,24 @@ void NodeLaw::computeModelContribution()
 void NodeLaw::computeInitialData() 
 {
     /* When UseExtrapolationFactor is true, then *BusValue is assumed to be over one year */
+    auto* compo = parentComponent();
 
-    const double factor = mParentCompo->ExtrapolationFactor();
-
+    const double factor = compo ? compo->ExtrapolationFactor() : 1.0;
     const double scale = mUseExtrapolationFactor ? (1.0 / factor) : 1.0;
 
     mStrictConstraintBusValue *= scale;
 }
 
-void NodeLaw::addExpressionToBalance(MIPModeler::MIPExpression1D& aFluxExpression)
+void NodeLaw::addExpressionToBalance1D(MIPModeler::MIPExpression1D& aFluxExpression)
 {
 	for (unsigned int t = 0; t < mHorizon ; ++t)
-	{
-	   mBusBalance[t] += aFluxExpression[t] ;
-	}
+	   mBusBalance[t] += aFluxExpression[t];
 }
 
-void NodeLaw::addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression)
+void NodeLaw::addExpressionToBalance0D(MIPModeler::MIPExpression &aFluxExpression)
 {
     for (unsigned int t = 0; t < mHorizon ; ++t)
-    {
-       mBusBalance[t] += aFluxExpression ;
-    }
+       mBusBalance[t] += aFluxExpression;
 }
 
 void NodeLaw::addStrictConstraint()
@@ -128,7 +122,7 @@ void NodeLaw::addStrictConstraint()
 
 void NodeLaw::computeAllIndicators(const double* optSol)
 {
-    BusSubModel::computeDefaultIndicators(optSol);
-    computeProduction(true, mHorizon, mNpdtPast, mBusBalance, optSol, 1., 0., mBusEnergyBalance.at(0), true);
-    computeProduction(false, *mptrTimeshift, mNpdtPast, mBusBalance, optSol, 1., 0., mBusEnergyBalance.at(1), true);
+    BusSubModel::computeAllIndicators(optSol);
+    computeProduction(true, mHorizon, mBusBalance, optSol, 1., 0., mBusEnergyBalance.at(0), true);
+    computeProduction(false, *mptrTimeshift, mBusBalance, optSol, 1., 0., mBusEnergyBalance.at(1), true);
 }

@@ -7,10 +7,12 @@
 class CAIRNCORESHARED_EXPORT Cairn_Exception : public std::exception
 {
 public:
-    void raise() const { throw *this; }
-    Cairn_Exception *clone() const { return new Cairn_Exception(*this); }
-    Cairn_Exception(const std::string& message = "", const int& level = 0) ;
-    Cairn_Exception(const char* message, const int& level = 0);
+    Cairn_Exception(const std::string& message = "", int level = 0) ;
+    Cairn_Exception(const char* message, int level = 0);
+
+    const char* what() const noexcept override {
+        return mMessage.c_str();
+    }
 
     // because throw is not functionnal in FBSF up to now
     void setMessage(const std::string &message) { mMessage=message; }
@@ -18,10 +20,6 @@ public:
 
     std::string message() const { return mMessage; }
     int error() const { return mError; }
-
-    const char* what() const noexcept override {
-        return mMessage.c_str();
-    }
 
 private:
     std::string mMessage ;

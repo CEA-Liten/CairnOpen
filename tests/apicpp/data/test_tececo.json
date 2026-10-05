@@ -1092,6 +1092,10 @@
 					{
 						"key": "FinalSOC",
 						"value": 1
+					},
+					{
+						"key": "FlowDirection",
+						"value": true
 					}
 				],
 				"optionListJson": [

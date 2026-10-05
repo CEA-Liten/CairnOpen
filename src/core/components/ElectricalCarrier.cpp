@@ -29,11 +29,10 @@ void ElectricalCarrier::declareCompoInputParam()
 
 void ElectricalCarrier::initEnergyVector()
 {
-	mFluxUnit = mPowerUnit;
-
-	mStorageUnit = mPowerUnit + "h";
-	
-	mFluxName = "ElectricalPower";
+	mFluxName    = "ElectricalPower";
 	mStorageName = "ElectricalEnergy";
-	mEnergyUnit = mPowerUnit + "h";
+
+	mFluxUnit    = mPowerUnit;
+	mStorageUnit = mPowerUnit + "h";
+	mEnergyUnit  = mPowerUnit + "h";
 }

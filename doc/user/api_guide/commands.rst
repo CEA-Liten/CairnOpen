@@ -31,6 +31,11 @@ EnergyVector
 .. autoclass:: cairn.EnergyVector
 .. autoclass:: cairnopen.EnergyVector
 
+Solver
+-----------
+.. autoclass:: cairn.Solver
+.. autoclass:: cairnopen.Solver
+
 Bus
 ---
 

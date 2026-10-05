@@ -7,7 +7,7 @@
 class CAIRNCORESHARED_EXPORT ConverterSubModel : public TechnicalSubModel
 {
 public:
-    ConverterSubModel(CairnObject* aParent=nullptr);
+    ConverterSubModel(CairnObject* aParent);
     ~ConverterSubModel();
     
     void declareInputParams(const std::string& name);
@@ -20,42 +20,42 @@ public:
     void setMinPower(MIPModeler::MIPExpression1D aPower, double aMinPow, double aNomPower);
     void setMinPower(MIPModeler::MIPExpression1D aPower, MIPModeler::MIPVariable1D aZ, std::vector<double> aMinPowList, double aNomPower);
 
-    void declareDefaultModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        TechnicalSubModel::declareDefaultModelConfigurationParameters();
-        addParameter("UseAgeing", &mUseAgeing, false, false, true, "Use Ageing Model if true - default to false. Current Efficiency will be reduced by 1-EfficiencyAgeingCoeff*HistRunnningTime and reset to 1 when HistRunnningTime reaches EfficiencyMaxHours", "", "Ageing");  
+        TechnicalSubModel::declareModelConfigurationParameters();
+        addConfigParameter("UseAgeing", &mUseAgeing, false, false, true, "Use Ageing Model if true - default to false. Current Efficiency will be reduced by 1-EfficiencyAgeingCoeff*HistRunnningTime and reset to 1 when HistRunnningTime reaches EfficiencyMaxHours", "", "Ageing");
     }
     
-    void declareDefaultModelParameters()
+    void declareModelParameters() override
     {
-        TechnicalSubModel::declareDefaultModelParameters();
+        TechnicalSubModel::declareModelParameters();
         if (mAgeingModel) { //&& mUseAgeing) { // Always declare even if UseAgeing is false
             mAgeingModel->declareModelParameters();
         }
     }
 
-    void declareDefaultModelInterface()
+    void declareModelInterface() override
     {
-        TechnicalSubModel::declareDefaultModelInterface();
+        TechnicalSubModel::declareModelInterface();
     }
 
-    void declareDefaultModelIndicators(bool* exp)
+    void declareModelIndicators() override
     {
-        TechnicalSubModel::declareDefaultModelIndicators();
+        TechnicalSubModel::declareModelIndicators();
 
         // ----------- Indicators specific for Converters -----------
 
-        mInputIndicators->addIndicator("Installed Size", &mOptimalSize, exp, "Component size", pOptimalSizeUnit(), "Size");
+        mInputIndicators->addIndicator("Installed Size", &mOptimalSize, &mExportIndicators, "Component size", pOptimalSizeUnit(), "Size");
         if (mWeight < 0) {
-            mInputIndicators->addIndicator("Optimal Weight", &mWeightResult, exp, "Component optimal weight", "-", "Weight");
+            mInputIndicators->addIndicator("Optimal Weight", &mWeightResult, &mExportIndicators, "Component optimal weight", "-", "Weight");
         }
         else {
-            mInputIndicators->addIndicator("Weight", &mWeightResult, exp, "Component weight", "-", "Weight");
+            mInputIndicators->addIndicator("Weight", &mWeightResult, &mExportIndicators, "Component weight", "-", "Weight");
         }
-        mInputIndicators->addIndicator("Running time at power >0.", &mRunningTime, exp, "Running time", "h", "RunningTime");
-        mInputIndicators->addIndicator("Running time availability", &mRunningTimeAvlblt, exp, "Maximum possible running time", "-", "RunningTimeAvailable");
+        mInputIndicators->addIndicator("Running time at power >0.", &mRunningTime, &mExportIndicators, "Running time", "h", "RunningTime");
+        mInputIndicators->addIndicator("Running time availability", &mRunningTimeAvlblt, &mExportIndicators, "Maximum possible running time", "-", "RunningTimeAvailable");
         if (mUseAgeing) {
-            mInputIndicators->addIndicator("Efficiency after running time << ", &mEfficiency_Ageing, exp, "Efficiency after running time", "-","Efficiency");
+            mInputIndicators->addIndicator("Efficiency after running time << ", &mEfficiency_Ageing, &mExportIndicators, "Efficiency after running time", "-","Efficiency");
         }
 
         for (const auto& port : mListPort) {
@@ -74,13 +74,13 @@ public:
 
                     mInputIndicators->addIndicator(
                         SExtFunctionName({ this, port, &indicatorName, { "Annual production of", STORAGE_NAME, VARIABLE } }),
-                        &mProductionMap[portId], exp, "Annual production of "+varName, port->pStorageUnit(), 
+                        &mProductionMap[portId], &mExportIndicators, "Annual production of "+varName, port->pStorageUnit(), 
                         SExtFunctionName({ this, port, &indicatorName, { "TotProd", VARIABLE } })
                         );
 
                     mInputIndicators->addIndicator(
                         SExtFunctionName({ this, port, &indicatorName, { "Mean production of", FLUX_NAME, VARIABLE } }),
-                        &mProdMeanMap[portId], exp, "Mean production of " + varName, port->pFluxUnit(), 
+                        &mProdMeanMap[portId], &mExportIndicators, "Mean production of " + varName, port->pFluxUnit(), 
                         SExtFunctionName({ this, port, &indicatorName, { "MeanProd", VARIABLE } })
                     );
                 }
@@ -94,19 +94,19 @@ public:
 
                     mInputIndicators->addIndicator(
                         SExtFunctionName({ this, port, &indicatorName, { "Annual consumption of", STORAGE_NAME, VARIABLE } }),
-                        &mConsumptionMap[portId], exp, "Annual consumption of " + varName, port->pStorageUnit(), 
+                        &mConsumptionMap[portId], &mExportIndicators, "Annual consumption of " + varName, port->pStorageUnit(), 
                         SExtFunctionName({ this, port, &indicatorName, { "TotCons", VARIABLE } })
                         );
                    
                     mInputIndicators->addIndicator(
                         SExtFunctionName({ this, port, &indicatorName, { "Mean consumption of", FLUX_NAME, VARIABLE } }),
-                        &mConsMeanMap[portId], exp, "Mean consumption of " + varName, port->pFluxUnit(), 
+                        &mConsMeanMap[portId], &mExportIndicators, "Mean consumption of " + varName, port->pFluxUnit(), 
                         SExtFunctionName({ this, port, &indicatorName, { "MeanCons", VARIABLE } })
                         );
                    
                     mInputIndicators->addIndicator(
                         SExtFunctionName({ this, port, &indicatorName, { "Load factor", VARIABLE } }),
-                        &mRateOfUse[portId], exp, "Mean/Max", "-", 
+                        &mRateOfUse[portId], &mExportIndicators, "Mean/Max", "-", 
                         SExtFunctionName({ this, port, &indicatorName, { "UseRate", VARIABLE } })
                         );
                 }
@@ -115,7 +115,7 @@ public:
                     mExpEchData.try_emplace(portId, 2, 0.0);
                     mInputIndicators->addIndicator(
                         SExtFunctionName({ this, port, &indicatorName, { "Data Port published", VARIABLE, "- data computed" } }),
-                        &mExpEchData[portId], exp, "Data port", port->pStorageUnit(), 
+                        &mExpEchData[portId], &mExportIndicators, "Data port", port->pStorageUnit(), 
                         SExtFunctionName({ this, port, &indicatorName, { "DataPort", VARIABLE } })
                     );
                 }
@@ -123,7 +123,7 @@ public:
         }
     }
 
-    void computeDefaultIndicators(const double* optSol);
+    void computeAllIndicators(const double* optSol) override;
 
     //used in MultiConverter and Cogeneration
     void cleanFluxIOs(const std::string& base);

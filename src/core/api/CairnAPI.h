@@ -110,6 +110,7 @@ public:
 
     // Return the list of the possibles Solver
     t_list get_Solvers() const;
+
 	// --------------------------------------------------------------------------------	
 	class DECLSPEC ParamAPI {
 	public:
@@ -137,6 +138,23 @@ public:
 
 	protected:
 		class ModelParam* m_Param{ nullptr };
+		std::shared_ptr<ObjectAPI> m_Parent{ nullptr };
+	};
+	// --------------------------------------------------------------------------------	
+	class DECLSPEC VariableAPI {
+	public:
+		VariableAPI(std::shared_ptr <class ObjectAPI> ap_Parent = nullptr, class ModelIO* ap_Var = nullptr);
+
+		std::string get_Name() const;
+		std::string get_Type() const;
+		std::string get_Description() const;
+		std::string get_Unit() const;
+
+		t_value get_Value() const;				
+		bool isUsed() const;		
+		
+	protected:
+		class ModelIO* m_Variable{ nullptr };
 		std::shared_ptr<ObjectAPI> m_Parent{ nullptr };
 	};
 	// --------------------------------------------------------------------------------
@@ -175,6 +193,7 @@ public:
 		virtual t_list get_PerfParamList() const;
 
 		virtual t_list get_VarList() const; // IO vars
+		VariableAPI get_Variable(const std::string& a_Name);
 		std::string get_VarDescription(const std::string& varName) const;
 
 		virtual t_list get_ShowConfigList();
@@ -266,6 +285,7 @@ public:
 	};
 
 	// --------------------------------------------------------------------------------
+
 	class DECLSPEC TecEcoAnalysisAPI : public ObjectAPI {
 	public:
 		TecEcoAnalysisAPI();
@@ -408,7 +428,7 @@ public:
 	
 		t_value get_SettingValue(const std::string& a_SettingName);
 		t_dict get_SettingValues();
-		t_value get_TimeSeriesVector(const std::string& a_SettingName);
+		t_value get_TimeSeriesVector(const std::string& a_TimeSeriesName);
 
 		void set_SettingValue(const std::string& a_SettingName, const t_value& a_SettingValue, bool checkExistance = true);
 		void set_SettingValues(const t_dict& a_SettingValues);
@@ -464,7 +484,7 @@ public:
 		/* Other methods */
 		void redeclarePortImpactParameters();
 		void removePortImpactParameters(const std::string& portName);
-		t_value get_OptimalSizeExpression();
+		std::string get_OptimalSizeExpression();
 
 	private:
 		void checkDefaultPortCarriers() const;	
@@ -584,7 +604,8 @@ public:
 
 		// --------- Solver ---------
 		std::shared_ptr<SolverAPI> get_Solver() const;
-		
+		void set_Solver(const std::string& name) const; // solver name
+
 		// --------- SimulationControl ---------
 		std::shared_ptr<SimulationControlAPI> get_SimulationControl() const;
 		
@@ -607,9 +628,12 @@ public:
 		SolutionAPI run(const std::string &a_resultsPath = "", const bool& a_coSim = false);
 		
 		void runSensitivityCSV(const std::string& a_samplingFileName, int a_max_time = -1, const std::string& a_indicatorsFileName = "");		
-		t_dicts runSensitivity(const t_dictsValues& a_sampling, int a_max_time = -1, 
-			const t_dicts& a_indicators = {}, std::function<void(int)> on_iter = nullptr);
+		t_dicts runSensitivityCB(const t_dictsValues& a_sampling, int a_max_time,
+			const t_dicts& a_indicators, std::function<void(int)> on_iter);
 
+		t_dicts runSensitivity(const t_dictsValues& a_sampling, int a_max_time = -1,
+			const t_dicts& a_indicators = {});
+		
 		// Indicators
 		t_dict get_All_IndicatorValues(const std::string& range = "PLAN") const; //return the indicator values of all components
 
@@ -664,6 +688,8 @@ public:
 
 	// close the current Study
 	void close_Study();
+
+	CairnAPI::OptimProblemAPI apply_Compatibility_Script();
 
 private:
     class CairnCore* m_Cairn{ nullptr };

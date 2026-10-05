@@ -213,7 +213,9 @@ void MultiConverter::computeModelContribution()
     }    
 }
 
-int MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vector<std::vector<double>>& matrix, const bool& isMatrixC)
+int MultiConverter::readAndVerifyMatrixA(const std::string& filename, 
+    std::vector<std::vector<double>>& matrix, 
+    const bool& isMatrixC)
 {
     std:string matrixName = "MatrixA";
     if(isMatrixC) matrixName = "MatrixC";
@@ -232,7 +234,7 @@ int MultiConverter::readAndVerifyMatrixA(const std::string& filename, std::vecto
     }
 
     //verify that the dimensions of the matrix are (mNbInputFlux + mNbOutputFlux) x (mNbInputFlux + mNbOutputFlux)
-    Eigen::MatrixXd matrixEigenA = convertToEigen(mCoefficient_A);
+    Eigen::MatrixXd matrixEigenA = convertToEigen(matrix);
     
     if (matrixEigenA.rows() != mNbInputFlux + mNbOutputFlux) {
         cError() << Name() + ": please verify the number of rows of the conversion matrix \"" + matrixName
@@ -361,5 +363,5 @@ int MultiConverter::checkConsistency()
 
 void MultiConverter::computeAllIndicators(const double* optSol)
 {
-    ConverterSubModel::computeDefaultIndicators(optSol);
+    ConverterSubModel::computeAllIndicators(optSol);
 }

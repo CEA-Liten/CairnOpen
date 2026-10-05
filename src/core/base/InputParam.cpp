@@ -201,8 +201,7 @@ void InputParam::readVectorParameters (const std::string &aName, const std::stri
 {
     fs::path vPath(aFileName);    
     if (!fs::exists(vPath)) {
-        Cairn_Exception error("ERROR DataFile " + aFileName + " doesn't exist for component " + aName, -1);
-        throw& error;
+        cError() << "ERROR DataFile " + aFileName + " doesn't exist for component " + aName;
     }
     
     std::vector<std::vector<std::string>> data_Inputs = CairnUtils::readFromCsvFile(aFileName, ";");
@@ -224,7 +223,7 @@ void InputParam::readVectorParameters (const std::string &aName, const std::stri
                             int n = std::stoi(CairnUtils::split(CairnUtils::split(simplifiedColName, '=')[1], ')')[0]);
                             if (CairnUtils::contains(simplifiedColName, "(r=")) {//row
                                 if (data_vector.size() % n != 0) {
-                                    cCritical() << "ERROR: the data size in column " << colName << " is not a multiplication of " << n;
+                                    cError() << "ERROR: the data size in column " << colName << " is not a multiplication of " << n;
                                     return;
                                 }
                                 else {
@@ -240,7 +239,7 @@ void InputParam::readVectorParameters (const std::string &aName, const std::stri
                             }
                             else {//column
                                 if (data_vector.size() % n != 0) {
-                                    cCritical() << "ERROR: the data size in column " << colName << " is not a multiplication of " << n;
+                                    cError() << "ERROR: the data size in column " << colName << " is not a multiplication of " << n;
                                     return;
                                 }
                                 else {

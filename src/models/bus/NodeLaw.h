@@ -32,15 +32,15 @@ public:
 //----------------------------------------------------------------------------------------------------
     void computeAllIndicators(const double* optSol);
 //----------------------------------------------------------------------------------------------------
-    void declareModelConfigurationParameters()
+    void declareModelConfigurationParameters() override
     {
-        BusSubModel::declareDefaultModelConfigurationParameters();
+        BusSubModel::declareModelConfigurationParameters();
     }
 
 //----------------------------------------------------------------------------------------------------
-    void declareModelParameters()
+    void declareModelParameters() override
     {
-        BusSubModel::declareDefaultModelParameters();
+        BusSubModel::declareModelParameters();
         //bool
         addParameter("UseExtrapolationFactor", &mUseExtrapolationFactor, false, false, true, "When true the values of *BusValue are assumed over one year instead of optimization horizon");  
         //double
@@ -48,24 +48,24 @@ public:
         addParameter("StrictConstraintBusValue", &mStrictConstraintBusValue, 0., false, true, "At each time sum of connected flows should be equal to this value - default is 0 - for flow balance for example");
     }
 //----------------------------------------------------------------------------------------------------
-    void declareModelInterface()
+    void declareModelInterface() override
     {
-        BusSubModel::declareDefaultModelInterface();
+        BusSubModel::declareModelInterface();
 
-        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue);
+        addControlIO("BusBalance", &mBusBalance, true, mMainCarrier->pFluxUnit(), &mHistBusBalance, &mInitBusValue, true, "Bus balance");
     }
 
-    void declareModelIndicators() {
+    void declareModelIndicators() override  {
         // Supported types are: double
-        BusSubModel::declareDefaultModelIndicators();
+        BusSubModel::declareModelIndicators();
         mInputIndicators->addIndicator("Integrated bus balance", &mBusEnergyBalance, &mExportIndicators, "Integrated bus balance", mMainCarrier->pStorageUnit(),"BusBalance");
     }
 
     void computeInitialData() override;
 
     MIPModeler::MIPExpression1D busBalance() {return mBusBalance;}
-    void addExpressionToBalance(MIPModeler::MIPExpression1D &aFluxExpression);
-    void addExpressionToBalance(MIPModeler::MIPExpression &aFluxExpression);
+    void addExpressionToBalance1D(MIPModeler::MIPExpression1D &aFluxExpression);
+    void addExpressionToBalance0D(MIPModeler::MIPExpression &aFluxExpression);
 
     void addStrictConstraint() ;
 

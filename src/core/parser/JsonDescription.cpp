@@ -32,6 +32,10 @@ void JsonDescription::extractJsonData(const std::string& aJsonFile)
 {
     const json jsonData = readJSONFile(aJsonFile);
 
+    // ---- Cairn version ---------------------------------------------
+    //"Saved with Cairn version": "5.2.11",
+
+
     // ---- Single-page format ----------------------------------------
     if (jsonData.contains("Components"))
     {
@@ -61,6 +65,12 @@ void JsonDescription::extractJsonData(const std::string& aJsonFile)
 
         for (auto& [key, value] : jsonData.items())
         {
+            if (CairnUtils::contains(key, "version")
+                && (CairnUtils::contains(key, "Cairn") || CairnUtils::contains(key, "PERSEE")))
+            {
+                mCairnVersionJson = value.get<std::string>();
+            }
+
             if (!CairnUtils::contains(key, "Page") || key == "numberPages")
                 continue;
 
@@ -96,12 +106,12 @@ void JsonDescription::extractJsonData(const std::string& aJsonFile)
     // ---- Group name (if applicable) ----------------------------
     if (jsonData.contains("groupName"))
     {
-        mGroupName = jsonData["groupName"];
+        mGroupName = read(jsonData, "groupName"); 
     }
 
     if (jsonData.contains("mainNodeName"))
     {
-        mGroupMainNode = jsonData["mainNodeName"];
+        mGroupMainNode = read(jsonData, "mainNodeName");
     }
 
     // Build component lookup indices now that the list is fully populated.
@@ -382,6 +392,7 @@ JsonDescription::extractPortParamData(const std::string& compoName) const
             const std::string carrierType = read(port, "carrierType");
             const std::string carrier = read(port, "carrier");
             const std::string direction = CairnUtils::toUpper(read(port, "direction"));
+            const std::string locked = read(port, "locked");
             const std::string coeff = read(port, "coeff");
             const std::string offset = read(port, "offset");
             const std::string checkUnit = read(port, "checkunit");
@@ -394,6 +405,7 @@ JsonDescription::extractPortParamData(const std::string& compoName) const
             CairnUtils::setParamValue(portMap, "CarrierType", carrierType);
             CairnUtils::setParamValue(portMap, "Carrier", carrier);
             CairnUtils::setParamValue(portMap, "Direction", direction);
+            CairnUtils::setParamValue(portMap, "Locked", locked);
             CairnUtils::setParamValue(portMap, "Variable", portVariable);
             CairnUtils::setParamValue(portMap, "Coeff", coeff);
             CairnUtils::setParamValue(portMap, "Offset", offset);
@@ -627,7 +639,7 @@ std::string JsonDescription::getNodeFromId(const std::string& nodeId) const
 
     if (const auto it = mComponentIndexById.find(nodeId);
         it != mComponentIndexById.end())
-        return mComponentsList[it->second].value("nodeName", std::string{});
+        return read(mComponentsList[it->second], "nodeName");
 
     return "nodeId_Not_Found_" + nodeId;
 }
@@ -698,8 +710,11 @@ std::string JsonDescription::read(const json& in, const std::string& id,
 
     const json& value = *it;
 
-    if (value.is_string())
-        return CairnUtils::trim(value.get<std::string>());
+    if (value.is_string()) {
+        std::string strValue = value.get<std::string>();
+        CairnUtils::clean_whitespace(strValue);
+        return strValue;
+    }
     if (value.is_number_unsigned())
         return std::to_string(value.get<uint64_t>());
     if (value.is_number_integer())
@@ -740,9 +755,9 @@ void JsonDescription::buildComponentIndex()
     {
         const json& c = mComponentsList[i];
         if (c.contains("nodeId"))
-            mComponentIndexById.try_emplace(c["nodeId"].get<std::string>(), i);
+            mComponentIndexById.try_emplace(read(c, "nodeId"), i);
         if (c.contains("nodeName"))
-            mComponentIndexByName.try_emplace(c["nodeName"].get<std::string>(), i);
+            mComponentIndexByName.try_emplace(read(c, "nodeName"), i);
     }
 }
 

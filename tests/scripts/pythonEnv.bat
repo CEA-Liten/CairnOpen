@@ -11,12 +11,12 @@ if "%PYTHON_VENV%"=="" (
 
 echo python environment is %1
 
-call %PYTHON_VENV%\scripts\deactivate.bat
+call "%PYTHON_VENV%\scripts\deactivate.bat"
 
 set PATH=%PYTHON_HOME%;%PATH%
 
 rem bien mettre cette ligne après le 'set PATH' (sinon problème de définition du PATH)
-call %PYTHON_VENV%\scripts\activate.bat
+call "%PYTHON_VENV%\scripts\activate.bat"
 
 echo - PYTHON_HOME is %PYTHON_HOME%
 echo - PYTHON_VENV is %PYTHON_VENV%

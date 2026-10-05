@@ -1,8 +1,6 @@
 /*
 * \file		BusSubModel.cpp
 * \brief	BusSubModel is a specialized SubModel implementation representing a bus.
-            It maintains links to ports belonging to components that connect to this bus,
-            and manages ManualObjective semantics for a bus and
 * \version	1.0
 * \author	Ali KASSEM
 * \date		13/09/2024
@@ -15,11 +13,30 @@
 
 BusSubModel::BusSubModel(CairnObject* aParent)
     : SubModel(aParent)
-    , mObjectiveType("")
+    , mObjectiveType({})
 {
 }
 
 // --- SubModel interface -------------------------------------------------------------
+
+int BusSubModel::checkPorts()
+{
+    if (LinkedPorts().empty()) {
+        cError() << Name() << ": bus must have at least one link.";
+        return -1;
+    }
+
+    if (!getMainCarrier())
+        throw Cairn_Exception("Missing carrier for Bus " + Name(), -1);
+
+    if (SubModel::checkPorts() < 0)
+        return -1;
+
+    if (checkConnections() < 0)
+        return -1;
+
+    return 0;
+}
 
 int BusSubModel::checkConsistency()
 {
@@ -37,9 +54,13 @@ void BusSubModel::buildModel()
     mAllocate = false;
 }
 
-void BusSubModel::computeDefaultIndicators(const double* /*optSol*/)
+// --- Bus-specific -------------------------------------------------------------
+
+std::vector<std::string> BusSubModel::getPossibleObjectiveTypes() const
 {
-    // No default indicators for Bus
+    if (ModelClassName() == "ManualObjective")
+        return { "Add", "Lexicographic", "" };
+    return {};
 }
 
 // --- Linked ports -------------------------------------------------------------
@@ -74,17 +95,6 @@ void BusSubModel::removeLink(MilpPort* linkedPort)
     mLinkedPorts.erase(it);
     linkedPort->setLinkedBus(nullptr);
 }
-
-// --- Bus-specific -------------------------------------------------------------
-
-std::vector<std::string> BusSubModel::getPossibleObjectiveTypes() const
-{
-    if (ModelClassName() == "ManualObjective")
-        return { "Add", "Lexicographic", "" };
-    return {};
-}
-
-// --- Consistency checks -------------------------------------------------------------
 
 int BusSubModel::checkConnections()
 {
@@ -156,21 +166,3 @@ int BusSubModel::checkConnections()
     return 0;
 }
 
-int BusSubModel::checkPorts()
-{
-    if (LinkedPorts().empty()) {
-        cError() << Name() << ": bus must have at least one link.";
-        return -1;
-    }
-
-    if (!getMainCarrier())
-        throw Cairn_Exception("Missing carrier for Bus " + Name(), -1);
-
-    if (SubModel::checkPorts() < 0)
-        return -1;
-
-    if (checkConnections() < 0)
-        return -1;
-
-    return 0;
-}
