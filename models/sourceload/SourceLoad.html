@@ -1,0 +1,244 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SourceLoad &mdash; Cairn 6.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=00a1018e" />
+
+  
+    <link rel="shortcut icon" href="../../_static/cairn_logo.png"/>
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d9c7ea69"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Storages" href="../storage.html" />
+    <link rel="prev" title="Source loads" href="../sourceload.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/cairn.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Start with Cairn</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/what_is_cairn.html">Overview of the <span class="xref std std-term">Cairn</span> tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/installation.html">Installing <span class="xref std std-term">Cairn</span></a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn User Guide Lines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/general.html">Principles of Cairn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/time_management/time_management.html">Time management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/input_output_files.html">Input and output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/economic_aspects.html">Economic optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/environmental_aspects.html">Environmental</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cairn_open_user_guide_lines/mixed_integer_linear_optimization.html">Mixed integer Linear optimization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Cairn Viewer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/build_a_problem.html">Build a problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/display_results.html">Display results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/shortcuts_and_options.html">Shortcuts and options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/How_to_build_a_UDI.html">Setting new indicators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hmi_guide/postprocessing.html">Post-processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_guide/quick_api.html">Reminder of main functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_guide/commands.html"><span class="xref std std-term">Cairn</span> <span class="xref std std-term">API</span> documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_guide/notebook.html">Example through a notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Components description</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">Cairn Open SubModels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid.html">Grids</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bus.html">Buses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../converter.html">Converters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sourceload.html">Source loads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storage.html">Storages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../operationconstraint.html">Operation constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../physicalequation.html">Physical equations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact us</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/contact_us.html">The <span class="xref std std-term">Cairn</span> team</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/contact_us.html#bugs-and-suggestions">Bugs and suggestions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../about_cairn/contact_us.html#other-requests-and-remarks">Other requests and remarks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FAQ-Glossary-Ref.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../genindex.html">Index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Cairn</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../sourceload.html">Source loads</a></li>
+      <li class="breadcrumb-item active">SourceLoad</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sourceload">
+<span id="id1"></span><h1>SourceLoad<a class="headerlink" href="#sourceload" title="Link to this heading"></a></h1>
+<section id="model-interface-of-sourceload">
+<h2>Model interface of SourceLoad<a class="headerlink" href="#model-interface-of-sourceload" title="Link to this heading"></a></h2>
+<p>This component represents either a source (injection) or a load (extraction). To extend the definition, for instance, a source can be a powerplant or a photovoltaic panel,
+whilst a load could be the demand of hydrogen of a building.</p>
+<p>Thus, an imposed flow of energy or material can be inserted as input for:</p>
+<ul class="simple">
+<li><p>Power for electrical or thermal carriers</p></li>
+<li><p>Flow rates for fluids, biomass, etc.</p></li>
+</ul>
+<section id="main-features">
+<h3>Main Features<a class="headerlink" href="#main-features" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>MaxFlow limits the absolute value of injected or extracted flow.</p></li>
+<li><p>Different strategies of load handling can be implemented:</p>
+<ul>
+<li><p>Load Shedding: optional load shedding model for demand-side management (available only for loads, compatible with Rolling Horizon usage).</p></li>
+<li><p>Peak Shaving: optional peak shaving model for demand-side management (available only for loads).</p></li>
+<li><p>Optimization of Price or Size:
+- Can optimize the size (capacity) or the price signal for injected/extracted flow.</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Load shedding and peak shaving can be used together but as the cost associated to peak shaving is yearly, it can be used to reduce the cost of load shedding, especially if the cost linked to load shedding is time dependent.</p>
+</div>
+</section>
+<section id="focus">
+<h3>Focus<a class="headerlink" href="#focus" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Load shedding:</p>
+<figure class="align-center" id="ioshedding">
+<a class="reference internal image-reference" href="../../_images/Shedding.JPG"><img alt="IO Shedding" src="../../_images/Shedding.JPG" style="width: 500px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 58 </span><span class="caption-text">Load Shedding Graphics</span><a class="headerlink" href="#ioshedding" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</li>
+</ul>
+<blockquote>
+<div><p>This method introduces optional load shedding capability for a load component.
+Load shedding represents the deliberate reduction of demand when it’s beneficial or necessary
+(e.g., during system stress or high price events). This model could be used for</p>
+</div></blockquote>
+<ul>
+<li><p>Demand Response modeling</p></li>
+<li><p>Robust optimization scenarios with load flexibility</p></li>
+<li><p>Scenario analysis for energy-constrained systems</p></li>
+<li><p>Peak Shaving:</p>
+<figure class="align-center" id="ioshaving">
+<a class="reference internal image-reference" href="../../_images/Shaving.JPG"><img alt="IO Shaving" src="../../_images/Shaving.JPG" style="width: 500px;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Fig. 59 </span><span class="caption-text">Peak Shaving Graphics</span><a class="headerlink" href="#ioshaving" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</li>
+</ul>
+<p>This method introduces optional peak shaving capability for a load component.
+Peak shaving represents the redistribution of charge when a peak is highlighted, over hours where load is less important.
+The imposed flow (ImposedFlow) can be balanced in this way: it can be increased or decreased by MaxEffect but the total energy over the period TimeSpan must be conserved.</p>
+<p>The imposed quantity depends on the connected energy vector.</p>
+<p>ImposedFlow defines the input data on which to apply flexibility:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>ImposedFlow: the time distribution to be balanced using flexibility.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="generated-variables-and-expressions">
+<h3>Generated Variables and Expressions<a class="headerlink" href="#generated-variables-and-expressions" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Variables for controlled or weighted flux, shedding, and reactive power.</p></li>
+<li><p>Expressions for:</p>
+<ul>
+<li><p>Total imposed flux</p></li>
+<li><p>Input and output powers</p></li>
+<li><p>Costs (regular and shedding)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../sourceload.html" class="btn btn-neutral float-left" title="Source loads" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../storage.html" class="btn btn-neutral float-right" title="Storages" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CEA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
