@@ -14,7 +14,7 @@ rem =========================================================
 SET STARTTIME=%TIME%
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-set CMAKEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
+set CMAKEPATH=cmake.exe
 if exist "cmakepath.bat" (	
 	call cmakepath.bat
 )
